@@ -209,7 +209,7 @@ All settings use the `DATALAKE_` prefix:
 | `REDIS_URL` | Redis connection URL | `redis://localhost:6379` |
 | `REDIS_CONSUMER_GROUP` | Consumer group name | `datalake-consumers` |
 | `REDIS_CONSUMER_NAME` | This consumer's name | `datalake-1` |
-| `STORAGE_PROVIDER` | `local` or `supabase` | `local` |
+| `STORAGE_PROVIDER` | `local`, `minio`, or `supabase` | `local` |
 | `LOCAL_STORAGE_PATH` | Path for local storage | `./data/datalake` |
 | `BUFFER_MAX_SIZE` | Events before flush | `100` |
 | `BUFFER_FLUSH_INTERVAL` | Flush interval (seconds) | `5.0` |
@@ -227,7 +227,12 @@ All settings use the `DATALAKE_` prefix:
 | `BATCH_SIZE` | Events per read | `50` |
 | `SUPABASE_URL` | Supabase project URL | - |
 | `SUPABASE_KEY` | Supabase service key | - |
-| `SUPABASE_BUCKET` | Storage bucket name | `datalake` |
+| `SUPABASE_BUCKET` | Storage bucket name | `geneflow-datalake` |
+| `MINIO_ENDPOINT` | MinIO/S3 endpoint (host:port) | - |
+| `MINIO_ACCESS_KEY` | MinIO/S3 access key | - |
+| `MINIO_SECRET_KEY` | MinIO/S3 secret key | - |
+| `MINIO_BUCKET` | MinIO/S3 bucket name | `geneflow-datalake` |
+| `MINIO_SECURE` | Use HTTPS | `true` |
 | `RETRY_BASE_DELAY` | Initial retry delay (s) | `1.0` |
 | `RETRY_MAX_DELAY` | Maximum retry delay (s) | `300.0` |
 | `DEDUP_TTL_HOURS` | Dedup window | `24` |
@@ -252,9 +257,10 @@ geneflow-datalake/
 │   ├── retry.py             # Retry handler + DLQ
 │   ├── api.py               # FastAPI REST endpoints
 │   └── storage/
-│       ├── base.py          # Abstract interface
+│       ├── storage.py       # Abstract interface
 │       ├── local.py         # Local filesystem (aiofiles)
-│       └── supabase.py      # Supabase Storage
+│       ├── minio.py         # MinIO / S3-compatible (aiobotocore)
+│       └── supabase.py      # Supabase Storage (httpx)
 ├── tests/
 ├── pyproject.toml           # Dependencies (uv)
 ├── Dockerfile
@@ -325,8 +331,9 @@ uv run ruff format src/ # Format
 | 9 | Entry point + graceful shutdown | ✅ Done |
 | 10 | Docker | ✅ Done |
 | 11 | Tests | ✅ Done |
-| 12 | Supabase provider | ⏳ Pending |
-| 13 | .NET integration test | ⏳ Pending |
+| 12 | MinIO provider | ✅ Done |
+| 13 | Supabase provider | ✅ Done |
+| 14 | .NET integration test | ⏳ Pending |
 
 ---
 

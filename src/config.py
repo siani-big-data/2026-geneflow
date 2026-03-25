@@ -12,11 +12,20 @@ class Settings(BaseSettings):
     batch_size: int = 50
 
     # Storage
-    storage_provider: Literal["local", "supabase", "cloudflare"] = "local"
+    storage_provider: Literal["local", "supabase", "minio"] = "local"
     local_storage_path: str = './data/datalake'
+
+    # Supabase Storage
     supabase_url: str = ''
     supabase_key: str = ''
     supabase_bucket: str = 'geneflow-datalake'
+
+    # MinIO / S3-compatible Storage
+    minio_endpoint: str = ''
+    minio_access_key: str = ''
+    minio_secret_key: str = ''
+    minio_bucket: str = 'geneflow-datalake'
+    minio_secure: bool = True
 
     # Buffer
     buffer_max_size: int = 1000

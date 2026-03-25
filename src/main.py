@@ -58,10 +58,18 @@ async def main() -> None:
     # Create storage provider
     storage = get_storage_provider(
         provider=settings.storage_provider,
+        # Local
         local_storage_path=settings.local_storage_path,
+        # Supabase
         supabase_url=settings.supabase_url,
         supabase_key=settings.supabase_key,
         supabase_bucket=settings.supabase_bucket,
+        # MinIO / S3
+        minio_endpoint=settings.minio_endpoint,
+        minio_access_key=settings.minio_access_key,
+        minio_secret_key=settings.minio_secret_key,
+        minio_bucket=settings.minio_bucket,
+        minio_secure=settings.minio_secure,
     )
 
     # Create consumer
