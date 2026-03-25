@@ -1,0 +1,41 @@
+[project]
+name = "geneflow-datalake"
+version = "1.0.0"
+description = "GeneFlow Datalake: A high-performance data lake solution."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "redis>=5.0.0",
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.27.0",
+    "pydantic>=2.5.0",
+    "pydantic-settings>=2.1.0",
+    "httpx>=0.27.0",
+    "aiofiles>=23.2.0",
+    "structlog>=24.1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=4.0.0",
+    "ruff>=0.3.0",
+]
+
+[project.scripts]
+datalake = "src.main:run"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_functions = "test_*"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W"]
+ignore = ["E501"]

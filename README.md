@@ -314,7 +314,7 @@ uv run ruff format src/ # Format
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| 1 | Project setup (uv, structure) | ⏳ Pending |
+| 1 | Project setup (uv, structure) | ✅ Done |
 | 2 | Config + Models | ⏳ Pending |
 | 3 | Storage layer (local provider) | ⏳ Pending |
 | 4 | Buffer + WAL | ⏳ Pending |
