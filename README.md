@@ -321,7 +321,7 @@ uv run ruff format src/ # Format
 | 5 | Deduplication | ✅ Done |
 | 6 | Retry + DLQ | ✅ Done |
 | 7 | Redis consumer | ✅ Done |
-| 8 | REST API | ⏳ Pending |
+| 8 | REST API | ✅ Done |
 | 9 | Entry point + graceful shutdown | ⏳ Pending |
 | 10 | Docker | ⏳ Pending |
 | 11 | Tests | ⏳ Pending |
