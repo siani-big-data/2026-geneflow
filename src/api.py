@@ -2,12 +2,26 @@ import json
 from datetime import datetime
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, Header, HTTPException, Query
 from pydantic import BaseModel
 
 from src.config import Settings
 from src.retry import RetryHandler
 from src.storage import StorageProvider
+
+
+def create_api_key_dependency(settings: Settings):
+    """Create API key validation dependency."""
+
+    async def verify_api_key(x_api_key: Optional[str] = Header(None)) -> None:
+        # If no API key configured, skip validation
+        if not settings.api_key:
+            return
+
+        if x_api_key != settings.api_key:
+            raise HTTPException(status_code=401, detail="Invalid or missing API key")
+
+    return verify_api_key
 
 
 # === Response Models ===
@@ -88,6 +102,7 @@ class DatalakeAPI:
         self.settings = settings
         self.retry_handler = retry_handler
         self._consumer_metrics_callback = None
+        self._verify_api_key = create_api_key_dependency(settings)
 
         self.app = FastAPI(
             title="GeneFlow Datalake API",
@@ -120,12 +135,12 @@ class DatalakeAPI:
 
         # === Categories ===
         @self.app.get("/categories", response_model=CategoriesResponse)
-        async def list_categories():
+        async def list_categories(_: None = Depends(self._verify_api_key)):
             categories = await self.storage.list_categories()
             return CategoriesResponse(categories=categories)
 
         @self.app.get("/categories/{category}/stats", response_model=CategoryStatsResponse)
-        async def get_category_stats(category: str):
+        async def get_category_stats(category: str, _: None = Depends(self._verify_api_key)):
             stats = await self.storage.get_stats(category)
             return CategoryStatsResponse(
                 category=category,
@@ -136,7 +151,7 @@ class DatalakeAPI:
             )
 
         @self.app.get("/categories/{category}/dates", response_model=CategoryDatesResponse)
-        async def get_category_dates(category: str):
+        async def get_category_dates(category: str, _: None = Depends(self._verify_api_key)):
             dates = await self.storage.list_dates(category)
             return CategoryDatesResponse(
                 category=category,
@@ -154,6 +169,7 @@ class DatalakeAPI:
             event_type: Optional[str] = Query(None),
             limit: int = Query(1000, ge=1, le=10000),
             offset: int = Query(0, ge=0),
+            _: None = Depends(self._verify_api_key),
         ):
             try:
                 if date:
@@ -200,6 +216,7 @@ class DatalakeAPI:
         async def replay(
             category: str,
             from_date: Optional[str] = Query(None, alias="from"),
+            _: None = Depends(self._verify_api_key),
         ):
             dates = await self.storage.list_dates(category)
 
@@ -237,6 +254,7 @@ class DatalakeAPI:
         @self.app.get("/dlq", response_model=DLQResponse)
         async def get_dlq(
             date: Optional[str] = Query(None, description="Date YYYY-MM-DD, default today"),
+            _: None = Depends(self._verify_api_key),
         ):
             if date:
                 target = datetime.strptime(date, "%Y-%m-%d")
@@ -251,12 +269,12 @@ class DatalakeAPI:
             )
 
         @self.app.get("/dlq/all", response_model=DLQResponse)
-        async def get_all_dlq():
+        async def get_all_dlq(_: None = Depends(self._verify_api_key)):
             events = await self.retry_handler.get_all_dlq_events()
             return DLQResponse(events=events, count=len(events))
 
         @self.app.post("/dlq/retry/{event_id}", response_model=DLQRetryResponse)
-        async def retry_dlq_event(event_id: str):
+        async def retry_dlq_event(event_id: str, _: None = Depends(self._verify_api_key)):
             success = await self.retry_handler.replay_dlq_event(event_id)
             return DLQRetryResponse(
                 success=success,
@@ -267,6 +285,7 @@ class DatalakeAPI:
         @self.app.post("/dlq/retry-all", response_model=DLQRetryAllResponse)
         async def retry_all_dlq(
             date: Optional[str] = Query(None),
+            _: None = Depends(self._verify_api_key),
         ):
             target = datetime.strptime(date, "%Y-%m-%d") if date else None
             result = await self.retry_handler.replay_all_dlq(target)

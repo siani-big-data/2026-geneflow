@@ -37,6 +37,7 @@ class Config(BaseSettings):
     # API
     api_host: str = "0.0.0.0"
     api_port: int = 8080
+    api_key: str = ""  # If empty, no auth required
 
     class Config:
         env_prefix = "DATALAKE_"

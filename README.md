@@ -322,7 +322,7 @@ uv run ruff format src/ # Format
 | 6 | Retry + DLQ | ✅ Done |
 | 7 | Redis consumer | ✅ Done |
 | 8 | REST API | ✅ Done |
-| 9 | Entry point + graceful shutdown | ⏳ Pending |
+| 9 | Entry point + graceful shutdown | ✅ Done |
 | 10 | Docker | ⏳ Pending |
 | 11 | Tests | ⏳ Pending |
 | 12 | Supabase provider | ⏳ Pending |
