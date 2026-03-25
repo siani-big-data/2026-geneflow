@@ -323,7 +323,7 @@ uv run ruff format src/ # Format
 | 7 | Redis consumer | ✅ Done |
 | 8 | REST API | ✅ Done |
 | 9 | Entry point + graceful shutdown | ✅ Done |
-| 10 | Docker | ⏳ Pending |
+| 10 | Docker | ✅ Done |
 | 11 | Tests | ⏳ Pending |
 | 12 | Supabase provider | ⏳ Pending |
 | 13 | .NET integration test | ⏳ Pending |
