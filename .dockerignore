@@ -1,0 +1,37 @@
+# Git
+.git/
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Environment
+.env
+.env.*
+
+# IDE
+.idea/
+.vscode/
+
+# Data (mounted as volume)
+data/
+
+# Tests
+tests/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Docs
+*.md
+!README.md
+IMPLEMENTATION_PLAN.md
+
+# Other
+.dockerignore
+Dockerfile
+docker-compose*.yml

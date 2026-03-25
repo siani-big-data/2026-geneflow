@@ -87,6 +87,7 @@ class EventBuffer:
         """Add event to buffer."""
         date_str = date.strftime("%Y-%m-%d")
         key = (category, date_str)
+        should_flush = False
 
         async with self._lock:
             # 1. Write to WAL first (durability)
@@ -97,9 +98,12 @@ class EventBuffer:
             self._pending_acks[key].append((stream_name, msg_id))
             self._count += 1
 
-            # 3. Flush if we hit the limit
-            if self._count >= self.max_size:
-                await self._flush_all()
+            # 3. Check if we need to flush
+            should_flush = self._count >= self.max_size
+
+        # Flush outside the lock to avoid deadlock
+        if should_flush:
+            await self._flush_all()
 
     async def _flush_loop(self) -> None:
         """Periodic flush loop."""

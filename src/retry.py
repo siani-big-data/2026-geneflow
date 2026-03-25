@@ -32,11 +32,13 @@ class RetryHandler:
         base_delay: float = 1.0,
         max_delay: float = 300.0,
         dlq_path: str = "./data/dlq",
+        check_interval: float = 1.0,
     ):
         self.max_retries = max_retries
         self.base_delay = base_delay
         self.max_delay = max_delay
         self.dlq_path = Path(dlq_path)
+        self.check_interval = check_interval
 
         self._queue: list[RetryableEvent] = []
         self._lock = asyncio.Lock()
@@ -114,7 +116,7 @@ class RetryHandler:
         """Main retry loop."""
         while self._running:
             try:
-                await asyncio.sleep(1)
+                await asyncio.sleep(self.check_interval)
 
                 now = datetime.utcnow()
                 to_retry = []

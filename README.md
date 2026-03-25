@@ -324,7 +324,7 @@ uv run ruff format src/ # Format
 | 8 | REST API | ✅ Done |
 | 9 | Entry point + graceful shutdown | ✅ Done |
 | 10 | Docker | ✅ Done |
-| 11 | Tests | ⏳ Pending |
+| 11 | Tests | ✅ Done |
 | 12 | Supabase provider | ⏳ Pending |
 | 13 | .NET integration test | ⏳ Pending |
 

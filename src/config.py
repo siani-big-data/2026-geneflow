@@ -1,7 +1,7 @@
 from typing import Literal
 from pydantic_settings import BaseSettings
 
-class Config(BaseSettings):
+class Settings(BaseSettings):
 
     # Redis config
     redis_url: str = "redis://redis:6379"
