@@ -7,6 +7,7 @@ from fastapi.openapi.utils import get_openapi
 from pydantic import BaseModel, Field
 
 from src.config import Settings
+from src.models import EventCategory
 from src.retry import RetryHandler
 from src.storage import StorageProvider
 
@@ -76,6 +77,19 @@ class CategoriesResponse(BaseModel):
 
     model_config = {"json_schema_extra": {"example": {
         "categories": ["users", "traces", "studies", "alignments"]
+    }}}
+
+
+class AvailableCategoriesResponse(BaseModel):
+    """All valid event categories."""
+
+    categories: list[str] = Field(..., description="Valid category names from enum")
+    count: int = Field(..., description="Number of categories")
+
+    model_config = {"json_schema_extra": {"example": {
+        "categories": ["users", "studies", "traces", "alignments",
+                       "subscriptions", "plans", "ai", "blast", "system"],
+        "count": 9
     }}}
 
 
@@ -265,12 +279,23 @@ Protected endpoints require an `X-API-Key` header.
             "/categories",
             response_model=CategoriesResponse,
             tags=["Categories"],
-            summary="List all categories",
-            description="Returns all event categories that have stored data.",
+            summary="List categories with data",
+            description="Returns event categories that have stored data.",
         )
         async def list_categories(_: None = Depends(self._verify_api_key)):
             categories = await self.storage.list_categories()
             return CategoriesResponse(categories=categories)
+
+        @self.app.get(
+            "/categories/available",
+            response_model=AvailableCategoriesResponse,
+            tags=["Categories"],
+            summary="List all valid categories",
+            description="Returns all valid event categories defined in the system.",
+        )
+        async def list_available_categories(_: None = Depends(self._verify_api_key)):
+            categories = [c.value for c in EventCategory]
+            return AvailableCategoriesResponse(categories=categories, count=len(categories))
 
         @self.app.get(
             "/categories/{category}/stats",

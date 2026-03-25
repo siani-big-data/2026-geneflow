@@ -421,7 +421,7 @@ wheels = [
 [[package]]
 name = "geneflow-datalake"
 version = "1.0.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "aiobotocore" },
     { name = "aiofiles" },
