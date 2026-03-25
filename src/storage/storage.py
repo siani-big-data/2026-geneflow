@@ -3,53 +3,53 @@ from datetime import datetime
 
 
 class StorageProvider(ABC):
-    """Interface para providers de almacenamiento."""
+    """Abstract interface for storage providers."""
 
     @abstractmethod
     async def append_events_batch(
             self, category: str, date: datetime, event_lines: list[str]
     ) -> None:
-        """Añadir batch de eventos a un archivo."""
+        """Append batch of events to a file."""
         pass
 
     @abstractmethod
     async def read_events(self, category: str, date: datetime) -> list[str]:
-        """Leer eventos de un día."""
+        """Read events from a single day."""
         pass
 
     @abstractmethod
     async def read_events_range(
             self, category: str, start_date: datetime, end_date: datetime
     ) -> list[str]:
-        """Leer eventos de un rango de fechas."""
+        """Read events from a date range."""
         pass
 
     @abstractmethod
     async def list_categories(self) -> list[str]:
-        """Listar categorías con datos."""
+        """List categories with data."""
         pass
 
     @abstractmethod
     async def list_dates(self, category: str) -> list[datetime]:
-        """Listar fechas disponibles para una categoría."""
+        """List available dates for a category."""
         pass
 
     @abstractmethod
     async def get_stats(self, category: str) -> dict:
-        """Obtener estadísticas de una categoría."""
+        """Get statistics for a category."""
         pass
 
     @abstractmethod
     async def health_check(self) -> bool:
-        """Verificar salud del storage."""
+        """Check storage health."""
         pass
 
     @abstractmethod
     async def close(self) -> None:
-        """Cerrar conexiones/recursos."""
+        """Close connections/resources."""
         pass
 
     def _get_file_path(self, category: str, date: datetime) -> str:
-        """Helper: path del archivo JSONL."""
+        """Helper: get JSONL file path."""
         date_str = date.strftime("%Y-%m-%d")
         return f"events/{category}/{date_str}.jsonl"

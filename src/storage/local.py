@@ -7,7 +7,7 @@ from src.storage.storage import StorageProvider
 
 
 class LocalStorageProvider(StorageProvider):
-    """Storage usando sistema de archivos local."""
+    """Storage provider using local filesystem."""
 
     def __init__(self, base_path: str = "./data/datalake"):
         self.base_path = Path(base_path)

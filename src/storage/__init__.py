@@ -5,7 +5,7 @@ from src.storage.storage import StorageProvider
 
 
 def get_storage_provider(provider: str, **kwargs) -> StorageProvider:
-    """Factory para obtener el provider correcto."""
+    """Factory to get the correct storage provider."""
     if provider == "local":
         return LocalStorageProvider(
             base_path=kwargs.get("local_storage_path", "./data/datalake")
