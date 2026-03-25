@@ -318,9 +318,9 @@ uv run ruff format src/ # Format
 | 2 | Config + Models | ✅ Done |
 | 3 | Storage layer (local provider) | ✅ Done |
 | 4 | Buffer + WAL | ✅ Done |
-| 5 | Deduplication | ⏳ Pending |
-| 6 | Retry + DLQ | ⏳ Pending |
-| 7 | Redis consumer | ⏳ Pending |
+| 5 | Deduplication | ✅ Done |
+| 6 | Retry + DLQ | ✅ Done |
+| 7 | Redis consumer | ✅ Done |
 | 8 | REST API | ⏳ Pending |
 | 9 | Entry point + graceful shutdown | ⏳ Pending |
 | 10 | Docker | ⏳ Pending |
