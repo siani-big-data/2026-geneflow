@@ -7,7 +7,6 @@ from typing import Optional
 
 class EventCategory(str, Enum):
     """Event categories matching Redis streams."""
-
     USERS = "users"
     STUDIES = "studies"
     TRACES = "traces"
