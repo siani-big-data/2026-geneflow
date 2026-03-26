@@ -48,6 +48,11 @@ class Settings(BaseSettings):
     api_port: int = 8080
     api_key: str = ""  # If empty, no auth required
 
+    # Qdrant
+    qdrant_url: str = "http://localhost:6333"
+    qdrant_api_key: str = ""
+    qdrant_enabled: bool = False
+
     class Config:
         env_prefix = "DATALAKE_"
         env_file = ".env"
