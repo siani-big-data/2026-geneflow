@@ -1,15 +1,27 @@
 import json
+import time
+import uuid
+from contextvars import ContextVar
 from datetime import datetime
 from typing import Optional
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Query
-from fastapi.openapi.utils import get_openapi
+import structlog
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from src.config import Settings
 from src.models import EventCategory
 from src.retry import RetryHandler
 from src.storage import StorageProvider
+
+# Context var for correlation ID (accessible across async calls)
+correlation_id_ctx: ContextVar[str] = ContextVar("correlation_id", default="")
+
+logger = structlog.get_logger(__name__)
 
 
 # === OpenAPI Tags ===
@@ -35,6 +47,96 @@ TAGS_METADATA = [
         "description": "Dead Letter Queue management for failed events.",
     },
 ]
+
+
+# === Error Response Model ===
+
+
+class ErrorResponse(BaseModel):
+    """Standard error response."""
+
+    error: str = Field(..., description="Error type")
+    message: str = Field(..., description="Error message")
+    detail: Optional[str] = Field(None, description="Additional details")
+    correlation_id: str = Field(..., description="Request correlation ID")
+
+
+# === Exception Handlers ===
+
+
+def create_exception_handlers(app: FastAPI) -> None:
+    """Register global exception handlers."""
+
+    @app.exception_handler(StarletteHTTPException)
+    async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+        """Handle HTTP exceptions with standard format."""
+        correlation_id = correlation_id_ctx.get() or "unknown"
+
+        error_map = {
+            400: "bad_request",
+            401: "unauthorized",
+            403: "forbidden",
+            404: "not_found",
+            405: "method_not_allowed",
+            409: "conflict",
+            422: "validation_error",
+            429: "too_many_requests",
+            500: "internal_error",
+            503: "service_unavailable",
+        }
+
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={
+                "error": error_map.get(exc.status_code, "error"),
+                "message": str(exc.detail),
+                "detail": None,
+                "correlation_id": correlation_id,
+            },
+        )
+
+    @app.exception_handler(RequestValidationError)
+    async def validation_exception_handler(request: Request, exc: RequestValidationError):
+        """Handle validation errors with detailed info."""
+        correlation_id = correlation_id_ctx.get() or "unknown"
+
+        errors = exc.errors()
+        first_error = errors[0] if errors else {}
+        field = ".".join(str(loc) for loc in first_error.get("loc", []))
+        msg = first_error.get("msg", "Validation error")
+
+        return JSONResponse(
+            status_code=422,
+            content={
+                "error": "validation_error",
+                "message": f"Invalid value for '{field}': {msg}",
+                "detail": errors,
+                "correlation_id": correlation_id,
+            },
+        )
+
+    @app.exception_handler(Exception)
+    async def unhandled_exception_handler(request: Request, exc: Exception):
+        """Handle unexpected exceptions."""
+        correlation_id = correlation_id_ctx.get() or "unknown"
+
+        logger.error(
+            "unhandled_exception",
+            correlation_id=correlation_id,
+            error=str(exc),
+            error_type=type(exc).__name__,
+            path=request.url.path,
+        )
+
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": "internal_error",
+                "message": "An unexpected error occurred",
+                "detail": None,
+                "correlation_id": correlation_id,
+            },
+        )
 
 
 def create_api_key_dependency(settings: Settings):
@@ -245,7 +347,78 @@ Protected endpoints require an `X-API-Key` header.
             },
         )
 
+        self._setup_middleware()
+        create_exception_handlers(self.app)
         self._setup_routes()
+
+    def _setup_middleware(self) -> None:
+        """Configure CORS and logging middleware."""
+
+        # CORS middleware
+        self.app.add_middleware(
+            CORSMiddleware,
+            allow_origins=self.settings.cors_origins,
+            allow_credentials=self.settings.cors_allow_credentials,
+            allow_methods=self.settings.cors_allow_methods,
+            allow_headers=self.settings.cors_allow_headers,
+        )
+
+        # Request logging middleware
+        @self.app.middleware("http")
+        async def logging_middleware(request: Request, call_next):
+            # Generate correlation ID
+            correlation_id = request.headers.get("X-Correlation-ID") or str(uuid.uuid4())
+            correlation_id_ctx.set(correlation_id)
+
+            # Skip logging for health checks
+            if request.url.path == "/health":
+                response = await call_next(request)
+                response.headers["X-Correlation-ID"] = correlation_id
+                return response
+
+            start_time = time.perf_counter()
+
+            # Log request
+            if self.settings.log_requests:
+                logger.info(
+                    "request_started",
+                    correlation_id=correlation_id,
+                    method=request.method,
+                    path=request.url.path,
+                    query=str(request.query_params) if request.query_params else None,
+                )
+
+            try:
+                response = await call_next(request)
+            except Exception as exc:
+                duration_ms = (time.perf_counter() - start_time) * 1000
+                logger.error(
+                    "request_failed",
+                    correlation_id=correlation_id,
+                    method=request.method,
+                    path=request.url.path,
+                    duration_ms=round(duration_ms, 2),
+                    error=str(exc),
+                )
+                raise
+
+            duration_ms = (time.perf_counter() - start_time) * 1000
+
+            # Log response
+            if self.settings.log_requests:
+                log_method = logger.info if response.status_code < 400 else logger.warning
+                log_method(
+                    "request_completed",
+                    correlation_id=correlation_id,
+                    method=request.method,
+                    path=request.url.path,
+                    status_code=response.status_code,
+                    duration_ms=round(duration_ms, 2),
+                )
+
+            # Add correlation ID to response headers
+            response.headers["X-Correlation-ID"] = correlation_id
+            return response
 
     def set_consumer_metrics_callback(self, callback) -> None:
         """Connect consumer metrics callback."""

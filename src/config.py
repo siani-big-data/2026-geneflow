@@ -48,6 +48,16 @@ class Settings(BaseSettings):
     api_port: int = 8080
     api_key: str = ""  # If empty, no auth required
 
+    # CORS
+    cors_origins: list[str] = ["*"]
+    cors_allow_credentials: bool = True
+    cors_allow_methods: list[str] = ["*"]
+    cors_allow_headers: list[str] = ["*"]
+
+    # Logging
+    log_level: str = "INFO"
+    log_requests: bool = True
+
     # Qdrant
     qdrant_url: str = "http://localhost:6333"
     qdrant_api_key: str = ""

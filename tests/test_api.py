@@ -55,7 +55,10 @@ class TestAuthMiddleware:
         response = client.get("/categories")
 
         assert response.status_code == 401
-        assert "Invalid or missing API key" in response.json()["detail"]
+        data = response.json()
+        assert data["error"] == "unauthorized"
+        assert "Invalid or missing API key" in data["message"]
+        assert "correlation_id" in data
 
     def test_protected_endpoint_with_wrong_key_returns_401(self, api_with_data):
         client, _ = api_with_data
