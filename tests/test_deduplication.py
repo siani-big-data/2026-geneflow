@@ -65,15 +65,15 @@ async def test_cleanup_expired():
 @pytest.mark.asyncio
 async def test_cleanup_on_max_size_exceeded():
     dedup = EventDeduplicator(
-        ttl_hours=0,  # Immediate expiry for cleanup
+        ttl_hours=1,  # 1 hour TTL
         max_size=2,
         cleanup_interval=60.0,
     )
     await dedup.start()
 
-    # Mark old events as expired
-    dedup._seen["old-1"] = datetime.utcnow() - timedelta(hours=1)
-    dedup._seen["old-2"] = datetime.utcnow() - timedelta(hours=1)
+    # Mark old events as expired (older than TTL)
+    dedup._seen["old-1"] = datetime.utcnow() - timedelta(hours=2)
+    dedup._seen["old-2"] = datetime.utcnow() - timedelta(hours=2)
 
     # This should trigger cleanup since we exceed max_size
     await dedup.mark_seen("new-1")
