@@ -17,11 +17,13 @@
 
 **Immutable Source of Truth for the GeneFlow Platform**
 
-[![Python 3.12+](https://img.shields.io/badge/Python-3.12+-3776ab?logo=python&logoColor=white)](https://www.python.org/)
+[![CI](https://github.com/geneflow-app/GeneFlow-Datalake/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/geneflow-app/GeneFlow-Datalake/actions/workflows/ci.yml)
+[![CD](https://github.com/geneflow-app/GeneFlow-Datalake/actions/workflows/cd.yml/badge.svg?branch=master)](https://github.com/geneflow-app/GeneFlow-Datalake/actions/workflows/cd.yml)
+[![Python](https://img.shields.io/badge/Python-3.12+-3776ab?logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![Redis](https://img.shields.io/badge/Redis-Streams-dc382d?logo=redis&logoColor=white)](https://redis.io/)
-[![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red)]()
-[![Status: In Development](https://img.shields.io/badge/Status-In%20Development-orange)]()
+[![Docker](https://img.shields.io/badge/Docker-GHCR-2496ed?logo=docker&logoColor=white)](https://github.com/geneflow-app/GeneFlow-Datalake/pkgs/container/geneflow-datalake)
+[![License](https://img.shields.io/badge/License-Proprietary-red)]()
 
 </div>
 
@@ -247,6 +249,14 @@ All settings use the `DATALAKE_` prefix:
 
 ```
 geneflow-datalake/
+├── .github/
+│   ├── workflows/
+│   │   ├── ci.yml           # Continuous Integration
+│   │   ├── cd.yml           # Continuous Deployment
+│   │   └── release.yml      # Release automation
+│   ├── dependabot.yml       # Dependency updates
+│   ├── CODEOWNERS           # Code ownership
+│   └── pull_request_template.md
 ├── src/
 │   ├── main.py              # Entry point, orchestration
 │   ├── config.py            # Settings (pydantic-settings)
@@ -256,12 +266,16 @@ geneflow-datalake/
 │   ├── deduplication.py     # eventId deduplication
 │   ├── retry.py             # Retry handler + DLQ
 │   ├── api.py               # FastAPI REST endpoints
+│   ├── mounters/            # Event projections (Postgres, Qdrant, Storage)
 │   └── storage/
 │       ├── storage.py       # Abstract interface
 │       ├── local.py         # Local filesystem (aiofiles)
 │       ├── minio.py         # MinIO / S3-compatible (aiobotocore)
 │       └── supabase.py      # Supabase Storage (httpx)
 ├── tests/
+├── docs/
+│   ├── API_CONVENTIONS.md   # API design standards
+│   └── CONVENTIONS.md       # Development conventions
 ├── pyproject.toml           # Dependencies (uv)
 ├── Dockerfile
 └── README.md
@@ -316,6 +330,147 @@ uv run ruff format src/ # Format
 
 ---
 
+## CI/CD
+
+This project uses GitHub Actions for continuous integration and deployment.
+
+### Workflows
+
+| Workflow | Trigger | Description |
+|----------|---------|-------------|
+| **CI** | Push/PR to `main`, `master`, `develop` | Lint, test, build Docker image, security scan |
+| **CD** | Push to `main`/`master` or tags `v*` | Build & push to GHCR, deploy to staging/production |
+| **Release** | Tags `v*` | Auto-generate changelog and GitHub release |
+
+### Pipeline Stages
+
+```
+┌─────────┐    ┌─────────┐    ┌─────────┐    ┌──────────┐
+│  Lint   │───►│  Test   │───►│  Build  │───►│ Security │
+│  ruff   │    │ pytest  │    │ Docker  │    │pip-audit │
+└─────────┘    └─────────┘    └─────────┘    └──────────┘
+                                  │
+                                  ▼
+                    ┌─────────────────────────┐
+                    │   Push to GHCR          │
+                    │   (on main/tags)        │
+                    └───────────┬─────────────┘
+                                │
+              ┌─────────────────┴─────────────────┐
+              ▼                                   ▼
+     ┌─────────────────┐                ┌─────────────────┐
+     │ Deploy Staging  │                │ Deploy Prod     │
+     │ (main branch)   │                │ (v* tags)       │
+     └─────────────────┘                └─────────────────┘
+```
+
+### Docker Images
+
+```bash
+# Pull latest
+docker pull ghcr.io/geneflow-app/geneflow-datalake:master
+
+# Pull specific version
+docker pull ghcr.io/geneflow-app/geneflow-datalake:v1.0.0
+```
+
+---
+
+## Mounters: Event Projections
+
+Mounters project events from the datalake to external systems, keeping them synchronized in real-time or via replay.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    MounterEngine (Orchestrator)                  │
+│  • Registers and coordinates mounters                           │
+│  • Dispatches events based on category                          │
+│  • Manages modes: REPLAY / LIVE / REBUILD                       │
+└───────────┬─────────────────┬─────────────────┬─────────────────┘
+            │                 │                 │
+            ▼                 ▼                 ▼
+   ┌─────────────────┐ ┌─────────────┐ ┌─────────────────┐
+   │ PostgresMounter │ │QdrantMounter│ │ StorageMounter  │
+   │   Relational    │ │   Vector    │ │  Binary Files   │
+   │     Tables      │ │  Embeddings │ │   + Chunking    │
+   └─────────────────┘ └─────────────┘ └─────────────────┘
+```
+
+### PostgresMounter
+
+Projects structured events to PostgreSQL tables organized by domain:
+
+| Handler | Category | Tables |
+|---------|----------|--------|
+| **UsersHandler** | `users` | `identity.users` |
+| **StudiesHandler** | `studies` | `studies.studies`, `studies.members`, `studies.invitations` |
+| **TracesHandler** | `traces` | `traces.traces`, `traces.annotations` |
+| **AlignmentsHandler** | `alignments` | `alignments.alignments`, `alignments.alignment_traces` |
+| **BillingHandler** | `billing` | `billing.plans`, `billing.subscriptions` |
+
+### QdrantMounter
+
+Stores AI embeddings for semantic similarity search:
+
+| Collection | Vector Size | Content |
+|------------|-------------|---------|
+| `geneflow_sequences` | 768 | Sequence embeddings |
+| `geneflow_annotations` | 1536 | Annotation text embeddings |
+| `geneflow_traces` | 256 | Trace summary embeddings |
+
+### StorageMounter
+
+Stores trace files with intelligent chunking for efficient access:
+
+```
+bucket: geneflow-traces/
+└── traces/{trace_id}/
+    ├── original.ab1          # Original file
+    ├── manifest.json         # Metadata + chunk index
+    └── chunks/
+        ├── chunk_0000.json   # Bases 0-9999
+        ├── chunk_0001.json   # Bases 10000-19999
+        └── ...
+```
+
+### Operation Modes
+
+| Mode | Description | Use Case |
+|------|-------------|----------|
+| `REPLAY` | Process historical events from datalake | Initial sync, recovery |
+| `REBUILD` | Wipe everything and reprocess from scratch | Schema changes, corruption |
+| `LIVE` | Process events in real-time (planned) | Production operation |
+
+### Usage Example
+
+```python
+from src.mounters import MounterEngine, MounterMode, PostgresMounter, QdrantMounter
+
+engine = MounterEngine(datalake_path="/data/datalake")
+engine.register(PostgresMounter(dsn="postgresql://..."))
+engine.register(QdrantMounter(qdrant_url="http://localhost:6333"))
+
+# Replay all events from March
+result = await engine.run(
+    mode=MounterMode.REPLAY,
+    from_date=datetime(2026, 3, 1),
+    to_date=datetime(2026, 3, 27),
+    categories=["users", "traces"]  # Optional filter
+)
+print(f"Processed: {result['events_processed']}, Failed: {result['events_failed']}")
+```
+
+---
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [API Conventions](docs/API_CONVENTIONS.md) | REST API design patterns and standards |
+| [Conventions](docs/CONVENTIONS.md) | Architecture, code, and development conventions |
+
+---
+
 ## Implementation Status
 
 | Phase | Description | Status |
@@ -333,7 +488,8 @@ uv run ruff format src/ # Format
 | 11 | Tests | ✅ Done |
 | 12 | MinIO provider | ✅ Done |
 | 13 | Supabase provider | ✅ Done |
-| 14 | .NET integration test | ⏳ Pending |
+| 14 | CI/CD (GitHub Actions) | ✅ Done |
+| 15 | .NET integration test | ⏳ Pending |
 
 ---
 
