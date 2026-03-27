@@ -165,11 +165,15 @@ class HealthResponse(BaseModel):
         None, description="Redis consumer metrics (events processed, etc.)"
     )
 
-    model_config = {"json_schema_extra": {"example": {
-        "status": "healthy",
-        "storage_healthy": True,
-        "consumer_metrics": {"events_processed": 1234, "events_per_second": 45.2}
-    }}}
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "status": "healthy",
+                "storage_healthy": True,
+                "consumer_metrics": {"events_processed": 1234, "events_per_second": 45.2},
+            }
+        }
+    }
 
 
 class CategoriesResponse(BaseModel):
@@ -177,9 +181,11 @@ class CategoriesResponse(BaseModel):
 
     categories: list[str] = Field(..., description="Event category names")
 
-    model_config = {"json_schema_extra": {"example": {
-        "categories": ["users", "traces", "studies", "alignments"]
-    }}}
+    model_config = {
+        "json_schema_extra": {
+            "example": {"categories": ["users", "traces", "studies", "alignments"]}
+        }
+    }
 
 
 class AvailableCategoriesResponse(BaseModel):
@@ -188,11 +194,24 @@ class AvailableCategoriesResponse(BaseModel):
     categories: list[str] = Field(..., description="Valid category names from enum")
     count: int = Field(..., description="Number of categories")
 
-    model_config = {"json_schema_extra": {"example": {
-        "categories": ["users", "studies", "traces", "alignments",
-                       "subscriptions", "plans", "ai", "blast", "system"],
-        "count": 9
-    }}}
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "categories": [
+                    "users",
+                    "studies",
+                    "traces",
+                    "alignments",
+                    "subscriptions",
+                    "plans",
+                    "ai",
+                    "blast",
+                    "system",
+                ],
+                "count": 9,
+            }
+        }
+    }
 
 
 class CategoryStatsResponse(BaseModel):
@@ -204,13 +223,17 @@ class CategoryStatsResponse(BaseModel):
     last_date: Optional[str] = Field(None, description="Last event date (YYYY-MM-DD)")
     file_count: int = Field(..., description="Number of JSONL files")
 
-    model_config = {"json_schema_extra": {"example": {
-        "category": "users",
-        "event_count": 15420,
-        "first_date": "2026-01-01",
-        "last_date": "2026-03-25",
-        "file_count": 84
-    }}}
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "category": "users",
+                "event_count": 15420,
+                "first_date": "2026-01-01",
+                "last_date": "2026-03-25",
+                "file_count": 84,
+            }
+        }
+    }
 
 
 class CategoryDatesResponse(BaseModel):
@@ -220,11 +243,15 @@ class CategoryDatesResponse(BaseModel):
     dates: list[str] = Field(..., description="Available dates (YYYY-MM-DD)")
     count: int = Field(..., description="Number of dates")
 
-    model_config = {"json_schema_extra": {"example": {
-        "category": "users",
-        "dates": ["2026-03-23", "2026-03-24", "2026-03-25"],
-        "count": 3
-    }}}
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "category": "users",
+                "dates": ["2026-03-23", "2026-03-24", "2026-03-25"],
+                "count": 3,
+            }
+        }
+    }
 
 
 class EventsResponse(BaseModel):
@@ -237,19 +264,23 @@ class EventsResponse(BaseModel):
     start_date: Optional[str] = Field(None, description="Range start date")
     end_date: Optional[str] = Field(None, description="Range end date")
 
-    model_config = {"json_schema_extra": {"example": {
-        "category": "users",
-        "events": [
-            {
-                "eventId": "550e8400-e29b-41d4-a716-446655440000",
-                "type": "UserRegistered",
-                "timestamp": "2026-03-25T10:30:00.000Z",
-                "data": {"userId": "user-123", "email": "scientist@lab.org"}
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "category": "users",
+                "events": [
+                    {
+                        "eventId": "550e8400-e29b-41d4-a716-446655440000",
+                        "type": "UserRegistered",
+                        "timestamp": "2026-03-25T10:30:00.000Z",
+                        "data": {"userId": "user-123", "email": "scientist@lab.org"},
+                    }
+                ],
+                "count": 1,
+                "date": "2026-03-25",
             }
-        ],
-        "count": 1,
-        "date": "2026-03-25"
-    }}}
+        }
+    }
 
 
 class ReplayResponse(BaseModel):
@@ -269,19 +300,23 @@ class DLQResponse(BaseModel):
     count: int = Field(..., description="Number of failed events")
     date: Optional[str] = Field(None, description="Queried date")
 
-    model_config = {"json_schema_extra": {"example": {
-        "events": [
-            {
-                "eventId": "failed-event-123",
-                "category": "users",
-                "lastError": "Storage timeout",
-                "retryCount": 5,
-                "movedToDlqAt": "2026-03-25T10:35:00.000Z"
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "events": [
+                    {
+                        "eventId": "failed-event-123",
+                        "category": "users",
+                        "lastError": "Storage timeout",
+                        "retryCount": 5,
+                        "movedToDlqAt": "2026-03-25T10:35:00.000Z",
+                    }
+                ],
+                "count": 1,
+                "date": "2026-03-25",
             }
-        ],
-        "count": 1,
-        "date": "2026-03-25"
-    }}}
+        }
+    }
 
 
 class DLQRetryResponse(BaseModel):

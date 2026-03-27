@@ -1,9 +1,8 @@
 """Chunking utilities for trace data storage."""
 
 import json
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from typing import Iterator
-
 
 DEFAULT_CHUNK_SIZE = 1000
 
@@ -132,19 +131,23 @@ class TraceChunker:
         chromatogram = parsed_data.get("chromatogram", {})
 
         total_bases = len(sequence)
-        chunk_count = (total_bases + self._chunk_size - 1) // self._chunk_size if total_bases > 0 else 0
+        chunk_count = (
+            (total_bases + self._chunk_size - 1) // self._chunk_size if total_bases > 0 else 0
+        )
 
         chunk_metas = []
         for i in range(chunk_count):
             start = i * self._chunk_size
             end = min(start + self._chunk_size, total_bases)
-            chunk_metas.append(ChunkMetadata(
-                index=i,
-                start_position=start,
-                end_position=end,
-                base_count=end - start,
-                filename=f"chunk_{i:04d}.json",
-            ))
+            chunk_metas.append(
+                ChunkMetadata(
+                    index=i,
+                    start_position=start,
+                    end_position=end,
+                    base_count=end - start,
+                    filename=f"chunk_{i:04d}.json",
+                )
+            )
 
         manifest = TraceManifest(
             trace_id=trace_id,
@@ -170,7 +173,9 @@ class TraceChunker:
                     chrom_end = end * 10
                     for channel in ["A", "C", "G", "T"]:
                         if channel in chromatogram:
-                            chunk_chromatogram[channel] = chromatogram[channel][chrom_start:chrom_end]
+                            chunk_chromatogram[channel] = chromatogram[channel][
+                                chrom_start:chrom_end
+                            ]
 
                 yield TraceChunk(
                     index=meta.index,

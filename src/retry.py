@@ -109,7 +109,7 @@ class RetryHandler:
 
     def _calculate_next_retry(self, retry_count: int) -> datetime:
         """Calculate next retry time with exponential backoff."""
-        delay = min(self.base_delay * (2 ** retry_count), self.max_delay)
+        delay = min(self.base_delay * (2**retry_count), self.max_delay)
         return datetime.utcnow() + timedelta(seconds=delay)
 
     async def _retry_loop(self) -> None:

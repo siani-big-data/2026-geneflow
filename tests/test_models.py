@@ -1,20 +1,27 @@
 import json
 from datetime import datetime
 
-import pytest
-
 from src.models import (
     DatalakeEvent,
     DLQEvent,
     EventBusMessage,
     EventCategory,
-    RetryableEvent,
 )
 
 
 class TestEventCategory:
     def test_all_categories_exist(self):
-        expected = ["users", "studies", "traces", "alignments", "subscriptions", "plans", "ai", "blast", "system"]
+        expected = [
+            "users",
+            "studies",
+            "traces",
+            "alignments",
+            "subscriptions",
+            "plans",
+            "ai",
+            "blast",
+            "system",
+        ]
         assert [c.value for c in EventCategory] == expected
 
     def test_category_is_string(self):

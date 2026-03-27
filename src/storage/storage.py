@@ -7,7 +7,7 @@ class StorageProvider(ABC):
 
     @abstractmethod
     async def append_events_batch(
-            self, category: str, date: datetime, event_lines: list[str]
+        self, category: str, date: datetime, event_lines: list[str]
     ) -> None:
         """Append batch of events to a file."""
         pass
@@ -19,7 +19,7 @@ class StorageProvider(ABC):
 
     @abstractmethod
     async def read_events_range(
-            self, category: str, start_date: datetime, end_date: datetime
+        self, category: str, start_date: datetime, end_date: datetime
     ) -> list[str]:
         """Read events from a date range."""
         pass

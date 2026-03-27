@@ -42,7 +42,13 @@ class AlignmentsHandler(BaseHandler):
         values = []
         idx = 1
 
-        for key in ["status_id", "alignment_length", "identity_percentage", "consensus_sequence", "completed_at"]:
+        for key in [
+            "status_id",
+            "alignment_length",
+            "identity_percentage",
+            "consensus_sequence",
+            "completed_at",
+        ]:
             if key in payload:
                 updates.append(f"{key} = ${idx}")
                 values.append(payload[key])

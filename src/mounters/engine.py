@@ -1,10 +1,11 @@
 """Mounter engine for managing multiple mounters."""
 
 import json
-import structlog
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+
+import structlog
 
 from src.mounters.base import BaseMounter, MounterMode
 

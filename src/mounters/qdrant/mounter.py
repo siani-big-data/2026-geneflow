@@ -4,13 +4,13 @@ import structlog
 from qdrant_client.models import PointStruct
 
 from src.mounters.base import BaseMounter
-from src.mounters.qdrant.connection import QdrantConnection
 from src.mounters.qdrant.collections import (
+    ANNOTATIONS_COLLECTION,
     COLLECTIONS,
     SEQUENCES_COLLECTION,
-    ANNOTATIONS_COLLECTION,
     TRACES_COLLECTION,
 )
+from src.mounters.qdrant.connection import QdrantConnection
 
 logger = structlog.get_logger()
 

@@ -1,7 +1,3 @@
-import os
-
-import pytest
-
 from src.config import Settings
 
 

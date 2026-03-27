@@ -1,11 +1,12 @@
 """Tests for MounterEngine."""
 
 import json
-import pytest
 import tempfile
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
+
+import pytest
 
 from src.mounters.base import BaseMounter, MounterMode
 from src.mounters.engine import MounterEngine
@@ -169,7 +170,7 @@ class TestMounterEngine:
         engine.register(mounter)
 
         # Only process users
-        result = await engine.run(
+        await engine.run(
             mode=MounterMode.REPLAY,
             categories=["users"],
         )
@@ -185,7 +186,7 @@ class TestMounterEngine:
         mounter = MockMounter("test", ["users"])
         engine.register(mounter)
 
-        result = await engine.run(mode=MounterMode.REBUILD)
+        await engine.run(mode=MounterMode.REBUILD)
 
         # Rebuild should have been called
         assert mounter.rebuilt is True

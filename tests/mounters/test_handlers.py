@@ -1,14 +1,15 @@
 """Tests for PostgreSQL event handlers."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
 
+import pytest
+
 from src.mounters.postgres.handlers import (
-    UsersHandler,
-    StudiesHandler,
-    TracesHandler,
     AlignmentsHandler,
     BillingHandler,
+    StudiesHandler,
+    TracesHandler,
+    UsersHandler,
 )
 
 

@@ -1,14 +1,13 @@
 """Tests for trace chunking."""
 
 import json
-import pytest
 
 from src.mounters.storage.chunking import (
-    TraceChunker,
-    TraceChunk,
-    TraceManifest,
-    ChunkMetadata,
     DEFAULT_CHUNK_SIZE,
+    ChunkMetadata,
+    TraceChunk,
+    TraceChunker,
+    TraceManifest,
 )
 
 
@@ -252,8 +251,20 @@ class TestTraceManifest:
             "has_quality_scores": True,
             "created_at": "2026-03-26T12:00:00Z",
             "chunks": [
-                {"index": 0, "start_position": 0, "end_position": 100, "base_count": 100, "filename": "chunk_0000.json"},
-                {"index": 1, "start_position": 100, "end_position": 200, "base_count": 100, "filename": "chunk_0001.json"},
+                {
+                    "index": 0,
+                    "start_position": 0,
+                    "end_position": 100,
+                    "base_count": 100,
+                    "filename": "chunk_0000.json",
+                },
+                {
+                    "index": 1,
+                    "start_position": 100,
+                    "end_position": 200,
+                    "base_count": 100,
+                    "filename": "chunk_0001.json",
+                },
             ],
         }
 

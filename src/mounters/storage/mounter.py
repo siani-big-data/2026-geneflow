@@ -1,12 +1,13 @@
 """Storage mounter for trace binary data."""
 
 import json
-import structlog
 from datetime import datetime
 
+import structlog
+
 from src.mounters.base import BaseMounter
-from src.mounters.storage.connection import StorageConnection
 from src.mounters.storage.chunking import TraceManifest, chunk_sequence
+from src.mounters.storage.connection import StorageConnection
 
 logger = structlog.get_logger()
 
@@ -113,13 +114,15 @@ class StorageMounter(BaseMounter):
                 json.dumps(chunk_content).encode(),
             )
 
-            chunk_metas.append({
-                "index": i,
-                "start_position": start,
-                "end_position": end,
-                "base_count": len(chunk_seq),
-                "filename": chunk_filename,
-            })
+            chunk_metas.append(
+                {
+                    "index": i,
+                    "start_position": start,
+                    "end_position": end,
+                    "base_count": len(chunk_seq),
+                    "filename": chunk_filename,
+                }
+            )
 
         manifest = TraceManifest(
             trace_id=trace_id,

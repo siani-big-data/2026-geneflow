@@ -15,9 +15,7 @@ from src.storage.supabase import SupabaseStorageProvider
 def get_storage_provider(provider: str, **kwargs) -> StorageProvider:
     """Factory to get the correct storage provider."""
     if provider == "local":
-        return LocalStorageProvider(
-            base_path=kwargs.get("local_storage_path", "./data/datalake")
-        )
+        return LocalStorageProvider(base_path=kwargs.get("local_storage_path", "./data/datalake"))
     elif provider == "minio":
         return MinIOStorageProvider(
             endpoint=kwargs.get("minio_endpoint", ""),

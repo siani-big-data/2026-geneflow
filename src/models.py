@@ -7,6 +7,7 @@ from typing import Optional
 
 class EventCategory(str, Enum):
     """Event categories matching Redis streams."""
+
     USERS = "users"
     STUDIES = "studies"
     TRACES = "traces"
@@ -21,6 +22,7 @@ class EventCategory(str, Enum):
 @dataclass
 class EventBusMessage:
     """Events."""
+
     eventId: str
     type: str
     category: str
@@ -47,6 +49,7 @@ class EventBusMessage:
 @dataclass
 class DatalakeEvent:
     """Normalized event."""
+
     eventId: str
     type: str
     category: str
@@ -56,19 +59,24 @@ class DatalakeEvent:
     receivedAt: datetime = field(default_factory=datetime.utcnow)
 
     def to_json_line(self) -> str:
-        return json.dumps({
-            "eventId": self.eventId,
-            "type": self.type,
-            "category": self.category,
-            "timestamp": self.timestamp.isoformat(),
-            "streamId": self.streamId,
-            "data": self.data,
-            "receivedAt": self.receivedAt.isoformat(),
-        }, ensuREDACTED=False)
+        return json.dumps(
+            {
+                "eventId": self.eventId,
+                "type": self.type,
+                "category": self.category,
+                "timestamp": self.timestamp.isoformat(),
+                "streamId": self.streamId,
+                "data": self.data,
+                "receivedAt": self.receivedAt.isoformat(),
+            },
+            ensuREDACTED=False,
+        )
+
 
 @dataclass
 class RetryableEvent:
     """Retry event"""
+
     id: str
     category: str
     date: datetime
@@ -78,9 +86,11 @@ class RetryableEvent:
     nextRetryAt: Optional[datetime] = None
     createdAt: datetime = field(default_factory=datetime.utcnow)
 
+
 @dataclass
 class DLQEvent:
     """Dead Letter Queue event."""
+
     eventId: str
     category: str
     date: str

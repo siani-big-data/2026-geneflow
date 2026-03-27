@@ -1,6 +1,7 @@
 """Qdrant collection definitions for GeneFlow embeddings."""
 
 from dataclasses import dataclass
+
 from qdrant_client.models import Distance
 
 

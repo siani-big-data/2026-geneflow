@@ -1,7 +1,5 @@
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
-from io import BytesIO
-from typing import Optional
 
 import structlog
 from aiobotocore.session import get_session
@@ -117,9 +115,7 @@ class MinIOStorageProvider(StorageProvider):
 
         async with self._get_client() as client:
             paginator = client.get_paginator("list_objects_v2")
-            async for page in paginator.paginate(
-                Bucket=self.bucket, Prefix=prefix, Delimiter="/"
-            ):
+            async for page in paginator.paginate(Bucket=self.bucket, Prefix=prefix, Delimiter="/"):
                 for common_prefix in page.get("CommonPrefixes", []):
                     # Extract category from "events/category/"
                     category = common_prefix["Prefix"].replace(prefix, "").rstrip("/")

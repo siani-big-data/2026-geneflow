@@ -76,11 +76,7 @@ class EventDeduplicator:
     async def _cleanup(self) -> None:
         """Remove expired entries."""
         now = datetime.utcnow()
-        expired = [
-            event_id
-            for event_id, seen_at in self._seen.items()
-            if now - seen_at > self.ttl
-        ]
+        expired = [event_id for event_id, seen_at in self._seen.items() if now - seen_at > self.ttl]
 
         for event_id in expired:
             del self._seen[event_id]

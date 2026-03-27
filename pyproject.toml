@@ -47,7 +47,11 @@ line-length = 100
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W"]
-ignore = ["E501"]
+ignore = [
+    "E501",   # Line too long (handled by formatter)
+    "N815",   # Variable in class scope should not be mixedCase (intentional for JSON mapping)
+    "N806",   # Variable in function should be lowercase (MockXxx pattern in tests)
+]
 
 [dependency-groups]
 dev = [

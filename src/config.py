@@ -1,8 +1,9 @@
 from typing import Literal
+
 from pydantic_settings import BaseSettings
 
-class Settings(BaseSettings):
 
+class Settings(BaseSettings):
     # Redis config
     redis_url: str = "redis://redis:6379"
     redis_consumer_group: str = "geneflow-datalake-consumers"
@@ -13,18 +14,18 @@ class Settings(BaseSettings):
 
     # Storage
     storage_provider: Literal["local", "supabase", "minio"] = "local"
-    local_storage_path: str = './data/datalake'
+    local_storage_path: str = "./data/datalake"
 
     # Supabase Storage
-    supabase_url: str = ''
-    supabase_key: str = ''
-    supabase_bucket: str = 'geneflow-datalake'
+    supabase_url: str = ""
+    supabase_key: str = ""
+    supabase_bucket: str = "geneflow-datalake"
 
     # MinIO / S3-compatible Storage
-    minio_endpoint: str = ''
-    minio_access_key: str = ''
-    minio_secret_key: str = ''
-    minio_bucket: str = 'geneflow-datalake'
+    minio_endpoint: str = ""
+    minio_access_key: str = ""
+    minio_secret_key: str = ""
+    minio_bucket: str = "geneflow-datalake"
     minio_secure: bool = True
 
     # Buffer

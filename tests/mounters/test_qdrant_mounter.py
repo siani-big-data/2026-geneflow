@@ -1,14 +1,15 @@
 """Tests for QdrantMounter."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
+
 from src.mounters.qdrant import (
-    QdrantMounter,
-    QdrantConnection,
-    SEQUENCES_COLLECTION,
     ANNOTATIONS_COLLECTION,
+    SEQUENCES_COLLECTION,
     TRACES_COLLECTION,
+    QdrantConnection,
+    QdrantMounter,
 )
 
 

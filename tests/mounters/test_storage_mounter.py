@@ -1,10 +1,11 @@
 """Tests for StorageMounter."""
 
 import json
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from src.mounters.storage import StorageMounter, TraceManifest, ChunkMetadata
+import pytest
+
+from src.mounters.storage import StorageMounter
 
 
 @pytest.fixture
@@ -139,7 +140,13 @@ class TestStorageMounter:
             "has_quality_scores": True,
             "created_at": "2026-03-26T10:00:00Z",
             "chunks": [
-                {"index": 0, "start_position": 0, "end_position": 100, "base_count": 100, "filename": "chunk_0000.json"}
+                {
+                    "index": 0,
+                    "start_position": 0,
+                    "end_position": 100,
+                    "base_count": 100,
+                    "filename": "chunk_0000.json",
+                }
             ],
         }
         mock_connection.get_object.return_value = json.dumps(manifest_data).encode()
@@ -177,9 +184,7 @@ class TestStorageMounter:
 
     async def test_get_original(self, storage_mounter, mock_connection):
         """Test getting the original file."""
-        mock_connection.list_objects.return_value = [
-            {"key": "traces/trace-123/original.ab1"}
-        ]
+        mock_connection.list_objects.return_value = [{"key": "traces/trace-123/original.ab1"}]
         mock_connection.get_object.return_value = b"binary file data"
 
         result = await storage_mounter.get_original("trace-123")
