@@ -400,7 +400,7 @@ uv run ruff format src/    # Format
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| 0 | Project setup (uv, structure) | ⏳ Pending |
+| 0 | Project setup (uv, structure) | In Progress |
 | 1 | Config + Models + Events | ⏳ Pending |
 | 2 | Parsers (AB1, SCF, FASTQ, FASTA) | ⏳ Pending |
 | 3 | Analyzers basic (Quality, Trimming) | ⏳ Pending |
