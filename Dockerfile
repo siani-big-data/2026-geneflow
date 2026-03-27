@@ -7,8 +7,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf 
 
 WORKDIR /app
 
-# Copy dependency files
-COPY pyproject.toml uv.lock ./
+# Copy dependency files and README (required by hatchling)
+COPY pyproject.toml uv.lock README.md ./
 
 # Install dependencies (no dev, frozen from lockfile)
 RUN uv sync --frozen --no-dev
