@@ -1,5 +1,8 @@
+"""FASTQ file parser using BioPython."""
 
-"""FASTQ file parser."""
+from io import StringIO
+
+from Bio import SeqIO
 
 from src.models import (
     ParsedTrace,
@@ -12,10 +15,7 @@ from src.constants import gc_content
 
 
 class FASTQParser(BaseParser):
-    """Parser for FASTQ files."""
-
-    # Quality score encoding offset (Phred+33 is standard)
-    PHRED_OFFSET = 33
+    """Parser for FASTQ files using BioPython."""
 
     @property
     def format(self) -> TraceFormat:
@@ -28,109 +28,80 @@ class FASTQParser(BaseParser):
     def parse(self, data: bytes, trace_id: str) -> ParsedTrace:
         """Parse FASTQ file data (first record only)."""
         text = data.decode("utf-8", errors="replace")
-        lines = text.strip().split("\n")
+        handle = StringIO(text)
 
-        if len(lines) < 4:
-            raise ValueError("Invalid FASTQ: need at least 4 lines")
+        try:
+            record = next(SeqIO.parse(handle, "fastq"))
+        except StopIteration:
+            raise ValueError("No valid FASTQ sequence found")
+        except Exception as e:
+            raise ValueError(f"Invalid FASTQ file: {e}")
 
-        # Parse first record
-        record = self._parse_record(lines, 0)
+        sequence_str = str(record.seq).upper()
+
+        # Extract quality scores
+        quality = list(record.letter_annotations.get("phred_quality", []))
 
         # Create sequence object
         sequence = Sequence(
             id=trace_id,
-            sequence=record["sequence"],
-            quality=record["quality"],
-            name=record["name"],
-            description=record["description"],
+            sequence=sequence_str,
+            quality=quality if quality else None,
+            name=record.id,
+            description=record.description if record.description != record.id else None,
         )
 
         # Calculate quality metrics
-        quality_metrics = self._calculate_metrics(
-            record["sequence"], record["quality"]
-        )
+        quality_metrics = self._calculate_metrics(sequence_str, quality)
 
         return ParsedTrace(
             traceId=trace_id,
             format=TraceFormat.FASTQ,
             sequence=sequence,
-            chromatogram=None,  # FASTQ has no chromatogram
+            chromatogram=None,
             qualityMetrics=quality_metrics,
-            metadata={"name": record["name"]} if record["name"] else {},
+            metadata={"name": record.id} if record.id else {},
         )
 
     def parse_all(self, data: bytes) -> list[dict]:
         """Parse all records from a FASTQ file."""
         text = data.decode("utf-8", errors="replace")
-        lines = text.strip().split("\n")
-
+        handle = StringIO(text)
         records = []
-        i = 0
 
-        while i < len(lines) - 3:
-            try:
-                record = self._parse_record(lines, i)
-                records.append(record)
-                i += 4
-            except ValueError:
-                # Skip malformed records
-                i += 1
+        for record in SeqIO.parse(handle, "fastq"):
+            quality = list(record.letter_annotations.get("phred_quality", []))
+            records.append({
+                "name": record.id,
+                "description": record.description,
+                "sequence": str(record.seq).upper(),
+                "quality": quality,
+            })
 
         return records
-
-    def _parse_record(self, lines: list[str], start: int) -> dict:
-        """Parse a single FASTQ record starting at the given line index."""
-        if start + 3 >= len(lines):
-            raise ValueError(f"Not enough lines for FASTQ record at line {start}")
-
-        header = lines[start].strip()
-        sequence_line = lines[start + 1].strip()
-        plus_line = lines[start + 2].strip()
-        quality_line = lines[start + 3].strip()
-
-        # Validate header
-        if not header.startswith("@"):
-            raise ValueError(f"Invalid FASTQ header at line {start}: {header[:50]}")
-
-        # Validate plus line
-        if not plus_line.startswith("+"):
-            raise ValueError(f"Invalid FASTQ plus line at line {start + 2}")
-
-        # Validate lengths match
-        if len(sequence_line) != len(quality_line):
-            raise ValueError(
-                f"Sequence and quality lengths don't match: "
-                f"{len(sequence_line)} vs {len(quality_line)}"
-            )
-
-        # Parse header
-        header_content = header[1:]  # Remove @
-        parts = header_content.split(None, 1)
-        name = parts[0] if parts else ""
-        description = parts[1] if len(parts) > 1 else ""
-
-        # Parse quality scores (Phred+33)
-        quality = [ord(c) - self.PHRED_OFFSET for c in quality_line]
-
-        return {
-            "name": name,
-            "description": description,
-            "sequence": sequence_line.upper(),
-            "quality": quality,
-        }
 
     def _calculate_metrics(
         self, sequence: str, quality: list[int]
     ) -> QualityMetrics:
         """Calculate quality metrics."""
-        mean_q = sum(quality) / len(quality) if quality else 0.0
+        if not quality:
+            return QualityMetrics(
+                meanQuality=0.0,
+                q20Percentage=0.0,
+                q30Percentage=0.0,
+                gcContent=round(gc_content(sequence), 2),
+                length=len(sequence),
+                ambiguousCount=sum(1 for b in sequence if b not in "ACGT"),
+            )
+
+        mean_q = sum(quality) / len(quality)
         q20_count = sum(1 for q in quality if q >= 20)
         q30_count = sum(1 for q in quality if q >= 30)
 
         return QualityMetrics(
             meanQuality=round(mean_q, 2),
-            q20Percentage=round((q20_count / len(quality)) * 100, 2) if quality else 0.0,
-            q30Percentage=round((q30_count / len(quality)) * 100, 2) if quality else 0.0,
+            q20Percentage=round((q20_count / len(quality)) * 100, 2),
+            q30Percentage=round((q30_count / len(quality)) * 100, 2),
             gcContent=round(gc_content(sequence), 2),
             length=len(sequence),
             ambiguousCount=sum(1 for b in sequence if b not in "ACGT"),

@@ -1,4 +1,8 @@
-"""FASTA file parser."""
+"""FASTA file parser using BioPython."""
+
+from io import StringIO
+
+from Bio import SeqIO
 
 from src.models import (
     ParsedTrace,
@@ -11,7 +15,7 @@ from src.constants import gc_content
 
 
 class FASTAParser(BaseParser):
-    """Parser for FASTA files."""
+    """Parser for FASTA files using BioPython."""
 
     @property
     def format(self) -> TraceFormat:
@@ -24,20 +28,24 @@ class FASTAParser(BaseParser):
     def parse(self, data: bytes, trace_id: str) -> ParsedTrace:
         """Parse FASTA file data (first sequence only)."""
         text = data.decode("utf-8", errors="replace")
+        handle = StringIO(text)
 
-        # Parse first record
-        record = self._parse_first_record(text)
-
-        if not record:
+        try:
+            record = next(SeqIO.parse(handle, "fasta"))
+        except StopIteration:
             raise ValueError("No valid FASTA sequence found")
+        except Exception as e:
+            raise ValueError(f"Invalid FASTA file: {e}")
+
+        sequence_str = str(record.seq).upper()
 
         # Create sequence object
         sequence = Sequence(
             id=trace_id,
-            sequence=record["sequence"],
+            sequence=sequence_str,
             quality=None,  # FASTA has no quality scores
-            name=record["name"],
-            description=record["description"],
+            name=record.id,
+            description=record.description if record.description != record.id else None,
         )
 
         # Calculate quality metrics (no quality scores)
@@ -45,108 +53,31 @@ class FASTAParser(BaseParser):
             meanQuality=0.0,
             q20Percentage=0.0,
             q30Percentage=0.0,
-            gcContent=round(gc_content(record["sequence"]), 2),
-            length=len(record["sequence"]),
-            ambiguousCount=sum(1 for b in record["sequence"] if b not in "ACGT"),
+            gcContent=round(gc_content(sequence_str), 2),
+            length=len(sequence_str),
+            ambiguousCount=sum(1 for b in sequence_str if b not in "ACGT"),
         )
 
         return ParsedTrace(
             traceId=trace_id,
             format=TraceFormat.FASTA,
             sequence=sequence,
-            chromatogram=None,  # FASTA has no chromatogram
+            chromatogram=None,
             qualityMetrics=quality_metrics,
-            metadata={"name": record["name"]} if record["name"] else {},
+            metadata={"name": record.id} if record.id else {},
         )
 
     def parse_all(self, data: bytes) -> list[dict]:
         """Parse all sequences from a FASTA file."""
         text = data.decode("utf-8", errors="replace")
-        return self._parse_all_records(text)
-
-    def _parse_first_record(self, text: str) -> dict | None:
-        """Parse the first FASTA record."""
-        lines = text.strip().split("\n")
-
-        header = None
-        sequence_lines = []
-
-        for line in lines:
-            line = line.strip()
-
-            if not line:
-                continue
-
-            if line.startswith(">"):
-                if header is not None:
-                    # We've hit a second sequence, return the first
-                    break
-                header = line[1:]  # Remove >
-            elif header is not None:
-                # Only collect sequence if we have a header
-                sequence_lines.append(line)
-
-        if header is None or not sequence_lines:
-            return None
-
-        # Parse header
-        parts = header.split(None, 1)
-        name = parts[0] if parts else ""
-        description = parts[1] if len(parts) > 1 else ""
-
-        # Join sequence lines and normalize
-        sequence = "".join(sequence_lines).upper()
-        # Remove any non-letter characters (spaces, numbers, etc.)
-        sequence = "".join(c for c in sequence if c.isalpha())
-
-        return {
-            "name": name,
-            "description": description,
-            "sequence": sequence,
-        }
-
-    def _parse_all_records(self, text: str) -> list[dict]:
-        """Parse all FASTA records from text."""
-        lines = text.strip().split("\n")
+        handle = StringIO(text)
         records = []
 
-        current_header = None
-        current_sequence = []
-
-        for line in lines:
-            line = line.strip()
-
-            if not line:
-                continue
-
-            if line.startswith(">"):
-                # Save previous record
-                if current_header is not None and current_sequence:
-                    records.append(self._make_record(current_header, current_sequence))
-
-                # Start new record
-                current_header = line[1:]
-                current_sequence = []
-            elif current_header is not None:
-                current_sequence.append(line)
-
-        # Don't forget the last record
-        if current_header is not None and current_sequence:
-            records.append(self._make_record(current_header, current_sequence))
+        for record in SeqIO.parse(handle, "fasta"):
+            records.append({
+                "name": record.id,
+                "description": record.description,
+                "sequence": str(record.seq).upper(),
+            })
 
         return records
-
-    def _make_record(self, header: str, sequence_lines: list[str]) -> dict:
-        """Create a record dict from header and sequence lines."""
-        parts = header.split(None, 1)
-        name = parts[0] if parts else ""
-        description = parts[1] if len(parts) > 1 else ""
-
-        sequence = "".join(sequence_lines).upper()
-        sequence = "".join(c for c in sequence if c.isalpha())
-
-        return {
-            "name": name,
-            "description": description,
-            "sequence": sequence,
-        }

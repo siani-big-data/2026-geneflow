@@ -13,6 +13,7 @@ dependencies = [
     "structlog>=24.4.0",
     "httpx>=0.28.0",
     "aiofiles>=24.1.0",
+    "biopython>=1.84",
 ]
 
 [project.optional-dependencies]
