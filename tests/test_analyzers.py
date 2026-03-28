@@ -2,7 +2,7 @@
 
 import pytest
 from src.analyzers import QualityAnalyzer, TrimmingAnalyzer
-from src.models import Sequence, TrimmingAlgorithm
+from src.models import Sequence, TrimmingAlgorithm, ChromatogramData
 
 
 class TestQualityAnalyzer:
@@ -109,6 +109,157 @@ class TestQualityAnalyzer:
         assert regions[0]["length"] == 5
         assert regions[1]["start"] == 12
         assert regions[1]["length"] == 6
+
+    def test_snr_without_chromatogram(self):
+        """Test that SNR is None without chromatogram data."""
+        analyzer = QualityAnalyzer()
+        seq = Sequence(id="test", sequence="ATGC", quality=[30, 30, 30, 30])
+
+        result = analyzer.analyze(seq)
+
+        assert result.snr is None
+
+    def test_snr_with_chromatogram(self):
+        """Test SNR calculation with chromatogram data."""
+        analyzer = QualityAnalyzer()
+        seq = Sequence(id="test", sequence="ATGC", quality=[30, 30, 30, 30])
+
+        # Create chromatogram with clear peaks
+        # Peak positions at 10, 20, 30, 40
+        trace_length = 50
+        trace_a = [10] * trace_length
+        trace_c = [10] * trace_length
+        trace_g = [10] * trace_length
+        trace_t = [10] * trace_length
+
+        # Add peaks at specific positions
+        trace_a[10] = 1000  # A peak
+        trace_t[20] = 1000  # T peak
+        trace_g[30] = 1000  # G peak
+        trace_c[40] = 1000  # C peak
+
+        chromatogram = ChromatogramData(
+            traceA=trace_a,
+            traceC=trace_c,
+            traceG=trace_g,
+            traceT=trace_t,
+            baseCalls=[ord("A"), ord("T"), ord("G"), ord("C")],
+            peakLocations=[10, 20, 30, 40],
+        )
+
+        result = analyzer.analyze(seq, chromatogram=chromatogram)
+
+        # SNR should be calculated
+        assert result.snr is not None
+        assert result.snr > 0
+
+    def test_snr_calculation_good_quality(self):
+        """Test SNR is high for good quality chromatogram."""
+        analyzer = QualityAnalyzer()
+
+        # High signal (1000) with low noise (10)
+        trace_length = 50
+        trace_a = [10] * trace_length
+        trace_c = [10] * trace_length
+        trace_g = [10] * trace_length
+        trace_t = [10] * trace_length
+
+        trace_a[10] = 1000
+        trace_t[20] = 1000
+        trace_g[30] = 1000
+        trace_c[40] = 1000
+
+        chromatogram = ChromatogramData(
+            traceA=trace_a,
+            traceC=trace_c,
+            traceG=trace_g,
+            traceT=trace_t,
+            baseCalls=[ord("A"), ord("T"), ord("G"), ord("C")],
+            peakLocations=[10, 20, 30, 40],
+        )
+
+        snr = analyzer.calculate_snr(chromatogram)
+
+        # SNR should be high for clean signal
+        assert snr > 50
+
+    def test_snr_calculation_poor_quality(self):
+        """Test SNR is lower for noisy chromatogram."""
+        analyzer = QualityAnalyzer()
+
+        # Variable background noise
+        import random
+        random.seed(42)
+        trace_length = 100
+
+        # Noisy baseline with some peaks
+        trace_a = [random.randint(50, 150) for _ in range(trace_length)]
+        trace_c = [random.randint(50, 150) for _ in range(trace_length)]
+        trace_g = [random.randint(50, 150) for _ in range(trace_length)]
+        trace_t = [random.randint(50, 150) for _ in range(trace_length)]
+
+        # Add modest peaks
+        trace_a[25] = 200
+        trace_t[50] = 200
+        trace_g[75] = 200
+
+        chromatogram = ChromatogramData(
+            traceA=trace_a,
+            traceC=trace_c,
+            traceG=trace_g,
+            traceT=trace_t,
+            baseCalls=[ord("A"), ord("T"), ord("G")],
+            peakLocations=[25, 50, 75],
+        )
+
+        snr = analyzer.calculate_snr(chromatogram)
+
+        # SNR should be lower for noisy data (compared to 50+ for clean data)
+        assert snr < 20
+
+    def test_snr_empty_peaks(self):
+        """Test SNR returns 0 for empty peak locations."""
+        analyzer = QualityAnalyzer()
+
+        chromatogram = ChromatogramData(
+            traceA=[100] * 50,
+            traceC=[100] * 50,
+            traceG=[100] * 50,
+            traceT=[100] * 50,
+            baseCalls=[],
+            peakLocations=[],
+        )
+
+        snr = analyzer.calculate_snr(chromatogram)
+
+        assert snr == 0.0
+
+    def test_snr_in_to_dict(self):
+        """Test SNR is included in QualityMetrics.to_dict() when present."""
+        analyzer = QualityAnalyzer()
+        seq = Sequence(id="test", sequence="ATGC", quality=[30, 30, 30, 30])
+
+        # Without chromatogram - SNR should not be in dict
+        result_no_chrom = analyzer.analyze(seq)
+        dict_no_chrom = result_no_chrom.to_dict()
+        assert "snr" not in dict_no_chrom
+
+        # With chromatogram - SNR should be in dict
+        chromatogram = ChromatogramData(
+            traceA=[10] * 50,
+            traceC=[10] * 50,
+            traceG=[10] * 50,
+            traceT=[10] * 50,
+            baseCalls=[ord("A"), ord("T")],
+            peakLocations=[10, 20],
+        )
+        chromatogram.traceA[10] = 500
+        chromatogram.traceT[20] = 500
+
+        result_with_chrom = analyzer.analyze(seq, chromatogram=chromatogram)
+        dict_with_chrom = result_with_chrom.to_dict()
+        assert "snr" in dict_with_chrom
+        assert dict_with_chrom["snr"] is not None
 
 
 class TestTrimmingAnalyzer:

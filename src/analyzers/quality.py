@@ -1,6 +1,9 @@
 """Quality analyzer for sequence quality metrics."""
 
-from src.models import QualityMetrics, Sequence
+import math
+from typing import Optional
+
+from src.models import QualityMetrics, Sequence, ChromatogramData
 from src.analyzers.analyzer import BaseAnalyzer
 from src.constants import gc_content
 
@@ -12,7 +15,12 @@ class QualityAnalyzer(BaseAnalyzer):
     def name(self) -> str:
         return "quality"
 
-    def analyze(self, sequence: Sequence, **options) -> QualityMetrics:
+    def analyze(
+        self,
+        sequence: Sequence,
+        chromatogram: Optional[ChromatogramData] = None,
+        **options,
+    ) -> QualityMetrics:
         """
         Compute quality metrics for a sequence.
 
@@ -33,6 +41,11 @@ class QualityAnalyzer(BaseAnalyzer):
         # Count ambiguous bases (not A, C, G, T)
         ambiguous = sum(1 for b in seq_str if b not in "ACGT")
 
+        # Calculate SNR if chromatogram is available
+        snr = None
+        if chromatogram is not None:
+            snr = self.calculate_snr(chromatogram)
+
         # If no quality scores, return basic metrics
         if not quality:
             return QualityMetrics(
@@ -42,6 +55,7 @@ class QualityAnalyzer(BaseAnalyzer):
                 gcContent=round(gc, 2),
                 length=len(seq_str),
                 ambiguousCount=ambiguous,
+                snr=snr,
             )
 
         # Calculate quality statistics
@@ -56,7 +70,77 @@ class QualityAnalyzer(BaseAnalyzer):
             gcContent=round(gc, 2),
             length=len(seq_str),
             ambiguousCount=ambiguous,
+            snr=snr,
         )
+
+    def calculate_snr(self, chromatogram: ChromatogramData) -> float:
+        """
+        Calculate Signal-to-Noise Ratio from chromatogram data.
+
+        SNR measures the quality of chromatogram peaks relative to background noise.
+        Higher values indicate cleaner, more reliable data.
+
+        Formula: SNR = mean(peak_signals) / std(noise)
+
+        Args:
+            chromatogram: Chromatogram data with trace channels
+
+        Returns:
+            SNR value (typically 10-100 for good quality data)
+        """
+        traces = [
+            chromatogram.traceA,
+            chromatogram.traceC,
+            chromatogram.traceG,
+            chromatogram.traceT,
+        ]
+
+        if not chromatogram.peakLocations:
+            return 0.0
+
+        # Calculate signal: max intensity at each peak position
+        peak_signals = []
+        for peak_pos in chromatogram.peakLocations:
+            if 0 <= peak_pos < len(traces[0]):
+                max_intensity = max(trace[peak_pos] for trace in traces)
+                peak_signals.append(max_intensity)
+
+        if not peak_signals:
+            return 0.0
+
+        mean_signal = sum(peak_signals) / len(peak_signals)
+
+        # Calculate noise: standard deviation of non-peak regions
+        # Sample points between peaks for noise estimation
+        noise_values = []
+        peak_set = set(chromatogram.peakLocations)
+
+        for i in range(len(traces[0])):
+            # Skip peak positions and nearby (±2 positions)
+            if any(abs(i - p) <= 2 for p in peak_set):
+                continue
+            # Get minimum value across channels (background)
+            min_val = min(trace[i] for trace in traces)
+            noise_values.append(min_val)
+
+        if len(noise_values) < 2:
+            # Not enough noise samples, estimate from peak variation
+            if len(peak_signals) < 2:
+                return mean_signal  # No noise reference
+            noise_std = math.sqrt(
+                sum((x - mean_signal) ** 2 for x in peak_signals) / len(peak_signals)
+            )
+        else:
+            noise_mean = sum(noise_values) / len(noise_values)
+            noise_std = math.sqrt(
+                sum((x - noise_mean) ** 2 for x in noise_values) / len(noise_values)
+            )
+
+        if noise_std == 0:
+            return float("inf") if mean_signal > 0 else 0.0
+
+        snr = mean_signal / noise_std
+        return round(snr, 2)
 
     def analyze_window(
         self, sequence: Sequence, window_size: int = 50

@@ -152,10 +152,11 @@ class QualityMetrics:
     gcContent: float
     length: int
     ambiguousCount: int = 0
+    snr: Optional[float] = None  # Signal-to-Noise Ratio (requires chromatogram)
 
     def to_dict(self) -> dict:
         """Serialize to dictionary."""
-        return {
+        result = {
             "meanQuality": self.meanQuality,
             "q20Percentage": self.q20Percentage,
             "q30Percentage": self.q30Percentage,
@@ -163,6 +164,9 @@ class QualityMetrics:
             "length": self.length,
             "ambiguousCount": self.ambiguousCount,
         }
+        if self.snr is not None:
+            result["snr"] = self.snr
+        return result
 
     @classmethod
     def from_dict(cls, data: dict) -> "QualityMetrics":
@@ -174,6 +178,7 @@ class QualityMetrics:
             gcContent=data["gcContent"],
             length=data["length"],
             ambiguousCount=data.get("ambiguousCount", 0),
+            snr=data.get("snr"),
         )
 
 
