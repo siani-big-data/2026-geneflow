@@ -1,5 +1,6 @@
 """Event Bus integration for GeneFlow AI."""
 
+from .consumer import EventBusConsumer
 from .events import (
     AIAnalysisCompleted,
     AIAnalysisFailed,
@@ -16,4 +17,5 @@ __all__ = [
     "AIAnalysisFailed",
     "AIBlastCompleted",
     "EventBusPublisher",
+    "EventBusConsumer",
 ]
