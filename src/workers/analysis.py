@@ -5,10 +5,25 @@ from typing import Any
 import structlog
 
 from src.config import Settings
-from src.events.events import TrimmingCompleted
+from src.events.events import (
+    TrimmingCompleted,
+    HeterozygoteDetectionCompleted,
+    MotifSearchCompleted,
+    TranslationCompleted,
+    ORFDetectionCompleted,
+    RestrictionAnalysisCompleted,
+)
 from src.events.publisher import EventBusPublisher
 from src.models import AnalysisJob, AnalysisType, TrimmingAlgorithm, Sequence
-from src.analyzers import QualityAnalyzer, TrimmingAnalyzer
+from src.analyzers import (
+    QualityAnalyzer,
+    TrimmingAnalyzer,
+    HeterozygoteAnalyzer,
+    MotifAnalyzer,
+    TranslationAnalyzer,
+    ORFAnalyzer,
+    RestrictionAnalyzer,
+)
 from src.workers.base import BaseWorker
 
 logger = structlog.get_logger()
@@ -31,6 +46,11 @@ class AnalysisWorker(BaseWorker):
         super().__init__(redis, publisher, settings)
         self._quality_analyzer = QualityAnalyzer()
         self._trimming_analyzer = TrimmingAnalyzer()
+        self._heterozygote_analyzer = HeterozygoteAnalyzer()
+        self._motif_analyzer = MotifAnalyzer()
+        self._translation_analyzer = TranslationAnalyzer()
+        self._orf_analyzer = ORFAnalyzer()
+        self._restriction_analyzer = RestrictionAnalyzer()
 
     @property
     def name(self) -> str:
@@ -85,7 +105,6 @@ class AnalysisWorker(BaseWorker):
         if not job.sequence:
             raise ValueError("Sequence required for quality analysis")
 
-        # Create Sequence object
         seq = Sequence(
             id=job.traceId,
             sequence=job.sequence,
@@ -108,14 +127,12 @@ class AnalysisWorker(BaseWorker):
         if not job.quality:
             raise ValueError("Quality scores required for trimming")
 
-        # Create Sequence object
         seq = Sequence(
             id=job.traceId,
             sequence=job.sequence,
             quality=job.quality,
         )
 
-        # Get algorithm from options
         options = dict(job.options)
         algorithm_name = options.pop("algorithm", "modified_mott")
         algorithm = TrimmingAlgorithm(algorithm_name)
@@ -133,7 +150,6 @@ class AnalysisWorker(BaseWorker):
             trimmed_length=result.trimmedLength,
         )
 
-        # Publish event
         event = TrimmingCompleted(
             traceId=job.traceId,
             algorithm=algorithm.value,
@@ -147,40 +163,161 @@ class AnalysisWorker(BaseWorker):
 
     async def _process_heterozygote(self, job: AnalysisJob) -> None:
         """Process heterozygote detection."""
-        # Will be implemented in Phase 6
-        logger.info(
-            "heterozygote_detection_placeholder",
-            trace_id=job.traceId,
+        if not job.sequence:
+            raise ValueError("Sequence required for heterozygote detection")
+
+        seq = Sequence(
+            id=job.traceId,
+            sequence=job.sequence,
+            quality=job.quality,
         )
+
+        result = self._heterozygote_analyzer.analyze(
+            seq,
+            chromatogram=job.chromatogram,
+            **job.options,
+        )
+
+        logger.info(
+            "heterozygote_detection_completed",
+            trace_id=job.traceId,
+            heterozygote_count=result.heterozygoteCount,
+        )
+
+        event = HeterozygoteDetectionCompleted(
+            traceId=job.traceId,
+            heterozygoteCount=result.heterozygoteCount,
+            positions=[c.position for c in result.calls],
+            correlationId=job.traceId,
+        )
+        await self._publisher.publish(event)
 
     async def _process_motif(self, job: AnalysisJob) -> None:
         """Process motif search."""
-        # Will be implemented in Phase 6
-        logger.info(
-            "motif_search_placeholder",
-            trace_id=job.traceId,
+        if not job.sequence:
+            raise ValueError("Sequence required for motif search")
+
+        pattern = job.options.get("pattern", "")
+        if not pattern:
+            raise ValueError("Pattern required for motif search")
+
+        seq = Sequence(
+            id=job.traceId,
+            sequence=job.sequence,
+            quality=job.quality,
         )
+
+        result = self._motif_analyzer.analyze(
+            seq,
+            pattern=pattern,
+            search_complement=job.options.get("search_complement", False),
+            use_regex=job.options.get("use_regex", False),
+        )
+
+        logger.info(
+            "motif_search_completed",
+            trace_id=job.traceId,
+            pattern=pattern,
+            match_count=result.matchCount,
+        )
+
+        event = MotifSearchCompleted(
+            traceId=job.traceId,
+            pattern=pattern,
+            matchCount=result.matchCount,
+            positions=[m.start for m in result.matches],
+            correlationId=job.traceId,
+        )
+        await self._publisher.publish(event)
 
     async def _process_translation(self, job: AnalysisJob) -> None:
         """Process translation."""
-        # Will be implemented in Phase 6
-        logger.info(
-            "translation_placeholder",
-            trace_id=job.traceId,
+        if not job.sequence:
+            raise ValueError("Sequence required for translation")
+
+        seq = Sequence(
+            id=job.traceId,
+            sequence=job.sequence,
+            quality=job.quality,
         )
+
+        frame = job.options.get("frame", 1)
+        result = self._translation_analyzer.analyze(seq, frame=frame)
+
+        logger.info(
+            "translation_completed",
+            trace_id=job.traceId,
+            frame=frame,
+            protein_length=result.proteinLength,
+        )
+
+        event = TranslationCompleted(
+            traceId=job.traceId,
+            frame=frame,
+            proteinLength=result.proteinLength,
+            correlationId=job.traceId,
+        )
+        await self._publisher.publish(event)
 
     async def _process_orf(self, job: AnalysisJob) -> None:
         """Process ORF detection."""
-        # Will be implemented in Phase 6
-        logger.info(
-            "orf_detection_placeholder",
-            trace_id=job.traceId,
+        if not job.sequence:
+            raise ValueError("Sequence required for ORF detection")
+
+        seq = Sequence(
+            id=job.traceId,
+            sequence=job.sequence,
+            quality=job.quality,
         )
+
+        min_length = job.options.get("min_length", 30)
+        result = self._orf_analyzer.analyze(seq, min_length=min_length)
+
+        longest_length = result.longestOrf.length if result.longestOrf else 0
+
+        logger.info(
+            "orf_detection_completed",
+            trace_id=job.traceId,
+            orf_count=result.totalOrfs,
+            longest_orf=longest_length,
+        )
+
+        event = ORFDetectionCompleted(
+            traceId=job.traceId,
+            orfCount=result.totalOrfs,
+            longestOrfLength=longest_length,
+            correlationId=job.traceId,
+        )
+        await self._publisher.publish(event)
 
     async def _process_restriction(self, job: AnalysisJob) -> None:
         """Process restriction analysis."""
-        # Will be implemented in Phase 6
-        logger.info(
-            "restriction_analysis_placeholder",
-            trace_id=job.traceId,
+        if not job.sequence:
+            raise ValueError("Sequence required for restriction analysis")
+
+        seq = Sequence(
+            id=job.traceId,
+            sequence=job.sequence,
+            quality=job.quality,
         )
+
+        enzymes = job.options.get("enzymes")
+        result = self._restriction_analyzer.analyze(seq, enzymes=enzymes)
+
+        enzymes_with_sites = list(set(s.enzyme for s in result.sites))
+
+        logger.info(
+            "restriction_analysis_completed",
+            trace_id=job.traceId,
+            total_sites=result.totalSites,
+            enzyme_count=result.enzymeCount,
+        )
+
+        event = RestrictionAnalysisCompleted(
+            traceId=job.traceId,
+            enzymeCount=result.enzymeCount,
+            totalSites=result.totalSites,
+            enzymesWithSites=enzymes_with_sites,
+            correlationId=job.traceId,
+        )
+        await self._publisher.publish(event)
