@@ -6,7 +6,6 @@ from typing import Optional
 from fastapi import FastAPI
 from pydantic import BaseModel
 
-from src.config import settings
 from src.models import WorkerStatus
 
 
@@ -79,6 +78,7 @@ def create_app() -> FastAPI:
         """Get detailed health info for a specific worker."""
         if worker_name not in _workers:
             from fastapi import HTTPException
+
             raise HTTPException(status_code=404, detail=f"Worker {worker_name} not found")
 
         worker = _workers[worker_name]
@@ -101,15 +101,18 @@ def create_app() -> FastAPI:
         """
         if not _workers:
             from fastapi import HTTPException
+
             raise HTTPException(status_code=503, detail="No workers registered")
 
         if not _redis_healthy:
             from fastapi import HTTPException
+
             raise HTTPException(status_code=503, detail="Redis not connected")
 
         running = [w for w in _workers.values() if w.status == WorkerStatus.RUNNING]
         if not running:
             from fastapi import HTTPException
+
             raise HTTPException(status_code=503, detail="No workers running")
 
         return {"ready": True}

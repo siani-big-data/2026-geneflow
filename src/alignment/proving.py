@@ -2,9 +2,9 @@
 """Proving script for alignment module."""
 
 from src.alignment import (
-    PairwiseAligner,
-    MultipleAligner,
     ConsensusBuilder,
+    MultipleAligner,
+    PairwiseAligner,
     VariantDetector,
 )
 from src.alignment.consensus import ConsensusMethod
@@ -94,7 +94,7 @@ def main():
     detector = VariantDetector()
     report = detector.detect(result.alignedSequences, reference_index=0)
 
-    print(f"Reference:         Seq 1")
+    print("Reference:         Seq 1")
     print(f"Total Positions:   {report.totalPositions}")
     print(f"Variant Positions: {report.variantPositions}")
     print(f"SNPs:              {report.snpCount}")
@@ -104,7 +104,10 @@ def main():
     if report.variants:
         print("\nVariants found:")
         for v in report.variants[:5]:  # First 5
-            print(f"  Pos {v.position}: {v.reference}->{v.alternate} ({v.type.value}) freq={v.frequency}")
+            print(
+                f"  Pos {v.position}: {v.reference}->{v.alternate} "
+                f"({v.type.value}) freq={v.frequency}"
+            )
 
     # Summary statistics
     summary = detector.summarize_variants(report)

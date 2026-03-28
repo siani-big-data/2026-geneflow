@@ -4,9 +4,9 @@
 from src.analyzers import (
     HeterozygoteAnalyzer,
     MotifAnalyzer,
-    TranslationAnalyzer,
     ORFAnalyzer,
     RestrictionAnalyzer,
+    TranslationAnalyzer,
 )
 from src.models import Sequence
 
@@ -102,7 +102,7 @@ def main():
 
     if result.longestOrf:
         orf = result.longestOrf
-        print(f"\nLongest ORF:")
+        print("\nLongest ORF:")
         print(f"  Position: {orf.start}-{orf.end}")
         print(f"  Strand:   {orf.strand}")
         print(f"  Frame:    {orf.frame}")
@@ -111,7 +111,7 @@ def main():
 
     # Summary
     summary = orf_analyzer.summarize(result)
-    print(f"\nSummary:")
+    print("\nSummary:")
     print(f"  Avg length: {summary['avgLength']} aa")
     print(f"  Strand dist: {summary['strandDistribution']}")
 

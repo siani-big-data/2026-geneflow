@@ -1,9 +1,7 @@
 """Trimming analyzer for sequence quality trimming."""
 
-import math
-
-from src.models import Sequence, TrimmingResult, TrimmingAlgorithm
 from src.analyzers.analyzer import BaseAnalyzer
+from src.models import Sequence, TrimmingAlgorithm, TrimmingResult
 
 
 class TrimmingAnalyzer(BaseAnalyzer):
@@ -22,7 +20,7 @@ class TrimmingAnalyzer(BaseAnalyzer):
         self,
         sequence: Sequence,
         algorithm: TrimmingAlgorithm = TrimmingAlgorithm.MODIFIED_MOTT,
-        **options
+        **options,
     ) -> TrimmingResult:
         """
         Trim low-quality ends from a sequence.
@@ -48,10 +46,7 @@ class TrimmingAnalyzer(BaseAnalyzer):
             raise ValueError(f"Unknown algorithm: {algorithm}")
 
     def _trim_modified_mott(
-        self,
-        sequence: Sequence,
-        cutoff: float = DEFAULT_MOTT_CUTOFF,
-        **_
+        self, sequence: Sequence, cutoff: float = DEFAULT_MOTT_CUTOFF, **_
     ) -> TrimmingResult:
         """
         Trim using Modified Mott algorithm.
@@ -120,7 +115,7 @@ class TrimmingAnalyzer(BaseAnalyzer):
         sequence: Sequence,
         window_size: int = DEFAULT_WINDOW_SIZE,
         threshold: int = DEFAULT_QUALITY_THRESHOLD,
-        **_
+        **_,
     ) -> TrimmingResult:
         """
         Trim using sliding window algorithm.
@@ -214,10 +209,7 @@ class TrimmingAnalyzer(BaseAnalyzer):
         )
 
     def _trim_quality_threshold(
-        self,
-        sequence: Sequence,
-        threshold: int = DEFAULT_QUALITY_THRESHOLD,
-        **_
+        self, sequence: Sequence, threshold: int = DEFAULT_QUALITY_THRESHOLD, **_
     ) -> TrimmingResult:
         """
         Trim using simple quality threshold.

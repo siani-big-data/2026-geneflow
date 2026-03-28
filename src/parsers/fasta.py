@@ -4,6 +4,7 @@ from io import StringIO
 
 from Bio import SeqIO
 
+from src.constants import gc_content
 from src.models import (
     ParsedTrace,
     QualityMetrics,
@@ -11,7 +12,6 @@ from src.models import (
     TraceFormat,
 )
 from src.parsers.parser import BaseParser
-from src.constants import gc_content
 
 
 class FASTAParser(BaseParser):
@@ -74,10 +74,12 @@ class FASTAParser(BaseParser):
         records = []
 
         for record in SeqIO.parse(handle, "fasta"):
-            records.append({
-                "name": record.id,
-                "description": record.description,
-                "sequence": str(record.seq).upper(),
-            })
+            records.append(
+                {
+                    "name": record.id,
+                    "description": record.description,
+                    "sequence": str(record.seq).upper(),
+                }
+            )
 
         return records

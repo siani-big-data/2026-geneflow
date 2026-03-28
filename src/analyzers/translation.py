@@ -1,10 +1,10 @@
 """Translation analyzer for DNA to protein conversion."""
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
-from src.models import Sequence
 from src.analyzers.analyzer import BaseAnalyzer
-from src.constants import translate, CODON_TABLE, AMINO_ACIDS
+from src.constants import translate
+from src.models import Sequence
 
 
 @dataclass
@@ -33,12 +33,7 @@ class TranslationAnalyzer(BaseAnalyzer):
     def name(self) -> str:
         return "translation"
 
-    def analyze(
-        self,
-        sequence: Sequence,
-        frame: int = 1,
-        **_
-    ) -> TranslationResult:
+    def analyze(self, sequence: Sequence, frame: int = 1, **_) -> TranslationResult:
         """
         Translate DNA sequence to protein.
 
@@ -111,7 +106,7 @@ class TranslationAnalyzer(BaseAnalyzer):
         start = frame - 1  # Convert 1-indexed to 0-indexed
 
         for i in range(start, len(sequence) - 2, 3):
-            codon = sequence[i:i + 3]
+            codon = sequence[i : i + 3]
             if codon == "ATG":
                 positions.append(i)
 
@@ -149,10 +144,7 @@ class TranslationAnalyzer(BaseAnalyzer):
             }
 
         # Calculate percentages
-        percentages = {
-            aa: round(count / total * 100, 2)
-            for aa, count in composition.items()
-        }
+        percentages = {aa: round(count / total * 100, 2) for aa, count in composition.items()}
 
         # Calculate property-based groupings
         properties = {

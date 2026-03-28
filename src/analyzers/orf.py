@@ -1,10 +1,10 @@
 """ORF (Open Reading Frame) detection analyzer."""
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
-from src.models import Sequence, ORF
 from src.analyzers.analyzer import BaseAnalyzer
 from src.constants import translate
+from src.models import ORF, Sequence
 
 
 @dataclass
@@ -42,7 +42,7 @@ class ORFAnalyzer(BaseAnalyzer):
         sequence: Sequence,
         min_length: int = DEFAULT_MIN_LENGTH,
         frames: list[int] | None = None,
-        **_
+        **_,
     ) -> ORFResult:
         """
         Detect ORFs in a sequence.
@@ -110,7 +110,7 @@ class ORFAnalyzer(BaseAnalyzer):
         open_orfs = []
 
         for i in range(start_offset, seq_len - 2, 3):
-            codon = seq[i:i + 3]
+            codon = seq[i : i + 3]
 
             if codon == self.START_CODON:
                 # Start a new potential ORF
@@ -135,15 +135,17 @@ class ORFAnalyzer(BaseAnalyzer):
                             orig_start = start_pos
                             orig_end = end_pos
 
-                        orfs.append(ORF(
-                            start=orig_start,
-                            end=orig_end,
-                            frame=actual_frame,
-                            strand=strand,
-                            length=aa_length,
-                            sequence=orf_seq,
-                            proteinSequence=protein,
-                        ))
+                        orfs.append(
+                            ORF(
+                                start=orig_start,
+                                end=orig_end,
+                                frame=actual_frame,
+                                strand=strand,
+                                length=aa_length,
+                                sequence=orf_seq,
+                                proteinSequence=protein,
+                            )
+                        )
 
                 # Clear open ORFs after stop codon
                 open_orfs = []

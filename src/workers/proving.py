@@ -5,8 +5,7 @@ import asyncio
 from unittest.mock import AsyncMock
 
 from src.config import Settings
-from src.workers import TraceWorker, AlignmentWorker, AnalysisWorker
-from src.models import WorkerStatus
+from src.workers import AlignmentWorker, AnalysisWorker, TraceWorker
 
 
 async def main():
@@ -47,7 +46,7 @@ async def main():
     }
 
     await trace_worker.process_job("msg-1", job_data)
-    print(f"Processed:   trace-001 (FASTA)")
+    print("Processed:   trace-001 (FASTA)")
     print(f"Event sent:  {mock_publisher.publish.call_count} event(s)")
 
     # 2. AlignmentWorker
@@ -69,7 +68,7 @@ async def main():
     }
 
     await align_worker.process_job("msg-2", job_data)
-    print(f"Pairwise:    align-001 completed")
+    print("Pairwise:    align-001 completed")
 
     # Test multiple alignment
     job_data = {
@@ -81,7 +80,7 @@ async def main():
     }
 
     await align_worker.process_job("msg-3", job_data)
-    print(f"Multiple:    align-002 completed (with consensus)")
+    print("Multiple:    align-002 completed (with consensus)")
     print(f"Events sent: {mock_publisher.publish.call_count} event(s)")
 
     # 3. AnalysisWorker
@@ -102,7 +101,7 @@ async def main():
     }
 
     await analysis_worker.process_job("msg-4", job_data)
-    print(f"Quality:     trace-002 analyzed")
+    print("Quality:     trace-002 analyzed")
 
     # Test trimming
     job_data = {
@@ -114,7 +113,7 @@ async def main():
     }
 
     await analysis_worker.process_job("msg-5", job_data)
-    print(f"Trimming:    trace-003 trimmed")
+    print("Trimming:    trace-003 trimmed")
     print(f"Events sent: {mock_publisher.publish.call_count} event(s)")
 
     # 4. Worker Metrics

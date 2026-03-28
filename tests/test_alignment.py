@@ -1,10 +1,11 @@
 """Tests for alignment module."""
 
 import pytest
+
 from src.alignment import (
-    PairwiseAligner,
-    MultipleAligner,
     ConsensusBuilder,
+    MultipleAligner,
+    PairwiseAligner,
     VariantDetector,
 )
 from src.alignment.consensus import ConsensusMethod
@@ -127,11 +128,13 @@ class TestMultipleAligner:
     def test_align_with_gaps_needed(self):
         """Test alignment requiring gap insertion."""
         aligner = MultipleAligner()
-        result = aligner.align([
-            "ACGTACGT",
-            "ACGACGT",
-            "ACGTCGT",
-        ])
+        result = aligner.align(
+            [
+                "ACGTACGT",
+                "ACGACGT",
+                "ACGTCGT",
+            ]
+        )
 
         assert len(result.alignedSequences) == 3
         # Check all have same length
@@ -307,11 +310,13 @@ class TestVariantDetector:
         detector = VariantDetector()
 
         # A->G is transition, A->C is transversion
-        report = detector.detect([
-            "AAAA",  # Reference
-            "GAAA",  # A->G transition
-            "CAAA",  # A->C transversion
-        ])
+        report = detector.detect(
+            [
+                "AAAA",  # Reference
+                "GAAA",  # A->G transition
+                "CAAA",  # A->C transversion
+            ]
+        )
 
         summary = detector.summarize_variants(report)
         # Should have both types
@@ -339,11 +344,13 @@ class TestAlignmentIntegration:
         """Test complete alignment -> consensus -> variants workflow."""
         # Align sequences
         aligner = MultipleAligner()
-        alignment = aligner.align([
-            "ACGTACGT",
-            "ACGTAGGT",
-            "ACGTACGT",
-        ])
+        alignment = aligner.align(
+            [
+                "ACGTACGT",
+                "ACGTAGGT",
+                "ACGTACGT",
+            ]
+        )
 
         # Build consensus
         builder = ConsensusBuilder()

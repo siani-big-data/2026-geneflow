@@ -1,11 +1,10 @@
 """Multiple sequence aligner using progressive alignment."""
 
 import uuid
-from Bio import Align
 
-from src.models import AlignmentResult, AlignmentType
 from src.alignment.aligner import BaseAligner
 from src.alignment.pairwise import PairwiseAligner
+from src.models import AlignmentResult, AlignmentType
 
 
 class MultipleAligner(BaseAligner):
@@ -21,10 +20,7 @@ class MultipleAligner(BaseAligner):
         return AlignmentType.MULTIPLE
 
     def align(
-        self,
-        sequences: list[str],
-        alignment_id: str | None = None,
-        **options
+        self, sequences: list[str], alignment_id: str | None = None, **options
     ) -> AlignmentResult:
         """
         Perform multiple sequence alignment.
@@ -89,11 +85,7 @@ class MultipleAligner(BaseAligner):
         return aligned
 
     def _add_sequence_to_alignment(
-        self,
-        aligned: list[str],
-        new_seq: str,
-        pairwise: PairwiseAligner,
-        **options
+        self, aligned: list[str], new_seq: str, pairwise: PairwiseAligner, **options
     ) -> list[str]:
         """Add a new sequence to existing alignment."""
         # Build consensus of current alignment
@@ -134,9 +126,7 @@ class MultipleAligner(BaseAligner):
 
         return "".join(consensus)
 
-    def _adjust_sequence(
-        self, original: str, old_consensus: str, new_consensus: str
-    ) -> str:
+    def _adjust_sequence(self, original: str, old_consensus: str, new_consensus: str) -> str:
         """Adjust sequence to match new gap positions in consensus."""
         result = []
         orig_idx = 0

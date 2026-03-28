@@ -4,12 +4,12 @@ from typing import Any
 
 import structlog
 
+from src.alignment import ConsensusBuilder, MultipleAligner, PairwiseAligner
+from src.alignment.consensus import ConsensusMethod
 from src.config import Settings
 from src.events.events import AlignmentCompleted, AlignmentFailed
 from src.events.publisher import EventBusPublisher
 from src.models import AlignmentJob, AlignmentType
-from src.alignment import PairwiseAligner, MultipleAligner, ConsensusBuilder
-from src.alignment.consensus import ConsensusMethod
 from src.workers.base import BaseWorker
 
 logger = structlog.get_logger()
@@ -76,9 +76,7 @@ class AlignmentWorker(BaseWorker):
             # Build consensus if requested
             consensus = None
             if job.options.get("build_consensus", False):
-                method = ConsensusMethod(
-                    job.options.get("consensus_method", "majority")
-                )
+                method = ConsensusMethod(job.options.get("consensus_method", "majority"))
                 consensus_result = self._consensus_builder.build(
                     result.alignedSequences,
                     method=method,

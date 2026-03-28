@@ -45,7 +45,7 @@ class HTTPStorageProvider(BaseStorageProvider):
             raise StorageError(f"Invalid URL scheme: {parsed.scheme}", url)
 
         if not parsed.netloc:
-            raise StorageError(f"Invalid URL: missing host", url)
+            raise StorageError("Invalid URL: missing host", url)
 
     async def get(self, path: str) -> bytes:
         """Fetch file from URL."""

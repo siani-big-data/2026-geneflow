@@ -7,27 +7,26 @@
 ██║   ██║██╔══╝  ██║╚██╗██║██╔══╝  ██╔══╝  ██║     ██║   ██║██║███╗██║
 ╚██████╔╝███████╗██║ ╚████║███████╗██║     ███████╗╚██████╔╝╚███╔███╔╝
  ╚═════╝ ╚══════╝╚═╝  ╚═══╝╚══════╝╚═╝     ╚══════╝ ╚═════╝  ╚══╝╚══╝
-            ██╗    ██╗ ██████╗ ██████╗ ██╗  ██╗███████╗██████╗
-            ██║    ██║██╔═══██╗██╔══██╗██║ ██╔╝██╔════╝██╔══██╗
-            ██║ █╗ ██║██║   ██║██████╔╝█████╔╝ █████╗  ██████╔╝
-            ██║███╗██║██║   ██║██╔══██╗██╔═██╗ ██╔══╝  ██╔══██╗
-            ╚███╔███╔╝╚██████╔╝██║  ██║██║  ██╗███████╗██║  ██║
-             ╚══╝╚══╝  ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
+   █████╗ ███╗   ██╗ █████╗ ██╗  ██╗   ██╗███████╗██╗███████╗
+  ██╔══██╗████╗  ██║██╔══██╗██║  ╚██╗ ██╔╝██╔════╝██║██╔════╝
+  ███████║██╔██╗ ██║███████║██║   ╚████╔╝ ███████╗██║███████╗
+  ██╔══██║██║╚██╗██║██╔══██║██║    ╚██╔╝  ╚════██║██║╚════██║
+  ██║  ██║██║ ╚████║██║  ██║███████╗██║   ███████║██║███████║
+  ╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝╚══════╝╚═╝   ╚══════╝╚═╝╚══════╝
 ```
 
-**Bioinformatics Analysis Worker for the GeneFlow Platform**
+**Bioinformatics Analysis Engine for the GeneFlow Platform**
 
 [![Python 3.12+](https://img.shields.io/badge/Python-3.12+-3776ab?logo=python&logoColor=white)](https://www.python.org/)
 [![Redis](https://img.shields.io/badge/Redis-Streams-dc382d?logo=redis&logoColor=white)](https://redis.io/)
 [![Biopython](https://img.shields.io/badge/Biopython-1.84+-3776ab)](https://biopython.org/)
 [![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red)]()
-[![Status: v2.0.0](https://img.shields.io/badge/Status-v2.0.0-brightgreen)]()
 
 </div>
 
 ---
 
-GeneFlow Worker is the **bioinformatics analysis engine** that processes sequencing traces, performs alignments, and executes advanced DNA analysis. It consumes jobs from Redis Streams and publishes results as events.
+GeneFlow Analysis is the **bioinformatics analysis engine** that processes sequencing traces, performs alignments, and executes advanced DNA analysis. It consumes jobs from Redis Streams and publishes results as events.
 
 ```
 Redis Streams ──► Workers ──► Parsers/Analyzers ──► Storage

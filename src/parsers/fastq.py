@@ -4,6 +4,7 @@ from io import StringIO
 
 from Bio import SeqIO
 
+from src.constants import gc_content
 from src.models import (
     ParsedTrace,
     QualityMetrics,
@@ -11,7 +12,6 @@ from src.models import (
     TraceFormat,
 )
 from src.parsers.parser import BaseParser
-from src.constants import gc_content
 
 
 class FASTQParser(BaseParser):
@@ -71,18 +71,18 @@ class FASTQParser(BaseParser):
 
         for record in SeqIO.parse(handle, "fastq"):
             quality = list(record.letter_annotations.get("phred_quality", []))
-            records.append({
-                "name": record.id,
-                "description": record.description,
-                "sequence": str(record.seq).upper(),
-                "quality": quality,
-            })
+            records.append(
+                {
+                    "name": record.id,
+                    "description": record.description,
+                    "sequence": str(record.seq).upper(),
+                    "quality": quality,
+                }
+            )
 
         return records
 
-    def _calculate_metrics(
-        self, sequence: str, quality: list[int]
-    ) -> QualityMetrics:
+    def _calculate_metrics(self, sequence: str, quality: list[int]) -> QualityMetrics:
         """Calculate quality metrics."""
         if not quality:
             return QualityMetrics(

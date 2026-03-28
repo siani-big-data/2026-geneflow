@@ -1,10 +1,10 @@
 """Restriction enzyme analysis."""
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
-from src.models import Sequence, RestrictionSite
 from src.analyzers.analyzer import BaseAnalyzer
 from src.constants import RESTRICTION_ENZYMES
+from src.models import RestrictionSite, Sequence
 
 
 @dataclass
@@ -31,10 +31,7 @@ class RestrictionAnalyzer(BaseAnalyzer):
         return "restriction"
 
     def analyze(
-        self,
-        sequence: Sequence,
-        enzymes: list[str] | None = None,
-        **_
+        self, sequence: Sequence, enzymes: list[str] | None = None, **_
     ) -> RestrictionResult:
         """
         Find restriction enzyme cut sites in sequence.
@@ -102,6 +99,7 @@ class RestrictionAnalyzer(BaseAnalyzer):
 
         # Convert IUPAC recognition sequence to regex
         import re
+
         pattern = self._recognition_to_regex(recognition)
 
         try:
@@ -111,13 +109,15 @@ class RestrictionAnalyzer(BaseAnalyzer):
                 pos = match.start()
                 cut_pos = pos + cut_offset
 
-                sites.append(RestrictionSite(
-                    enzyme=enzyme_name,
-                    position=pos,
-                    cutPosition=cut_pos,
-                    recognitionSequence=recognition,
-                    overhang=overhang,
-                ))
+                sites.append(
+                    RestrictionSite(
+                        enzyme=enzyme_name,
+                        position=pos,
+                        cutPosition=cut_pos,
+                        recognitionSequence=recognition,
+                        overhang=overhang,
+                    )
+                )
         except re.error:
             pass
 
@@ -230,7 +230,9 @@ class RestrictionAnalyzer(BaseAnalyzer):
                 "totalSites": 0,
                 "enzymeCount": 0,
                 "sitesPerEnzyme": {},
-                "avgFragmentLength": len(result.fragmentLengths[0]) if result.fragmentLengths else 0,
+                "avgFragmentLength": (
+                    len(result.fragmentLengths[0]) if result.fragmentLengths else 0
+                ),
                 "fragmentCount": len(result.fragmentLengths),
             }
 

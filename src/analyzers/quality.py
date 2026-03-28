@@ -3,9 +3,9 @@
 import math
 from typing import Optional
 
-from src.models import QualityMetrics, Sequence, ChromatogramData
 from src.analyzers.analyzer import BaseAnalyzer
 from src.constants import gc_content
+from src.models import ChromatogramData, QualityMetrics, Sequence
 
 
 class QualityAnalyzer(BaseAnalyzer):
@@ -142,9 +142,7 @@ class QualityAnalyzer(BaseAnalyzer):
         snr = mean_signal / noise_std
         return round(snr, 2)
 
-    def analyze_window(
-        self, sequence: Sequence, window_size: int = 50
-    ) -> list[dict]:
+    def analyze_window(self, sequence: Sequence, window_size: int = 50) -> list[dict]:
         """
         Compute quality metrics in sliding windows.
 
@@ -170,13 +168,15 @@ class QualityAnalyzer(BaseAnalyzer):
             q20_count = sum(1 for q in window if q >= 20)
             q30_count = sum(1 for q in window if q >= 30)
 
-            results.append({
-                "start": i,
-                "end": min(i + window_size, len(quality)),
-                "meanQuality": round(mean_q, 2),
-                "q20Percentage": round((q20_count / len(window)) * 100, 2),
-                "q30Percentage": round((q30_count / len(window)) * 100, 2),
-            })
+            results.append(
+                {
+                    "start": i,
+                    "end": min(i + window_size, len(quality)),
+                    "meanQuality": round(mean_q, 2),
+                    "q20Percentage": round((q20_count / len(window)) * 100, 2),
+                    "q30Percentage": round((q30_count / len(window)) * 100, 2),
+                }
+            )
 
         return results
 
@@ -210,12 +210,14 @@ class QualityAnalyzer(BaseAnalyzer):
                     length = i - start
                     if length >= min_length:
                         region_quality = quality[start:i]
-                        regions.append({
-                            "start": start,
-                            "end": i,
-                            "length": length,
-                            "meanQuality": round(sum(region_quality) / len(region_quality), 2),
-                        })
+                        regions.append(
+                            {
+                                "start": start,
+                                "end": i,
+                                "length": length,
+                                "meanQuality": round(sum(region_quality) / len(region_quality), 2),
+                            }
+                        )
                     start = None
 
         # Handle region at end
@@ -223,11 +225,13 @@ class QualityAnalyzer(BaseAnalyzer):
             length = len(quality) - start
             if length >= min_length:
                 region_quality = quality[start:]
-                regions.append({
-                    "start": start,
-                    "end": len(quality),
-                    "length": length,
-                    "meanQuality": round(sum(region_quality) / len(region_quality), 2),
-                })
+                regions.append(
+                    {
+                        "start": start,
+                        "end": len(quality),
+                        "length": length,
+                        "meanQuality": round(sum(region_quality) / len(region_quality), 2),
+                    }
+                )
 
         return regions

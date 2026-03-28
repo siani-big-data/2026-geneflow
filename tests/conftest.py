@@ -1,8 +1,9 @@
 """Shared test fixtures for GeneFlow Analysis Worker."""
 
-import pytest
-from pathlib import Path
 import tempfile
+from pathlib import Path
+
+import pytest
 
 from src.config import Settings
 

@@ -1,12 +1,13 @@
 """Tests for workers module."""
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
-from src.workers import BaseWorker, TraceWorker, AlignmentWorker, AnalysisWorker
-from src.workers.base import BaseWorker
-from src.models import WorkerStatus, TraceFormat, AlignmentType, AnalysisType
+import pytest
+
 from src.config import Settings
+from src.models import WorkerStatus
+from src.workers import AlignmentWorker, AnalysisWorker, TraceWorker
+from src.workers.base import BaseWorker
 
 
 class ConcreteWorker(BaseWorker):

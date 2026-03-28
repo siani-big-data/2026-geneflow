@@ -4,26 +4,26 @@ from typing import Any
 
 import structlog
 
-from src.config import Settings
-from src.events.events import (
-    TrimmingCompleted,
-    HeterozygoteDetectionCompleted,
-    MotifSearchCompleted,
-    TranslationCompleted,
-    ORFDetectionCompleted,
-    RestrictionAnalysisCompleted,
-)
-from src.events.publisher import EventBusPublisher
-from src.models import AnalysisJob, AnalysisType, TrimmingAlgorithm, Sequence
 from src.analyzers import (
-    QualityAnalyzer,
-    TrimmingAnalyzer,
     HeterozygoteAnalyzer,
     MotifAnalyzer,
-    TranslationAnalyzer,
     ORFAnalyzer,
+    QualityAnalyzer,
     RestrictionAnalyzer,
+    TranslationAnalyzer,
+    TrimmingAnalyzer,
 )
+from src.config import Settings
+from src.events.events import (
+    HeterozygoteDetectionCompleted,
+    MotifSearchCompleted,
+    ORFDetectionCompleted,
+    RestrictionAnalysisCompleted,
+    TranslationCompleted,
+    TrimmingCompleted,
+)
+from src.events.publisher import EventBusPublisher
+from src.models import AnalysisJob, AnalysisType, Sequence, TrimmingAlgorithm
 from src.workers.base import BaseWorker
 
 logger = structlog.get_logger()

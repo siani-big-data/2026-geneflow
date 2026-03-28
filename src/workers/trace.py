@@ -7,7 +7,7 @@ import structlog
 from src.config import Settings
 from src.events.events import TraceProcessed, TraceProcessingFailed
 from src.events.publisher import EventBusPublisher
-from src.models import TraceProcessingJob, TraceFormat
+from src.models import TraceProcessingJob
 from src.parsers import ParserFactory
 from src.workers.base import BaseWorker
 

@@ -3,6 +3,7 @@
 import struct
 from typing import Any
 
+from src.constants import gc_content
 from src.models import (
     ChromatogramData,
     ParsedTrace,
@@ -11,7 +12,6 @@ from src.models import (
     TraceFormat,
 )
 from src.parsers.parser import BaseParser
-from src.constants import gc_content
 
 
 class SCFParser(BaseParser):
@@ -220,9 +220,7 @@ class SCFParser(BaseParser):
 
         return metadata
 
-    def _calculate_metrics(
-        self, sequence: str, quality: list[int] | None
-    ) -> QualityMetrics:
+    def _calculate_metrics(self, sequence: str, quality: list[int] | None) -> QualityMetrics:
         """Calculate quality metrics."""
         if not quality:
             return QualityMetrics(

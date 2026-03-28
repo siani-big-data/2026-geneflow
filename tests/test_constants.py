@@ -1,19 +1,18 @@
 """Tests for biological constants and utilities."""
 
-import pytest
 from src.constants import (
-    IUPAC_CODES,
-    COMPLEMENT,
-    CODON_TABLE,
     AMINO_ACIDS,
+    CODON_TABLE,
+    COMPLEMENT,
+    IUPAC_CODES,
     RESTRICTION_ENZYMES,
     START_CODONS,
     STOP_CODONS,
-    reverse_complement,
     complement,
-    translate,
     gc_content,
     get_iupac_code,
+    reverse_complement,
+    translate,
 )
 
 
@@ -98,7 +97,7 @@ class TestTranslation:
     def test_translation_frames(self):
         seq = "AATGCTTAA"
         assert translate(seq, frame=0) == "NA*"  # AAT GCT TAA
-        assert translate(seq, frame=1) == "ML"   # ATG CTT
+        assert translate(seq, frame=1) == "ML"  # ATG CTT
 
     def test_translation_incomplete_codon(self):
         # Last incomplete codon should be ignored

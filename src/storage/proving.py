@@ -3,14 +3,13 @@
 
 import asyncio
 import tempfile
-from pathlib import Path
 
+from src.config import Settings
 from src.storage import (
-    LocalStorageProvider,
     HTTPStorageProvider,
+    LocalStorageProvider,
     StorageFactory,
 )
-from src.config import Settings
 
 
 async def main():

@@ -1,8 +1,9 @@
 """Tests for sequence analyzers."""
 
 import pytest
+
 from src.analyzers import QualityAnalyzer, TrimmingAnalyzer
-from src.models import Sequence, TrimmingAlgorithm, ChromatogramData
+from src.models import ChromatogramData, Sequence, TrimmingAlgorithm
 
 
 class TestQualityAnalyzer:
@@ -99,7 +100,28 @@ class TestQualityAnalyzer:
         seq = Sequence(
             id="test",
             sequence="A" * 20,
-            quality=[30, 30, 30, 10, 10, 10, 10, 10, 30, 30, 30, 30, 10, 10, 10, 10, 10, 10, 30, 30],
+            quality=[
+                30,
+                30,
+                30,
+                10,
+                10,
+                10,
+                10,
+                10,
+                30,
+                30,
+                30,
+                30,
+                10,
+                10,
+                10,
+                10,
+                10,
+                10,
+                30,
+                30,
+            ],
         )
 
         regions = analyzer.find_low_quality_regions(seq, threshold=20, min_length=5)
@@ -189,6 +211,7 @@ class TestQualityAnalyzer:
 
         # Variable background noise
         import random
+
         random.seed(42)
         trace_length = 100
 
@@ -273,9 +296,7 @@ class TestTrimmingAnalyzer:
             quality=[5, 5, 5, 30, 30, 30, 30, 30, 30, 30, 5, 5, 5],
         )
 
-        result = analyzer.analyze(
-            seq, algorithm=TrimmingAlgorithm.QUALITY_THRESHOLD, threshold=20
-        )
+        result = analyzer.analyze(seq, algorithm=TrimmingAlgorithm.QUALITY_THRESHOLD, threshold=20)
 
         assert result.trimStart == 3
         assert result.trimEnd == 10
@@ -315,9 +336,7 @@ class TestTrimmingAnalyzer:
             quality=[5] * 5 + [40] * 10 + [5] * 5,
         )
 
-        result = analyzer.analyze(
-            seq, algorithm=TrimmingAlgorithm.MODIFIED_MOTT, cutoff=0.05
-        )
+        result = analyzer.analyze(seq, algorithm=TrimmingAlgorithm.MODIFIED_MOTT, cutoff=0.05)
 
         # Should find the high-quality region in the middle
         assert result.trimmedLength > 0
@@ -332,9 +351,7 @@ class TestTrimmingAnalyzer:
             quality=[5, 5, 5, 5, 5, 5, 5, 5],
         )
 
-        result = analyzer.analyze(
-            seq, algorithm=TrimmingAlgorithm.QUALITY_THRESHOLD, threshold=20
-        )
+        result = analyzer.analyze(seq, algorithm=TrimmingAlgorithm.QUALITY_THRESHOLD, threshold=20)
 
         assert result.trimmedLength == 0
         assert result.trimmedSequence == ""
@@ -347,9 +364,7 @@ class TestTrimmingAnalyzer:
             quality=[40, 40, 40, 40, 40, 40, 40, 40],
         )
 
-        result = analyzer.analyze(
-            seq, algorithm=TrimmingAlgorithm.QUALITY_THRESHOLD, threshold=20
-        )
+        result = analyzer.analyze(seq, algorithm=TrimmingAlgorithm.QUALITY_THRESHOLD, threshold=20)
 
         assert result.trimmedLength == 8
         assert result.trimmedSequence == "ATGCATGC"
@@ -364,9 +379,7 @@ class TestTrimmingAnalyzer:
             quality=[5, 5, 30, 30, 30, 30, 5, 5],
         )
 
-        result = analyzer.analyze(
-            seq, algorithm=TrimmingAlgorithm.QUALITY_THRESHOLD, threshold=20
-        )
+        result = analyzer.analyze(seq, algorithm=TrimmingAlgorithm.QUALITY_THRESHOLD, threshold=20)
 
         assert len(result.trimmedSequence) == len(result.trimmedQuality)
         assert result.trimmedQuality == [30, 30, 30, 30]

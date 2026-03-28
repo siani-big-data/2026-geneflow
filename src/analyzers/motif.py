@@ -1,11 +1,11 @@
 """Motif search analyzer."""
 
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
-from src.models import Sequence, MotifMatch
 from src.analyzers.analyzer import BaseAnalyzer
 from src.constants import reverse_complement
+from src.models import MotifMatch, Sequence
 
 
 @dataclass
@@ -36,17 +36,17 @@ class MotifAnalyzer(BaseAnalyzer):
         "G": "G",
         "T": "T",
         "U": "U",
-        "R": "[AG]",      # Purine
-        "Y": "[CT]",      # Pyrimidine
-        "S": "[GC]",      # Strong
-        "W": "[AT]",      # Weak
-        "K": "[GT]",      # Keto
-        "M": "[AC]",      # Amino
-        "B": "[CGT]",     # Not A
-        "D": "[AGT]",     # Not C
-        "H": "[ACT]",     # Not G
-        "V": "[ACG]",     # Not T
-        "N": "[ACGT]",    # Any
+        "R": "[AG]",  # Purine
+        "Y": "[CT]",  # Pyrimidine
+        "S": "[GC]",  # Strong
+        "W": "[AT]",  # Weak
+        "K": "[GT]",  # Keto
+        "M": "[AC]",  # Amino
+        "B": "[CGT]",  # Not A
+        "D": "[AGT]",  # Not C
+        "H": "[ACT]",  # Not G
+        "V": "[ACG]",  # Not T
+        "N": "[ACGT]",  # Any
     }
 
     @property
@@ -59,7 +59,7 @@ class MotifAnalyzer(BaseAnalyzer):
         pattern: str = "",
         search_complement: bool = False,
         use_regex: bool = False,
-        **_
+        **_,
     ) -> MotifResult:
         """
         Search for a motif pattern in the sequence.
@@ -88,17 +88,13 @@ class MotifAnalyzer(BaseAnalyzer):
         seq_str = sequence.sequence.upper()
 
         # Search forward strand
-        forward_matches = self._find_matches(
-            seq_str, regex_pattern, pattern, "+"
-        )
+        forward_matches = self._find_matches(seq_str, regex_pattern, pattern, "+")
         matches.extend(forward_matches)
 
         # Search reverse complement if requested
         if search_complement:
             rev_comp = reverse_complement(seq_str)
-            reverse_matches = self._find_matches(
-                rev_comp, regex_pattern, pattern, "-"
-            )
+            reverse_matches = self._find_matches(rev_comp, regex_pattern, pattern, "-")
 
             # Adjust positions for reverse strand
             seq_len = len(seq_str)
@@ -143,13 +139,15 @@ class MotifAnalyzer(BaseAnalyzer):
             compiled = re.compile(regex_pattern, re.IGNORECASE)
 
             for match in compiled.finditer(sequence):
-                matches.append(MotifMatch(
-                    pattern=original_pattern,
-                    start=match.start(),
-                    end=match.end(),
-                    matchedSequence=match.group(),
-                    strand=strand,
-                ))
+                matches.append(
+                    MotifMatch(
+                        pattern=original_pattern,
+                        start=match.start(),
+                        end=match.end(),
+                        matchedSequence=match.group(),
+                        strand=strand,
+                    )
+                )
         except re.error as e:
             raise ValueError(f"Invalid pattern: {e}")
 
@@ -220,15 +218,17 @@ class MotifAnalyzer(BaseAnalyzer):
                     full_match = match.group(0)
                     repeat_count = len(full_match) // len(unit)
 
-                    repeats.append({
-                        "start": match.start(),
-                        "end": match.end(),
-                        "unit": unit,
-                        "unitLength": len(unit),
-                        "repeatCount": repeat_count,
-                        "totalLength": len(full_match),
-                        "sequence": full_match,
-                    })
+                    repeats.append(
+                        {
+                            "start": match.start(),
+                            "end": match.end(),
+                            "unit": unit,
+                            "unitLength": len(unit),
+                            "repeatCount": repeat_count,
+                            "totalLength": len(full_match),
+                            "sequence": full_match,
+                        }
+                    )
             except re.error:
                 continue
 

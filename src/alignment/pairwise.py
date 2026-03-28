@@ -1,10 +1,11 @@
 """Pairwise sequence aligner using Needleman-Wunsch algorithm."""
 
 import uuid
+
 from Bio import Align
 
-from src.models import AlignmentResult, AlignmentType
 from src.alignment.aligner import BaseAligner
+from src.models import AlignmentResult, AlignmentType
 
 
 class PairwiseAligner(BaseAligner):
@@ -32,7 +33,7 @@ class PairwiseAligner(BaseAligner):
         mismatch_score: int = DEFAULT_MISMATCH_SCORE,
         gap_open: float = DEFAULT_GAP_OPEN,
         gap_extend: float = DEFAULT_GAP_EXTEND,
-        **_
+        **_,
     ) -> AlignmentResult:
         """
         Perform pairwise global alignment.
@@ -94,9 +95,6 @@ class PairwiseAligner(BaseAligner):
 
     def _extract_aligned_sequences(self, alignment, seq1: str, seq2: str) -> list[str]:
         """Extract aligned sequences from BioPython alignment object."""
-        # Get alignment as formatted string and parse it
-        aligned_str = str(alignment).split("\n")
-
         # BioPython format varies, try to extract sequences
         try:
             # Try using alignment coordinates
@@ -104,8 +102,6 @@ class PairwiseAligner(BaseAligner):
             aligned2 = []
 
             coords = alignment.coordinates
-            seq1_idx = 0
-            seq2_idx = 0
 
             # Walk through alignment coordinates
             for i in range(len(coords[0]) - 1):
@@ -135,10 +131,7 @@ class PairwiseAligner(BaseAligner):
             return [seq1, seq2]
 
     def align_local(
-        self,
-        sequences: list[str],
-        alignment_id: str | None = None,
-        **options
+        self, sequences: list[str], alignment_id: str | None = None, **options
     ) -> AlignmentResult:
         """
         Perform local alignment (Smith-Waterman style).

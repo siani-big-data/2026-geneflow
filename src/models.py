@@ -3,6 +3,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional
 
+
 class TraceFormat(str, Enum):
     """Supported trace file formats."""
 

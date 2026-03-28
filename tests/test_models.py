@@ -1,25 +1,24 @@
 """Tests for domain models."""
 
-import pytest
 from src.models import (
-    Sequence,
+    ORF,
+    AlignmentJob,
+    AlignmentResult,
+    AlignmentType,
+    AnalysisJob,
+    AnalysisType,
     ChromatogramData,
-    QualityMetrics,
-    TrimmingResult,
     HeterozygoteCall,
     MotifMatch,
-    ORF,
-    RestrictionSite,
-    AlignmentResult,
-    Variant,
     ParsedTrace,
-    TraceProcessingJob,
-    AlignmentJob,
-    AnalysisJob,
+    QualityMetrics,
+    RestrictionSite,
+    Sequence,
     TraceFormat,
-    AlignmentType,
-    AnalysisType,
+    TraceProcessingJob,
     TrimmingAlgorithm,
+    TrimmingResult,
+    Variant,
 )
 
 
@@ -35,7 +34,7 @@ class TestSequence:
     def test_sequence_with_quality(self, sample_sequence: str, sample_quality: list[int]):
         seq = Sequence(
             id="test-1",
-            sequence=sample_sequence[:len(sample_quality)],
+            sequence=sample_sequence[: len(sample_quality)],
             quality=sample_quality,
         )
         assert seq.quality == sample_quality

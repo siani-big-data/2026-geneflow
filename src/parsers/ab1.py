@@ -4,6 +4,7 @@ from io import BytesIO
 
 from Bio import SeqIO
 
+from src.constants import gc_content
 from src.models import (
     ChromatogramData,
     ParsedTrace,
@@ -12,7 +13,6 @@ from src.models import (
     TraceFormat,
 )
 from src.parsers.parser import BaseParser
-from src.constants import gc_content
 
 
 class AB1Parser(BaseParser):
@@ -52,7 +52,9 @@ class AB1Parser(BaseParser):
             sequence=sequence_str,
             quality=quality,
             name=name,
-            description=record.description if record.description != "<unknown description>" else None,
+            description=(
+                record.description if record.description != "<unknown description>" else None
+            ),
         )
 
         # Extract chromatogram data from annotations
@@ -105,9 +107,7 @@ class AB1Parser(BaseParser):
         except Exception:
             return None
 
-    def _calculate_metrics(
-        self, sequence: str, quality: list[int] | None
-    ) -> QualityMetrics:
+    def _calculate_metrics(self, sequence: str, quality: list[int] | None) -> QualityMetrics:
         """Calculate quality metrics."""
         if not quality:
             return QualityMetrics(

@@ -1,14 +1,15 @@
 """Tests for trace file parsers."""
 
 import pytest
-from src.parsers import (
-    BaseParser,
-    AB1Parser,
-    SCFParser,
-    FASTQParser,
-    FASTAParser,
-)
+
 from src.models import TraceFormat
+from src.parsers import (
+    AB1Parser,
+    BaseParser,
+    FASTAParser,
+    FASTQParser,
+    SCFParser,
+)
 
 
 class TestBaseParser:

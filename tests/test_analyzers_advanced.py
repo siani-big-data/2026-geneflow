@@ -1,14 +1,15 @@
 """Tests for advanced analyzers."""
 
 import pytest
+
 from src.analyzers import (
     HeterozygoteAnalyzer,
     MotifAnalyzer,
-    TranslationAnalyzer,
     ORFAnalyzer,
     RestrictionAnalyzer,
+    TranslationAnalyzer,
 )
-from src.models import Sequence, ChromatogramData
+from src.models import Sequence
 
 
 class TestHeterozygoteAnalyzer:
@@ -196,7 +197,7 @@ class TestORFAnalyzer:
         # ATG...TAA = ORF
         seq = Sequence(
             id="test",
-            sequence="ATGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATAA"
+            sequence="ATGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATAA",
         )
         result = analyzer.analyze(seq, min_length=10)
 
@@ -214,7 +215,7 @@ class TestORFAnalyzer:
         """Test that ORF includes protein sequence."""
         seq = Sequence(
             id="test",
-            sequence="ATGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATAA"
+            sequence="ATGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATAA",
         )
         result = analyzer.analyze(seq, min_length=10)
 
@@ -226,7 +227,7 @@ class TestORFAnalyzer:
         """Test finding longest ORF."""
         seq = Sequence(
             id="test",
-            sequence="ATGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATAA"
+            sequence="ATGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATAA",
         )
         orf = analyzer.find_longest_orf(seq)
 

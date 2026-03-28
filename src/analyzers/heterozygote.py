@@ -1,10 +1,10 @@
 """Heterozygote detection analyzer."""
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
-from src.models import Sequence, ChromatogramData, HeterozygoteCall
 from src.analyzers.analyzer import BaseAnalyzer
 from src.constants import get_iupac_code
+from src.models import ChromatogramData, HeterozygoteCall, Sequence
 
 
 @dataclass
@@ -43,7 +43,7 @@ class HeterozygoteAnalyzer(BaseAnalyzer):
         min_ratio: float = DEFAULT_MIN_RATIO,
         max_ratio: float = DEFAULT_MAX_RATIO,
         min_confidence: float = DEFAULT_MIN_CONFIDENCE,
-        **_
+        **_,
     ) -> HeterozygoteResult:
         """
         Detect heterozygote positions in a sequence.
@@ -141,14 +141,16 @@ class HeterozygoteAnalyzer(BaseAnalyzer):
                 if confidence >= min_confidence:
                     iupac = get_iupac_code({primary_base, secondary_base})
 
-                    calls.append(HeterozygoteCall(
-                        position=i,
-                        base1=primary_base,
-                        base2=secondary_base,
-                        iupacCode=iupac,
-                        ratio=round(ratio, 3),
-                        confidence=round(confidence, 3),
-                    ))
+                    calls.append(
+                        HeterozygoteCall(
+                            position=i,
+                            base1=primary_base,
+                            base2=secondary_base,
+                            iupacCode=iupac,
+                            ratio=round(ratio, 3),
+                            confidence=round(confidence, 3),
+                        )
+                    )
 
         return calls
 
@@ -170,14 +172,16 @@ class HeterozygoteAnalyzer(BaseAnalyzer):
             if base in iupac_pairs:
                 base1, base2 = iupac_pairs[base]
 
-                calls.append(HeterozygoteCall(
-                    position=i,
-                    base1=base1,
-                    base2=base2,
-                    iupacCode=base,
-                    ratio=0.5,  # Assumed equal
-                    confidence=0.8,  # Moderate confidence from sequence
-                ))
+                calls.append(
+                    HeterozygoteCall(
+                        position=i,
+                        base1=base1,
+                        base2=base2,
+                        iupacCode=base,
+                        ratio=0.5,  # Assumed equal
+                        confidence=0.8,  # Moderate confidence from sequence
+                    )
+                )
 
         return calls
 
@@ -202,7 +206,5 @@ class HeterozygoteAnalyzer(BaseAnalyzer):
             "rate": result.heterozygoteRate,
             "positions": [c.position for c in result.calls],
             "iupacCodes": iupac_counts,
-            "avgConfidence": round(
-                sum(c.confidence for c in result.calls) / len(result.calls), 3
-            ),
+            "avgConfidence": round(sum(c.confidence for c in result.calls) / len(result.calls), 3),
         }

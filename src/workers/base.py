@@ -4,7 +4,7 @@ import asyncio
 import json
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any
 
 import structlog
 from redis.asyncio import Redis
@@ -185,16 +185,14 @@ class BaseWorker(ABC):
             self._metrics.jobsProcessed += 1
             self._metrics.lastJobAt = datetime.now(timezone.utc)
 
-            processing_time = (
-                datetime.now(timezone.utc) - start_time
-            ).total_seconds() * 1000
+            processing_time = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
 
             # Update average processing time
             total_jobs = self._metrics.jobsProcessed
             current_avg = self._metrics.averageProcessingTimeMs
             self._metrics.averageProcessingTimeMs = (
-                (current_avg * (total_jobs - 1) + processing_time) / total_jobs
-            )
+                current_avg * (total_jobs - 1) + processing_time
+            ) / total_jobs
 
             logger.info(
                 "job_completed",

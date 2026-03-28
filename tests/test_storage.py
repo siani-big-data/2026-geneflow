@@ -1,18 +1,17 @@
 """Tests for storage providers."""
 
-import pytest
 import tempfile
-import os
-from pathlib import Path
 
+import pytest
+
+from src.config import Settings
 from src.storage import (
-    LocalStorageProvider,
     HTTPStorageProvider,
-    SupabaseStorageProvider,
+    LocalStorageProvider,
     StorageFactory,
+    SupabaseStorageProvider,
 )
 from src.storage.base import StorageError
-from src.config import Settings
 
 
 class TestLocalStorageProvider:

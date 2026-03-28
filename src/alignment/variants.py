@@ -6,6 +6,7 @@ from enum import Enum
 
 class VariantType(str, Enum):
     """Type of sequence variant."""
+
     SNP = "snp"  # Single nucleotide polymorphism
     INSERTION = "insertion"
     DELETION = "deletion"
@@ -15,6 +16,7 @@ class VariantType(str, Enum):
 @dataclass
 class Variant:
     """Represents a detected variant."""
+
     position: int  # 0-based position in alignment
     type: VariantType
     reference: str  # Reference base(s)
@@ -27,6 +29,7 @@ class Variant:
 @dataclass
 class VariantReport:
     """Report of all variants found in alignment."""
+
     variants: list[Variant]
     totalPositions: int
     variantPositions: int
@@ -278,7 +281,11 @@ class VariantDetector:
         return {
             "totalVariants": len(report.variants),
             "variantRate": variant_rate,
-            "snpRate": round(report.snpCount / report.totalPositions, 4) if report.totalPositions > 0 else 0.0,
+            "snpRate": (
+                round(report.snpCount / report.totalPositions, 4)
+                if report.totalPositions > 0
+                else 0.0
+            ),
             "transitions": transitions,
             "transversions": transversions,
             "tiTvRatio": ti_tv_ratio,

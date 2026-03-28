@@ -9,11 +9,11 @@ import structlog
 import uvicorn
 from redis.asyncio import Redis
 
-from src.config import settings
 from src.api import app, register_workers, set_redis_health
-from src.events.publisher import EventBusPublisher
+from src.config import settings
 from src.events.events import WorkerStarted, WorkerStopped
-from src.workers import TraceWorker, AlignmentWorker, AnalysisWorker
+from src.events.publisher import EventBusPublisher
+from src.workers import AlignmentWorker, AnalysisWorker, TraceWorker
 
 # Configure structlog
 structlog.configure(

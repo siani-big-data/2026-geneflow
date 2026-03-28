@@ -3,11 +3,12 @@
 from dataclasses import dataclass
 from enum import Enum
 
-from src.constants import IUPAC_CODES, get_iupac_code
+from src.constants import get_iupac_code
 
 
 class ConsensusMethod(str, Enum):
     """Method for building consensus."""
+
     MAJORITY = "majority"
     THRESHOLD = "threshold"
     IUPAC = "iupac"
@@ -16,6 +17,7 @@ class ConsensusMethod(str, Enum):
 @dataclass
 class ConsensusResult:
     """Result of consensus building."""
+
     consensus: str
     quality: list[float]
     coverage: list[int]
@@ -71,9 +73,7 @@ class ConsensusBuilder:
 
         for i in range(length):
             column = [seq[i].upper() for seq in aligned_sequences]
-            base, freq, cov = self._consensus_at_position(
-                column, method, threshold, min_coverage
-            )
+            base, freq, cov = self._consensus_at_position(column, method, threshold, min_coverage)
             consensus.append(base)
             quality.append(freq)
             coverage.append(cov)

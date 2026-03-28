@@ -79,7 +79,9 @@ class SupabaseStorageProvider(BaseStorageProvider):
         except httpx.RequestError as e:
             raise StorageError(f"Request failed: {e}", path, e)
 
-    async def put(self, path: str, data: bytes, content_type: str = "application/octet-stream") -> str:
+    async def put(
+        self, path: str, data: bytes, content_type: str = "application/octet-stream"
+    ) -> str:
         """Upload file to Supabase storage."""
         url = self._get_object_url(path)
 
