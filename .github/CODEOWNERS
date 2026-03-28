@@ -1,0 +1,25 @@
+# GeneFlow Datalake Code Owners
+# These owners will be requested for review when someone opens a pull request.
+
+# Default owners for everything
+*       @geneflow/backend-team
+
+# CI/CD configuration
+.github/                @geneflow/devops-team
+Dockerfile              @geneflow/devops-team
+
+# Documentation
+docs/                   @geneflow/backend-team
+*.md                    @geneflow/backend-team
+
+# Core source code
+src/                    @geneflow/backend-team
+src/api.py              @geneflow/backend-team
+src/storage/            @geneflow/backend-team
+src/mounters/           @geneflow/backend-team
+
+# Tests
+tests/                  @geneflow/backend-team
+
+# Configuration files
+pyproject.toml          @geneflow/backend-team @geneflow/devops-team
