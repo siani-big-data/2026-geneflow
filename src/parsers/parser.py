@@ -57,3 +57,77 @@ class BaseParser(ABC):
         """Check if this parser can handle the given filename."""
         ext = Path(filename).suffix.lower().lstrip(".")
         return ext in self.extensions
+
+
+class ParserFactory:
+    """Factory for creating trace file parsers."""
+
+    _parsers: dict[TraceFormat, type] = {}
+
+    @classmethod
+    def register(cls, parser_class: type) -> None:
+        """Register a parser class."""
+        # Lazy import to avoid circular imports
+        instance = parser_class()
+        cls._parsers[instance.format] = parser_class
+
+    @classmethod
+    def get_parser(cls, format: TraceFormat | str) -> BaseParser:
+        """
+        Get a parser instance for the given format.
+
+        Args:
+            format: TraceFormat enum or string format name
+
+        Returns:
+            Parser instance for the format
+        """
+        # Ensure parsers are registered
+        cls._ensuREDACTED()
+
+        if isinstance(format, str):
+            format = TraceFormat(format.lower())
+
+        if format not in cls._parsers:
+            raise ValueError(f"No parser registered for format: {format}")
+
+        return cls._parsers[format]()
+
+    @classmethod
+    def get_parser_for_file(cls, filename: str) -> BaseParser:
+        """
+        Get a parser instance based on file extension.
+
+        Args:
+            filename: Name of the file
+
+        Returns:
+            Parser instance for the file type
+        """
+        cls._ensuREDACTED()
+
+        ext = Path(filename).suffix.lower().lstrip(".")
+
+        for format, parser_class in cls._parsers.items():
+            parser = parser_class()
+            if ext in parser.extensions:
+                return parser
+
+        raise ValueError(f"No parser found for file: {filename}")
+
+    @classmethod
+    def _ensuREDACTED(cls) -> None:
+        """Ensure all parsers are registered."""
+        if cls._parsers:
+            return
+
+        # Import and register parsers
+        from src.parsers.ab1 import AB1Parser
+        from src.parsers.scf import SCFParser
+        from src.parsers.fastq import FASTQParser
+        from src.parsers.fasta import FASTAParser
+
+        cls._parsers[TraceFormat.AB1] = AB1Parser
+        cls._parsers[TraceFormat.SCF] = SCFParser
+        cls._parsers[TraceFormat.FASTQ] = FASTQParser
+        cls._parsers[TraceFormat.FASTA] = FASTAParser
