@@ -139,12 +139,14 @@ Proporciona un resumen ejecutivo conciso."""
         lines.append("## Calidad")
         if result.quality:
             q = result.quality
-            lines.extend([
-                f"- Precisión predicha: {q.predictedAccuracy}",
-                f"- Probabilidad de error: {q.errorProbability}",
-                f"- Trim sugerido: {q.suggestedTrimStart} - {q.suggestedTrimEnd}",
-                f"- Regiones de baja calidad: {len(q.lowQualityRegions)}",
-            ])
+            lines.extend(
+                [
+                    f"- Precisión predicha: {q.predictedAccuracy}",
+                    f"- Probabilidad de error: {q.errorProbability}",
+                    f"- Trim sugerido: {q.suggestedTrimStart} - {q.suggestedTrimEnd}",
+                    f"- Regiones de baja calidad: {len(q.lowQualityRegions)}",
+                ]
+            )
         else:
             lines.append("No hay datos de calidad disponibles.")
         lines.append("")

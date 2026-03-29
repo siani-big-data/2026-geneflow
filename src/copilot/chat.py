@@ -42,10 +42,7 @@ class Conversation:
 
     def get_messages_for_api(self) -> list[dict]:
         """Get messages formatted for Claude API."""
-        return [
-            {"role": msg.role, "content": msg.content}
-            for msg in self.messages
-        ]
+        return [{"role": msg.role, "content": msg.content} for msg in self.messages]
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize to dictionary."""
@@ -282,9 +279,9 @@ class ChatHandler:
 
         # Pattern for numbered items
         patterns = [
-            r'\d+\.\s*\*\*[^*]+\*\*:?\s*(.+?)(?=\d+\.|$)',
-            r'[-•]\s*(.+?)(?=[-•]|$)',
-            r'Recomendaci[oó]n(?:es)?[:\s]+(.+?)(?=\n|$)',
+            r"\d+\.\s*\*\*[^*]+\*\*:?\s*(.+?)(?=\d+\.|$)",
+            r"[-•]\s*(.+?)(?=[-•]|$)",
+            r"Recomendaci[oó]n(?:es)?[:\s]+(.+?)(?=\n|$)",
         ]
 
         for pattern in patterns:

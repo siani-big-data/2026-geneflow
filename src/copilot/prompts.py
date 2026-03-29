@@ -147,7 +147,7 @@ Proporciona:
             result = result.replace(f"{{{key}}}", str(value))
 
         # Then handle any remaining placeholders
-        result = re.sub(r'\{(\w+)\}', replace_missing, result)
+        result = re.sub(r"\{(\w+)\}", replace_missing, result)
 
         return result
 
@@ -157,10 +157,10 @@ Proporciona:
         if not quality:
             return "No hay datos de calidad disponibles."
 
-        return f"""- Precisión predicha: {quality.get('predictedAccuracy', 'N/A')}
-- Probabilidad de error: {quality.get('errorProbability', 'N/A')}
-- Trim sugerido: {quality.get('suggestedTrimStart', 0)} - {quality.get('suggestedTrimEnd', 'N/A')}
-- Confianza: {quality.get('confidence', 'N/A')}"""
+        return f"""- Precisión predicha: {quality.get("predictedAccuracy", "N/A")}
+- Probabilidad de error: {quality.get("errorProbability", "N/A")}
+- Trim sugerido: {quality.get("suggestedTrimStart", 0)} - {quality.get("suggestedTrimEnd", "N/A")}
+- Confianza: {quality.get("confidence", "N/A")}"""
 
     @staticmethod
     def format_blast_section(blast_hits: Optional[list]) -> str:
@@ -170,12 +170,12 @@ Proporciona:
 
         lines = []
         for i, hit in enumerate(blast_hits[:5], 1):  # Top 5 hits
-            acc = hit.get('accession', 'N/A')
-            desc = hit.get('description', 'N/A')
+            acc = hit.get("accession", "N/A")
+            desc = hit.get("description", "N/A")
             lines.append(f"{i}. **{acc}** - {desc}")
             lines.append(f"   - Identidad: {hit.get('identity', 'N/A')}%")
             lines.append(f"   - E-value: {hit.get('eValue', 'N/A')}")
-            if hit.get('organism'):
+            if hit.get("organism"):
                 lines.append(f"   - Organismo: {hit.get('organism')}")
 
         return "\n".join(lines)
@@ -188,11 +188,11 @@ Proporciona:
 
         lines = []
         for v in variants:
-            pos = v.get('position', 'N/A')
-            ref = v.get('referenceBase', 'N/A')
-            alt = v.get('alternateBase', 'N/A')
-            vtype = v.get('variantType', 'N/A')
-            sig = v.get('clinicalSignificance', 'desconocida')
+            pos = v.get("position", "N/A")
+            ref = v.get("referenceBase", "N/A")
+            alt = v.get("alternateBase", "N/A")
+            vtype = v.get("variantType", "N/A")
+            sig = v.get("clinicalSignificance", "desconocida")
             lines.append(f"- Pos {pos}: {ref} → {alt} ({vtype}, significancia: {sig})")
 
         return "\n".join(lines)
@@ -205,10 +205,10 @@ Proporciona:
 
         lines = []
         for a in annotations:
-            start = a.get('start', 'N/A')
-            end = a.get('end', 'N/A')
-            ftype = a.get('featureType', 'N/A')
-            name = a.get('name', '')
+            start = a.get("start", "N/A")
+            end = a.get("end", "N/A")
+            ftype = a.get("featureType", "N/A")
+            name = a.get("name", "")
             lines.append(f"- {ftype}: {start}-{end}" + (f" ({name})" if name else ""))
 
         return "\n".join(lines)

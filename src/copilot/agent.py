@@ -121,9 +121,7 @@ Contexto actual del usuario:
             "available": self.is_available,
         }
 
-    def set_trace_provider(
-        self, provider: Callable[[str], Optional[AnalysisResult]]
-    ) -> None:
+    def set_trace_provider(self, provider: Callable[[str], Optional[AnalysisResult]]) -> None:
         """Set the trace data provider function."""
         self._trace_provider = provider
 
@@ -272,33 +270,35 @@ Contexto actual del usuario:
                 for block in response.content:
                     if block.type == "tool_use":
                         self._tool_calls += 1
-                        result = await self._execute_tool(
-                            block.name, block.input, context
+                        result = await self._execute_tool(block.name, block.input, context)
+                        tool_results.append(
+                            {
+                                "type": "tool_result",
+                                "tool_use_id": block.id,
+                                "content": str(result),
+                            }
                         )
-                        tool_results.append({
-                            "type": "tool_result",
-                            "tool_use_id": block.id,
-                            "content": str(result),
-                        })
 
                 # Add assistant message with tool use
-                current_messages.append({
-                    "role": "assistant",
-                    "content": response.content,
-                })
+                current_messages.append(
+                    {
+                        "role": "assistant",
+                        "content": response.content,
+                    }
+                )
 
                 # Add tool results
-                current_messages.append({
-                    "role": "user",
-                    "content": tool_results,
-                })
+                current_messages.append(
+                    {
+                        "role": "user",
+                        "content": tool_results,
+                    }
+                )
 
         # Max iterations reached
         return "Se alcanzó el límite de iteraciones. Por favor, reformula tu pregunta."
 
-    async def _execute_tool(
-        self, tool_name: str, tool_input: dict, context: AgentContext
-    ) -> Any:
+    async def _execute_tool(self, tool_name: str, tool_input: dict, context: AgentContext) -> Any:
         """Execute a tool and return result."""
         logger.debug("executing_tool", tool=tool_name, input=tool_input)
 
@@ -363,9 +363,7 @@ Contexto actual del usuario:
     # Tool Handlers
     # =========================================================================
 
-    async def _handle_get_trace(
-        self, params: dict, context: AgentContext
-    ) -> dict[str, Any]:
+    async def _handle_get_trace(self, params: dict, context: AgentContext) -> dict[str, Any]:
         """Handle get_trace_analysis tool."""
         trace_id = params.get("traceId") or context.traceId
 
@@ -395,9 +393,7 @@ Contexto actual del usuario:
 
         return await self._blast_handler(params)
 
-    async def _handle_get_quality(
-        self, params: dict, context: AgentContext
-    ) -> dict[str, Any]:
+    async def _handle_get_quality(self, params: dict, context: AgentContext) -> dict[str, Any]:
         """Handle get_quality_assessment tool."""
         trace_id = params.get("traceId") or context.traceId
 
@@ -456,11 +452,13 @@ Contexto actual del usuario:
 
         for i in range(min_len):
             if seq1[i] != seq2[i]:
-                differences.append({
-                    "position": i + 1,
-                    "seq1": seq1[i],
-                    "seq2": seq2[i],
-                })
+                differences.append(
+                    {
+                        "position": i + 1,
+                        "seq1": seq1[i],
+                        "seq2": seq2[i],
+                    }
+                )
 
         return {
             "length1": len(seq1),
