@@ -26,10 +26,18 @@ class Settings(BaseSettings):
     cors_allow_methods: list[str] = ["*"]
     cors_allow_headers: list[str] = ["*"]
 
-    # Claude API (Copilot)
+    # LLM Provider Selection
+    llm_provider: str = "claude"  # "claude", "deepseek", or "auto" (cheapest available)
+
+    # Claude API (Anthropic)
     claude_api_key: str = ""
     claude_model: str = "claude-sonnet-4-20250514"
     claude_max_tokens: int = 4096
+
+    # DeepSeek API (OpenAI-compatible, very cheap)
+    deepseek_api_key: str = ""
+    deepseek_model: str = "deepseek-chat"
+    deepseek_base_url: str = "https://api.deepseek.com/v1"
 
     # NCBI BLAST
     blast_email: str = ""
