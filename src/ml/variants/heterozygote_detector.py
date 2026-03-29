@@ -158,9 +158,7 @@ class HeterozygoteDetector(LocalModel):
             processingTimeMs=round(processing_time, 2),
             metadata={
                 "sequenceLength": seq_length,
-                "avgRatio": round(
-                    np.mean([h.ratio for h in heterozygotes]), 3
-                )
+                "avgRatio": round(np.mean([h.ratio for h in heterozygotes]), 3)
                 if heterozygotes
                 else 0,
                 "genotypeCounts": self._count_genotypes(heterozygotes),

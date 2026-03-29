@@ -131,9 +131,7 @@ class GeneFinder(LocalModel):
             },
         )
 
-    def _find_orfs(
-        self, seq: str, frame: int, strand: str, min_length: int
-    ) -> list[GeneRegion]:
+    def _find_orfs(self, seq: str, frame: int, strand: str, min_length: int) -> list[GeneRegion]:
         """Encontrar ORFs en un marco de lectura."""
         orfs = []
         seq_len = len(seq)

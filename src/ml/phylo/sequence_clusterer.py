@@ -51,10 +51,7 @@ class SequenceClusterer(LocalModel):
     name = "sequence_clusterer"
     version = "1.0.0"
     category = ModelCategory.PHYLO
-    description = (
-        "Agrupa secuencias por similitud usando k-mer embeddings "
-        "y clustering jerárquico."
-    )
+    description = "Agrupa secuencias por similitud usando k-mer embeddings y clustering jerárquico."
 
     KMER_SIZE = 6
 
@@ -111,9 +108,7 @@ class SequenceClusterer(LocalModel):
                 similarity_matrix[j, i] = sim
 
         # Clustering simple (single-linkage)
-        clusters = self._hierarchical_cluster(
-            seq_ids, similarity_matrix, similarity_threshold
-        )
+        clusters = self._hierarchical_cluster(seq_ids, similarity_matrix, similarity_threshold)
 
         processing_time = (time.perf_counter() - start_time) * 1000
 

@@ -27,8 +27,7 @@ class DiversityCalculator(LocalModel):
     version = "1.0.0"
     category = ModelCategory.PHYLO
     description = (
-        "Calcula métricas de diversidad genética: Pi, Theta, "
-        "número de sitios segregantes, etc."
+        "Calcula métricas de diversidad genética: Pi, Theta, número de sitios segregantes, etc."
     )
 
     def __init__(self):
@@ -144,9 +143,7 @@ class DiversityCalculator(LocalModel):
                 diff = sum(
                     1
                     for k in range(L)
-                    if seqs[i][k] != seqs[j][k]
-                    and seqs[i][k] in "ATCG"
-                    and seqs[j][k] in "ATCG"
+                    if seqs[i][k] != seqs[j][k] and seqs[i][k] in "ATCG" and seqs[j][k] in "ATCG"
                 )
                 total_diff += diff
                 comparisons += 1
@@ -166,9 +163,7 @@ class DiversityCalculator(LocalModel):
 
         return S / (a1 * L)
 
-    def _calculate_tajimas_d(
-        self, pi: float, theta_w: float, n: int, S: int
-    ) -> float:
+    def _calculate_tajimas_d(self, pi: float, theta_w: float, n: int, S: int) -> float:
         """Calcular Tajima's D (simplificado)."""
         if S == 0 or theta_w == 0:
             return 0.0

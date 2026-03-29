@@ -81,9 +81,7 @@ class QualityPredictor(LocalModel):
 
         # Si tenemos señales, extraer features y predecir
         if signal_a and signal_t and signal_c and signal_g:
-            return self._predict_from_signals(
-                signal_a, signal_t, signal_c, signal_g, start_time
-            )
+            return self._predict_from_signals(signal_a, signal_t, signal_c, signal_g, start_time)
 
         # Si solo tenemos secuencia, estimación básica
         if sequence:
@@ -97,9 +95,7 @@ class QualityPredictor(LocalModel):
             metadata={},
         )
 
-    def _calculate_from_scores(
-        self, scores: list[int], start_time: float
-    ) -> PredictionResult:
+    def _calculate_from_scores(self, scores: list[int], start_time: float) -> PredictionResult:
         """Calcular métricas directamente de Phred scores."""
         scores_arr = np.array(scores)
         total = len(scores_arr)
@@ -211,9 +207,7 @@ class QualityPredictor(LocalModel):
             },
         )
 
-    def _estimate_from_sequence(
-        self, sequence: str, start_time: float
-    ) -> PredictionResult:
+    def _estimate_from_sequence(self, sequence: str, start_time: float) -> PredictionResult:
         """Estimación básica desde secuencia (sin scores)."""
         seq = sequence.upper()
         total = len(seq)
@@ -291,9 +285,7 @@ class QualityPredictor(LocalModel):
                 peak_positions.extend(spacing)
 
         if peak_positions:
-            spacing_consistency = 1 - np.std(peak_positions) / (
-                np.mean(peak_positions) + 1e-6
-            )
+            spacing_consistency = 1 - np.std(peak_positions) / (np.mean(peak_positions) + 1e-6)
         else:
             spacing_consistency = 0.5
 

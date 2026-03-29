@@ -180,14 +180,10 @@ class SNPCaller(LocalModel):
                 "queryLength": len(query),
                 "basesCompared": total_compared,
                 "transitions": sum(
-                    1
-                    for s in snps
-                    if self._is_transition(s.referenceBase, s.alternateBase)
+                    1 for s in snps if self._is_transition(s.referenceBase, s.alternateBase)
                 ),
                 "transversions": sum(
-                    1
-                    for s in snps
-                    if not self._is_transition(s.referenceBase, s.alternateBase)
+                    1 for s in snps if not self._is_transition(s.referenceBase, s.alternateBase)
                 ),
             },
         )

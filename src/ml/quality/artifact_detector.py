@@ -228,9 +228,7 @@ class ArtifactDetector(LocalModel):
 
         return artifacts[:20]  # Limitar a 20 pull-ups
 
-    def _detect_dye_blobs(
-        self, signals: dict[str, np.ndarray]
-    ) -> list[DetectedArtifact]:
+    def _detect_dye_blobs(self, signals: dict[str, np.ndarray]) -> list[DetectedArtifact]:
         """Detectar dye blobs (manchas de fluoróforo)."""
         artifacts = []
 
@@ -262,9 +260,7 @@ class ArtifactDetector(LocalModel):
 
         return artifacts
 
-    def _detect_low_signal(
-        self, signals: dict[str, np.ndarray]
-    ) -> list[DetectedArtifact]:
+    def _detect_low_signal(self, signals: dict[str, np.ndarray]) -> list[DetectedArtifact]:
         """Detectar regiones de señal baja."""
         artifacts = []
 
@@ -295,9 +291,7 @@ class ArtifactDetector(LocalModel):
 
         return artifacts
 
-    def _detect_baseline_drift(
-        self, signals: dict[str, np.ndarray]
-    ) -> list[DetectedArtifact]:
+    def _detect_baseline_drift(self, signals: dict[str, np.ndarray]) -> list[DetectedArtifact]:
         """Detectar deriva de línea base."""
         artifacts = []
 

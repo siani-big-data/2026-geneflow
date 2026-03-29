@@ -57,16 +57,22 @@ class RNAStructurePredictor(LocalModel):
 
     # Pares de bases permitidos (Watson-Crick + wobble)
     VALID_PAIRS = {
-        ("A", "U"), ("U", "A"),
-        ("G", "C"), ("C", "G"),
-        ("G", "U"), ("U", "G"),  # Wobble
+        ("A", "U"),
+        ("U", "A"),
+        ("G", "C"),
+        ("C", "G"),
+        ("G", "U"),
+        ("U", "G"),  # Wobble
     }
 
     # Energías de apareamiento (simplificadas, kcal/mol)
     PAIR_ENERGIES = {
-        ("A", "U"): -2.0, ("U", "A"): -2.0,
-        ("G", "C"): -3.0, ("C", "G"): -3.0,
-        ("G", "U"): -1.0, ("U", "G"): -1.0,
+        ("A", "U"): -2.0,
+        ("U", "A"): -2.0,
+        ("G", "C"): -3.0,
+        ("C", "G"): -3.0,
+        ("G", "U"): -1.0,
+        ("U", "G"): -1.0,
     }
 
     MIN_LOOP_SIZE = 3  # Mínimo 3 bases en loop
@@ -187,9 +193,7 @@ class RNAStructurePredictor(LocalModel):
         self._traceback(traceback, seq, 0, n - 1, pairs)
 
         # Calcular energía
-        energy = sum(
-            self.PAIR_ENERGIES.get((seq[i], seq[j]), -1.0) for i, j in pairs
-        )
+        energy = sum(self.PAIR_ENERGIES.get((seq[i], seq[j]), -1.0) for i, j in pairs)
 
         return pairs, energy
 
