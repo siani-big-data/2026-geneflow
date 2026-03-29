@@ -251,14 +251,12 @@ class BlastClient:
 
         # Timeout
         self._errors += 1
-        raise BlastTimeoutError(
-            f"BLAST job {job.rid} timed out after {timeout_seconds}s"
-        )
+        raise BlastTimeoutError(f"BLAST job {job.rid} timed out after {timeout_seconds}s")
 
     def _parse_rid(self, response_text: str) -> str:
         """Parse RID from BLAST response."""
         # Look for RID in QBlastInfo
-        match = re.search(r'RID\s*=\s*(\S+)', response_text)
+        match = re.search(r"RID\s*=\s*(\S+)", response_text)
         if match:
             return match.group(1)
 
@@ -267,7 +265,7 @@ class BlastClient:
     def _parse_status(self, response_text: str) -> str:
         """Parse status from BLAST response."""
         # Check for Status in response
-        match = re.search(r'Status=(\S+)', response_text)
+        match = re.search(r"Status=(\S+)", response_text)
         if match:
             status = match.group(1).upper()
             if status in ("WAITING", "READY", "FAILED"):
@@ -288,19 +286,19 @@ class BlastClient:
             root = ElementTree.fromstring(xml_text)
 
             # Get query length
-            query_len_elem = root.find('.//Iteration_query-len')
+            query_len_elem = root.find(".//Iteration_query-len")
             query_length = int(query_len_elem.text) if query_len_elem is not None else 0
 
             # Get database
-            db_elem = root.find('.//BlastOutput_db')
+            db_elem = root.find(".//BlastOutput_db")
             database = db_elem.text if db_elem is not None else "nt"
 
             # Get program
-            prog_elem = root.find('.//BlastOutput_program')
+            prog_elem = root.find(".//BlastOutput_program")
             program = prog_elem.text if prog_elem is not None else "blastn"
 
             # Parse hits
-            for hit_elem in root.findall('.//Hit'):
+            for hit_elem in root.findall(".//Hit"):
                 hit = self._parse_hit(hit_elem)
                 if hit:
                     hits.append(hit)
@@ -321,27 +319,27 @@ class BlastClient:
         """Parse a single hit from XML."""
         try:
             # Get hit info
-            accession = hit_elem.findtext('Hit_accession', '')
-            description = hit_elem.findtext('Hit_def', '')
+            accession = hit_elem.findtext("Hit_accession", "")
+            description = hit_elem.findtext("Hit_def", "")
 
             # Get best HSP
-            hsp = hit_elem.find('.//Hsp')
+            hsp = hit_elem.find(".//Hsp")
             if hsp is None:
                 return None
 
-            score = float(hsp.findtext('Hsp_bit-score', '0'))
-            e_value = float(hsp.findtext('Hsp_evalue', '1'))
+            score = float(hsp.findtext("Hsp_bit-score", "0"))
+            e_value = float(hsp.findtext("Hsp_evalue", "1"))
 
             # Calculate identity
-            identity_count = int(hsp.findtext('Hsp_identity', '0'))
-            align_len = int(hsp.findtext('Hsp_align-len', '1'))
+            identity_count = int(hsp.findtext("Hsp_identity", "0"))
+            align_len = int(hsp.findtext("Hsp_align-len", "1"))
             identity = (identity_count / align_len * 100) if align_len > 0 else 0
 
             # Get positions
-            query_start = int(hsp.findtext('Hsp_query-from', '0'))
-            query_end = int(hsp.findtext('Hsp_query-to', '0'))
-            subject_start = int(hsp.findtext('Hsp_hit-from', '0'))
-            subject_end = int(hsp.findtext('Hsp_hit-to', '0'))
+            query_start = int(hsp.findtext("Hsp_query-from", "0"))
+            query_end = int(hsp.findtext("Hsp_query-to", "0"))
+            subject_start = int(hsp.findtext("Hsp_hit-from", "0"))
+            subject_end = int(hsp.findtext("Hsp_hit-to", "0"))
 
             # Extract organism from description
             organism = self._extract_organism(description)
@@ -366,7 +364,7 @@ class BlastClient:
     def _extract_organism(self, description: str) -> Optional[str]:
         """Extract organism name from hit description."""
         # Common pattern: [Organism name]
-        match = re.search(r'\[([^\]]+)\]', description)
+        match = re.search(r"\[([^\]]+)\]", description)
         if match:
             return match.group(1)
 

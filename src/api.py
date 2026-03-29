@@ -190,14 +190,10 @@ def create_app() -> FastAPI:
         Optionally provide a conversation ID to continue a conversation.
         """
         if not _chat_handler:
-            raise HTTPException(
-                status_code=503, detail="Copilot service not initialized"
-            )
+            raise HTTPException(status_code=503, detail="Copilot service not initialized")
 
         if not _chat_handler.is_available:
-            raise HTTPException(
-                status_code=503, detail="Claude API not configured"
-            )
+            raise HTTPException(status_code=503, detail="Claude API not configured")
 
         result = await _chat_handler.ask(
             question=request.question,
@@ -215,9 +211,7 @@ def create_app() -> FastAPI:
     async def copilot_list_conversations() -> dict:
         """List all active conversations."""
         if not _chat_handler:
-            raise HTTPException(
-                status_code=503, detail="Copilot service not initialized"
-            )
+            raise HTTPException(status_code=503, detail="Copilot service not initialized")
 
         return {"conversations": _chat_handler.list_conversations()}
 
@@ -225,9 +219,7 @@ def create_app() -> FastAPI:
     async def copilot_delete_conversation(conversation_id: str) -> dict:
         """Delete a conversation."""
         if not _chat_handler:
-            raise HTTPException(
-                status_code=503, detail="Copilot service not initialized"
-            )
+            raise HTTPException(status_code=503, detail="Copilot service not initialized")
 
         deleted = _chat_handler.delete_conversation(conversation_id)
         if not deleted:
@@ -264,14 +256,10 @@ def create_app() -> FastAPI:
         Provide a traceId to give context about a specific trace.
         """
         if not _agent:
-            raise HTTPException(
-                status_code=503, detail="Agent not initialized"
-            )
+            raise HTTPException(status_code=503, detail="Agent not initialized")
 
         if not _agent.is_available:
-            raise HTTPException(
-                status_code=503, detail="Claude API not configured"
-            )
+            raise HTTPException(status_code=503, detail="Claude API not configured")
 
         result = await _agent.ask(
             question=request.question,
@@ -291,9 +279,7 @@ def create_app() -> FastAPI:
     async def agent_list_contexts() -> dict:
         """List all active agent contexts."""
         if not _agent:
-            raise HTTPException(
-                status_code=503, detail="Agent not initialized"
-            )
+            raise HTTPException(status_code=503, detail="Agent not initialized")
 
         return {"contexts": _agent.list_contexts()}
 
@@ -301,9 +287,7 @@ def create_app() -> FastAPI:
     async def agent_delete_context(context_id: str) -> dict:
         """Delete an agent context."""
         if not _agent:
-            raise HTTPException(
-                status_code=503, detail="Agent not initialized"
-            )
+            raise HTTPException(status_code=503, detail="Agent not initialized")
 
         deleted = _agent.delete_context(context_id)
         if not deleted:
@@ -335,10 +319,7 @@ def create_app() -> FastAPI:
         """List available agent tools."""
         from src.copilot.tools import AGENT_TOOLS
 
-        tools = [
-            {"name": t["name"], "description": t["description"]}
-            for t in AGENT_TOOLS
-        ]
+        tools = [{"name": t["name"], "description": t["description"]} for t in AGENT_TOOLS]
         return {"tools": tools}
 
     # =========================================================================
@@ -354,14 +335,10 @@ def create_app() -> FastAPI:
         For long sequences, consider using the async endpoint.
         """
         if not _blast_client:
-            raise HTTPException(
-                status_code=503, detail="BLAST service not initialized"
-            )
+            raise HTTPException(status_code=503, detail="BLAST service not initialized")
 
         if not _blast_client.is_configured:
-            raise HTTPException(
-                status_code=503, detail="BLAST not configured. Set AI_BLAST_EMAIL."
-            )
+            raise HTTPException(status_code=503, detail="BLAST not configured. Set AI_BLAST_EMAIL.")
 
         try:
             result = await _blast_client.search(
@@ -391,14 +368,10 @@ def create_app() -> FastAPI:
         Returns a job ID (RID) that can be used to check status and get results.
         """
         if not _blast_client:
-            raise HTTPException(
-                status_code=503, detail="BLAST service not initialized"
-            )
+            raise HTTPException(status_code=503, detail="BLAST service not initialized")
 
         if not _blast_client.is_configured:
-            raise HTTPException(
-                status_code=503, detail="BLAST not configured. Set AI_BLAST_EMAIL."
-            )
+            raise HTTPException(status_code=503, detail="BLAST not configured. Set AI_BLAST_EMAIL.")
 
         try:
             job = await _blast_client.submit_search(
@@ -416,9 +389,7 @@ def create_app() -> FastAPI:
     async def blast_status(rid: str) -> dict:
         """Get status of a BLAST job."""
         if not _blast_client:
-            raise HTTPException(
-                status_code=503, detail="BLAST service not initialized"
-            )
+            raise HTTPException(status_code=503, detail="BLAST service not initialized")
 
         try:
             status = await _blast_client.check_status(rid)
@@ -431,9 +402,7 @@ def create_app() -> FastAPI:
     async def blast_results(rid: str) -> dict:
         """Get results of a completed BLAST job."""
         if not _blast_client:
-            raise HTTPException(
-                status_code=503, detail="BLAST service not initialized"
-            )
+            raise HTTPException(status_code=503, detail="BLAST service not initialized")
 
         try:
             result = await _blast_client.get_results(rid)

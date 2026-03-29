@@ -92,10 +92,7 @@ class EventBusConsumer:
 
     async def _consume_loop(self) -> None:
         """Main loop that consumes events."""
-        streams = {
-            f"{self._stream_prefix}:{cat}": ">"
-            for cat in self._categories
-        }
+        streams = {f"{self._stream_prefix}:{cat}": ">" for cat in self._categories}
 
         while self._running:
             try:
@@ -195,6 +192,7 @@ class EventBusConsumer:
             except json.JSONDecodeError:
                 # Try eval for dict-like strings
                 import ast
+
                 return ast.literal_eval(raw_data)
         return {}
 

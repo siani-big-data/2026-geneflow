@@ -129,12 +129,8 @@ class AIService:
         # Start consumer if eventbus enabled
         if settings.eventbus_enabled:
             self._consumer = EventBusConsumer(self._redis, settings)
-            self._consumer.register_handler(
-                "trace.processed", self._handle_trace_processed
-            )
-            self._consumer.register_handler(
-                "alignment.completed", self._handle_alignment_completed
-            )
+            self._consumer.register_handler("trace.processed", self._handle_trace_processed)
+            self._consumer.register_handler("alignment.completed", self._handle_alignment_completed)
             self._consumer_task = asyncio.create_task(self._consumer.start())
             logger.info("eventbus_consumer_started")
 
@@ -245,13 +241,15 @@ class AIService:
             # Format results for agent
             hits = []
             for hit in result.hits[:5]:  # Top 5 hits
-                hits.append({
-                    "accession": hit.accession,
-                    "description": hit.description,
-                    "organism": hit.organism,
-                    "identity": hit.identity,
-                    "eValue": hit.eValue,
-                })
+                hits.append(
+                    {
+                        "accession": hit.accession,
+                        "description": hit.description,
+                        "organism": hit.organism,
+                        "identity": hit.identity,
+                        "eValue": hit.eValue,
+                    }
+                )
 
             return {
                 "rid": result.rid,
