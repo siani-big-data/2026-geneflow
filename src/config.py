@@ -1,6 +1,5 @@
 """Settings configuration for GeneFlow AI service."""
 
-
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
