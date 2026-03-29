@@ -123,9 +123,7 @@ class TestBlastClient:
             await client.submit_search("ATCG")
 
     @pytest.mark.asyncio
-    async def test_submit_search_success(
-        self, settings_with_email, sample_blast_response
-    ):
+    async def test_submit_search_success(self, settings_with_email, sample_blast_response):
         """submit_search returns job with RID."""
         client = BlastClient(settings_with_email)
 
@@ -165,9 +163,7 @@ class TestBlastClient:
             assert status == "READY"
 
     @pytest.mark.asyncio
-    async def test_check_status_waiting(
-        self, settings_with_email, sample_status_waiting
-    ):
+    async def test_check_status_waiting(self, settings_with_email, sample_status_waiting):
         """check_status returns WAITING when job is pending."""
         client = BlastClient(settings_with_email)
 
@@ -185,9 +181,7 @@ class TestBlastClient:
             assert status == "WAITING"
 
     @pytest.mark.asyncio
-    async def test_get_results_parses_xml(
-        self, settings_with_email, sample_xml_results
-    ):
+    async def test_get_results_parses_xml(self, settings_with_email, sample_xml_results):
         """get_results parses XML and returns BlastSearchResult."""
         client = BlastClient(settings_with_email)
 
@@ -326,12 +320,26 @@ class TestBlastSearchResult:
         result = BlastSearchResult(rid="TEST")
         result.hits = [
             BlastHit(
-                accession="A", description="", score=0, eValue=0, identity=0,
-                queryStart=1, queryEnd=100, subjectStart=1, subjectEnd=100
+                accession="A",
+                description="",
+                score=0,
+                eValue=0,
+                identity=0,
+                queryStart=1,
+                queryEnd=100,
+                subjectStart=1,
+                subjectEnd=100,
             ),
             BlastHit(
-                accession="B", description="", score=0, eValue=0, identity=0,
-                queryStart=1, queryEnd=100, subjectStart=1, subjectEnd=100
+                accession="B",
+                description="",
+                score=0,
+                eValue=0,
+                identity=0,
+                queryStart=1,
+                queryEnd=100,
+                subjectStart=1,
+                subjectEnd=100,
             ),
         ]
 
@@ -342,8 +350,15 @@ class TestBlastSearchResult:
         from src.models import BlastHit
 
         hit = BlastHit(
-            accession="A", description="", score=0, eValue=0, identity=0,
-            queryStart=1, queryEnd=100, subjectStart=1, subjectEnd=100
+            accession="A",
+            description="",
+            score=0,
+            eValue=0,
+            identity=0,
+            queryStart=1,
+            queryEnd=100,
+            subjectStart=1,
+            subjectEnd=100,
         )
         result = BlastSearchResult(rid="TEST")
         result.hits = [hit]

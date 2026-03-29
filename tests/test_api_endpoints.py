@@ -90,11 +90,13 @@ class TestCopilotEndpoints:
         """copilot/ask returns answer."""
         mock_handler = MagicMock()
         mock_handler.is_available = True
-        mock_handler.ask = AsyncMock(return_value={
-            "answer": "This is a test answer.",
-            "conversationId": "conv-123",
-            "messageCount": 2,
-        })
+        mock_handler.ask = AsyncMock(
+            return_value={
+                "answer": "This is a test answer.",
+                "conversationId": "conv-123",
+                "messageCount": 2,
+            }
+        )
         set_chat_handler(mock_handler)
 
         response = running_service.post(
@@ -195,14 +197,16 @@ class TestBlastEndpoints:
         """blast/submit returns job info."""
         mock_client = MagicMock()
         mock_client.is_configured = True
-        mock_client.submit_search = AsyncMock(return_value=MagicMock(
-            to_dict=lambda: {
-                "rid": "ABC123",
-                "status": "WAITING",
-                "program": "blastn",
-                "database": "nt",
-            }
-        ))
+        mock_client.submit_search = AsyncMock(
+            return_value=MagicMock(
+                to_dict=lambda: {
+                    "rid": "ABC123",
+                    "status": "WAITING",
+                    "program": "blastn",
+                    "database": "nt",
+                }
+            )
+        )
         set_blast_client(mock_client)
 
         response = running_service.post(
@@ -233,14 +237,16 @@ class TestBlastEndpoints:
         """blast/results returns search results."""
         mock_client = MagicMock()
         mock_client.is_configured = True
-        mock_client.get_results = AsyncMock(return_value=MagicMock(
-            to_dict=lambda: {
-                "rid": "ABC123",
-                "hits": [],
-                "hitCount": 0,
-                "queryLength": 500,
-            }
-        ))
+        mock_client.get_results = AsyncMock(
+            return_value=MagicMock(
+                to_dict=lambda: {
+                    "rid": "ABC123",
+                    "hits": [],
+                    "hitCount": 0,
+                    "queryLength": 500,
+                }
+            )
+        )
         set_blast_client(mock_client)
 
         response = running_service.get("/blast/results/ABC123")

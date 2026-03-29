@@ -1,6 +1,5 @@
 """Tests for prompt templates."""
 
-
 from src.copilot.prompts import PromptTemplates
 
 

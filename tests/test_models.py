@@ -1,6 +1,5 @@
 """Tests for domain models."""
 
-
 from src.models import (
     AnalysisResult,
     AnalysisStatus,

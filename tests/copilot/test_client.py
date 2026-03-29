@@ -86,9 +86,7 @@ class TestClaudeClient:
         with patch("src.copilot.client.AsyncAnthropic") as mock_anthropic:
             mock_client = MagicMock()
             mock_anthropic.return_value = mock_client
-            mock_client.messages.create = AsyncMock(
-                side_effect=Exception("API error")
-            )
+            mock_client.messages.create = AsyncMock(side_effect=Exception("API error"))
 
             client = ClaudeClient(settings_with_api_key)
 

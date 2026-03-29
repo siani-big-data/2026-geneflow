@@ -155,9 +155,7 @@ class TestChatHandler:
         assert result2["messageCount"] == 4  # 2 user + 2 assistant
 
     @pytest.mark.asyncio
-    async def test_ask_with_analysis_context(
-        self, mock_client, settings, sample_analysis
-    ):
+    async def test_ask_with_analysis_context(self, mock_client, settings, sample_analysis):
         """ask uses analysis result as context."""
         handler = ChatHandler(mock_client, settings)
 

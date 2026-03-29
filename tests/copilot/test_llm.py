@@ -43,9 +43,7 @@ class TestLLMResponse:
 
         response = LLMResponse(
             content="",
-            tool_calls=[
-                ToolCall(id="1", name="get_weather", arguments={"city": "Madrid"})
-            ],
+            tool_calls=[ToolCall(id="1", name="get_weather", arguments={"city": "Madrid"})],
             input_tokens=20,
             output_tokens=10,
         )
