@@ -35,7 +35,7 @@ export default function PlatformLayout({
       >
         <Header />
         <main className="flex-1 overflow-auto">
-          <div className="container mx-auto p-6">{children}</div>
+          <div className="px-16 py-10">{children}</div>
         </main>
       </div>
     </div>
