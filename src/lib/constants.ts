@@ -11,7 +11,6 @@ export const ROUTES = {
   TRACES: "/traces",
   TRACE_DETAIL: (id: string) => `/traces/${id}`,
   PIPELINES: "/pipelines",
-  ANALYSIS: "/analysis",
   PROFILE: "/profile",
   USER_PROFILE: (id: string) => `/users/${id}`,
   SETTINGS: "/settings",

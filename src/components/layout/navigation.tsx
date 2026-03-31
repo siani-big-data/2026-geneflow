@@ -4,7 +4,6 @@ import {
   Beaker,
   Waves,
   Activity,
-  BarChart3,
   Settings,
   HelpCircle,
   type LucideIcon,
@@ -22,7 +21,6 @@ export const mainNavigation: NavItem[] = [
   { name: "Studies", href: "/studies", icon: Beaker },
   { name: "Traces", href: "/traces", icon: Waves },
   { name: "Pipelines", href: "/pipelines", icon: Activity },
-  { name: "Analysis", href: "/analysis", icon: BarChart3 },
 ];
 
 export const bottomNavigation: NavItem[] = [
