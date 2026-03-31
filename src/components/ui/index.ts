@@ -41,5 +41,6 @@ export {
 export { Input, type InputProps } from "./input";
 export { Progress } from "./progress";
 export { Skeleton } from "./skeleton";
+export { Switch } from "./switch";
 export { Tabs, TabsList, TabsTrigger, TabsContent } from "./tabs";
 export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "./tooltip";
