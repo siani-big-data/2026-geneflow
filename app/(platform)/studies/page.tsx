@@ -2,117 +2,621 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { PageHeader } from "@/components/layout";
-import { Button, Card, CardContent, Input, Skeleton } from "@/components/ui";
+import {
+  FileText,
+  Users,
+  Calendar,
+  Plus,
+  Search,
+  Filter,
+  Download,
+  MoreVertical,
+  Beaker,
+  ChevronDown,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { StatusBadge, EmptyState } from "@/components/shared";
-import { useStudies } from "@/hooks";
-import { formatDate, formatNumber } from "@/lib/utils";
-import { Plus, Search, Beaker, Users, Waves } from "lucide-react";
+
+const studyTypes = [
+  "All Types",
+  "GWAS",
+  "WES",
+  "WGS",
+  "RNA-Seq",
+  "Targeted",
+  "Metagenomics",
+  "PGx",
+  "scRNA-Seq",
+];
+
+const statusOptions = ["All Status", "Active", "Completed", "On Hold", "Draft"];
+
+const studies = [
+  {
+    id: "GF-2026-089",
+    name: "Genome-Wide Association Study - Type 2 Diabetes",
+    type: "GWAS",
+    samples: 1247,
+    traces: 8934,
+    created: "2026-03-10",
+    pi: "Dr. Sarah Martinez",
+    status: "active" as const,
+    tags: ["Diabetes", "GWAS", "Population Study"],
+    progress: 78,
+  },
+  {
+    id: "GF-2026-087",
+    name: "Whole Exome Sequencing - Rare Disease Panel",
+    type: "WES",
+    samples: 342,
+    traces: 2156,
+    created: "2026-03-08",
+    pi: "Dr. James Wong",
+    status: "active" as const,
+    tags: ["Rare Disease", "Clinical", "Exome"],
+    progress: 45,
+  },
+  {
+    id: "GF-2026-085",
+    name: "RNA-Seq Analysis - Cancer Biomarkers",
+    type: "RNA-Seq",
+    samples: 856,
+    traces: 6123,
+    created: "2026-03-05",
+    pi: "Dr. Emily Chen",
+    status: "completed" as const,
+    tags: ["Cancer", "Biomarkers", "Transcriptomics"],
+    progress: 100,
+  },
+  {
+    id: "GF-2026-082",
+    name: "Targeted Sequencing - BRCA1/2 Variants",
+    type: "Targeted",
+    samples: 125,
+    traces: 892,
+    created: "2026-03-02",
+    pi: "Dr. Michael Park",
+    status: "draft" as const,
+    tags: ["BRCA", "Hereditary Cancer", "Targeted"],
+    progress: 12,
+  },
+  {
+    id: "GF-2026-078",
+    name: "Whole Genome Sequencing - Cardiovascular Risk",
+    type: "WGS",
+    samples: 2341,
+    traces: 15234,
+    created: "2026-02-28",
+    pi: "Dr. Lisa Anderson",
+    status: "active" as const,
+    tags: ["Cardiovascular", "WGS", "Prevention"],
+    progress: 62,
+  },
+  {
+    id: "GF-2026-075",
+    name: "Microbiome Analysis - IBD Cohort",
+    type: "Metagenomics",
+    samples: 567,
+    traces: 4521,
+    created: "2026-02-25",
+    pi: "Dr. Robert Kim",
+    status: "active" as const,
+    tags: ["Microbiome", "IBD", "Metagenomics"],
+    progress: 89,
+  },
+  {
+    id: "GF-2026-071",
+    name: "Pharmacogenomics - Drug Response Study",
+    type: "PGx",
+    samples: 893,
+    traces: 5832,
+    created: "2026-02-20",
+    pi: "Dr. Maria Garcia",
+    status: "completed" as const,
+    tags: ["PGx", "Drug Response", "Precision Medicine"],
+    progress: 100,
+  },
+  {
+    id: "GF-2026-068",
+    name: "Single Cell RNA-Seq - Tumor Heterogeneity",
+    type: "scRNA-Seq",
+    samples: 214,
+    traces: 3421,
+    created: "2026-02-15",
+    pi: "Dr. David Lee",
+    status: "active" as const,
+    tags: ["Single Cell", "Cancer", "Heterogeneity"],
+    progress: 34,
+  },
+];
 
 export default function StudiesPage() {
-  const [search, setSearch] = useState("");
-  const { data, isLoading } = useStudies({ search: search || undefined });
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedType, setSelectedType] = useState("All Types");
+  const [selectedStatus, setSelectedStatus] = useState("All Status");
+  const [newStudyOpen, setNewStudyOpen] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const filteredStudies = studies.filter((study) => {
+    const matchesSearch =
+      searchQuery === "" ||
+      study.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      study.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      study.pi.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesType =
+      selectedType === "All Types" || study.type === selectedType;
+    const matchesStatus =
+      selectedStatus === "All Status" ||
+      study.status.toLowerCase() === selectedStatus.toLowerCase();
+    return matchesSearch && matchesType && matchesStatus;
+  });
+
+  const totalPages = Math.ceil(filteredStudies.length / 6);
+  const paginatedStudies = filteredStudies.slice(
+    (currentPage - 1) * 6,
+    currentPage * 6
+  );
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Studies"
-        description="Manage your genomic research projects"
-      >
-        <Button>
+      {/* Page Header */}
+      <div className="flex items-start justify-between">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold text-foreground">Studies</h1>
+          <p className="text-sm text-muted-foreground">
+            Manage and monitor your genetic sequencing studies
+          </p>
+        </div>
+        <Button
+          onClick={() => setNewStudyOpen(true)}
+          className="bg-gradient-to-r from-teal to-teal/90 hover:from-teal/90 hover:to-teal/80"
+        >
           <Plus className="h-4 w-4" />
           New Study
         </Button>
-      </PageHeader>
+      </div>
 
-      {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          placeholder="Search studies..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-10"
-        />
+      {/* Search and Filters */}
+      <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+        <div className="flex flex-col gap-4 md:flex-row">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search studies by ID, name, or PI..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full rounded-lg border border-border bg-background py-2 pl-10 pr-4 text-sm transition-all duration-200 focus:border-teal/30 focus:outline-none focus:ring-2 focus:ring-teal/20"
+            />
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={cn(
+                "flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-all duration-200 active:scale-[0.98]",
+                showFilters
+                  ? "border-teal/30 bg-teal/10 text-teal"
+                  : "border-border text-foreground hover:bg-muted/50"
+              )}
+            >
+              <Filter className="h-4 w-4" />
+              Filter
+              <ChevronDown
+                className={cn(
+                  "h-3.5 w-3.5 transition-transform",
+                  showFilters && "rotate-180"
+                )}
+              />
+            </button>
+            <button className="flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground transition-all duration-200 hover:bg-muted/50 active:scale-[0.98]">
+              <Download className="h-4 w-4" />
+              Export
+            </button>
+          </div>
+        </div>
+
+        {/* Expanded Filters */}
+        {showFilters && (
+          <div className="mt-4 flex flex-wrap items-center gap-4 border-t border-border pt-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Type:</span>
+              <div className="relative">
+                <select
+                  value={selectedType}
+                  onChange={(e) => setSelectedType(e.target.value)}
+                  className="cursor-pointer appearance-none rounded-lg border border-border bg-background py-1.5 pl-3 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20"
+                >
+                  {studyTypes.map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Status:</span>
+              <div className="relative">
+                <select
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(e.target.value)}
+                  className="cursor-pointer appearance-none rounded-lg border border-border bg-background py-1.5 pl-3 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20"
+                >
+                  {statusOptions.map((status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              </div>
+            </div>
+            {(selectedType !== "All Types" ||
+              selectedStatus !== "All Status") && (
+              <button
+                onClick={() => {
+                  setSelectedType("All Types");
+                  setSelectedStatus("All Status");
+                }}
+                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Clear filters
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Studies Grid */}
-      {isLoading ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Card key={i}>
-              <CardContent className="p-6">
-                <Skeleton className="h-6 w-3/4" />
-                <Skeleton className="mt-2 h-4 w-full" />
-                <Skeleton className="mt-1 h-4 w-2/3" />
-                <div className="mt-4 flex gap-4">
-                  <Skeleton className="h-4 w-16" />
-                  <Skeleton className="h-4 w-16" />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : data?.data.length === 0 ? (
+      {filteredStudies.length === 0 ? (
         <EmptyState
           icon={Beaker}
           title="No studies found"
           description={
-            search
-              ? "Try adjusting your search terms"
+            searchQuery || selectedType !== "All Types" || selectedStatus !== "All Status"
+              ? "Try adjusting your search or filters"
               : "Create your first study to get started"
           }
         >
-          {!search && (
-            <Button>
+          {!searchQuery && selectedType === "All Types" && selectedStatus === "All Status" && (
+            <Button onClick={() => setNewStudyOpen(true)}>
               <Plus className="h-4 w-4" />
               New Study
             </Button>
           )}
         </EmptyState>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {data?.data.map((study) => (
-            <Link key={study.id} href={`/studies/${study.id}`}>
-              <Card className="h-full transition-shadow hover:shadow-md">
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <h3 className="font-semibold text-foreground line-clamp-1">
-                      {study.name}
-                    </h3>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {paginatedStudies.map((study) => (
+            <Link
+              key={study.id}
+              href={`/studies/${study.id}`}
+              className="group rounded-xl border border-border bg-card p-6 transition-all duration-200 hover:-translate-y-0.5 hover:border-teal/40 hover:shadow-lg hover:shadow-black/5 active:scale-[0.99]"
+            >
+              <div className="mb-4 flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="mb-1 flex items-center gap-2">
+                    <span className="text-sm font-medium text-blue-deep">
+                      {study.id}
+                    </span>
                     <StatusBadge status={study.status} />
                   </div>
-                  {study.description && (
-                    <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
-                      {study.description}
-                    </p>
-                  )}
-                  <div className="mt-4 flex items-center gap-4 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <Waves className="h-4 w-4" />
-                      {formatNumber(study.tracesCount)} traces
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Users className="h-4 w-4" />
-                      {study.members.length}
-                    </span>
+                  <h3 className="line-clamp-2 font-medium text-foreground transition-colors duration-200 group-hover:text-teal">
+                    {study.name}
+                  </h3>
+                </div>
+                <button
+                  className="rounded-lg p-1.5 text-muted-foreground transition-all duration-200 hover:bg-muted/70 hover:text-foreground active:scale-95"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                >
+                  <MoreVertical className="h-4 w-4" />
+                </button>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="mb-4">
+                <div className="mb-1 flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">Progress</span>
+                  <span className="font-medium text-foreground">
+                    {study.progress}%
+                  </span>
+                </div>
+                <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+                  <div
+                    className={cn(
+                      "h-full rounded-full transition-all",
+                      study.progress === 100
+                        ? "bg-emerald-500"
+                        : "bg-gradient-to-r from-teal to-blue-deep"
+                    )}
+                    style={{ width: `${study.progress}%` }}
+                  />
+                </div>
+              </div>
+
+              <div className="mb-4 grid grid-cols-3 gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <FileText className="h-3.5 w-3.5" />
+                    <span className="text-xs">Type</span>
                   </div>
-                  <p className="mt-3 text-xs text-muted-foreground">
-                    Updated {formatDate(study.updatedAt)}
+                  <p className="text-sm font-medium text-foreground">
+                    {study.type}
                   </p>
-                </CardContent>
-              </Card>
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <Users className="h-3.5 w-3.5" />
+                    <span className="text-xs">Samples</span>
+                  </div>
+                  <p className="text-sm font-medium text-foreground">
+                    {study.samples.toLocaleString()}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <Calendar className="h-3.5 w-3.5" />
+                    <span className="text-xs">Created</span>
+                  </div>
+                  <p className="text-sm font-medium text-foreground">
+                    {new Date(study.created).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <p className="mb-1 text-xs text-muted-foreground">
+                  Principal Investigator
+                </p>
+                <p className="text-sm font-medium text-foreground">
+                  {study.pi}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-1.5">
+                {study.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded-md bg-muted/50 px-2.5 py-1 text-xs text-muted-foreground"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
             </Link>
           ))}
         </div>
       )}
 
-      {/* Pagination info */}
-      {data && data.total > 0 && (
-        <p className="text-sm text-muted-foreground">
-          Showing {data.data.length} of {data.total} studies
-        </p>
+      {/* Pagination */}
+      {filteredStudies.length > 0 && (
+        <div className="flex items-center justify-between rounded-xl border border-border bg-card px-6 py-4 shadow-sm">
+          <p className="text-sm text-muted-foreground">
+            Showing{" "}
+            <span className="font-medium text-foreground">
+              {(currentPage - 1) * 6 + 1}-
+              {Math.min(currentPage * 6, filteredStudies.length)}
+            </span>{" "}
+            of{" "}
+            <span className="font-medium text-foreground">
+              {filteredStudies.length}
+            </span>{" "}
+            studies
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="rounded-lg border border-border px-3 py-2 text-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-muted/50 hover:text-foreground active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Previous
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className={cn(
+                  "rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 active:scale-95",
+                  currentPage === page
+                    ? "bg-teal text-white shadow-sm"
+                    : "border border-border text-foreground hover:bg-muted/50"
+                )}
+              >
+                {page}
+              </button>
+            ))}
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground transition-all duration-200 hover:bg-muted/50 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+        </div>
       )}
+
+      {/* New Study Dialog */}
+      <Dialog open={newStudyOpen} onOpenChange={setNewStudyOpen}>
+        <DialogContent className="sm:max-w-[540px]">
+          <DialogHeader>
+            <DialogTitle>Create New Study</DialogTitle>
+            <DialogDescription>
+              Set up a new genetic sequencing study with project details and
+              configuration.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-5 py-4">
+            <div className="space-y-2">
+              <label
+                htmlFor="study-name"
+                className="text-sm font-medium text-foreground"
+              >
+                Study Name
+              </label>
+              <input
+                id="study-name"
+                type="text"
+                className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground transition-all placeholder:text-muted-foreground focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/10"
+                placeholder="e.g., Genome-Wide Association Study"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label
+                  htmlFor="study-type"
+                  className="text-sm font-medium text-foreground"
+                >
+                  Study Type
+                </label>
+                <select
+                  id="study-type"
+                  className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/10"
+                >
+                  <option value="">Select type...</option>
+                  <option value="GWAS">GWAS</option>
+                  <option value="WES">Whole Exome Sequencing</option>
+                  <option value="WGS">Whole Genome Sequencing</option>
+                  <option value="RNA-Seq">RNA-Seq</option>
+                  <option value="Targeted">Targeted Sequencing</option>
+                  <option value="Metagenomics">Metagenomics</option>
+                  <option value="PGx">Pharmacogenomics</option>
+                  <option value="scRNA-Seq">Single Cell RNA-Seq</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label
+                  htmlFor="sample-count"
+                  className="text-sm font-medium text-foreground"
+                >
+                  Expected Samples
+                </label>
+                <input
+                  id="sample-count"
+                  type="number"
+                  className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground transition-all placeholder:text-muted-foreground focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/10"
+                  placeholder="e.g., 1247"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label
+                htmlFor="principal-investigator"
+                className="text-sm font-medium text-foreground"
+              >
+                Principal Investigator
+              </label>
+              <input
+                id="principal-investigator"
+                type="text"
+                className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground transition-all placeholder:text-muted-foreground focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/10"
+                placeholder="e.g., Dr. Sarah Martinez"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label
+                  htmlFor="status"
+                  className="text-sm font-medium text-foreground"
+                >
+                  Initial Status
+                </label>
+                <select
+                  id="status"
+                  className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/10"
+                >
+                  <option value="draft">Draft</option>
+                  <option value="active">Active</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label
+                  htmlFor="start-date"
+                  className="text-sm font-medium text-foreground"
+                >
+                  Start Date
+                </label>
+                <input
+                  id="start-date"
+                  type="date"
+                  className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/10"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label
+                htmlFor="tags"
+                className="text-sm font-medium text-foreground"
+              >
+                Tags
+              </label>
+              <input
+                id="tags"
+                type="text"
+                className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground transition-all placeholder:text-muted-foreground focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/10"
+                placeholder="e.g., Diabetes, GWAS, Population Study"
+              />
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                Separate tags with commas
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <label
+                htmlFor="description"
+                className="text-sm font-medium text-foreground"
+              >
+                Description
+              </label>
+              <textarea
+                id="description"
+                rows={3}
+                className="w-full resize-none rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground transition-all placeholder:text-muted-foreground focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/10"
+                placeholder="Brief description of the study objectives..."
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <button
+              type="button"
+              className="rounded-lg px-4 py-2.5 text-sm font-medium text-foreground transition-all hover:bg-muted"
+              onClick={() => setNewStudyOpen(false)}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="rounded-lg bg-teal px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-teal/90 hover:shadow-md"
+              onClick={() => setNewStudyOpen(false)}
+            >
+              Create Study
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
