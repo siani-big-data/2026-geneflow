@@ -1,221 +1,368 @@
 "use client";
 
-import { use } from "react";
+import { useState, useCallback } from "react";
 import Link from "next/link";
-import { PageHeader } from "@/components/layout";
-import { Button, Card, CardContent, CardHeader, CardTitle, Skeleton } from "@/components/ui";
-import { StatusBadge, EmptyState } from "@/components/shared";
-import { useTrace } from "@/hooks";
-import { formatDate, formatBytes } from "@/lib/utils";
-import { ArrowLeft, Download, Share2, Trash2, FileText, Calendar, HardDrive, Activity, Dna } from "lucide-react";
+import {
+  ArrowLeft,
+  ChevronDown,
+  Download,
+  Share2,
+  Printer,
+  CheckCircle2,
+  Info,
+  AlertCircle,
+  Sparkles,
+  X,
+  ZoomIn,
+  ZoomOut,
+  Maximize2,
+  Activity,
+  List,
+  BarChart3,
+  Copy,
+  Scissors,
+  MessageSquare,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { AIAssistant, Chromatogram } from "@/components/shared";
+import type { ChromatogramControls, ChromatogramStats } from "@/components/shared";
 
-export default function TraceDetailPage({
-  params,
-}: {
-  params: Promise<{ traceId: string }>;
-}) {
-  const { traceId } = use(params);
-  const { data: trace, isLoading } = useTrace(traceId);
+const availableTraces = [
+  { id: "TR-2026-08945", sample: "SMD-T2D-1258", quality: 98.2 },
+  { id: "TR-2026-08944", sample: "SMD-T2D-1257", quality: 97.8 },
+  { id: "TR-2026-08940", sample: "SMD-CB-0789", quality: 96.5 },
+  { id: "TR-2026-08939", sample: "SMD-CB-0788", quality: 97.1 },
+  { id: "TR-2026-08936", sample: "SMD-T2D-1254", quality: 98.5 },
+];
 
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-8 w-64" />
-        <div className="grid gap-4 md:grid-cols-4">
-          <Skeleton className="h-24" />
-          <Skeleton className="h-24" />
-          <Skeleton className="h-24" />
-          <Skeleton className="h-24" />
-        </div>
-        <Skeleton className="h-96" />
-      </div>
-    );
-  }
+export default function TraceViewerPage() {
+  const [selectedTrace, setSelectedTrace] = useState(availableTraces[0]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
+  const [notification, setNotification] = useState<{
+    message: string;
+    type: "success" | "error" | "info";
+  } | null>(null);
 
-  if (!trace) {
-    return (
-      <EmptyState
-        title="Trace not found"
-        description="The trace you're looking for doesn't exist or has been removed."
-      >
-        <Link href="/traces">
-          <Button variant="outline">
-            <ArrowLeft className="h-4 w-4" />
-            Back to Traces
-          </Button>
-        </Link>
-      </EmptyState>
-    );
-  }
+  // Chromatogram controls and stats
+  const [chromControls, setChromControls] = useState<ChromatogramControls | null>(null);
+  const [chromStats, setChromStats] = useState<ChromatogramStats | null>(null);
+
+  const handleControlsReady = useCallback((controls: ChromatogramControls) => {
+    setChromControls(controls);
+  }, []);
+
+  const handleStatsReady = useCallback((stats: ChromatogramStats) => {
+    setChromStats(stats);
+  }, []);
+
+  const showNotification = (message: string, type: "success" | "error" | "info" = "success") => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 3000);
+  };
+
+  const handleExport = () => {
+    showNotification("Preparing export...", "info");
+  };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Link href="/traces">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <PageHeader
-          title={trace.name}
-          description={
-            <span className="flex items-center gap-2">
-              <Link
-                href={`/studies/${trace.studyId}`}
-                className="text-teal hover:underline"
-              >
-                {trace.studyName}
-              </Link>
-              <span>·</span>
-              <StatusBadge status={trace.status} />
-            </span>
-          }
-        >
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon">
-              <Share2 className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="icon">
-              <Trash2 className="h-4 w-4" />
-            </Button>
-            <Button>
-              <Download className="h-4 w-4" />
-              Download
-            </Button>
-          </div>
-        </PageHeader>
-      </div>
-
-      {/* Trace Info Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardContent className="flex items-center gap-3 p-4">
-            <div className="rounded-full bg-muted p-2">
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </div>
-            <div>
-              <p className="text-lg font-semibold">{trace.fileType.toUpperCase()}</p>
-              <p className="text-sm text-muted-foreground">File Type</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center gap-3 p-4">
-            <div className="rounded-full bg-muted p-2">
-              <HardDrive className="h-4 w-4 text-muted-foreground" />
-            </div>
-            <div>
-              <p className="text-lg font-semibold">{formatBytes(trace.fileSize)}</p>
-              <p className="text-sm text-muted-foreground">File Size</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center gap-3 p-4">
-            <div className="rounded-full bg-muted p-2">
-              <Dna className="h-4 w-4 text-muted-foreground" />
-            </div>
-            <div>
-              <p className="text-lg font-semibold">
-                {trace.sequenceLength?.toLocaleString() ?? "-"}
-              </p>
-              <p className="text-sm text-muted-foreground">Sequence Length</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center gap-3 p-4">
-            <div className="rounded-full bg-muted p-2">
-              <Activity className="h-4 w-4 text-muted-foreground" />
-            </div>
-            <div>
-              <p className="text-lg font-semibold">
-                {trace.qualityScore ? `${trace.qualityScore}%` : "-"}
-              </p>
-              <p className="text-sm text-muted-foreground">Quality Score</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Sequence Viewer Placeholder */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Sequence Viewer</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {trace.status === "completed" ? (
-            <div className="rounded-lg bg-muted/50 p-8 text-center">
-              <Dna className="mx-auto h-12 w-12 text-muted-foreground" />
-              <p className="mt-4 text-lg font-medium">Sequence Visualization</p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Interactive sequence viewer will be displayed here.
-              </p>
-              <div className="mt-6 font-mono text-xs text-muted-foreground bg-muted p-4 rounded overflow-x-auto">
-                ATCGATCGATCGATCGATCGATCGATCGATCGATCGATCG...
-              </div>
-            </div>
-          ) : trace.status === "processing" ? (
-            <div className="rounded-lg bg-muted/50 p-8 text-center">
-              <Activity className="mx-auto h-12 w-12 text-blue-500 animate-pulse" />
-              <p className="mt-4 text-lg font-medium">Processing...</p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                This trace is currently being processed. Please check back shortly.
-              </p>
-            </div>
-          ) : trace.status === "failed" ? (
-            <div className="rounded-lg bg-destructive/10 p-8 text-center">
-              <p className="text-lg font-medium text-destructive">Processing Failed</p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                There was an error processing this trace. Please try uploading again.
-              </p>
-            </div>
-          ) : (
-            <div className="rounded-lg bg-muted/50 p-8 text-center">
-              <p className="text-lg font-medium">Pending Processing</p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                This trace is queued for processing.
-              </p>
-            </div>
+    <div className="-mx-16 -mt-10 flex h-[calc(100vh-0px)] flex-col bg-background">
+      {/* Toast Notification */}
+      {notification && (
+        <div
+          className={cn(
+            "fixed right-8 top-24 z-50 flex items-center gap-2 rounded-lg border px-4 py-3 shadow-lg transition-all",
+            notification.type === "success" &&
+              "border-emerald-500/30 bg-emerald-500/10 text-emerald-500",
+            notification.type === "error" && "border-red-500/30 bg-red-500/10 text-red-500",
+            notification.type === "info" && "border-blue-deep/30 bg-blue-deep/10 text-blue-deep"
           )}
-        </CardContent>
-      </Card>
+        >
+          {notification.type === "success" && <CheckCircle2 className="h-4 w-4" />}
+          {notification.type === "error" && <AlertCircle className="h-4 w-4" />}
+          {notification.type === "info" && <Info className="h-4 w-4" />}
+          <span className="text-sm font-medium">{notification.message}</span>
+        </div>
+      )}
 
-      {/* Metadata */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Details</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <dl className="grid gap-4 md:grid-cols-2">
-            <div>
-              <dt className="text-sm font-medium text-muted-foreground">Uploaded by</dt>
-              <dd className="mt-1">{trace.uploadedBy.name}</dd>
+      {/* Top Control Bar */}
+      <div className="flex-shrink-0 border-b border-border bg-card">
+        <div className="px-16 py-3">
+          {/* Back Button */}
+          <Link
+            href="/traces"
+            className="mb-3 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Traces
+          </Link>
+
+          {/* Main Header Row */}
+          <div className="flex items-center justify-between gap-4">
+            {/* Left: Trace Selector + Stats */}
+            <div className="flex items-center gap-6">
+              {/* Trace Selector */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowDropdown(!showDropdown)}
+                  className="flex min-w-[280px] items-center gap-3 rounded-lg border border-border bg-background px-3 py-2 transition-all hover:bg-muted/30"
+                >
+                  <div className="flex-1 text-left">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-blue-deep">{selectedTrace.id}</span>
+                      <span className="text-xs text-muted-foreground">-</span>
+                      <span className="font-mono text-xs text-foreground">
+                        {selectedTrace.sample}
+                      </span>
+                    </div>
+                  </div>
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                </button>
+
+                {showDropdown && (
+                  <div className="absolute left-0 top-full z-10 mt-2 w-full overflow-hidden rounded-lg border border-border bg-card shadow-lg">
+                    <div className="border-b border-border bg-muted/20 p-2">
+                      <input
+                        type="text"
+                        placeholder="Search traces..."
+                        className="w-full rounded border border-border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20"
+                      />
+                    </div>
+                    <div className="max-h-64 overflow-y-auto">
+                      {availableTraces.map((trace) => (
+                        <button
+                          key={trace.id}
+                          onClick={() => {
+                            setSelectedTrace(trace);
+                            setShowDropdown(false);
+                          }}
+                          className={cn(
+                            "w-full border-l-2 px-4 py-2.5 text-left transition-colors hover:bg-muted/50",
+                            selectedTrace.id === trace.id
+                              ? "border-teal bg-teal/5"
+                              : "border-transparent"
+                          )}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-blue-deep">{trace.id}</span>
+                            <span className="font-mono text-xs text-foreground">{trace.sample}</span>
+                            <span className="ml-auto text-xs font-medium text-emerald-500">{trace.quality}%</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="h-8 w-px bg-border" />
+
+              {/* Stats from Chromatogram */}
+              {chromStats && (
+                <div className="flex items-center gap-5">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Length</span>
+                    <span className="text-sm font-semibold text-foreground">{chromStats.sequenceLength} bp</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Quality</span>
+                    <span className={cn(
+                      "text-sm font-semibold",
+                      chromStats.averageQuality >= 30 ? "text-emerald-500" : chromStats.averageQuality >= 20 ? "text-amber-500" : "text-red-500"
+                    )}>
+                      Q{chromStats.averageQuality}
+                    </span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] uppercase tracking-wide text-muted-foreground">GC</span>
+                    <span className="text-sm font-semibold text-foreground">{chromStats.gcContent}%</span>
+                  </div>
+                </div>
+              )}
             </div>
-            <div>
-              <dt className="text-sm font-medium text-muted-foreground">Upload date</dt>
-              <dd className="mt-1">{formatDate(trace.createdAt)}</dd>
-            </div>
-            {trace.processedAt && (
-              <div>
-                <dt className="text-sm font-medium text-muted-foreground">Processed date</dt>
-                <dd className="mt-1">{formatDate(trace.processedAt)}</dd>
+
+            {/* Center: Chromatogram Controls */}
+            {chromControls && (
+              <div className="flex items-center gap-2">
+                {/* View Mode Toggle */}
+                <div className="flex rounded-lg border border-border bg-muted/30 p-0.5">
+                  <button
+                    onClick={() => chromControls.setViewMode("trace")}
+                    className={cn(
+                      "flex h-7 w-8 items-center justify-center rounded-md transition-all",
+                      chromControls.viewMode === "trace"
+                        ? "bg-teal text-white"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                    title="Trace View"
+                  >
+                    <Activity className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => chromControls.setViewMode("sequence")}
+                    className={cn(
+                      "flex h-7 w-8 items-center justify-center rounded-md transition-all",
+                      chromControls.viewMode === "sequence"
+                        ? "bg-teal text-white"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                    title="Sequence View"
+                  >
+                    <List className="h-4 w-4" />
+                  </button>
+                </div>
+
+                <div className="h-6 w-px bg-border" />
+
+                {/* Zoom Controls */}
+                <div className="flex items-center gap-1 rounded-lg border border-border bg-muted/30 p-0.5">
+                  <button
+                    onClick={chromControls.zoomOut}
+                    disabled={chromControls.zoomLevel <= chromControls.minZoom}
+                    className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-all hover:bg-background hover:text-foreground disabled:opacity-40"
+                    title="Zoom Out"
+                  >
+                    <ZoomOut className="h-4 w-4" />
+                  </button>
+                  <span className="min-w-[42px] text-center text-xs font-medium text-foreground">
+                    {Math.round(chromControls.zoomLevel * 100)}%
+                  </span>
+                  <button
+                    onClick={chromControls.zoomIn}
+                    disabled={chromControls.zoomLevel >= chromControls.maxZoom}
+                    className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-all hover:bg-background hover:text-foreground disabled:opacity-40"
+                    title="Zoom In"
+                  >
+                    <ZoomIn className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={chromControls.resetZoom}
+                    className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-all hover:bg-background hover:text-foreground"
+                    title="Reset Zoom"
+                  >
+                    <Maximize2 className="h-4 w-4" />
+                  </button>
+                </div>
+
+                <div className="h-6 w-px bg-border" />
+
+                {/* Quality Toggle */}
+                <button
+                  onClick={() => chromControls.setShowQuality(!chromControls.showQuality)}
+                  className={cn(
+                    "flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition-all",
+                    chromControls.showQuality
+                      ? "border-teal bg-teal text-white"
+                      : "border-border text-muted-foreground hover:border-teal hover:text-foreground"
+                  )}
+                  title="Toggle Quality Bars"
+                >
+                  <BarChart3 className="h-3.5 w-3.5" />
+                  Quality
+                </button>
+
+                <div className="h-6 w-px bg-border" />
+
+                {/* Tools - Placeholder for future */}
+                <button
+                  className="flex h-8 items-center gap-1.5 rounded-lg border border-border px-2.5 text-xs font-medium text-muted-foreground transition-all hover:border-teal hover:text-foreground"
+                  title="Trim Sequence"
+                >
+                  <Scissors className="h-3.5 w-3.5" />
+                  Trim
+                </button>
+
+                <button
+                  className="flex h-8 items-center gap-1.5 rounded-lg border border-border px-2.5 text-xs font-medium text-muted-foreground transition-all hover:border-teal hover:text-foreground"
+                  title="Add Annotation"
+                >
+                  <MessageSquare className="h-3.5 w-3.5" />
+                  Annotate
+                </button>
               </div>
             )}
-            <div>
-              <dt className="text-sm font-medium text-muted-foreground">Study</dt>
-              <dd className="mt-1">
-                <Link
-                  href={`/studies/${trace.studyId}`}
-                  className="text-teal hover:underline"
-                >
-                  {trace.studyName}
-                </Link>
-              </dd>
+
+            {/* Right: Action Buttons */}
+            <div className="flex items-center gap-2">
+              {chromControls && (
+                <>
+                  <button
+                    onClick={chromControls.copySequence}
+                    className="flex h-8 items-center gap-1.5 rounded-lg border border-border px-2.5 text-xs font-medium text-muted-foreground transition-all hover:border-teal hover:text-foreground"
+                    title="Copy Sequence"
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                    {chromControls.copied ? "Copied!" : "Copy"}
+                  </button>
+
+                  <button
+                    onClick={chromControls.exportFasta}
+                    className="flex h-8 items-center gap-1.5 rounded-lg border border-border px-2.5 text-xs font-medium text-muted-foreground transition-all hover:border-teal hover:text-foreground"
+                    title="Export FASTA"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    FASTA
+                  </button>
+
+                  <div className="h-6 w-px bg-border" />
+                </>
+              )}
+
+              <button
+                onClick={() => setAiAssistantOpen(true)}
+                className="flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-teal to-blue-deep px-3 text-xs font-medium text-white transition-all hover:opacity-90"
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                AI Assistant
+              </button>
+
+              <button className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground transition-all hover:bg-muted/50 hover:text-foreground">
+                <Share2 className="h-4 w-4" />
+              </button>
+              <button className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground transition-all hover:bg-muted/50 hover:text-foreground">
+                <Printer className="h-4 w-4" />
+              </button>
             </div>
-          </dl>
-        </CardContent>
-      </Card>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content Area */}
+      <div className="flex-1 overflow-auto p-4">
+        <Chromatogram
+          className="h-[1000px] w-full"
+          hideHeader
+          onControlsReady={handleControlsReady}
+          onStatsReady={handleStatsReady}
+        />
+      </div>
+
+      {/* AI Assistant Chat Bubble */}
+      <button
+        onClick={() => setAiAssistantOpen(!aiAssistantOpen)}
+        className={cn(
+          "fixed bottom-6 z-40 flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl",
+          aiAssistantOpen
+            ? "right-[416px] bg-muted/90 text-foreground backdrop-blur-sm hover:bg-muted"
+            : "right-6 bg-gradient-to-r from-teal to-blue-deep text-white"
+        )}
+        aria-label={aiAssistantOpen ? "Close AI Assistant" : "Open AI Assistant"}
+      >
+        {aiAssistantOpen ? (
+          <X className="h-6 w-6" />
+        ) : (
+          <Sparkles className="h-6 w-6" />
+        )}
+      </button>
+
+      {/* AI Assistant */}
+      <AIAssistant
+        isOpen={aiAssistantOpen}
+        onClose={() => setAiAssistantOpen(false)}
+        contextType="trace"
+        contextTitle={`${selectedTrace.id} - ${selectedTrace.sample}`}
+        contextId={selectedTrace.id}
+      />
     </div>
   );
 }
