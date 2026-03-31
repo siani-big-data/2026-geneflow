@@ -200,10 +200,6 @@ export default function DashboardPage() {
             Welcome back, Dr. Martinez. Here&apos;s your laboratory overview for today.
           </p>
         </div>
-        <div className="text-right">
-          <p className="text-sm text-muted-foreground">Last updated</p>
-          <p className="text-sm font-medium text-foreground">Today at 4:32 PM</p>
-        </div>
       </div>
 
       {/* Metrics Grid */}

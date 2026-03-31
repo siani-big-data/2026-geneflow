@@ -12,24 +12,12 @@ export default function PlatformLayout({
   const { sidebarCollapsed } = useUIStore();
 
   return (
-    <div className="relative flex min-h-screen overflow-hidden bg-background">
-      {/* Ambient background effect */}
-      <div className="pointer-events-none absolute inset-0 z-0">
-        <div
-          className="absolute -left-20 -top-20 h-[600px] w-[600px]"
-          style={{
-            background:
-              "radial-gradient(circle, rgba(13, 148, 136, 0.12) 0%, rgba(13, 148, 136, 0.06) 40%, transparent 70%)",
-            filter: "blur(80px)",
-          }}
-        />
-      </div>
-
+    <div className="flex min-h-screen bg-background">
       <Sidebar />
 
       <div
         className={cn(
-          "flex min-w-0 flex-1 flex-col transition-all duration-300",
+          "flex min-w-0 flex-1 flex-col transition-[margin] duration-300 ease-out will-change-[margin-left]",
           sidebarCollapsed ? "ml-20" : "ml-64"
         )}
       >

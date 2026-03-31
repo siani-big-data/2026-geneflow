@@ -26,16 +26,16 @@
   --switch-background: #cbd5e1;
   --ring: #0d9488;
   --chart-1: #0d9488;
-  --chart-2: #1e40af;
+  --chart-2: #3b82f6;
   --chart-3: #6366f1;
   --chart-4: #8b5cf6;
   --chart-5: #ec4899;
   --teal: #0d9488;
   --teal-light: #14b8a6;
   --teal-hover: #0f766e;
-  --blue-deep: #1e40af;
-  --blue-light: #3b82f6;
-  --blue-hover: #1e3a8a;
+  --blue-deep: #3b82f6;
+  --blue-light: #60a5fa;
+  --blue-hover: #2563eb;
   --gray-50: #f9fafb;
   --gray-100: #f3f4f6;
   --gray-200: #e5e7eb;
@@ -54,40 +54,46 @@
 }
 
 .dark {
-  --background: #0a0a0a;
+  --background: #09090b;
   --foreground: #fafafa;
-  --card: #0a0a0a;
+  --card: #111113;
   --card-foreground: #fafafa;
-  --popover: #0a0a0a;
+  --popover: #151517;
   --popover-foreground: #fafafa;
   --primary: #fafafa;
-  --primary-foreground: #1a1a1a;
-  --secondary: #262626;
+  --primary-foreground: #18181b;
+  --secondary: #27272a;
   --secondary-foreground: #fafafa;
-  --muted: #262626;
-  --muted-foreground: #a3a3a3;
-  --accent: #262626;
+  --muted: #27272a;
+  --muted-foreground: #a1a1aa;
+  --accent: #2d2d32;
   --accent-foreground: #fafafa;
-  --destructive: #7f1d1d;
+  --destructive: #991b1b;
   --destructive-foreground: #fca5a5;
-  --border: #262626;
-  --input: #262626;
-  --input-background: #171717;
-  --switch-background: #404040;
-  --ring: #525252;
-  --chart-1: #3b82f6;
-  --chart-2: #22c55e;
+  --border: #3f3f46;
+  --input: #27272a;
+  --input-background: #18181b;
+  --switch-background: #52525b;
+  --ring: #14b8a6;
+  --chart-1: #14b8a6;
+  --chart-2: #60a5fa;
   --chart-3: #eab308;
   --chart-4: #a855f7;
   --chart-5: #f43f5e;
-  --sidebar: #171717;
+  --teal: #14b8a6;
+  --teal-light: #2dd4bf;
+  --teal-hover: #0d9488;
+  --blue-deep: #60a5fa;
+  --blue-light: #93c5fd;
+  --blue-hover: #3b82f6;
+  --sidebar: #111113;
   --sidebar-foreground: #fafafa;
-  --sidebar-primary: #3b82f6;
+  --sidebar-primary: #14b8a6;
   --sidebar-primary-foreground: #fafafa;
-  --sidebar-accent: #262626;
+  --sidebar-accent: #27272a;
   --sidebar-accent-foreground: #fafafa;
-  --sidebar-border: #262626;
-  --sidebar-ring: #525252;
+  --sidebar-border: #3f3f46;
+  --sidebar-ring: #14b8a6;
 }
 
 @theme inline {

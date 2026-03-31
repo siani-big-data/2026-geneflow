@@ -31,7 +31,7 @@ export function Header() {
             id="global-search"
             type="search"
             placeholder="Search studies, samples, or analyses..."
-            className="peer min-h-[40px] w-full rounded-lg border border-transparent bg-muted/30 py-2 pl-10 pr-4 text-sm transition-all duration-200 focus:border-border focus:bg-background focus:outline-none focus:ring-2 focus:ring-teal/10"
+            className="peer min-h-[40px] w-full rounded-lg border border-border/50 bg-muted/50 py-2 pl-10 pr-4 text-sm placeholder:text-muted-foreground/70 transition-all duration-200 focus:border-teal/50 focus:bg-background focus:outline-none focus:ring-2 focus:ring-teal/20 dark:border-white/10 dark:bg-white/5 dark:placeholder:text-white/40 dark:focus:border-teal/60 dark:focus:bg-white/10"
             aria-label="Search studies, samples, or analyses"
           />
         </div>
