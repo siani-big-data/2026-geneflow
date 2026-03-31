@@ -181,6 +181,8 @@ export default function DiscoverPage() {
   const [selectedField, setSelectedField] = useState("All Fields");
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
 
   const filteredStudies = publicStudies.filter((study) => {
     const matchesField =
@@ -192,6 +194,12 @@ export default function DiscoverPage() {
       study.pi.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesField && matchesSearch;
   });
+
+  const totalPages = Math.ceil(filteredStudies.length / itemsPerPage);
+  const paginatedStudies = filteredStudies.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const featuredStudies = publicStudies.filter((study) => study.featured);
 
@@ -220,7 +228,10 @@ export default function DiscoverPage() {
               type="text"
               placeholder="Search studies, institutions, or researchers..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
               className="w-full rounded-xl border border-border bg-card py-4 pl-12 pr-4 text-base shadow-sm transition-all duration-200 placeholder:text-muted-foreground/60 hover:shadow-md focus:border-teal/30 focus:outline-none focus:ring-2 focus:ring-teal/20 dark:border-border/50 dark:bg-card/50 dark:hover:bg-card"
             />
           </div>
@@ -230,7 +241,8 @@ export default function DiscoverPage() {
       {/* Featured Studies */}
       {featuredStudies.length > 0 &&
         searchQuery === "" &&
-        selectedField === "All Fields" && (
+        selectedField === "All Fields" &&
+        currentPage === 1 && (
           <div>
             <div className="mb-4 flex items-center gap-2">
               <Award className="h-5 w-5 text-amber-500" />
@@ -309,7 +321,10 @@ export default function DiscoverPage() {
           <div className="relative">
             <select
               value={selectedField}
-              onChange={(e) => setSelectedField(e.target.value)}
+              onChange={(e) => {
+                setSelectedField(e.target.value);
+                setCurrentPage(1);
+              }}
               className="cursor-pointer appearance-none rounded-lg border border-border bg-card py-2 pl-4 pr-10 text-sm font-medium text-foreground transition-all hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-teal/20"
             >
               {researchFields.map((field) => (
@@ -323,7 +338,10 @@ export default function DiscoverPage() {
 
           {selectedField !== "All Fields" && (
             <button
-              onClick={() => setSelectedField("All Fields")}
+              onClick={() => {
+                setSelectedField("All Fields");
+                setCurrentPage(1);
+              }}
               className="text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
               Clear filters
@@ -464,7 +482,7 @@ export default function DiscoverPage() {
       {/* Studies Grid */}
       {viewMode === "grid" ? (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filteredStudies.map((study) => (
+          {paginatedStudies.map((study) => (
             <Link
               key={study.id}
               href={`/studies/${study.id}`}
@@ -549,7 +567,7 @@ export default function DiscoverPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {filteredStudies.map((study) => (
+          {paginatedStudies.map((study) => (
             <Link
               key={study.id}
               href={`/studies/${study.id}`}
@@ -619,6 +637,64 @@ export default function DiscoverPage() {
         </div>
       )}
 
+      {/* Pagination */}
+      {filteredStudies.length > 0 && totalPages > 1 && (
+        <div className="flex items-center justify-between rounded-xl border border-border bg-card px-6 py-4 shadow-sm">
+          <p className="text-sm text-muted-foreground">
+            Showing{" "}
+            <span className="font-medium text-foreground">
+              {(currentPage - 1) * itemsPerPage + 1}-
+              {Math.min(currentPage * itemsPerPage, filteredStudies.length)}
+            </span>{" "}
+            of{" "}
+            <span className="font-medium text-foreground">
+              {filteredStudies.length}
+            </span>{" "}
+            studies
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className={cn(
+                "rounded-lg border border-border px-3 py-2 text-sm font-medium transition-all duration-200 active:scale-95",
+                currentPage === 1
+                  ? "cursor-not-allowed opacity-50"
+                  : "text-foreground hover:bg-muted/50"
+              )}
+            >
+              Previous
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className={cn(
+                  "rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 active:scale-95",
+                  currentPage === page
+                    ? "bg-teal text-white shadow-sm"
+                    : "border border-border text-foreground hover:bg-muted/50"
+                )}
+              >
+                {page}
+              </button>
+            ))}
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className={cn(
+                "rounded-lg border border-border px-3 py-2 text-sm font-medium transition-all duration-200 active:scale-95",
+                currentPage === totalPages
+                  ? "cursor-not-allowed opacity-50"
+                  : "text-foreground hover:bg-muted/50"
+              )}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Empty State */}
       {filteredStudies.length === 0 && (
         <div className="py-16 text-center">
@@ -635,6 +711,7 @@ export default function DiscoverPage() {
             onClick={() => {
               setSearchQuery("");
               setSelectedField("All Fields");
+              setCurrentPage(1);
             }}
             className="rounded-lg bg-teal px-4 py-2 text-white transition-all hover:bg-teal/90"
           >
