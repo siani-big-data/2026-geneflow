@@ -55,9 +55,10 @@ const stats = [
 
 const statusOptions = ["All Status", "Uploaded", "Validating", "Processing", "Processed", "Failed"];
 const dateRangeOptions = ["All Time", "Today", "Last 7 Days", "Last 30 Days", "Last 90 Days"];
-const ownerOptions = ["All Owners", ...Array.from(new Set(traces.map((t) => t.owner)))];
+const initialOwners = ["All Owners", ...Array.from(new Set(traces.map((t) => t.owner)))];
 
 export default function TracesPage() {
+  const [tracesData, setTracesData] = useState(traces);
   const [selectedTraces, setSelectedTraces] = useState<string[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -65,9 +66,50 @@ export default function TracesPage() {
   const [selectedDateRange, setSelectedDateRange] = useState("All Time");
   const [selectedOwner, setSelectedOwner] = useState("All Owners");
   const [currentPage, setCurrentPage] = useState(1);
+  const [notification, setNotification] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
   const itemsPerPage = 10;
 
-  const filteredTraces = traces.filter((trace) => {
+  const showNotification = (message: string, type: "success" | "error" | "info" = "success") => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 3000);
+  };
+
+  const handleDeleteSelected = () => {
+    setTracesData((prev) => prev.filter((t) => !selectedTraces.includes(t.id)));
+    showNotification(`${selectedTraces.length} trace(s) deleted successfully`);
+    setSelectedTraces([]);
+  };
+
+  const handleDeleteSingle = (id: string) => {
+    setTracesData((prev) => prev.filter((t) => t.id !== id));
+    setSelectedTraces((prev) => prev.filter((t) => t !== id));
+    showNotification("Trace deleted successfully");
+  };
+
+  const handleDownloadSelected = () => {
+    showNotification(`Downloading ${selectedTraces.length} trace(s)...`, "info");
+  };
+
+  const handleDownloadSingle = (id: string) => {
+    showNotification(`Downloading trace ${id}...`, "info");
+  };
+
+  const handleReprocess = () => {
+    // Update status to "Processing" for selected traces
+    setTracesData((prev) =>
+      prev.map((t) =>
+        selectedTraces.includes(t.id) ? { ...t, status: "Processing", quality: null } : t
+      )
+    );
+    showNotification(`${selectedTraces.length} trace(s) queued for reprocessing`);
+    setSelectedTraces([]);
+  };
+
+  const handleExport = () => {
+    showNotification("Exporting traces to CSV...", "info");
+  };
+
+  const filteredTraces = tracesData.filter((trace) => {
     const matchesSearch =
       searchQuery === "" ||
       trace.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -143,6 +185,23 @@ export default function TracesPage() {
 
   return (
     <div className="space-y-6">
+      {/* Notification Toast */}
+      {notification && (
+        <div
+          className={cn(
+            "fixed right-6 top-20 z-50 flex items-center gap-3 rounded-lg border px-4 py-3 shadow-lg transition-all animate-in slide-in-from-top-2",
+            notification.type === "success" && "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+            notification.type === "error" && "border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400",
+            notification.type === "info" && "border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400"
+          )}
+        >
+          {notification.type === "success" && <CheckCircle2 className="h-5 w-5" />}
+          {notification.type === "error" && <XCircle className="h-5 w-5" />}
+          {notification.type === "info" && <Clock className="h-5 w-5" />}
+          <span className="text-sm font-medium">{notification.message}</span>
+        </div>
+      )}
+
       {/* Page Header */}
       <div className="flex items-start justify-between">
         <div className="space-y-1">
@@ -257,7 +316,7 @@ export default function TracesPage() {
                 }}
                 className="cursor-pointer appearance-none rounded-lg border border-border bg-card py-2 pl-9 pr-10 text-sm font-medium text-foreground transition-all hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-teal/20"
               >
-                {ownerOptions.map((owner) => (
+                {initialOwners.map((owner) => (
                   <option key={owner} value={owner}>
                     {owner}
                   </option>
@@ -265,7 +324,10 @@ export default function TracesPage() {
               </select>
               <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             </div>
-            <button className="flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground transition-all hover:bg-muted/50">
+            <button
+              onClick={handleExport}
+              className="flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground transition-all hover:bg-muted/50 active:scale-[0.98]"
+            >
               <Download className="h-4 w-4" />
               Export
             </button>
@@ -284,13 +346,22 @@ export default function TracesPage() {
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <button className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-all hover:bg-muted/50">
+              <button
+                onClick={handleDownloadSelected}
+                className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-all hover:bg-muted/50 active:scale-[0.98]"
+              >
                 Download Selected
               </button>
-              <button className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-all hover:bg-muted/50">
+              <button
+                onClick={handleReprocess}
+                className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-all hover:bg-muted/50 active:scale-[0.98]"
+              >
                 Reprocess
               </button>
-              <button className="rounded-lg border border-red-500/30 bg-card px-4 py-2 text-sm font-medium text-red-500 transition-all hover:bg-red-500/5">
+              <button
+                onClick={handleDeleteSelected}
+                className="rounded-lg border border-red-500/30 bg-card px-4 py-2 text-sm font-medium text-red-500 transition-all hover:bg-red-500/5 active:scale-[0.98]"
+              >
                 Delete Selected
               </button>
             </div>
@@ -447,12 +518,14 @@ export default function TracesPage() {
                             <Eye className="h-4 w-4" />
                           </Link>
                           <button
+                            onClick={() => handleDownloadSingle(trace.id)}
                             className="rounded-md p-1.5 text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
                             title="Download"
                           >
                             <Download className="h-4 w-4" />
                           </button>
                           <button
+                            onClick={() => handleDeleteSingle(trace.id)}
                             className="rounded-md p-1.5 text-muted-foreground transition-all hover:bg-red-500/10 hover:text-red-500"
                             title="Delete"
                           >
