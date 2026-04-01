@@ -25,7 +25,7 @@ export default function AuthLayout({
       {/* Side Panel - Image */}
       <div className="hidden lg:block w-1/2 h-full rounded-2xl overflow-hidden flex-shrink-0">
         <Image
-          src="/hero-side.png"
+          src="/img/hero-side.png"
           alt="GeneFlow Platform"
           width={1920}
           height={1080}

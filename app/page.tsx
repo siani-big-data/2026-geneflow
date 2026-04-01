@@ -387,7 +387,7 @@ export default function LandingPage() {
                 </div>
               </div>
               <Image
-                src={resolvedTheme === "dark" ? "/dashboard-dark.png" : "/dashboard-light.png"}
+                src={resolvedTheme === "dark" ? "/img/dashboard-dark.png" : "/img/dashboard-light.png"}
                 alt="GeneFlow Dashboard Preview"
                 width={1920}
                 height={1080}
