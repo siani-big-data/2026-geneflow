@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import {
   Search,
   Book,
@@ -20,8 +19,17 @@ import {
   ChevronRight,
   ChevronDown,
   Download,
+  Send,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const helpCategories = [
   {
@@ -204,6 +212,30 @@ function AccordionItem({
 export default function HelpPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
+  const [contactOpen, setContactOpen] = useState(false);
+  const [liveChatOpen, setLiveChatOpen] = useState(false);
+  const [chatMessages, setChatMessages] = useState<{ sender: "user" | "support"; text: string }[]>([
+    { sender: "support", text: "Hello! How can I help you today?" }
+  ]);
+  const [chatInput, setChatInput] = useState("");
+
+  const handleSendMessage = () => {
+    if (chatInput.trim()) {
+      setChatMessages([...chatMessages, { sender: "user", text: chatInput }]);
+      setChatInput("");
+      // Simulate support response
+      setTimeout(() => {
+        setChatMessages(prev => [...prev, {
+          sender: "support",
+          text: "Thank you for your message. A support agent will respond shortly. In the meantime, you can check our FAQ section for quick answers."
+        }]);
+      }, 1000);
+    }
+  };
+
+  const handleTopicClick = (topic: string) => {
+    console.log("Navigating to topic:", topic);
+  };
 
   return (
     <div className="-mx-16 -mt-10 min-h-full bg-background">
@@ -291,7 +323,10 @@ export default function HelpPage() {
                   <ul className="space-y-2.5">
                     {category.topics.map((topic, topicIdx) => (
                       <li key={topicIdx}>
-                        <button className="group/item flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-teal">
+                        <button
+                          onClick={() => handleTopicClick(topic)}
+                          className="group/item flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-teal"
+                        >
                           <ChevronRight className="h-3.5 w-3.5 opacity-0 transition-opacity group-hover/item:opacity-100" />
                           <span>{topic}</span>
                         </button>
@@ -364,14 +399,20 @@ export default function HelpPage() {
                 Can't find what you're looking for? Our support team is here to help.
               </p>
               <div className="space-y-3">
-                <button className="group flex w-full items-center gap-3 rounded-lg bg-teal p-3 text-white transition-all hover:bg-teal/90">
+                <button
+                  onClick={() => setContactOpen(true)}
+                  className="group flex w-full items-center gap-3 rounded-lg bg-teal p-3 text-white transition-all hover:bg-teal/90"
+                >
                   <Mail className="h-4 w-4" />
                   <div className="flex-1 text-left">
                     <p className="text-sm font-medium">Email Support</p>
                     <p className="text-xs opacity-90">Response in 24 hours</p>
                   </div>
                 </button>
-                <button className="group flex w-full items-center gap-3 rounded-lg border border-border p-3 transition-all hover:bg-muted/50">
+                <button
+                  onClick={() => setLiveChatOpen(true)}
+                  className="group flex w-full items-center gap-3 rounded-lg border border-border p-3 transition-all hover:bg-muted/50"
+                >
                   <MessageCircle className="h-4 w-4 text-foreground" />
                   <div className="flex-1 text-left">
                     <p className="text-sm font-medium text-foreground">Live Chat</p>
@@ -386,7 +427,9 @@ export default function HelpPage() {
               <h3 className="mb-4 text-base font-semibold text-foreground">Resources</h3>
               <div className="space-y-3">
                 <a
-                  href="#"
+                  href="https://docs.geneflow.io"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="group flex items-center justify-between rounded-lg p-3 transition-all hover:bg-muted/50"
                 >
                   <div className="flex items-center gap-3">
@@ -396,7 +439,9 @@ export default function HelpPage() {
                   <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
                 </a>
                 <a
-                  href="#"
+                  href="https://youtube.com/@geneflow"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="group flex items-center justify-between rounded-lg p-3 transition-all hover:bg-muted/50"
                 >
                   <div className="flex items-center gap-3">
@@ -406,7 +451,9 @@ export default function HelpPage() {
                   <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
                 </a>
                 <a
-                  href="#"
+                  href="https://api.geneflow.io/docs"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="group flex items-center justify-between rounded-lg p-3 transition-all hover:bg-muted/50"
                 >
                   <div className="flex items-center gap-3">
@@ -416,7 +463,9 @@ export default function HelpPage() {
                   <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
                 </a>
                 <a
-                  href="#"
+                  href="https://geneflow.io/sample-data"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="group flex items-center justify-between rounded-lg p-3 transition-all hover:bg-muted/50"
                 >
                   <div className="flex items-center gap-3">
@@ -439,7 +488,9 @@ export default function HelpPage() {
               </div>
               <p className="mb-3 text-sm text-muted-foreground">All services are running normally.</p>
               <a
-                href="#"
+                href="https://status.geneflow.io"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex items-center gap-1 text-sm font-medium text-teal hover:text-teal/80"
               >
                 View Status Page
@@ -457,17 +508,137 @@ export default function HelpPage() {
             Our support team is available to answer your questions and help you get the most out of GeneFlow.
           </p>
           <div className="flex items-center justify-center gap-3">
-            <button className="flex items-center gap-2 rounded-lg bg-teal px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-teal/90 hover:shadow-md">
+            <button
+              onClick={() => setContactOpen(true)}
+              className="flex items-center gap-2 rounded-lg bg-teal px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-teal/90 hover:shadow-md"
+            >
               <Mail className="h-4 w-4" />
               Contact Support
             </button>
-            <button className="flex items-center gap-2 rounded-lg border border-border px-5 py-2.5 text-sm font-medium text-foreground transition-all hover:bg-muted/50">
+            <a
+              href="https://docs.geneflow.io"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 rounded-lg border border-border px-5 py-2.5 text-sm font-medium text-foreground transition-all hover:bg-muted/50"
+            >
               <Book className="h-4 w-4" />
               Browse Documentation
-            </button>
+            </a>
           </div>
         </div>
       </div>
+
+      {/* Contact Support Dialog */}
+      <Dialog open={contactOpen} onOpenChange={setContactOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Contact Support</DialogTitle>
+            <DialogDescription>
+              Send us a message and we&apos;ll respond within 24 hours.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Subject</label>
+              <input
+                type="text"
+                className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm"
+                placeholder="Brief description of your issue"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Category</label>
+              <select className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm">
+                <option>Select a category...</option>
+                <option>Technical Issue</option>
+                <option>Billing Question</option>
+                <option>Feature Request</option>
+                <option>Account Help</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Message</label>
+              <textarea
+                rows={5}
+                className="w-full resize-none rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm"
+                placeholder="Describe your question or issue in detail..."
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <button
+              onClick={() => setContactOpen(false)}
+              className="rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-muted"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                console.log("Sending support message");
+                setContactOpen(false);
+              }}
+              className="rounded-lg bg-teal px-4 py-2.5 text-sm font-medium text-white hover:bg-teal/90"
+            >
+              Send Message
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Live Chat Dialog */}
+      <Dialog open={liveChatOpen} onOpenChange={setLiveChatOpen}>
+        <DialogContent className="sm:max-w-[440px]">
+          <DialogHeader>
+            <DialogTitle>Live Chat Support</DialogTitle>
+            <DialogDescription>
+              Chat with our support team in real-time.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="h-[300px] overflow-y-auto rounded-lg border border-border bg-muted/20 p-4">
+              <div className="space-y-4">
+                {chatMessages.map((message, idx) => (
+                  <div
+                    key={idx}
+                    className={cn(
+                      "flex",
+                      message.sender === "user" ? "justify-end" : "justify-start"
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "max-w-[80%] rounded-lg px-4 py-2 text-sm",
+                        message.sender === "user"
+                          ? "bg-teal text-white"
+                          : "bg-card border border-border text-foreground"
+                      )}
+                    >
+                      {message.text}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="mt-4 flex gap-2">
+              <input
+                type="text"
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+                className="flex-1 rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm"
+                placeholder="Type your message..."
+              />
+              <button
+                onClick={handleSendMessage}
+                className="rounded-lg bg-teal p-2.5 text-white hover:bg-teal/90"
+              >
+                <Send className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

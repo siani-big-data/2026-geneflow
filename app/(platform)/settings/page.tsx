@@ -1,9 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout";
 import { Button, Switch } from "@/components/ui";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   User,
   Shield,
@@ -23,6 +31,11 @@ import {
   Sun,
   Moon,
   Monitor,
+  Upload,
+  Laptop,
+  MapPin,
+  Clock,
+  AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -37,6 +50,14 @@ const sections = [
   { id: "collaboration" as const, name: "Collaboration", icon: Users },
 ];
 
+const mockSessions = [
+  { id: "1", device: "Chrome on MacOS", location: "Stanford, CA", lastActive: "Active now", current: true },
+  { id: "2", device: "Safari on iPhone", location: "San Francisco, CA", lastActive: "2 hours ago", current: false },
+  { id: "3", device: "Firefox on Windows", location: "New York, NY", lastActive: "1 day ago", current: false },
+];
+
+const mockBlockedUsers: { id: string; name: string; email: string; blockedAt: string }[] = [];
+
 export default function SettingsPage() {
   const [activeSection, setActiveSection] = useState<SettingsSection>("account");
   const [emailNotifications, setEmailNotifications] = useState(true);
@@ -49,6 +70,57 @@ export default function SettingsPage() {
   const [sessionTimeout, setSessionTimeout] = useState(true);
   const [autoCollabApproval, setAutoCollabApproval] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState<"light" | "dark" | "system">("light");
+
+  // Modal states
+  const [uploadPhotoOpen, setUploadPhotoOpen] = useState(false);
+  const [sessionsOpen, setSessionsOpen] = useState(false);
+  const [dataExportOpen, setDataExportOpen] = useState(false);
+  const [blockedUsersOpen, setBlockedUsersOpen] = useState(false);
+  const [deactivateOpen, setDeactivateOpen] = useState(false);
+  const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
+  const [remove2FAOpen, setRemove2FAOpen] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
+
+  const handleSaveChanges = () => {
+    setSaveSuccess(true);
+    setTimeout(() => setSaveSuccess(false), 2000);
+  };
+
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedPhoto(file);
+    }
+  };
+
+  const handleUploadPhoto = () => {
+    if (selectedPhoto) {
+      console.log("Uploading photo:", selectedPhoto.name);
+      setUploadPhotoOpen(false);
+      setSelectedPhoto(null);
+    }
+  };
+
+  const handleRemovePhoto = () => {
+    console.log("Removing photo");
+  };
+
+  const handleRequestDataExport = () => {
+    console.log("Requesting data export");
+    setDataExportOpen(false);
+  };
+
+  const handleEndSession = (sessionId: string) => {
+    console.log("Ending session:", sessionId);
+  };
+
+  const handleRemove2FA = () => {
+    setTwoFactorEnabled(false);
+    setRemove2FAOpen(false);
+  };
 
   return (
     <div className="space-y-6">
@@ -96,7 +168,10 @@ export default function SettingsPage() {
                     <div className="flex h-20 w-20 items-center justify-center rounded-xl bg-gradient-to-br from-teal to-blue-deep text-2xl font-semibold text-white shadow-sm">
                       SM
                     </div>
-                    <button className="absolute bottom-0 right-0 rounded-lg border border-border bg-background p-1.5 opacity-0 shadow-md transition-all hover:bg-muted group-hover:opacity-100">
+                    <button
+                      className="absolute bottom-0 right-0 rounded-lg border border-border bg-background p-1.5 opacity-0 shadow-md transition-all hover:bg-muted group-hover:opacity-100"
+                      aria-label="Change profile photo"
+                    >
                       <Camera className="h-3.5 w-3.5 text-foreground" />
                     </button>
                   </div>
@@ -104,10 +179,16 @@ export default function SettingsPage() {
                     <h3 className="mb-1 text-base font-medium text-foreground">Profile Photo</h3>
                     <p className="mb-3 text-sm text-muted-foreground">Update your profile picture. JPG or PNG, max 5MB.</p>
                     <div className="flex gap-2">
-                      <button className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium transition-all hover:bg-muted/50">
+                      <button
+                        onClick={() => setUploadPhotoOpen(true)}
+                        className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium transition-all hover:bg-muted/50"
+                      >
                         Upload New
                       </button>
-                      <button className="px-3 py-1.5 text-xs font-medium text-muted-foreground transition-all hover:text-foreground">
+                      <button
+                        onClick={handleRemovePhoto}
+                        className="px-3 py-1.5 text-xs font-medium text-muted-foreground transition-all hover:text-foreground"
+                      >
                         Remove
                       </button>
                     </div>
@@ -194,10 +275,12 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="mt-6 flex items-center justify-end gap-3 border-t border-border pt-6">
-                  <Button variant="ghost">Cancel</Button>
-                  <Button>
+                  <Button variant="ghost" onClick={() => setActiveSection("account")}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleSaveChanges}>
                     <Save className="h-4 w-4" />
-                    Save Changes
+                    {saveSuccess ? "Saved!" : "Save Changes"}
                   </Button>
                 </div>
               </div>
@@ -244,7 +327,10 @@ export default function SettingsPage() {
                         Temporarily disable your account. You can reactivate it at any time.
                       </p>
                     </div>
-                    <button className="rounded-lg border border-red-500 px-4 py-2 text-sm font-medium text-red-500 transition-all hover:bg-red-500/10">
+                    <button
+                      onClick={() => setDeactivateOpen(true)}
+                      className="rounded-lg border border-red-500 px-4 py-2 text-sm font-medium text-red-500 transition-all hover:bg-red-500/10"
+                    >
                       Deactivate
                     </button>
                   </div>
@@ -255,7 +341,10 @@ export default function SettingsPage() {
                         Permanently delete your account and all associated data. This action cannot be undone.
                       </p>
                     </div>
-                    <button className="rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-red-500/90">
+                    <button
+                      onClick={() => setDeleteAccountOpen(true)}
+                      className="rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-red-500/90"
+                    >
                       Delete Account
                     </button>
                   </div>
@@ -312,7 +401,9 @@ export default function SettingsPage() {
                 </div>
                 <div className="mt-6 flex items-center justify-end gap-3 border-t border-border pt-6">
                   <Button variant="ghost">Cancel</Button>
-                  <Button>Update Password</Button>
+                  <Button onClick={handleSaveChanges}>
+                    {saveSuccess ? "Updated!" : "Update Password"}
+                  </Button>
                 </div>
               </div>
 
@@ -344,7 +435,12 @@ export default function SettingsPage() {
                           You're using an authenticator app for two-factor authentication.
                         </p>
                       </div>
-                      <button className="text-xs font-medium text-red-500 hover:text-red-500/80">Remove</button>
+                      <button
+                        onClick={() => setRemove2FAOpen(true)}
+                        className="text-xs font-medium text-red-500 hover:text-red-500/80"
+                      >
+                        Remove
+                      </button>
                     </div>
                   </div>
                 )}
@@ -363,7 +459,10 @@ export default function SettingsPage() {
                     <Switch checked={sessionTimeout} onCheckedChange={setSessionTimeout} />
                   </div>
                   <div className="border-t border-border pt-3">
-                    <button className="flex items-center gap-2 text-sm font-medium text-foreground transition-colors hover:text-teal">
+                    <button
+                      onClick={() => setSessionsOpen(true)}
+                      className="flex items-center gap-2 text-sm font-medium text-foreground transition-colors hover:text-teal"
+                    >
                       <Key className="h-4 w-4" />
                       View Active Sessions
                     </button>
@@ -556,7 +655,7 @@ export default function SettingsPage() {
                 <p className="mb-4 text-sm text-muted-foreground">
                   Download a copy of your account data and research information.
                 </p>
-                <Button variant="outline">
+                <Button variant="outline" onClick={() => setDataExportOpen(true)}>
                   <Download className="h-4 w-4" />
                   Request Data Export
                 </Button>
@@ -672,14 +771,326 @@ export default function SettingsPage() {
                 <p className="mb-4 text-sm text-muted-foreground">
                   Manage users you've blocked from collaborating with you.
                 </p>
-                <button className="text-sm font-medium text-foreground transition-colors hover:text-teal">
-                  View Blocked Users (0)
+                <button
+                  onClick={() => setBlockedUsersOpen(true)}
+                  className="text-sm font-medium text-foreground transition-colors hover:text-teal"
+                >
+                  View Blocked Users ({mockBlockedUsers.length})
                 </button>
               </div>
             </>
           )}
         </div>
       </div>
+
+      {/* Upload Photo Dialog */}
+      <Dialog open={uploadPhotoOpen} onOpenChange={setUploadPhotoOpen}>
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle>Upload Profile Photo</DialogTitle>
+            <DialogDescription>
+              Choose a new profile picture. JPG or PNG, max 5MB.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <div
+              className={cn(
+                "group cursor-pointer rounded-lg border-2 border-dashed p-8 text-center transition-all",
+                selectedPhoto
+                  ? "border-teal bg-teal/5"
+                  : "border-border hover:border-teal/50"
+              )}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png"
+                onChange={handlePhotoSelect}
+                className="hidden"
+              />
+              <Upload className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
+              {selectedPhoto ? (
+                <p className="text-sm font-medium text-foreground">{selectedPhoto.name}</p>
+              ) : (
+                <p className="text-sm text-muted-foreground">Click to select a photo</p>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <button
+              onClick={() => {
+                setSelectedPhoto(null);
+                setUploadPhotoOpen(false);
+              }}
+              className="rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-muted"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleUploadPhoto}
+              disabled={!selectedPhoto}
+              className="rounded-lg bg-teal px-4 py-2.5 text-sm font-medium text-white hover:bg-teal/90 disabled:opacity-50"
+            >
+              Upload
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Active Sessions Dialog */}
+      <Dialog open={sessionsOpen} onOpenChange={setSessionsOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Active Sessions</DialogTitle>
+            <DialogDescription>
+              Manage devices that are currently signed into your account.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-4">
+            {mockSessions.map((session) => (
+              <div
+                key={session.id}
+                className="flex items-center justify-between rounded-lg border border-border p-4"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="rounded-lg bg-muted p-2">
+                    <Laptop className="h-4 w-4 text-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{session.device}</p>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <MapPin className="h-3 w-3" />
+                      {session.location}
+                      <span>•</span>
+                      <Clock className="h-3 w-3" />
+                      {session.lastActive}
+                    </div>
+                  </div>
+                </div>
+                {session.current ? (
+                  <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-500">
+                    Current
+                  </span>
+                ) : (
+                  <button
+                    onClick={() => handleEndSession(session.id)}
+                    className="text-xs font-medium text-red-500 hover:text-red-500/80"
+                  >
+                    End Session
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+          <DialogFooter>
+            <button
+              onClick={() => setSessionsOpen(false)}
+              className="rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-muted"
+            >
+              Done
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Data Export Dialog */}
+      <Dialog open={dataExportOpen} onOpenChange={setDataExportOpen}>
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle>Request Data Export</DialogTitle>
+            <DialogDescription>
+              We&apos;ll prepare a download of your account data and send you an email when it&apos;s ready.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="rounded-lg border border-border bg-muted/30 p-4">
+              <p className="text-sm text-muted-foreground">
+                Your export will include:
+              </p>
+              <ul className="mt-2 space-y-1 text-sm text-foreground">
+                <li>• Profile information</li>
+                <li>• Study data and metadata</li>
+                <li>• Analysis results</li>
+                <li>• Activity logs</li>
+              </ul>
+            </div>
+          </div>
+          <DialogFooter>
+            <button
+              onClick={() => setDataExportOpen(false)}
+              className="rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-muted"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleRequestDataExport}
+              className="rounded-lg bg-teal px-4 py-2.5 text-sm font-medium text-white hover:bg-teal/90"
+            >
+              Request Export
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Blocked Users Dialog */}
+      <Dialog open={blockedUsersOpen} onOpenChange={setBlockedUsersOpen}>
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle>Blocked Users</DialogTitle>
+            <DialogDescription>
+              Users you&apos;ve blocked cannot collaborate with you or view your studies.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            {mockBlockedUsers.length === 0 ? (
+              <div className="text-center py-8">
+                <Users className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">
+                  You haven&apos;t blocked any users.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {mockBlockedUsers.map((user) => (
+                  <div key={user.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <p className="font-medium">{user.name}</p>
+                      <p className="text-xs text-muted-foreground">{user.email}</p>
+                    </div>
+                    <button className="text-xs text-teal hover:text-teal/80">Unblock</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <button
+              onClick={() => setBlockedUsersOpen(false)}
+              className="rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-muted"
+            >
+              Done
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Deactivate Account Dialog */}
+      <Dialog open={deactivateOpen} onOpenChange={setDeactivateOpen}>
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle>Deactivate Account</DialogTitle>
+            <DialogDescription>
+              Your account will be temporarily disabled. You can reactivate it at any time by logging in.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4">
+              <AlertTriangle className="h-5 w-5 flex-shrink-0 text-amber-500" />
+              <p className="text-sm text-amber-700 dark:text-amber-400">
+                While deactivated, your studies will be hidden and team members won&apos;t be able to access shared data.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <button
+              onClick={() => setDeactivateOpen(false)}
+              className="rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-muted"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                console.log("Deactivating account");
+                setDeactivateOpen(false);
+              }}
+              className="rounded-lg border border-red-500 px-4 py-2.5 text-sm font-medium text-red-500 hover:bg-red-500/10"
+            >
+              Deactivate Account
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Account Dialog */}
+      <Dialog open={deleteAccountOpen} onOpenChange={setDeleteAccountOpen}>
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle className="text-red-500">Delete Account</DialogTitle>
+            <DialogDescription>
+              This action is permanent and cannot be undone. All your data will be permanently deleted.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="space-y-4">
+              <div className="flex items-start gap-3 rounded-lg border border-red-500/30 bg-red-500/10 p-4">
+                <AlertTriangle className="h-5 w-5 flex-shrink-0 text-red-500" />
+                <div className="text-sm text-red-700 dark:text-red-400">
+                  <p className="font-medium">This will permanently delete:</p>
+                  <ul className="mt-1 list-disc pl-4 space-y-0.5">
+                    <li>Your profile and account settings</li>
+                    <li>All studies you own</li>
+                    <li>All uploaded traces and analysis results</li>
+                  </ul>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">
+                  Type &quot;DELETE&quot; to confirm
+                </label>
+                <input
+                  type="text"
+                  className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm"
+                  placeholder="DELETE"
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <button
+              onClick={() => setDeleteAccountOpen(false)}
+              className="rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-muted"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                console.log("Deleting account");
+                setDeleteAccountOpen(false);
+              }}
+              className="rounded-lg bg-red-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-500/90"
+            >
+              Delete Account
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Remove 2FA Dialog */}
+      <Dialog open={remove2FAOpen} onOpenChange={setRemove2FAOpen}>
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle>Remove Two-Factor Authentication</DialogTitle>
+            <DialogDescription>
+              This will remove the extra security from your account. Are you sure?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4">
+            <button
+              onClick={() => setRemove2FAOpen(false)}
+              className="rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-muted"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleRemove2FA}
+              className="rounded-lg bg-red-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-500/90"
+            >
+              Remove 2FA
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

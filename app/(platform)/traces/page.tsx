@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 import {
   Search,
@@ -19,9 +19,28 @@ import {
   ArrowUpDown,
   ChevronDown,
   Waves,
+  RotateCcw,
+  Copy,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/shared";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const traces = [
   { id: "TR-2026-08945", sample: "SMD-T2D-1258", study: "GF-2026-089", studyName: "Type 2 Diabetes GWAS", uploaded: "2026-03-16 16:45", owner: "Dr. Sarah Martinez", status: "Processed", quality: 98.2, size: "2.4 MB" },
@@ -57,6 +76,9 @@ const statusOptions = ["All Status", "Uploaded", "Validating", "Processing", "Pr
 const dateRangeOptions = ["All Time", "Today", "Last 7 Days", "Last 30 Days", "Last 90 Days"];
 const initialOwners = ["All Owners", ...Array.from(new Set(traces.map((t) => t.owner)))];
 
+type SortField = "id" | "sample" | "uploaded" | "quality";
+type SortDirection = "asc" | "desc";
+
 export default function TracesPage() {
   const [tracesData, setTracesData] = useState(traces);
   const [selectedTraces, setSelectedTraces] = useState<string[]>([]);
@@ -67,7 +89,48 @@ export default function TracesPage() {
   const [selectedOwner, setSelectedOwner] = useState("All Owners");
   const [currentPage, setCurrentPage] = useState(1);
   const [notification, setNotification] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [sortField, setSortField] = useState<SortField | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const itemsPerPage = 10;
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    setUploadedFiles(files);
+  };
+
+  const handleUpload = () => {
+    if (uploadedFiles.length > 0) {
+      showNotification(`${uploadedFiles.length} file(s) uploaded successfully`, "success");
+      setUploadedFiles([]);
+      setUploadOpen(false);
+    }
+  };
+
+  const handleReprocessSingle = (id: string) => {
+    setTracesData((prev) =>
+      prev.map((t) =>
+        t.id === id ? { ...t, status: "Processing", quality: null } : t
+      )
+    );
+    showNotification(`Trace ${id} queued for reprocessing`);
+  };
+
+  const handleCopyId = (id: string) => {
+    navigator.clipboard.writeText(id);
+    showNotification(`Copied ${id} to clipboard`, "info");
+  };
 
   const showNotification = (message: string, type: "success" | "error" | "info" = "success") => {
     setNotification({ message, type });
@@ -109,43 +172,63 @@ export default function TracesPage() {
     showNotification("Exporting traces to CSV...", "info");
   };
 
-  const filteredTraces = tracesData.filter((trace) => {
-    const matchesSearch =
-      searchQuery === "" ||
-      trace.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      trace.sample.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      trace.study.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      trace.owner.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus =
-      selectedStatus === "All Status" || trace.status === selectedStatus;
-    const matchesOwner =
-      selectedOwner === "All Owners" || trace.owner === selectedOwner;
+  const filteredTraces = tracesData
+    .filter((trace) => {
+      const matchesSearch =
+        searchQuery === "" ||
+        trace.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        trace.sample.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        trace.study.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        trace.owner.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesStatus =
+        selectedStatus === "All Status" || trace.status === selectedStatus;
+      const matchesOwner =
+        selectedOwner === "All Owners" || trace.owner === selectedOwner;
 
-    // Date range filter
-    let matchesDateRange = true;
-    if (selectedDateRange !== "All Time") {
-      const uploadDate = new Date(trace.uploaded.replace(" ", "T"));
-      const now = new Date();
-      const diffDays = Math.floor((now.getTime() - uploadDate.getTime()) / (1000 * 60 * 60 * 24));
+      // Date range filter
+      let matchesDateRange = true;
+      if (selectedDateRange !== "All Time") {
+        const uploadDate = new Date(trace.uploaded.replace(" ", "T"));
+        const now = new Date();
+        const diffDays = Math.floor((now.getTime() - uploadDate.getTime()) / (1000 * 60 * 60 * 24));
 
-      switch (selectedDateRange) {
-        case "Today":
-          matchesDateRange = diffDays === 0;
+        switch (selectedDateRange) {
+          case "Today":
+            matchesDateRange = diffDays === 0;
+            break;
+          case "Last 7 Days":
+            matchesDateRange = diffDays <= 7;
+            break;
+          case "Last 30 Days":
+            matchesDateRange = diffDays <= 30;
+            break;
+          case "Last 90 Days":
+            matchesDateRange = diffDays <= 90;
+            break;
+        }
+      }
+
+      return matchesSearch && matchesStatus && matchesOwner && matchesDateRange;
+    })
+    .sort((a, b) => {
+      if (!sortField) return 0;
+      let comparison = 0;
+      switch (sortField) {
+        case "id":
+          comparison = a.id.localeCompare(b.id);
           break;
-        case "Last 7 Days":
-          matchesDateRange = diffDays <= 7;
+        case "sample":
+          comparison = a.sample.localeCompare(b.sample);
           break;
-        case "Last 30 Days":
-          matchesDateRange = diffDays <= 30;
+        case "uploaded":
+          comparison = new Date(a.uploaded).getTime() - new Date(b.uploaded).getTime();
           break;
-        case "Last 90 Days":
-          matchesDateRange = diffDays <= 90;
+        case "quality":
+          comparison = (a.quality || 0) - (b.quality || 0);
           break;
       }
-    }
-
-    return matchesSearch && matchesStatus && matchesOwner && matchesDateRange;
-  });
+      return sortDirection === "asc" ? comparison : -comparison;
+    });
 
   const totalPages = Math.ceil(filteredTraces.length / itemsPerPage);
   const paginatedTraces = filteredTraces.slice(
@@ -239,13 +322,16 @@ export default function TracesPage() {
           <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-teal/10">
             <Upload className="h-6 w-6 text-teal" />
           </div>
-          <h3 className="mb-2 text-base font-medium text-foreground">
+          <h2 className="mb-2 text-base font-medium text-foreground">
             Upload Chromatogram Traces
-          </h3>
+          </h2>
           <p className="mb-4 max-w-md text-sm text-muted-foreground">
             Drag and drop your .ab1, .scf, or .abi files here, or click to browse
           </p>
-          <button className="rounded-lg bg-teal px-4 py-2 text-sm font-medium text-white transition-all hover:bg-teal/90">
+          <button
+            onClick={() => setUploadOpen(true)}
+            className="rounded-lg bg-teal px-4 py-2 text-sm font-medium text-white transition-all hover:bg-teal/90"
+          >
             Choose Files
           </button>
           <p className="mt-4 text-xs text-muted-foreground">
@@ -272,7 +358,9 @@ export default function TracesPage() {
           </div>
           <div className="flex gap-2">
             <div className="relative">
+              <label htmlFor="status-filter" className="sr-only">Filter by status</label>
               <select
+                id="status-filter"
                 value={selectedStatus}
                 onChange={(e) => {
                   setSelectedStatus(e.target.value);
@@ -289,8 +377,10 @@ export default function TracesPage() {
               <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             </div>
             <div className="relative">
+              <label htmlFor="date-filter" className="sr-only">Filter by date range</label>
               <Calendar className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <select
+                id="date-filter"
                 value={selectedDateRange}
                 onChange={(e) => {
                   setSelectedDateRange(e.target.value);
@@ -307,8 +397,10 @@ export default function TracesPage() {
               <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             </div>
             <div className="relative">
+              <label htmlFor="owner-filter" className="sr-only">Filter by owner</label>
               <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <select
+                id="owner-filter"
                 value={selectedOwner}
                 onChange={(e) => {
                   setSelectedOwner(e.target.value);
@@ -392,27 +484,58 @@ export default function TracesPage() {
                       checked={selectedTraces.length === paginatedTraces.length && paginatedTraces.length > 0}
                       onChange={toggleSelectAll}
                       className="h-4 w-4 rounded border-border text-teal focus:ring-teal focus:ring-offset-0"
+                      aria-label="Select all traces"
                     />
                   </th>
                   <th className="px-6 py-3 text-left">
-                    <button className="flex items-center gap-1.5 text-xs font-medium uppercase text-muted-foreground transition-colors hover:text-foreground">
+                    <button
+                      onClick={() => handleSort("id")}
+                      className={cn(
+                        "flex items-center gap-1.5 text-xs font-medium uppercase transition-colors hover:text-foreground",
+                        sortField === "id" ? "text-teal" : "text-muted-foreground"
+                      )}
+                    >
                       Trace ID
-                      <ArrowUpDown className="h-3.5 w-3.5" />
+                      {sortField === "id" ? (
+                        sortDirection === "asc" ? <ArrowUp className="h-3.5 w-3.5" /> : <ArrowDown className="h-3.5 w-3.5" />
+                      ) : (
+                        <ArrowUpDown className="h-3.5 w-3.5" />
+                      )}
                     </button>
                   </th>
                   <th className="px-6 py-3 text-left">
-                    <button className="flex items-center gap-1.5 text-xs font-medium uppercase text-muted-foreground transition-colors hover:text-foreground">
+                    <button
+                      onClick={() => handleSort("sample")}
+                      className={cn(
+                        "flex items-center gap-1.5 text-xs font-medium uppercase transition-colors hover:text-foreground",
+                        sortField === "sample" ? "text-teal" : "text-muted-foreground"
+                      )}
+                    >
                       Sample Name
-                      <ArrowUpDown className="h-3.5 w-3.5" />
+                      {sortField === "sample" ? (
+                        sortDirection === "asc" ? <ArrowUp className="h-3.5 w-3.5" /> : <ArrowDown className="h-3.5 w-3.5" />
+                      ) : (
+                        <ArrowUpDown className="h-3.5 w-3.5" />
+                      )}
                     </button>
                   </th>
                   <th className="px-6 py-3 text-left">
                     <span className="text-xs font-medium uppercase text-muted-foreground">Study</span>
                   </th>
                   <th className="px-6 py-3 text-left">
-                    <button className="flex items-center gap-1.5 text-xs font-medium uppercase text-muted-foreground transition-colors hover:text-foreground">
+                    <button
+                      onClick={() => handleSort("uploaded")}
+                      className={cn(
+                        "flex items-center gap-1.5 text-xs font-medium uppercase transition-colors hover:text-foreground",
+                        sortField === "uploaded" ? "text-teal" : "text-muted-foreground"
+                      )}
+                    >
                       Upload Date
-                      <ArrowUpDown className="h-3.5 w-3.5" />
+                      {sortField === "uploaded" ? (
+                        sortDirection === "asc" ? <ArrowUp className="h-3.5 w-3.5" /> : <ArrowDown className="h-3.5 w-3.5" />
+                      ) : (
+                        <ArrowUpDown className="h-3.5 w-3.5" />
+                      )}
                     </button>
                   </th>
                   <th className="px-6 py-3 text-left">
@@ -422,9 +545,19 @@ export default function TracesPage() {
                     <span className="text-xs font-medium uppercase text-muted-foreground">Status</span>
                   </th>
                   <th className="px-6 py-3 text-left">
-                    <button className="flex items-center gap-1.5 text-xs font-medium uppercase text-muted-foreground transition-colors hover:text-foreground">
+                    <button
+                      onClick={() => handleSort("quality")}
+                      className={cn(
+                        "flex items-center gap-1.5 text-xs font-medium uppercase transition-colors hover:text-foreground",
+                        sortField === "quality" ? "text-teal" : "text-muted-foreground"
+                      )}
+                    >
                       Quality
-                      <ArrowUpDown className="h-3.5 w-3.5" />
+                      {sortField === "quality" ? (
+                        sortDirection === "asc" ? <ArrowUp className="h-3.5 w-3.5" /> : <ArrowDown className="h-3.5 w-3.5" />
+                      ) : (
+                        <ArrowUpDown className="h-3.5 w-3.5" />
+                      )}
                     </button>
                   </th>
                   <th className="px-6 py-3 text-left">
@@ -453,6 +586,7 @@ export default function TracesPage() {
                           checked={selectedTraces.includes(trace.id)}
                           onChange={() => toggleSelectTrace(trace.id)}
                           className="h-4 w-4 rounded border-border text-teal focus:ring-teal focus:ring-offset-0"
+                          aria-label={`Select trace ${trace.id}`}
                         />
                       </td>
                       <td className="px-6 py-4">
@@ -513,30 +647,52 @@ export default function TracesPage() {
                           <Link
                             href={`/traces/${trace.id}`}
                             className="rounded-md p-1.5 text-muted-foreground transition-all hover:bg-teal/10 hover:text-teal"
-                            title="View trace"
+                            aria-label={`View trace ${trace.id}`}
                           >
                             <Eye className="h-4 w-4" />
                           </Link>
                           <button
                             onClick={() => handleDownloadSingle(trace.id)}
                             className="rounded-md p-1.5 text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
-                            title="Download"
+                            aria-label={`Download trace ${trace.id}`}
                           >
                             <Download className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => handleDeleteSingle(trace.id)}
                             className="rounded-md p-1.5 text-muted-foreground transition-all hover:bg-red-500/10 hover:text-red-500"
-                            title="Delete"
+                            aria-label={`Delete trace ${trace.id}`}
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
-                          <button
-                            className="rounded-md p-1.5 text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
-                            title="More actions"
-                          >
-                            <MoreVertical className="h-4 w-4" />
-                          </button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button
+                                className="rounded-md p-1.5 text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
+                                aria-label={`More actions for trace ${trace.id}`}
+                              >
+                                <MoreVertical className="h-4 w-4" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuItem onClick={() => handleCopyId(trace.id)}>
+                                <Copy className="h-4 w-4" />
+                                Copy Trace ID
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleReprocessSingle(trace.id)}>
+                                <RotateCcw className="h-4 w-4" />
+                                Reprocess
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-red-500 focus:text-red-500"
+                                onClick={() => handleDeleteSingle(trace.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </td>
                     </tr>
@@ -617,6 +773,77 @@ export default function TracesPage() {
           </div>
         </div>
       )}
+
+      {/* Upload Traces Dialog */}
+      <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Upload Chromatogram Traces</DialogTitle>
+            <DialogDescription>
+              Upload .ab1, .scf, or .abi files for processing.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-5 py-4">
+            <div
+              className={cn(
+                "group cursor-pointer rounded-lg border-2 border-dashed p-8 text-center transition-all",
+                uploadedFiles.length > 0
+                  ? "border-teal bg-teal/5"
+                  : "border-border hover:border-teal/50 hover:bg-muted/20"
+              )}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept=".ab1,.scf,.abi"
+                onChange={handleFileSelect}
+                className="hidden"
+                aria-label="Choose trace files to upload"
+              />
+              <Upload className="mx-auto mb-3 h-10 w-10 text-muted-foreground group-hover:text-teal" />
+              {uploadedFiles.length > 0 ? (
+                <>
+                  <p className="mb-1 text-sm font-medium text-foreground">
+                    {uploadedFiles.length} file(s) selected
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {uploadedFiles.map((f) => f.name).join(", ")}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="mb-1 text-sm font-medium text-foreground">
+                    Click to upload or drag and drop
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    ABI, SCF, or AB1 files (max 50MB each)
+                  </p>
+                </>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <button
+              onClick={() => {
+                setUploadedFiles([]);
+                setUploadOpen(false);
+              }}
+              className="rounded-lg px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleUpload}
+              disabled={uploadedFiles.length === 0}
+              className="rounded-lg bg-teal px-4 py-2.5 text-sm font-medium text-white hover:bg-teal/90 disabled:opacity-50"
+            >
+              Upload Files
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

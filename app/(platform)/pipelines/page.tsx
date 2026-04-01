@@ -5,6 +5,14 @@ import { PageHeader } from "@/components/layout";
 import { Button } from "@/components/ui";
 import { StatusBadge } from "@/components/shared";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Plus,
   Play,
   Pause,
@@ -49,12 +57,51 @@ function formatTimeAgo(dateString?: string): string {
 }
 
 export default function PipelinesPage() {
-  const [pipelines] = useState<PipelineWithMetrics[]>(mockPipelines);
+  const [pipelines, setPipelines] = useState<PipelineWithMetrics[]>(mockPipelines);
+  const [newPipelineOpen, setNewPipelineOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const stats = getPipelineStats();
 
   const activePipelines = pipelines.filter(
     (p) => p.status === "running" || p.status === "queued" || p.status === "failed"
   );
+
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    setTimeout(() => {
+      setPipelines([...mockPipelines]);
+      setIsRefreshing(false);
+    }, 1000);
+  };
+
+  const handlePausePipeline = (id: string) => {
+    setPipelines((prev) =>
+      prev.map((p) =>
+        p.id === id ? { ...p, status: "queued" as const } : p
+      )
+    );
+  };
+
+  const handleResumePipeline = (id: string) => {
+    setPipelines((prev) =>
+      prev.map((p) =>
+        p.id === id ? { ...p, status: "running" as const } : p
+      )
+    );
+  };
+
+  const handleRetryPipeline = (id: string) => {
+    setPipelines((prev) =>
+      prev.map((p) =>
+        p.id === id ? { ...p, status: "running" as const, error: undefined } : p
+      )
+    );
+  };
+
+  const handleCreatePipeline = () => {
+    console.log("Creating new pipeline");
+    setNewPipelineOpen(false);
+  };
 
   return (
     <div className="space-y-6">
@@ -62,11 +109,11 @@ export default function PipelinesPage() {
         title="Pipeline Monitor"
         description="Real-time monitoring of data processing pipelines"
       >
-        <Button variant="outline">
-          <RefreshCw className="h-4 w-4" />
-          Refresh
+        <Button variant="outline" onClick={handleRefresh} disabled={isRefreshing}>
+          <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
+          {isRefreshing ? "Refreshing..." : "Refresh"}
         </Button>
-        <Button>
+        <Button onClick={() => setNewPipelineOpen(true)}>
           <Plus className="h-4 w-4" />
           New Pipeline
         </Button>
@@ -125,9 +172,9 @@ export default function PipelinesPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="rounded-lg border border-border bg-card p-6">
           <div className="mb-6 space-y-1">
-            <h3 className="text-base font-semibold text-foreground">
+            <h2 className="text-base font-semibold text-foreground">
               Resource Utilization
-            </h3>
+            </h2>
             <p className="text-sm text-muted-foreground">
               CPU and memory usage over time
             </p>
@@ -188,9 +235,9 @@ export default function PipelinesPage() {
 
         <div className="rounded-lg border border-border bg-card p-6">
           <div className="mb-6 space-y-1">
-            <h3 className="text-base font-semibold text-foreground">
+            <h2 className="text-base font-semibold text-foreground">
               Sample Throughput
-            </h3>
+            </h2>
             <p className="text-sm text-muted-foreground">
               Samples processed per hour
             </p>
@@ -228,9 +275,9 @@ export default function PipelinesPage() {
       {/* Active Pipelines */}
       <div className="rounded-lg border border-border bg-card">
         <div className="border-b border-border p-6">
-          <h3 className="text-base font-semibold text-foreground">
+          <h2 className="text-base font-semibold text-foreground">
             Active Pipelines
-          </h3>
+          </h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Currently running and queued processing jobs
           </p>
@@ -259,26 +306,38 @@ export default function PipelinesPage() {
                       }
                     />
                   </div>
-                  <h4 className="mb-1 font-medium text-foreground">
+                  <h3 className="mb-1 font-medium text-foreground">
                     {pipeline.name}
-                  </h4>
+                  </h3>
                   <p className="text-sm text-muted-foreground">
                     Study: {pipeline.studyName}
                   </p>
                 </div>
                 <div className="flex gap-2">
                   {pipeline.status === "running" && (
-                    <button className="rounded-md border border-border p-2 text-foreground transition-colors hover:bg-muted">
+                    <button
+                      onClick={() => handlePausePipeline(pipeline.id)}
+                      className="rounded-md border border-border p-2 text-foreground transition-colors hover:bg-muted"
+                      aria-label={`Pause pipeline ${pipeline.name}`}
+                    >
                       <Pause className="h-4 w-4" />
                     </button>
                   )}
                   {pipeline.status === "failed" && (
-                    <button className="rounded-md border border-border p-2 text-foreground transition-colors hover:bg-muted">
+                    <button
+                      onClick={() => handleRetryPipeline(pipeline.id)}
+                      className="rounded-md border border-border p-2 text-foreground transition-colors hover:bg-muted"
+                      aria-label={`Retry pipeline ${pipeline.name}`}
+                    >
                       <RotateCcw className="h-4 w-4" />
                     </button>
                   )}
                   {pipeline.status === "queued" && (
-                    <button className="rounded-md border border-border p-2 text-foreground transition-colors hover:bg-muted">
+                    <button
+                      onClick={() => handleResumePipeline(pipeline.id)}
+                      className="rounded-md border border-border p-2 text-foreground transition-colors hover:bg-muted"
+                      aria-label={`Start pipeline ${pipeline.name}`}
+                    >
                       <Play className="h-4 w-4" />
                     </button>
                   )}
@@ -346,6 +405,106 @@ export default function PipelinesPage() {
           ))}
         </div>
       </div>
+
+      {/* New Pipeline Dialog */}
+      <Dialog open={newPipelineOpen} onOpenChange={setNewPipelineOpen}>
+        <DialogContent className="sm:max-w-[540px]">
+          <DialogHeader>
+            <DialogTitle>Create New Pipeline</DialogTitle>
+            <DialogDescription>
+              Configure a new data processing pipeline for your study.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-5 py-4">
+            <div className="space-y-2">
+              <label htmlFor="pipeline-name" className="text-sm font-medium text-foreground">
+                Pipeline Name
+              </label>
+              <input
+                id="pipeline-name"
+                type="text"
+                className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
+                placeholder="e.g., Quality Control Pipeline"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="pipeline-type" className="text-sm font-medium text-foreground">
+                Pipeline Type
+              </label>
+              <select
+                id="pipeline-type"
+                className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
+              >
+                <option value="">Select pipeline type...</option>
+                <option value="qc">Quality Control</option>
+                <option value="variant">Variant Calling</option>
+                <option value="alignment">Sequence Alignment</option>
+                <option value="assembly">De Novo Assembly</option>
+                <option value="annotation">Variant Annotation</option>
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="study-select" className="text-sm font-medium text-foreground">
+                Target Study
+              </label>
+              <select
+                id="study-select"
+                className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
+              >
+                <option value="">Select study...</option>
+                <option value="GF-2026-089">GF-2026-089 - Type 2 Diabetes GWAS</option>
+                <option value="GF-2026-087">GF-2026-087 - Rare Disease Panel</option>
+                <option value="GF-2026-085">GF-2026-085 - Cancer Biomarkers</option>
+              </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label htmlFor="priority" className="text-sm font-medium text-foreground">
+                  Priority
+                </label>
+                <select
+                  id="priority"
+                  className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
+                >
+                  <option value="normal">Normal</option>
+                  <option value="high">High</option>
+                  <option value="urgent">Urgent</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="notifications" className="text-sm font-medium text-foreground">
+                  Notifications
+                </label>
+                <select
+                  id="notifications"
+                  className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
+                >
+                  <option value="completion">On Completion</option>
+                  <option value="error">On Error Only</option>
+                  <option value="none">None</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <button
+              onClick={() => setNewPipelineOpen(false)}
+              className="rounded-lg px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleCreatePipeline}
+              className="rounded-lg bg-teal px-4 py-2.5 text-sm font-medium text-white hover:bg-teal/90"
+            >
+              Create Pipeline
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

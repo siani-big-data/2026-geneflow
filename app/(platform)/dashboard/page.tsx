@@ -239,9 +239,9 @@ export default function DashboardPage() {
         <CardContent className="p-6">
           <div className="mb-6 flex items-center justify-between">
             <div>
-              <h3 className="text-base font-semibold text-foreground">
+              <h2 className="text-base font-semibold text-foreground">
                 Trace Processing Activity
-              </h3>
+              </h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 24-hour trace processing volume and quality metrics
               </p>
@@ -328,9 +328,9 @@ export default function DashboardPage() {
           <div className="border-b border-border p-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-base font-semibold text-foreground">
+                <h2 className="text-base font-semibold text-foreground">
                   Recent Studies
-                </h3>
+                </h2>
                 <p className="mt-1 text-sm text-muted-foreground">
                   Active and recently updated sequencing studies
                 </p>
@@ -359,9 +359,9 @@ export default function DashboardPage() {
                       </span>
                       <StatusBadge status={study.status} />
                     </div>
-                    <h4 className="mb-1 font-semibold text-foreground transition-colors duration-200 group-hover:text-teal">
+                    <h3 className="mb-1 font-semibold text-foreground transition-colors duration-200 group-hover:text-teal">
                       {study.name}
-                    </h4>
+                    </h3>
                     <p className="text-sm font-medium text-muted-foreground">
                       {study.pi}
                     </p>
@@ -427,9 +427,9 @@ export default function DashboardPage() {
         {/* Pipeline Status - Takes 1 column */}
         <Card className="overflow-hidden shadow-sm">
           <div className="border-b border-border p-6">
-            <h3 className="text-base font-semibold text-foreground">
+            <h2 className="text-base font-semibold text-foreground">
               Processing Pipelines
-            </h3>
+            </h2>
             <p className="mt-1 text-sm text-muted-foreground">
               Active analysis pipelines
             </p>
@@ -458,9 +458,9 @@ export default function DashboardPage() {
                         {pipeline.status === "running" ? "Running" : "Completed"}
                       </span>
                     </div>
-                    <h4 className="mb-1 text-sm font-semibold text-foreground transition-colors duration-200 group-hover:text-teal">
+                    <h3 className="mb-1 text-sm font-semibold text-foreground transition-colors duration-200 group-hover:text-teal">
                       {pipeline.name}
-                    </h4>
+                    </h3>
                     <p className="text-xs font-medium text-muted-foreground">
                       {pipeline.study}
                     </p>
@@ -511,9 +511,9 @@ export default function DashboardPage() {
       {/* Recent Analysis Activity */}
       <Card className="overflow-hidden shadow-sm">
         <div className="border-b border-border p-6">
-          <h3 className="text-base font-semibold text-foreground">
+          <h2 className="text-base font-semibold text-foreground">
             Recent Analysis Activity
-          </h3>
+          </h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Latest team actions and study updates
           </p>

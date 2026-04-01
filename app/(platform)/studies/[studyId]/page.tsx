@@ -103,11 +103,56 @@ export default function StudyDetailPage() {
   const [newAnalysisOpen, setNewAnalysisOpen] = useState(false);
   const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [deleteStudyOpen, setDeleteStudyOpen] = useState(false);
+  const [viewAnalysisOpen, setViewAnalysisOpen] = useState(false);
+  const [selectedAnalysis, setSelectedAnalysis] = useState<typeof analysisResults[0] | null>(null);
+  const [editMemberOpen, setEditMemberOpen] = useState(false);
+  const [deleteMemberOpen, setDeleteMemberOpen] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<typeof members[0] | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
     setLinkCopied(true);
     setTimeout(() => setLinkCopied(false), 2000);
+  };
+
+  const handleDownloadTrace = (traceId: string) => {
+    console.log("Downloading trace:", traceId);
+  };
+
+  const handleViewAnalysis = (analysis: typeof analysisResults[0]) => {
+    setSelectedAnalysis(analysis);
+    setViewAnalysisOpen(true);
+  };
+
+  const handleDownloadAnalysis = (analysis: typeof analysisResults[0]) => {
+    console.log("Downloading analysis:", analysis.name);
+  };
+
+  const handleEditMember = (member: typeof members[0]) => {
+    setSelectedMember(member);
+    setEditMemberOpen(true);
+  };
+
+  const handleDeleteMember = (member: typeof members[0]) => {
+    setSelectedMember(member);
+    setDeleteMemberOpen(true);
+  };
+
+  const handleSaveSettings = () => {
+    setSaveSuccess(true);
+    setTimeout(() => setSaveSuccess(false), 2000);
+  };
+
+  const handleDeleteStudy = () => {
+    console.log("Deleting study");
+    setDeleteStudyOpen(false);
+  };
+
+  const handleExportFormat = (format: string) => {
+    console.log("Exporting as:", format);
+    setExportOpen(false);
   };
 
   return (
@@ -366,7 +411,12 @@ export default function StudyDetailPage() {
                           <span className="text-sm text-foreground">{analysis.variants}</span>
                         </td>
                         <td className="px-6 py-4">
-                          <button className="text-sm font-medium text-teal hover:text-teal/80">View</button>
+                          <button
+                            onClick={() => handleViewAnalysis(analysis)}
+                            className="text-sm font-medium text-teal hover:text-teal/80"
+                          >
+                            View
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -452,7 +502,11 @@ export default function StudyDetailPage() {
                             <Link href={`/traces/${trace.id}`} className="rounded-md p-1.5 text-muted-foreground transition-all hover:bg-teal/10 hover:text-teal">
                               <Eye className="h-4 w-4" />
                             </Link>
-                            <button className="rounded-md p-1.5 text-muted-foreground transition-all hover:bg-muted hover:text-foreground">
+                            <button
+                              onClick={() => handleDownloadTrace(trace.id)}
+                              className="rounded-md p-1.5 text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
+                              title="Download trace"
+                            >
                               <Download className="h-4 w-4" />
                             </button>
                           </div>
@@ -504,9 +558,17 @@ export default function StudyDetailPage() {
                     )}
                   </div>
                   <div className="flex items-center gap-2">
-                    <button className="flex-1 rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground transition-all hover:bg-muted/50">View Details</button>
+                    <button
+                      onClick={() => handleViewAnalysis(analysis)}
+                      className="flex-1 rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground transition-all hover:bg-muted/50"
+                    >
+                      View Details
+                    </button>
                     {analysis.status === "Completed" && (
-                      <button className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground transition-all hover:bg-muted/50">
+                      <button
+                        onClick={() => handleDownloadAnalysis(analysis)}
+                        className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground transition-all hover:bg-muted/50"
+                      >
                         <Download className="h-4 w-4" />
                       </button>
                     )}
@@ -557,8 +619,18 @@ export default function StudyDetailPage() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
-                          <button className="rounded-md p-1.5 text-muted-foreground transition-all hover:bg-muted hover:text-foreground"><Edit className="h-4 w-4" /></button>
-                          <button className="rounded-md p-1.5 text-muted-foreground transition-all hover:bg-red-500/10 hover:text-red-500"><Trash2 className="h-4 w-4" /></button>
+                          <button
+                            onClick={() => handleEditMember(member)}
+                            className="rounded-md p-1.5 text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteMember(member)}
+                            className="rounded-md p-1.5 text-muted-foreground transition-all hover:bg-red-500/10 hover:text-red-500"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -611,14 +683,24 @@ export default function StudyDetailPage() {
                 </div>
               </div>
               <div className="border-t border-border pt-4">
-                <button className="rounded-lg bg-teal px-4 py-2 text-white transition-all hover:bg-teal/90">Save Changes</button>
+                <button
+                  onClick={handleSaveSettings}
+                  className="rounded-lg bg-teal px-4 py-2 text-white transition-all hover:bg-teal/90"
+                >
+                  {saveSuccess ? "Saved!" : "Save Changes"}
+                </button>
               </div>
             </div>
 
             <div className="rounded-xl border border-red-500/30 bg-card p-6">
               <h3 className="mb-2 text-base font-semibold text-red-500">Danger Zone</h3>
               <p className="mb-4 text-sm text-muted-foreground">Once you delete a study, there is no going back.</p>
-              <button className="rounded-lg border border-red-500 px-4 py-2 text-red-500 transition-all hover:bg-red-500/10">Delete Study</button>
+              <button
+                onClick={() => setDeleteStudyOpen(true)}
+                className="rounded-lg border border-red-500 px-4 py-2 text-red-500 transition-all hover:bg-red-500/10"
+              >
+                Delete Study
+              </button>
             </div>
           </div>
         )}
@@ -654,7 +736,11 @@ export default function StudyDetailPage() {
           </DialogHeader>
           <div className="space-y-3 py-4">
             {["PDF Report", "CSV Data", "JSON Format"].map((format) => (
-              <button key={format} className="group flex w-full items-center justify-between rounded-lg border border-border px-4 py-3.5 transition-all hover:border-teal/30 hover:bg-muted/50">
+              <button
+                key={format}
+                onClick={() => handleExportFormat(format)}
+                className="group flex w-full items-center justify-between rounded-lg border border-border px-4 py-3.5 transition-all hover:border-teal/30 hover:bg-muted/50"
+              >
                 <div className="flex items-center gap-3">
                   <div className="rounded-lg bg-muted p-2 group-hover:bg-teal/10"><FileText className="h-4 w-4 text-muted-foreground group-hover:text-teal" /></div>
                   <span className="font-medium">{format}</span>
@@ -761,6 +847,152 @@ export default function StudyDetailPage() {
           <DialogFooter>
             <button onClick={() => setNewAnalysisOpen(false)} className="rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-muted">Cancel</button>
             <button onClick={() => setNewAnalysisOpen(false)} className="rounded-lg bg-teal px-4 py-2.5 text-sm font-medium text-white">Create Analysis</button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Analysis Dialog */}
+      <Dialog open={viewAnalysisOpen} onOpenChange={setViewAnalysisOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>{selectedAnalysis?.name}</DialogTitle>
+            <DialogDescription>Analysis details and results</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Type</p>
+                <p className="text-sm font-medium">{selectedAnalysis?.type}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Status</p>
+                <p className="text-sm font-medium">{selectedAnalysis?.status}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Date</p>
+                <p className="text-sm font-medium">{selectedAnalysis?.date}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Variants</p>
+                <p className="text-sm font-medium">{selectedAnalysis?.variants}</p>
+              </div>
+            </div>
+            {selectedAnalysis?.status === "Completed" && (
+              <div className="rounded-lg border border-border bg-muted/30 p-4">
+                <p className="text-sm text-muted-foreground">
+                  Analysis completed successfully. Results are available for download.
+                </p>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <button onClick={() => setViewAnalysisOpen(false)} className="rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-muted">Close</button>
+            {selectedAnalysis?.status === "Completed" && (
+              <button
+                onClick={() => {
+                  handleDownloadAnalysis(selectedAnalysis);
+                  setViewAnalysisOpen(false);
+                }}
+                className="rounded-lg bg-teal px-4 py-2.5 text-sm font-medium text-white"
+              >
+                Download Results
+              </button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Member Dialog */}
+      <Dialog open={editMemberOpen} onOpenChange={setEditMemberOpen}>
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle>Edit Team Member</DialogTitle>
+            <DialogDescription>Update role and permissions for {selectedMember?.name}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Role</label>
+              <select
+                defaultValue={selectedMember?.role}
+                className="w-full rounded-lg border border-border px-3.5 py-2.5 text-sm"
+              >
+                <option>Principal Investigator</option>
+                <option>Co-Investigator</option>
+                <option>Research Scientist</option>
+                <option>Lab Technician</option>
+                <option>Bioinformatician</option>
+                <option>Viewer</option>
+              </select>
+            </div>
+          </div>
+          <DialogFooter>
+            <button onClick={() => setEditMemberOpen(false)} className="rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-muted">Cancel</button>
+            <button
+              onClick={() => {
+                console.log("Updating member:", selectedMember?.email);
+                setEditMemberOpen(false);
+              }}
+              className="rounded-lg bg-teal px-4 py-2.5 text-sm font-medium text-white"
+            >
+              Save Changes
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Member Dialog */}
+      <Dialog open={deleteMemberOpen} onOpenChange={setDeleteMemberOpen}>
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle>Remove Team Member</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to remove {selectedMember?.name} from this study?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4">
+            <button onClick={() => setDeleteMemberOpen(false)} className="rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-muted">Cancel</button>
+            <button
+              onClick={() => {
+                console.log("Removing member:", selectedMember?.email);
+                setDeleteMemberOpen(false);
+              }}
+              className="rounded-lg bg-red-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-500/90"
+            >
+              Remove Member
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Study Dialog */}
+      <Dialog open={deleteStudyOpen} onOpenChange={setDeleteStudyOpen}>
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle className="text-red-500">Delete Study</DialogTitle>
+            <DialogDescription>
+              This action is permanent and cannot be undone. All traces, analyses, and data will be deleted.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                Type the study ID to confirm: <span className="font-mono text-teal">{studyData.id}</span>
+              </label>
+              <input
+                type="text"
+                className="w-full rounded-lg border border-border px-3.5 py-2.5 text-sm"
+                placeholder={studyData.id}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <button onClick={() => setDeleteStudyOpen(false)} className="rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-muted">Cancel</button>
+            <button
+              onClick={handleDeleteStudy}
+              className="rounded-lg bg-red-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-500/90"
+            >
+              Delete Study
+            </button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

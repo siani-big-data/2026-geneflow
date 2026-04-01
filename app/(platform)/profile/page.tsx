@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 import {
   Camera,
@@ -17,6 +17,7 @@ import {
   ChevronRight,
   Globe,
   Calendar,
+  Upload,
 } from "lucide-react";
 import {
   Dialog,
@@ -87,9 +88,39 @@ const recentActivity = [
   { action: "Created new study", study: "GF-2026-091", timestamp: "2 days ago" },
 ];
 
+const allActivity = [
+  { action: "Uploaded 24 new traces", study: "GF-2026-089", timestamp: "2 hours ago" },
+  { action: "Completed Variant Calling Analysis", study: "GF-2026-089", timestamp: "5 hours ago" },
+  { action: "Invited team member", study: "GF-2026-087", timestamp: "1 day ago" },
+  { action: "Created new study", study: "GF-2026-091", timestamp: "2 days ago" },
+  { action: "Exported analysis results", study: "GF-2026-089", timestamp: "3 days ago" },
+  { action: "Updated study settings", study: "GF-2026-085", timestamp: "4 days ago" },
+  { action: "Ran Quality Control pipeline", study: "GF-2026-089", timestamp: "5 days ago" },
+  { action: "Added collaborator Dr. Wong", study: "GF-2026-087", timestamp: "1 week ago" },
+];
+
 export default function ProfilePage() {
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [editBioOpen, setEditBioOpen] = useState(false);
+  const [uploadPhotoOpen, setUploadPhotoOpen] = useState(false);
+  const [viewActivityOpen, setViewActivityOpen] = useState(false);
+  const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedPhoto(file);
+    }
+  };
+
+  const handleUploadPhoto = () => {
+    if (selectedPhoto) {
+      console.log("Uploading photo:", selectedPhoto.name);
+      setUploadPhotoOpen(false);
+      setSelectedPhoto(null);
+    }
+  };
 
   return (
     <div className="-mx-16 -mt-10 min-h-full bg-background">
@@ -102,7 +133,10 @@ export default function ProfilePage() {
               <div className="flex h-28 w-28 items-center justify-center rounded-2xl bg-gradient-to-br from-teal to-blue-deep text-3xl font-semibold text-white shadow-lg">
                 SM
               </div>
-              <button className="absolute bottom-0 right-0 rounded-lg border border-border bg-background p-2 opacity-0 shadow-md transition-all hover:bg-muted group-hover:opacity-100">
+              <button
+                onClick={() => setUploadPhotoOpen(true)}
+                className="absolute bottom-0 right-0 rounded-lg border border-border bg-background p-2 opacity-0 shadow-md transition-all hover:bg-muted group-hover:opacity-100"
+              >
                 <Camera className="h-4 w-4 text-foreground" />
               </button>
             </div>
@@ -292,7 +326,10 @@ export default function ProfilePage() {
                   </div>
                 ))}
               </div>
-              <button className="mt-4 w-full border-t border-border pt-4 text-sm font-medium text-teal hover:text-teal/80">
+              <button
+                onClick={() => setViewActivityOpen(true)}
+                className="mt-4 w-full border-t border-border pt-4 text-sm font-medium text-teal hover:text-teal/80"
+              >
                 View All Activity
               </button>
             </div>
@@ -477,6 +514,91 @@ export default function ProfilePage() {
               Cancel
             </Button>
             <Button onClick={() => setEditBioOpen(false)}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Upload Photo Dialog */}
+      <Dialog open={uploadPhotoOpen} onOpenChange={setUploadPhotoOpen}>
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle>Upload Profile Photo</DialogTitle>
+            <DialogDescription>
+              Choose a new profile picture. JPG or PNG, max 5MB.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <div
+              className={cn(
+                "group cursor-pointer rounded-lg border-2 border-dashed p-8 text-center transition-all",
+                selectedPhoto
+                  ? "border-teal bg-teal/5"
+                  : "border-border hover:border-teal/50"
+              )}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png"
+                onChange={handlePhotoSelect}
+                className="hidden"
+              />
+              <Upload className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
+              {selectedPhoto ? (
+                <p className="text-sm font-medium text-foreground">{selectedPhoto.name}</p>
+              ) : (
+                <p className="text-sm text-muted-foreground">Click to select a photo</p>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setSelectedPhoto(null);
+                setUploadPhotoOpen(false);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleUploadPhoto} disabled={!selectedPhoto}>
+              Upload
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View All Activity Dialog */}
+      <Dialog open={viewActivityOpen} onOpenChange={setViewActivityOpen}>
+        <DialogContent className="sm:max-w-[540px]">
+          <DialogHeader>
+            <DialogTitle>Activity History</DialogTitle>
+            <DialogDescription>
+              Your recent activity across all studies.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[400px] overflow-y-auto py-4">
+            <div className="space-y-4">
+              {allActivity.map((activity, idx) => (
+                <div key={idx} className="flex gap-3">
+                  <div className="mt-2 h-2 w-2 flex-shrink-0 rounded-full bg-teal" />
+                  <div className="flex-1 border-b border-border pb-4">
+                    <p className="mb-0.5 text-sm font-medium text-foreground">{activity.action}</p>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span>{activity.study}</span>
+                      <span>•</span>
+                      <span>{activity.timestamp}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setViewActivityOpen(false)}>
+              Close
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

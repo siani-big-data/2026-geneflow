@@ -198,6 +198,14 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Skip to main content link for accessibility */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[60] focus:px-4 focus:py-2 focus:bg-teal focus:text-white focus:rounded-md focus:outline-none"
+      >
+        Skip to main content
+      </a>
+
       {/* Navigation */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -263,6 +271,8 @@ export default function LandingPage() {
               <button
                 className="p-2 -mr-2"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+                aria-expanded={mobileMenuOpen}
               >
                 {mobileMenuOpen ? (
                   <X className="h-6 w-6" />
@@ -303,8 +313,9 @@ export default function LandingPage() {
         )}
       </header>
 
-      {/* Hero */}
-      <section className="relative pt-32 pb-20 sm:pt-40 sm:pb-32 overflow-hidden">
+      <main id="main-content">
+        {/* Hero */}
+        <section className="relative pt-32 pb-20 sm:pt-40 sm:pb-32 overflow-hidden">
         {/* Background gradient */}
         <div className="absolute inset-0 -z-10">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-teal/10 rounded-full blur-3xl" />
@@ -441,7 +452,7 @@ export default function LandingPage() {
             ].map((name) => (
               <div
                 key={name}
-                className="text-lg font-semibold text-muted-foreground/50"
+                className="text-lg font-semibold text-muted-foreground"
               >
                 {name}
               </div>
@@ -671,6 +682,7 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+      </main>
 
       {/* Footer */}
       <footer className="py-12 border-t border-border">
@@ -710,7 +722,7 @@ export default function LandingPage() {
             </div>
 
             <div>
-              <h4 className="font-semibold mb-4">Product</h4>
+              <h3 className="font-semibold mb-4">Product</h3>
               <ul className="space-y-2 text-sm">
                 <li>
                   <a
@@ -748,7 +760,7 @@ export default function LandingPage() {
             </div>
 
             <div>
-              <h4 className="font-semibold mb-4">Resources</h4>
+              <h3 className="font-semibold mb-4">Resources</h3>
               <ul className="space-y-2 text-sm">
                 <li>
                   <a
@@ -786,7 +798,7 @@ export default function LandingPage() {
             </div>
 
             <div>
-              <h4 className="font-semibold mb-4">Company</h4>
+              <h3 className="font-semibold mb-4">Company</h3>
               <ul className="space-y-2 text-sm">
                 <li>
                   <a

@@ -190,6 +190,8 @@ export function Sidebar() {
                   "text-muted-foreground transition-all duration-300 ease-out hover:text-foreground",
                   sidebarCollapsed ? "w-0 opacity-0" : "opacity-0 group-hover:opacity-100"
                 )}
+                aria-label="Log out"
+                tabIndex={sidebarCollapsed ? -1 : 0}
               >
                 <LogOut className="h-4 w-4" />
               </button>

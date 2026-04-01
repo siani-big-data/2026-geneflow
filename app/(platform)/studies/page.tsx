@@ -13,6 +13,12 @@ import {
   MoreVertical,
   Beaker,
   ChevronDown,
+  Eye,
+  Edit,
+  Trash2,
+  Copy,
+  Archive,
+  Share2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui";
@@ -24,6 +30,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { StatusBadge, EmptyState } from "@/components/shared";
 
 const studyTypes = [
@@ -146,6 +159,23 @@ export default function StudiesPage() {
   const [newStudyOpen, setNewStudyOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [deleteStudyOpen, setDeleteStudyOpen] = useState(false);
+  const [selectedStudy, setSelectedStudy] = useState<typeof studies[0] | null>(null);
+
+  const handleExport = (format: string) => {
+    // Simulate export
+    console.log(`Exporting studies as ${format}`);
+    setExportOpen(false);
+  };
+
+  const handleDeleteStudy = () => {
+    if (selectedStudy) {
+      console.log(`Deleting study ${selectedStudy.id}`);
+      setDeleteStudyOpen(false);
+      setSelectedStudy(null);
+    }
+  };
 
   const filteredStudies = studies.filter((study) => {
     const matchesSearch =
@@ -218,7 +248,10 @@ export default function StudiesPage() {
                 )}
               />
             </button>
-            <button className="flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground transition-all duration-200 hover:bg-muted/50 active:scale-[0.98]">
+            <button
+              onClick={() => setExportOpen(true)}
+              className="flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground transition-all duration-200 hover:bg-muted/50 active:scale-[0.98]"
+            >
               <Download className="h-4 w-4" />
               Export
             </button>
@@ -312,19 +345,59 @@ export default function StudiesPage() {
                     </span>
                     <StatusBadge status={study.status} />
                   </div>
-                  <h3 className="line-clamp-2 font-medium text-foreground transition-colors duration-200 group-hover:text-teal">
+                  <h2 className="line-clamp-2 text-base font-medium text-foreground transition-colors duration-200 group-hover:text-teal">
                     {study.name}
-                  </h3>
+                  </h2>
                 </div>
-                <button
-                  className="rounded-lg p-1.5 text-muted-foreground transition-all duration-200 hover:bg-muted/70 hover:text-foreground active:scale-95"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                  }}
-                >
-                  <MoreVertical className="h-4 w-4" />
-                </button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className="rounded-lg p-1.5 text-muted-foreground transition-all duration-200 hover:bg-muted/70 hover:text-foreground active:scale-95"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
+                      aria-label={`More options for ${study.name}`}
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48" onClick={(e) => e.stopPropagation()}>
+                    <DropdownMenuItem asChild>
+                      <Link href={`/studies/${study.id}`} className="flex items-center gap-2">
+                        <Eye className="h-4 w-4" />
+                        View Details
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => console.log(`Edit ${study.id}`)}>
+                      <Edit className="h-4 w-4" />
+                      Edit Study
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => console.log(`Duplicate ${study.id}`)}>
+                      <Copy className="h-4 w-4" />
+                      Duplicate
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => console.log(`Share ${study.id}`)}>
+                      <Share2 className="h-4 w-4" />
+                      Share
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => console.log(`Archive ${study.id}`)}>
+                      <Archive className="h-4 w-4" />
+                      Archive
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-red-500 focus:text-red-500"
+                      onClick={() => {
+                        setSelectedStudy(study);
+                        setDeleteStudyOpen(true);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
 
               {/* Progress Bar */}
@@ -394,7 +467,7 @@ export default function StudiesPage() {
                 {study.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="rounded-md bg-muted/50 px-2.5 py-1 text-xs text-muted-foreground"
+                    className="rounded-md bg-muted px-2.5 py-1 text-xs text-foreground/70"
                   >
                     {tag}
                   </span>
@@ -452,6 +525,68 @@ export default function StudiesPage() {
           </div>
         </div>
       )}
+
+      {/* Export Dialog */}
+      <Dialog open={exportOpen} onOpenChange={setExportOpen}>
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle>Export Studies</DialogTitle>
+            <DialogDescription>
+              Choose the format to export your studies data.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-4">
+            {[
+              { format: "CSV", description: "Spreadsheet compatible format" },
+              { format: "JSON", description: "Machine-readable format" },
+              { format: "PDF", description: "Printable report format" },
+            ].map((option) => (
+              <button
+                key={option.format}
+                onClick={() => handleExport(option.format)}
+                className="group flex w-full items-center justify-between rounded-lg border border-border px-4 py-3.5 transition-all hover:border-teal/30 hover:bg-muted/50"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="rounded-lg bg-muted p-2 group-hover:bg-teal/10">
+                    <FileText className="h-4 w-4 text-muted-foreground group-hover:text-teal" />
+                  </div>
+                  <div className="text-left">
+                    <span className="font-medium text-foreground">{option.format}</span>
+                    <p className="text-xs text-muted-foreground">{option.description}</p>
+                  </div>
+                </div>
+                <Download className="h-4 w-4 text-muted-foreground" />
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Study Confirmation Dialog */}
+      <Dialog open={deleteStudyOpen} onOpenChange={setDeleteStudyOpen}>
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle>Delete Study</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete &quot;{selectedStudy?.name}&quot;? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4">
+            <button
+              onClick={() => setDeleteStudyOpen(false)}
+              className="rounded-lg px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleDeleteStudy}
+              className="rounded-lg bg-red-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-500/90"
+            >
+              Delete Study
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* New Study Dialog */}
       <Dialog open={newStudyOpen} onOpenChange={setNewStudyOpen}>
