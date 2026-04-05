@@ -25,21 +25,29 @@ public sealed class UserUnitOfWork : IUserUnitOfWork
     /// <inheritdoc />
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        var domainEvents = _context.ChangeTracker
-            .Entries<IAggregateRoot>()
-            .SelectMany(e => e.Entity.DomainEvents)
+        // Get all aggregate roots with pending domain events
+        var aggregateRoots = _context.ChangeTracker
+            .Entries()
+            .Where(e => e.Entity is IAggregateRoot)
+            .Select(e => (IAggregateRoot)e.Entity)
+            .ToList();
+
+        var domainEvents = aggregateRoots
+            .SelectMany(ar => ar.DomainEvents)
             .ToList();
 
         var result = await _context.SaveChangesAsync(cancellationToken);
 
+        // Dispatch events after successful save
         foreach (var domainEvent in domainEvents)
         {
             await _eventDispatcher.DispatchAsync(domainEvent, cancellationToken);
         }
 
-        foreach (var entry in _context.ChangeTracker.Entries<IAggregateRoot>())
+        // Clear events from all aggregate roots
+        foreach (var aggregateRoot in aggregateRoots)
         {
-            entry.Entity.ClearDomainEvents();
+            aggregateRoot.ClearDomainEvents();
         }
 
         return result;

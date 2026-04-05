@@ -1,4 +1,5 @@
 using GeneFlow.ApiNet2.Application.Identity.Interfaces;
+using GeneFlow.ApiNet2.Application.Identity.Services;
 using GeneFlow.ApiNet2.Domain.Identity;
 using GeneFlow.ApiNet2.Infrastructure.Events;
 using GeneFlow.ApiNet2.Infrastructure.Identity.Configuration;
@@ -110,6 +111,7 @@ public static class DependencyInjection
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<IEmailService, EmailService>();
+        services.AddScoped<IUserAuthenticationValidator, UserAuthenticationValidator>();
 
         services.AddHttpContextAccessor();
 

@@ -10,13 +10,15 @@ namespace GeneFlow.ApiNet2.API.Middleware;
 public sealed class GlobalExceptionHandler : IExceptionHandler
 {
     private readonly ILogger<GlobalExceptionHandler> _logger;
+    private readonly IHostEnvironment _environment;
 
     /// <summary>
     /// Initializes a new instance of the handler.
     /// </summary>
-    public GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger)
+    public GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger, IHostEnvironment environment)
     {
         _logger = logger;
+        _environment = environment;
     }
 
     /// <inheritdoc />
@@ -30,9 +32,13 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
             "Unhandled exception occurred: {Message}",
             exception.Message);
 
+        var message = _environment.IsDevelopment()
+            ? $"{exception.Message} | {exception.InnerException?.Message}"
+            : "An unexpected error occurred. Please try again later.";
+
         var error = new ApiError(
             "InternalServerError",
-            "An unexpected error occurred. Please try again later.");
+            message);
 
         httpContext.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
         await httpContext.Response.WriteAsJsonAsync(error, cancellationToken);

@@ -1,4 +1,5 @@
 using GeneFlow.ApiNet2.Domain.Identity;
+using GeneFlow.ApiNet2.Domain.Identity.Enumerations;
 using Microsoft.EntityFrameworkCore;
 
 namespace GeneFlow.ApiNet2.Infrastructure.Identity.Persistence.Context;
@@ -26,6 +27,10 @@ public sealed class UserContext : DbContext
         base.OnModelCreating(modelBuilder);
 
         modelBuilder.HasDefaultSchema("identity");
+
+        // Ignore smart enumerations - they are stored as JSON, not separate entities
+        modelBuilder.Ignore<Role>();
+
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(UserContext).Assembly);
     }
 }

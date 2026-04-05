@@ -4,6 +4,18 @@ using GeneFlow.ApiNet2.API.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Add CORS
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.WithOrigins("http://localhost:3000")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
+
 // Add API services (includes Infrastructure, MediatR, JWT, Swagger)
 builder.Services.AddApiServices(builder.Configuration);
 
@@ -22,6 +34,7 @@ if (app.Environment.IsDevelopment())
 app.UseCorrelationId();
 app.UseExceptionHandler();
 app.UseHttpsRedirection();
+app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 

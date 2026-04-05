@@ -104,14 +104,14 @@ public sealed class UserRepository : IUserRepository
     public async Task<User?> GetByEmailVerificationTokenAsync(string token, CancellationToken cancellationToken = default)
     {
         return await _context.Users
-            .FirstOrDefaultAsync(u => u.EmailVerificationToken == token, cancellationToken);
+            .FirstOrDefaultAsync(u => u.EmailVerification.Token == token, cancellationToken);
     }
 
     /// <inheritdoc />
     public async Task<User?> GetByPasswordResetTokenAsync(string token, CancellationToken cancellationToken = default)
     {
         return await _context.Users
-            .FirstOrDefaultAsync(u => u.PasswordResetToken == token, cancellationToken);
+            .FirstOrDefaultAsync(u => u.PasswordReset.Token == token, cancellationToken);
     }
 
     /// <inheritdoc />

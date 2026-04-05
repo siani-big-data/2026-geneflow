@@ -156,6 +156,9 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
             .HasConversion(rolesConverter)
             .Metadata.SetValueComparer(rolesComparer);
 
+        // Ignore the Roles navigation property - we use the backing field _roles
+        builder.Ignore(u => u.Roles);
+
         // Refresh Tokens (owned collection)
         builder.OwnsMany<RefreshToken>("_refreshTokens", rt =>
         {
@@ -257,5 +260,10 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
 
         // Soft delete filter
         builder.HasQueryFilter(u => !u.IsDeleted);
+
+        // Ignore navigation properties - we use backing fields for owned collections
+        builder.Ignore(u => u.RefreshTokens);
+        builder.Ignore(u => u.ExternalLogins);
+        builder.Ignore(u => u.TwoFactorCodes);
     }
 }
