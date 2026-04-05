@@ -12,16 +12,16 @@ import structlog
 
 from src.mounters.base import BaseMounter
 from src.mounters.postgres.connection import PostgresConnection
-from src.mounters.postgres.handlers.users import UsersHandler
-from src.mounters.postgres.handlers.studies import StudiesHandler
-from src.mounters.postgres.handlers.traces import TracesHandler
 from src.mounters.postgres.handlers.alignments import AlignmentsHandler
 from src.mounters.postgres.handlers.billing import BillingHandler
-from src.mounters.postgres.schemas.users import USERS_SCHEMA
-from src.mounters.postgres.schemas.studies import STUDIES_SCHEMA
-from src.mounters.postgres.schemas.traces import TRACES_SCHEMA
+from src.mounters.postgres.handlers.studies import StudiesHandler
+from src.mounters.postgres.handlers.traces import TracesHandler
+from src.mounters.postgres.handlers.users import UsersHandler
 from src.mounters.postgres.schemas.alignments import ALIGNMENTS_SCHEMA
 from src.mounters.postgres.schemas.billing import BILLING_SCHEMA
+from src.mounters.postgres.schemas.studies import STUDIES_SCHEMA
+from src.mounters.postgres.schemas.traces import TRACES_SCHEMA
+from src.mounters.postgres.schemas.users import USERS_SCHEMA
 
 logger = structlog.get_logger()
 
