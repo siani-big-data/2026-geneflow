@@ -12,6 +12,7 @@ Handles all Identity domain events from the backend:
 """
 
 from datetime import datetime
+
 from src.mounters.postgres.handlers.base import BaseHandler
 
 

@@ -7,6 +7,7 @@ This mounter:
 """
 
 import json
+
 import structlog
 
 from src.mounters.base import BaseMounter
