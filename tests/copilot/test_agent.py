@@ -302,10 +302,10 @@ class TestAgentToolHandlers:
 
     @pytest.mark.asyncio
     async def test_handle_get_quality_from_context(self, agent):
-        """_handle_get_quality returns quality from context."""
+        """_handle_get_quality returns quality_enhanced from context."""
         ctx = AgentContext(traceId="TR-123")
         ctx.analysisData = {
-            "quality": {
+            "quality_enhanced": {
                 "predictedAccuracy": 0.95,
                 "errorProbability": 0.05,
             }

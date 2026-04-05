@@ -156,7 +156,7 @@ class TestDeepSeekClient:
             ]
 
             response = await client.chat(
-                messages=[Message(role="user", content="Check quality")],
+                messages=[Message(role="user", content="Check quality_enhanced")],
                 tools=tools,
             )
 

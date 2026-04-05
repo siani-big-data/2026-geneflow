@@ -60,7 +60,7 @@ class TestHeuristicSNPStrategy:
 
 
 class TestHeuristicHeterozygoteStrategy:
-    """Tests for heterozygote detection strategy."""
+    """Tests for heterozygote_training detection strategy."""
 
     @pytest.fixture
     def strategy(self):
@@ -68,7 +68,7 @@ class TestHeuristicHeterozygoteStrategy:
 
     @pytest.mark.asyncio
     async def test_detect_heterozygote(self, strategy):
-        # Position with two strong signals (heterozygote) - ratio between 0.25-0.75
+        # Position with two strong signals (heterozygote_training) - ratio between 0.25-0.75
         signal_a = [1000, 100, 100]
         signal_t = [100, 100, 100]
         signal_c = [100, 500, 100]  # Strong C at pos 1

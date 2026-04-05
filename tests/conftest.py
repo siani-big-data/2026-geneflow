@@ -47,5 +47,5 @@ def sample_sequence() -> str:
 
 @pytest.fixture
 def sample_quality() -> list[int]:
-    """Sample quality scores for testing."""
+    """Sample quality_enhanced scores for testing."""
     return [30, 35, 40, 38, 42, 45, 40, 38, 35, 30] * 5 + [25, 20, 15, 10, 5]

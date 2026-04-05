@@ -1,4 +1,4 @@
-"""Tests for heuristic quality strategies."""
+"""Tests for heuristic quality_enhanced strategies."""
 
 import pytest
 
@@ -11,7 +11,7 @@ from src.ml.strategies.heuristic.quality import (
 
 
 class TestHeuristicQualityStrategy:
-    """Tests for quality prediction strategy."""
+    """Tests for quality_enhanced prediction strategy."""
 
     @pytest.fixture
     def strategy(self):
@@ -56,7 +56,7 @@ class TestHeuristicTrimStrategy:
 
     @pytest.mark.asyncio
     async def test_trim_low_quality_ends(self, strategy):
-        # Low quality at start and end
+        # Low quality_enhanced at start and end
         scores = [5, 8, 10, 12, 35, 40, 42, 40, 38, 35, 10, 8, 5]
         result = await strategy.execute(quality_scores=scores)
 

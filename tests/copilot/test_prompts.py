@@ -21,7 +21,7 @@ class TestPromptTemplates:
         assert result == "Hello Bob, your [missing no disponible] is ready."
 
     def test_format_quality_section_with_data(self):
-        """format_quality_section formats quality data."""
+        """format_quality_section formats quality_enhanced data."""
         quality = {
             "predictedAccuracy": 0.95,
             "errorProbability": 0.05,

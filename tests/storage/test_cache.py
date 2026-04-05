@@ -53,9 +53,9 @@ class TestCacheService:
 
     @pytest.mark.asyncio
     async def test_cache_analysis_result(self, cache_service):
-        analysis = {"quality": 95, "trimmed": True}
-        await cache_service.cache_analysis_result("trace123", "quality", analysis)
-        result = await cache_service.get_analysis_result("trace123", "quality")
+        analysis = {"quality_enhanced": 95, "trimmed": True}
+        await cache_service.cache_analysis_result("trace123", "quality_enhanced", analysis)
+        result = await cache_service.get_analysis_result("trace123", "quality_enhanced")
 
         assert result == analysis
 
