@@ -78,16 +78,31 @@ export const authService = {
 
   /**
    * Logout the current user.
+   * Always clears local tokens even if the backend call fails.
    */
   async logout(): Promise<void> {
     const refreshToken = tokenStorage.getRefreshToken();
+    const accessToken = tokenStorage.getAccessToken();
 
-    try {
-      if (refreshToken) {
-        await api.post("/api/v1/auth/logout", { refreshToken });
+    // Clear tokens first to ensure logout happens even if API call fails
+    tokenStorage.clearTokens();
+
+    // Try to revoke the token on the backend, but don't fail if it doesn't work
+    if (refreshToken && accessToken) {
+      try {
+        // Make a direct fetch call to avoid the API client's token refresh logic
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5286"}/api/v1/auth/logout`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({ refreshToken }),
+        });
+      } catch {
+        // Ignore errors - local logout already happened
+        console.log("[Auth] Backend logout failed, but local session cleared");
       }
-    } finally {
-      tokenStorage.clearTokens();
     }
   },
 
