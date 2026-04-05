@@ -5,3 +5,4 @@ export { AIAssistant } from "./ai-assistant";
 export { Chromatogram } from "./chromatogram";
 export type { ChromatogramControls, ChromatogramStats, ChromatogramData } from "./chromatogram";
 export { SkipLink } from "./skip-link";
+export { LocaleSwitcher } from "./locale-switcher";

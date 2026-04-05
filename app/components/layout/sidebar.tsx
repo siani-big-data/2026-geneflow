@@ -1,12 +1,13 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronLeft, ChevronRight, User, LogOut } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/stores/ui-store";
 import { mainNavigation, bottomNavigation } from "./navigation";
+import { Link } from "@/lib/navigation";
 import {
   Tooltip,
   TooltipContent,
@@ -16,12 +17,16 @@ import {
 export function Sidebar() {
   const pathname = usePathname();
   const { sidebarCollapsed, toggleSidebar } = useUIStore();
+  const t = useTranslations("navigation");
+  const tCommon = useTranslations("common");
 
   const isActive = (href: string) => {
+    // Remove locale prefix from pathname for comparison
+    const pathWithoutLocale = pathname.replace(/^\/(es|en)/, "");
     if (href === "/dashboard") {
-      return pathname === "/dashboard" || pathname === "/";
+      return pathWithoutLocale === "/dashboard" || pathWithoutLocale === "/";
     }
-    return pathname.startsWith(href);
+    return pathWithoutLocale.startsWith(href);
   };
 
   return (
@@ -52,10 +57,10 @@ export function Sidebar() {
             )}
           >
             <span className="text-base font-semibold leading-none text-foreground">
-              GeneFlow
+              {tCommon("appName")}
             </span>
             <span className="mt-0.5 text-[10px] leading-none text-muted-foreground">
-              Sequencing Platform
+              {tCommon("tagline")}
             </span>
           </div>
         </Link>
@@ -64,7 +69,7 @@ export function Sidebar() {
         <button
           onClick={toggleSidebar}
           className="absolute -right-3 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card shadow-sm transition-all duration-200 hover:scale-110 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-label={sidebarCollapsed ? t("expandSidebar") : t("collapseSidebar")}
           aria-expanded={!sidebarCollapsed}
         >
           {sidebarCollapsed ? (
@@ -80,6 +85,7 @@ export function Sidebar() {
         {mainNavigation.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href);
+          const name = t(item.nameKey);
 
           const linkContent = (
             <Link
@@ -100,21 +106,21 @@ export function Sidebar() {
                   sidebarCollapsed ? "w-0 opacity-0" : "w-auto opacity-100"
                 )}
               >
-                {item.name}
+                {name}
               </span>
             </Link>
           );
 
           if (sidebarCollapsed) {
             return (
-              <Tooltip key={item.name} delayDuration={0}>
+              <Tooltip key={item.nameKey} delayDuration={0}>
                 <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
-                <TooltipContent side="right">{item.name}</TooltipContent>
+                <TooltipContent side="right">{name}</TooltipContent>
               </Tooltip>
             );
           }
 
-          return <React.Fragment key={item.name}>{linkContent}</React.Fragment>;
+          return <React.Fragment key={item.nameKey}>{linkContent}</React.Fragment>;
         })}
       </nav>
 
@@ -123,6 +129,7 @@ export function Sidebar() {
         {bottomNavigation.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href);
+          const name = t(item.nameKey);
 
           const linkContent = (
             <Link
@@ -140,21 +147,21 @@ export function Sidebar() {
                   sidebarCollapsed ? "w-0 opacity-0" : "w-auto opacity-100"
                 )}
               >
-                {item.name}
+                {name}
               </span>
             </Link>
           );
 
           if (sidebarCollapsed) {
             return (
-              <Tooltip key={item.name} delayDuration={0}>
+              <Tooltip key={item.nameKey} delayDuration={0}>
                 <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
-                <TooltipContent side="right">{item.name}</TooltipContent>
+                <TooltipContent side="right">{name}</TooltipContent>
               </Tooltip>
             );
           }
 
-          return <React.Fragment key={item.name}>{linkContent}</React.Fragment>;
+          return <React.Fragment key={item.nameKey}>{linkContent}</React.Fragment>;
         })}
       </div>
 
@@ -190,7 +197,7 @@ export function Sidebar() {
                   "text-muted-foreground transition-all duration-300 ease-out hover:text-foreground",
                   sidebarCollapsed ? "w-0 opacity-0" : "opacity-0 group-hover:opacity-100"
                 )}
-                aria-label="Log out"
+                aria-label={t("logout")}
                 tabIndex={sidebarCollapsed ? -1 : 0}
               >
                 <LogOut className="h-4 w-4" />

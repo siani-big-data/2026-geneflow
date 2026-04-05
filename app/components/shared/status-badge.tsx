@@ -1,3 +1,6 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
@@ -18,28 +21,29 @@ interface StatusBadgeProps {
   className?: string;
 }
 
-const statusConfig: Record<
+const statusVariants: Record<
   StatusType,
-  { label: string; variant: "default" | "secondary" | "destructive" | "outline" | "success" | "warning" | "info" }
+  "default" | "secondary" | "destructive" | "outline" | "success" | "warning" | "info"
 > = {
-  draft: { label: "Draft", variant: "secondary" },
-  active: { label: "Active", variant: "success" },
-  completed: { label: "Completed", variant: "default" },
-  archived: { label: "Archived", variant: "outline" },
-  pending: { label: "Pending", variant: "warning" },
-  processing: { label: "Processing", variant: "info" },
-  failed: { label: "Failed", variant: "destructive" },
-  queued: { label: "Queued", variant: "secondary" },
-  running: { label: "Running", variant: "info" },
-  cancelled: { label: "Cancelled", variant: "outline" },
+  draft: "secondary",
+  active: "success",
+  completed: "default",
+  archived: "outline",
+  pending: "warning",
+  processing: "info",
+  failed: "destructive",
+  queued: "secondary",
+  running: "info",
+  cancelled: "outline",
 };
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {
-  const config = statusConfig[status];
+  const t = useTranslations("common");
+  const variant = statusVariants[status];
 
   return (
-    <Badge variant={config.variant} className={cn(className)}>
-      {config.label}
+    <Badge variant={variant} className={cn(className)}>
+      {t(`status.${status}`)}
     </Badge>
   );
 }

@@ -10,20 +10,21 @@ import {
 } from "lucide-react";
 
 export interface NavItem {
-  name: string;
+  /** Translation key for the navigation item name */
+  nameKey: string;
   href: string;
   icon: LucideIcon;
 }
 
 export const mainNavigation: NavItem[] = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Discover", href: "/discover", icon: Globe },
-  { name: "Studies", href: "/studies", icon: Beaker },
-  { name: "Traces", href: "/traces", icon: Waves },
-  { name: "Pipelines", href: "/pipelines", icon: Activity },
+  { nameKey: "dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { nameKey: "discover", href: "/discover", icon: Globe },
+  { nameKey: "studies", href: "/studies", icon: Beaker },
+  { nameKey: "traces", href: "/traces", icon: Waves },
+  { nameKey: "pipelines", href: "/pipelines", icon: Activity },
 ];
 
 export const bottomNavigation: NavItem[] = [
-  { name: "Settings", href: "/settings", icon: Settings },
-  { name: "Help", href: "/help", icon: HelpCircle },
+  { nameKey: "settings", href: "/settings", icon: Settings },
+  { nameKey: "help", href: "/help", icon: HelpCircle },
 ];

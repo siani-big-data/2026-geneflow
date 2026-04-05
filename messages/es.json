@@ -1,0 +1,1417 @@
+{
+  "common": {
+    "appName": "GeneFlow",
+    "tagline": "Plataforma de Secuenciación",
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "view": "Ver",
+    "close": "Cerrar",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "export": "Exportar",
+    "download": "Descargar",
+    "upload": "Subir",
+    "create": "Crear",
+    "update": "Actualizar",
+    "remove": "Eliminar",
+    "confirm": "Confirmar",
+    "back": "Volver",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "done": "Listo",
+    "yes": "Sí",
+    "no": "No",
+    "or": "o",
+    "and": "y",
+    "all": "Todos",
+    "none": "Ninguno",
+    "showing": "Mostrando",
+    "of": "de",
+    "items": "elementos",
+    "status": {
+      "draft": "Borrador",
+      "active": "Activo",
+      "completed": "Completado",
+      "archived": "Archivado",
+      "pending": "Pendiente",
+      "processing": "Procesando",
+      "failed": "Fallido",
+      "queued": "En Cola",
+      "running": "Ejecutando",
+      "cancelled": "Cancelado",
+      "inProgress": "En Progreso",
+      "review": "Revisión",
+      "processed": "Procesada",
+      "uploaded": "Subida",
+      "validating": "Validando"
+    }
+  },
+  "navigation": {
+    "dashboard": "Panel",
+    "discover": "Descubrir",
+    "studies": "Estudios",
+    "traces": "Trazas",
+    "pipelines": "Pipelines",
+    "settings": "Configuración",
+    "help": "Ayuda",
+    "profile": "Perfil",
+    "logout": "Cerrar sesión",
+    "expandSidebar": "Expandir barra lateral",
+    "collapseSidebar": "Colapsar barra lateral"
+  },
+  "header": {
+    "searchPlaceholder": "Buscar estudios, muestras o análisis...",
+    "uploadTraces": "Subir Trazas",
+    "notifications": "Ver notificaciones",
+    "switchToDark": "Cambiar a modo oscuro",
+    "switchToLight": "Cambiar a modo claro"
+  },
+  "localeSwitcher": {
+    "language": "Idioma",
+    "spanish": "Español",
+    "english": "English"
+  },
+  "auth": {
+    "welcomeBack": "Bienvenido de nuevo",
+    "signInToAccount": "Inicia sesión en tu cuenta de GeneFlow",
+    "email": "Correo electrónico",
+    "emailPlaceholder": "nombre@empresa.com",
+    "password": "Contraseña",
+    "passwordPlaceholder": "••••••••",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "rememberMe": "Recordarme",
+    "signIn": "Iniciar sesión",
+    "signingIn": "Iniciando sesión...",
+    "orContinueWith": "O continuar con",
+    "signInWithGoogle": "Iniciar sesión con Google",
+    "signInWithGitHub": "Iniciar sesión con GitHub",
+    "noAccount": "¿No tienes una cuenta?",
+    "signUp": "Regístrate",
+    "createAccount": "Crear cuenta",
+    "alreadyHaveAccount": "¿Ya tienes una cuenta?",
+    "register": "Registrarse",
+    "registering": "Registrando...",
+    "fullName": "Nombre completo",
+    "fullNamePlaceholder": "Dr. Juan García",
+    "confirmPassword": "Confirmar contraseña",
+    "agreeToTerms": "Acepto los",
+    "termsOfService": "Términos de Servicio",
+    "privacyPolicy": "Política de Privacidad",
+    "resetPassword": "Restablecer contraseña",
+    "resetPasswordDescription": "Ingresa tu correo electrónico y te enviaremos instrucciones para restablecer tu contraseña.",
+    "sendResetLink": "Enviar enlace de restablecimiento",
+    "sendingResetLink": "Enviando...",
+    "backToLogin": "Volver al inicio de sesión",
+    "twoFactorAuth": "Autenticación de Dos Factores",
+    "twoFactorDescription": "Hemos enviado un código de verificación a tu correo electrónico.",
+    "verificationCode": "Código de verificación",
+    "verifyCode": "Verificar código",
+    "verifying": "Verificando...",
+    "resendCode": "Reenviar código",
+    "codeSentSuccess": "Código de verificación enviado exitosamente",
+    "validation": {
+      "emailRequired": "Por favor ingresa una dirección de correo válida",
+      "passwordRequired": "La contraseña debe tener al menos 8 caracteres",
+      "passwordsMatch": "Las contraseñas deben coincidir",
+      "nameRequired": "Por favor ingresa tu nombre",
+      "termsRequired": "Debes aceptar los términos y condiciones",
+      "invalidCode": "Por favor ingresa un código válido de 6 dígitos"
+    }
+  },
+  "dashboard": {
+    "title": "Panel",
+    "welcome": "Bienvenido de nuevo, {name}. Aquí está el resumen de tu laboratorio para hoy.",
+    "metrics": {
+      "activeStudies": "Estudios Activos",
+      "processedTraces": "Trazas Procesadas",
+      "pendingTraces": "Trazas Pendientes",
+      "teamActivity": "Actividad del Equipo",
+      "thisWeek": "+{count} esta semana",
+      "today": "+{count} hoy",
+      "processing": "Procesando",
+      "activeNow": "Activos ahora"
+    },
+    "chart": {
+      "title": "Actividad de Procesamiento de Trazas",
+      "description": "Volumen de procesamiento de trazas y métricas de calidad en 24 horas",
+      "tracesProcessed": "Trazas Procesadas",
+      "qualityScore": "Puntuación de Calidad"
+    },
+    "recentStudies": {
+      "title": "Estudios Recientes",
+      "description": "Estudios de secuenciación activos y actualizados recientemente",
+      "viewAll": "Ver todos",
+      "samples": "Muestras",
+      "traces": "Trazas",
+      "quality": "Calidad",
+      "updated": "Actualizado",
+      "progress": "Progreso"
+    },
+    "pipelines": {
+      "title": "Pipelines de Procesamiento",
+      "description": "Pipelines de análisis activos",
+      "running": "Ejecutando",
+      "completed": "Completado",
+      "samples": "Muestras",
+      "eta": "ETA",
+      "viewAll": "Ver todos los pipelines"
+    },
+    "recentActivity": {
+      "title": "Actividad de Análisis Reciente",
+      "description": "Últimas acciones del equipo y actualizaciones de estudios",
+      "actions": {
+        "upload": "Subió {count} trazas de cromatogramas",
+        "review": "Completó revisión de calidad",
+        "pipeline": "Inició nuevo pipeline de llamado de variantes",
+        "export": "Exportó resultados de análisis",
+        "create": "Creó nuevo estudio"
+      }
+    },
+    "time": {
+      "minutesAgo": "hace {count} minutos",
+      "hourAgo": "hace 1 hora",
+      "hoursAgo": "hace {count} horas",
+      "minAgo": "hace {count} min"
+    }
+  },
+  "studies": {
+    "title": "Estudios",
+    "description": "Gestiona y monitorea tus estudios de secuenciación genética",
+    "newStudy": "Nuevo Estudio",
+    "searchPlaceholder": "Buscar estudios por ID, nombre o PI...",
+    "noStudiesFound": "No se encontraron estudios",
+    "noStudiesDescription": "Intenta ajustar tu búsqueda o filtros",
+    "createFirstStudy": "Crea tu primer estudio para comenzar",
+    "filters": {
+      "type": "Tipo",
+      "status": "Estado",
+      "allTypes": "Todos los Tipos",
+      "allStatus": "Todos los Estados",
+      "clearFilters": "Limpiar filtros"
+    },
+    "card": {
+      "type": "Tipo",
+      "samples": "Muestras",
+      "created": "Creado",
+      "pi": "Investigador Principal",
+      "progress": "Progreso"
+    },
+    "actions": {
+      "viewDetails": "Ver Detalles",
+      "editStudy": "Editar Estudio",
+      "duplicate": "Duplicar",
+      "share": "Compartir",
+      "archive": "Archivar",
+      "delete": "Eliminar"
+    },
+    "export": {
+      "title": "Exportar Estudios",
+      "description": "Elige el formato para exportar los datos de tus estudios.",
+      "csv": "CSV",
+      "csvDescription": "Formato compatible con hojas de cálculo",
+      "json": "JSON",
+      "jsonDescription": "Formato legible por máquinas",
+      "pdf": "PDF",
+      "pdfDescription": "Formato de informe imprimible"
+    },
+    "delete": {
+      "title": "Eliminar Estudio",
+      "description": "¿Estás seguro de que deseas eliminar \"{name}\"? Esta acción no se puede deshacer.",
+      "confirm": "Eliminar Estudio"
+    },
+    "create": {
+      "title": "Crear Nuevo Estudio",
+      "description": "Configura un nuevo estudio de secuenciación genética con detalles del proyecto y configuración.",
+      "studyName": "Nombre del Estudio",
+      "studyNamePlaceholder": "ej., Estudio de Asociación del Genoma Completo",
+      "studyType": "Tipo de Estudio",
+      "selectType": "Seleccionar tipo...",
+      "expectedSamples": "Muestras Esperadas",
+      "expectedSamplesPlaceholder": "ej., 1247",
+      "principalInvestigator": "Investigador Principal",
+      "piPlaceholder": "ej., Dra. Sarah Martinez",
+      "initialStatus": "Estado Inicial",
+      "startDate": "Fecha de Inicio",
+      "tags": "Etiquetas",
+      "tagsPlaceholder": "ej., Diabetes, GWAS, Estudio Poblacional",
+      "tagsHelp": "Separa las etiquetas con comas",
+      "studyDescription": "Descripción",
+      "descriptionPlaceholder": "Breve descripción de los objetivos del estudio...",
+      "submit": "Crear Estudio"
+    },
+    "status": {
+      "active": "Activo",
+      "completed": "Completado",
+      "draft": "Borrador",
+      "onHold": "En Espera",
+      "processing": "Procesando",
+      "pending": "Pendiente"
+    },
+    "pagination": {
+      "showing": "Mostrando",
+      "of": "de",
+      "studies": "estudios"
+    },
+    "detail": {
+      "backToStudies": "Volver a Estudios",
+      "aiAssistant": "Asistente IA",
+      "share": "Compartir",
+      "export": "Exportar",
+      "tabs": {
+        "overview": "Resumen",
+        "traces": "Trazas",
+        "analysis": "Análisis",
+        "team": "Equipo",
+        "settings": "Configuración"
+      },
+      "visibility": {
+        "private": "Privado",
+        "public": "Público"
+      },
+      "stats": {
+        "totalSamples": "Total de Muestras",
+        "allSamplesCollected": "Todas las muestras recolectadas",
+        "chromatogramTraces": "Trazas de Cromatogramas",
+        "processed": "{percent}% procesadas",
+        "qualityScore": "Puntuación de Calidad",
+        "excellentQuality": "Calidad excelente",
+        "teamMembers": "Miembros del Equipo",
+        "activeCollaborators": "Colaboradores activos"
+      },
+      "overview": {
+        "studyDescription": "Descripción del Estudio",
+        "researchField": "Campo de Investigación",
+        "principalInvestigator": "Investigador Principal",
+        "institution": "Institución",
+        "createdDate": "Fecha de Creación",
+        "processingProgress": "Progreso de Procesamiento",
+        "tracesProcessed": "Trazas Procesadas",
+        "tracesOf": "{processed} de {total} trazas",
+        "inProgress": "En Progreso",
+        "tracesProcessing": "{count} trazas procesando",
+        "pending": "Pendiente",
+        "tracesQueued": "{count} trazas en cola",
+        "recentAnalysis": "Análisis Reciente",
+        "latestAnalysisRuns": "Últimos análisis y sus resultados"
+      },
+      "table": {
+        "analysisName": "Nombre del Análisis",
+        "type": "Tipo",
+        "status": "Estado",
+        "date": "Fecha",
+        "results": "Resultados",
+        "actions": "Acciones",
+        "view": "Ver"
+      },
+      "traces": {
+        "title": "Trazas de Cromatogramas",
+        "description": "Todas las trazas de secuenciación para este estudio",
+        "uploadTraces": "Subir Trazas",
+        "traceId": "ID de Traza",
+        "sampleId": "ID de Muestra",
+        "quality": "Calidad",
+        "length": "Longitud",
+        "uploaded": "Subido",
+        "by": "Por"
+      },
+      "analysis": {
+        "title": "Pipelines de Análisis",
+        "description": "Ejecutar y gestionar flujos de trabajo de análisis",
+        "newAnalysis": "Nuevo Análisis",
+        "variants": "Variantes",
+        "viewDetails": "Ver Detalles"
+      },
+      "team": {
+        "title": "Miembros del Equipo",
+        "description": "Gestionar colaboradores y permisos",
+        "inviteMember": "Invitar Miembro",
+        "member": "Miembro",
+        "role": "Rol",
+        "email": "Correo",
+        "roles": {
+          "principalInvestigator": "Investigador Principal",
+          "coInvestigator": "Co-Investigador",
+          "researchScientist": "Científico de Investigación",
+          "labTechnician": "Técnico de Laboratorio",
+          "bioinformatician": "Bioinformático",
+          "viewer": "Observador"
+        }
+      },
+      "settings": {
+        "title": "Configuración del Estudio",
+        "description": "Gestionar configuración y preferencias del estudio",
+        "studyName": "Nombre del Estudio",
+        "studyDescription": "Descripción",
+        "visibility": "Visibilidad",
+        "privateDesc": "Solo los miembros del equipo pueden acceder",
+        "publicDesc": "Cualquiera con el enlace puede ver",
+        "saveChanges": "Guardar Cambios",
+        "saved": "¡Guardado!",
+        "dangerZone": "Zona de Peligro",
+        "dangerZoneDesc": "Una vez que elimines un estudio, no hay vuelta atrás.",
+        "deleteStudy": "Eliminar Estudio"
+      },
+      "dialogs": {
+        "share": {
+          "title": "Compartir Estudio",
+          "description": "Comparte este estudio con miembros del equipo o colaboradores.",
+          "copy": "Copiar",
+          "copied": "Copiado",
+          "done": "Listo"
+        },
+        "export": {
+          "title": "Exportar Datos del Estudio",
+          "description": "Elige el formato para exportar.",
+          "pdfReport": "Informe PDF",
+          "csvData": "Datos CSV",
+          "jsonFormat": "Formato JSON"
+        },
+        "uploadTraces": {
+          "title": "Subir Trazas",
+          "description": "Sube nuevos archivos de trazas de secuenciación.",
+          "dropzone": "Haz clic para subir o arrastra y suelta",
+          "fileTypes": "Archivos ABI, SCF o FASTA (máx 50MB)",
+          "cancel": "Cancelar",
+          "upload": "Subir"
+        },
+        "inviteMember": {
+          "title": "Invitar Miembro del Equipo",
+          "description": "Añade un nuevo colaborador a este estudio.",
+          "emailAddress": "Correo Electrónico",
+          "emailPlaceholder": "colega@institucion.edu",
+          "role": "Rol",
+          "selectRole": "Seleccionar rol...",
+          "cancel": "Cancelar",
+          "sendInvitation": "Enviar Invitación"
+        },
+        "newAnalysis": {
+          "title": "Crear Nuevo Análisis",
+          "description": "Configura y ejecuta un nuevo pipeline de análisis.",
+          "analysisName": "Nombre del Análisis",
+          "analysisNamePlaceholder": "ej., Análisis de Llamado de Variantes",
+          "pipelineType": "Tipo de Pipeline",
+          "selectPipeline": "Seleccionar pipeline...",
+          "priority": "Prioridad",
+          "notifications": "Notificaciones",
+          "cancel": "Cancelar",
+          "createAnalysis": "Crear Análisis"
+        },
+        "viewAnalysis": {
+          "description": "Detalles y resultados del análisis",
+          "analysisCompleted": "Análisis completado exitosamente. Los resultados están disponibles para descargar.",
+          "close": "Cerrar",
+          "downloadResults": "Descargar Resultados"
+        },
+        "editMember": {
+          "title": "Editar Miembro del Equipo",
+          "description": "Actualizar rol y permisos para {name}",
+          "cancel": "Cancelar",
+          "saveChanges": "Guardar Cambios"
+        },
+        "deleteMember": {
+          "title": "Eliminar Miembro del Equipo",
+          "description": "¿Estás seguro de que deseas eliminar a {name} de este estudio?",
+          "cancel": "Cancelar",
+          "removeMember": "Eliminar Miembro"
+        },
+        "deleteStudy": {
+          "title": "Eliminar Estudio",
+          "description": "Esta acción es permanente y no se puede deshacer. Todas las trazas, análisis y datos serán eliminados.",
+          "confirmLabel": "Escribe el ID del estudio para confirmar:",
+          "cancel": "Cancelar",
+          "delete": "Eliminar Estudio"
+        }
+      }
+    }
+  },
+  "traces": {
+    "title": "Trazas de Cromatogramas",
+    "description": "Subir, gestionar y monitorear archivos de trazas de secuenciación",
+    "stats": {
+      "totalTraces": "Total de Trazas",
+      "processing": "Procesando",
+      "pending": "Pendientes",
+      "failed": "Fallidas",
+      "processed": "Procesadas",
+      "inProgress": "En Progreso",
+      "queued": "En Cola",
+      "requiresReview": "Requiere Revisión"
+    },
+    "upload": {
+      "title": "Subir Trazas de Cromatogramas",
+      "description": "Arrastra y suelta tus archivos .ab1, .scf o .abi aquí, o haz clic para explorar",
+      "chooseFiles": "Elegir Archivos",
+      "supportedFormats": "Formatos soportados: AB1, SCF, ABI • Tamaño máximo: 50 MB por archivo",
+      "dialogTitle": "Subir Trazas de Cromatogramas",
+      "dialogDescription": "Sube archivos .ab1, .scf o .abi para procesamiento.",
+      "clickToUpload": "Haz clic para subir o arrastra y suelta",
+      "fileTypes": "Archivos ABI, SCF o AB1 (máx 50MB cada uno)",
+      "filesSelected": "{count} archivo(s) seleccionado(s)",
+      "uploadFiles": "Subir Archivos"
+    },
+    "search": {
+      "placeholder": "Buscar por ID de traza, nombre de muestra o estudio..."
+    },
+    "filters": {
+      "allStatus": "Todos los Estados",
+      "allTime": "Todo el Tiempo",
+      "today": "Hoy",
+      "last7Days": "Últimos 7 Días",
+      "last30Days": "Últimos 30 Días",
+      "last90Days": "Últimos 90 Días",
+      "allOwners": "Todos los Propietarios"
+    },
+    "batch": {
+      "selected": "{count} traza(s) seleccionada(s)",
+      "downloadSelected": "Descargar Seleccionadas",
+      "reprocess": "Reprocesar",
+      "deleteSelected": "Eliminar Seleccionadas"
+    },
+    "table": {
+      "traceId": "ID de Traza",
+      "sampleName": "Nombre de Muestra",
+      "study": "Estudio",
+      "uploadDate": "Fecha de Subida",
+      "owner": "Propietario",
+      "status": "Estado",
+      "quality": "Calidad",
+      "size": "Tamaño",
+      "actions": "Acciones"
+    },
+    "status": {
+      "uploaded": "Subida",
+      "validating": "Validando",
+      "processing": "Procesando",
+      "processed": "Procesada",
+      "failed": "Fallida"
+    },
+    "actions": {
+      "view": "Ver traza",
+      "download": "Descargar traza",
+      "delete": "Eliminar traza",
+      "copyId": "Copiar ID de Traza",
+      "reprocess": "Reprocesar"
+    },
+    "empty": {
+      "title": "No se encontraron trazas",
+      "description": "Intenta ajustar tu búsqueda o filtros",
+      "uploadFirst": "Sube tu primera traza para comenzar"
+    },
+    "pagination": {
+      "showing": "Mostrando",
+      "of": "de",
+      "traces": "trazas"
+    },
+    "notifications": {
+      "uploadSuccess": "{count} archivo(s) subido(s) exitosamente",
+      "reprocessQueued": "Traza {id} en cola para reprocesamiento",
+      "reprocessBatchQueued": "{count} traza(s) en cola para reprocesamiento",
+      "copySuccess": "Copiado {id} al portapapeles",
+      "deleteSuccess": "Traza eliminada exitosamente",
+      "deleteBatchSuccess": "{count} traza(s) eliminada(s) exitosamente",
+      "downloadStarted": "Descargando traza {id}...",
+      "downloadBatchStarted": "Descargando {count} traza(s)...",
+      "exportStarted": "Exportando trazas a CSV..."
+    },
+    "detail": {
+      "backToTraces": "Volver a Trazas",
+      "searchTraces": "Buscar trazas...",
+      "stats": {
+        "length": "Longitud",
+        "quality": "Calidad",
+        "gc": "GC"
+      },
+      "viewModes": {
+        "trace": "Vista de Traza",
+        "sequence": "Vista de Secuencia"
+      },
+      "controls": {
+        "zoomIn": "Acercar",
+        "zoomOut": "Alejar",
+        "resetZoom": "Restablecer Zoom",
+        "quality": "Calidad",
+        "trim": "Recortar",
+        "annotate": "Anotar",
+        "copy": "Copiar",
+        "copied": "¡Copiado!",
+        "copySequence": "Copiar Secuencia",
+        "exportFasta": "Exportar FASTA"
+      },
+      "aiAssistant": "Asistente IA",
+      "openAiAssistant": "Abrir Asistente IA",
+      "closeAiAssistant": "Cerrar Asistente IA",
+      "notifications": {
+        "preparingExport": "Preparando exportación..."
+      }
+    }
+  },
+  "pipelines": {
+    "title": "Monitor de Pipelines",
+    "description": "Monitoreo en tiempo real de pipelines de procesamiento de datos",
+    "refresh": "Actualizar",
+    "refreshing": "Actualizando...",
+    "newPipeline": "Nuevo Pipeline",
+    "metrics": {
+      "active": "Activos",
+      "runningPipelines": "Pipelines ejecutándose",
+      "cpuUtilization": "Utilización de CPU",
+      "memoryUsage": "Uso de memoria",
+      "samplesProcessed": "Muestras procesadas",
+      "today": "Hoy",
+      "avg": "Promedio"
+    },
+    "charts": {
+      "resourceUtilization": "Utilización de Recursos",
+      "resourceDescription": "Uso de CPU y memoria a lo largo del tiempo",
+      "sampleThroughput": "Rendimiento de Muestras",
+      "throughputDescription": "Muestras procesadas por hora",
+      "cpu": "CPU",
+      "memory": "Memoria"
+    },
+    "activePipelines": {
+      "title": "Pipelines Activos",
+      "description": "Trabajos de procesamiento en ejecución y en cola"
+    },
+    "table": {
+      "study": "Estudio",
+      "samples": "Muestras",
+      "started": "Iniciado",
+      "eta": "ETA",
+      "cpu": "CPU",
+      "memory": "Memoria",
+      "progress": "Progreso"
+    },
+    "actions": {
+      "pause": "Pausar pipeline",
+      "resume": "Iniciar pipeline",
+      "retry": "Reintentar pipeline"
+    },
+    "create": {
+      "title": "Crear Nuevo Pipeline",
+      "description": "Configura un nuevo pipeline de procesamiento de datos para tu estudio.",
+      "pipelineName": "Nombre del Pipeline",
+      "pipelineNamePlaceholder": "ej., Pipeline de Control de Calidad",
+      "pipelineType": "Tipo de Pipeline",
+      "selectType": "Seleccionar tipo de pipeline...",
+      "types": {
+        "qc": "Control de Calidad",
+        "variant": "Llamado de Variantes",
+        "alignment": "Alineamiento de Secuencias",
+        "assembly": "Ensamblaje De Novo",
+        "annotation": "Anotación de Variantes"
+      },
+      "targetStudy": "Estudio Objetivo",
+      "selectStudy": "Seleccionar estudio...",
+      "priority": "Prioridad",
+      "priorityNormal": "Normal",
+      "priorityHigh": "Alta",
+      "priorityUrgent": "Urgente",
+      "notifications": "Notificaciones",
+      "onCompletion": "Al Completar",
+      "onErrorOnly": "Solo en Error",
+      "none": "Ninguna",
+      "submit": "Crear Pipeline"
+    },
+    "time": {
+      "minAgo": "{count} min atrás",
+      "hoursAgo": "{count} hora(s) atrás",
+      "daysAgo": "{count} día(s) atrás"
+    }
+  },
+  "settings": {
+    "title": "Configuración",
+    "description": "Gestiona la configuración y preferencias de tu cuenta",
+    "sections": {
+      "account": "Cuenta",
+      "security": "Seguridad",
+      "notifications": "Notificaciones",
+      "preferences": "Preferencias",
+      "billing": "Facturación",
+      "collaboration": "Colaboración"
+    },
+    "account": {
+      "profileInfo": "Información del Perfil",
+      "profilePhoto": "Foto de Perfil",
+      "profilePhotoDesc": "Actualiza tu foto de perfil. JPG o PNG, máx 5MB.",
+      "uploadNew": "Subir Nueva",
+      "remove": "Eliminar",
+      "firstName": "Nombre",
+      "lastName": "Apellido",
+      "emailAddress": "Correo Electrónico",
+      "role": "Rol",
+      "institution": "Institución",
+      "bio": "Biografía",
+      "researchIdentifiers": "Identificadores de Investigación",
+      "orcid": "ORCID iD",
+      "website": "Sitio Web",
+      "dangerZone": "Zona de Peligro",
+      "deactivateAccount": "Desactivar Cuenta",
+      "deactivateDesc": "Deshabilita temporalmente tu cuenta. Puedes reactivarla en cualquier momento.",
+      "deactivate": "Desactivar",
+      "deleteAccount": "Eliminar Cuenta",
+      "deleteDesc": "Elimina permanentemente tu cuenta y todos los datos asociados. Esta acción no se puede deshacer.",
+      "saveChanges": "Guardar Cambios",
+      "saved": "¡Guardado!"
+    },
+    "security": {
+      "password": "Contraseña",
+      "currentPassword": "Contraseña Actual",
+      "newPassword": "Nueva Contraseña",
+      "confirmPassword": "Confirmar Nueva Contraseña",
+      "updatePassword": "Actualizar Contraseña",
+      "updated": "¡Actualizado!",
+      "twoFactor": "Autenticación de Dos Factores",
+      "enable2FA": "Habilitar 2FA",
+      "active": "Activo",
+      "twoFactorDesc": "Añade una capa extra de seguridad a tu cuenta usando aplicaciones de autenticación.",
+      "authenticatorConnected": "Aplicación de Autenticación Conectada",
+      "authenticatorDesc": "Estás usando una aplicación de autenticación para la autenticación de dos factores.",
+      "securityOptions": "Opciones de Seguridad",
+      "sessionTimeout": "Tiempo de Espera de Sesión",
+      "sessionTimeoutDesc": "Cerrar sesión automáticamente después de 30 minutos de inactividad.",
+      "viewActiveSessions": "Ver Sesiones Activas",
+      "remove": "Eliminar"
+    },
+    "notifications": {
+      "emailNotifications": "Notificaciones por Correo",
+      "enableEmail": "Habilitar Notificaciones por Correo",
+      "enableEmailDesc": "Recibe actualizaciones por correo sobre tus estudios y actividades.",
+      "studyUpdates": "Actualizaciones de Estudios",
+      "studyUpdatesDesc": "Notificaciones cuando los estudios en los que participas se actualizan.",
+      "analysisCompletion": "Finalización de Análisis",
+      "analysisCompletionDesc": "Recibe notificaciones cuando tus pipelines de análisis se completan.",
+      "teamInvitations": "Invitaciones de Equipo",
+      "teamInvitationsDesc": "Recibe notificaciones cuando te invitan a colaborar.",
+      "weeklyDigest": "Resumen Semanal",
+      "weeklyDigestDesc": "Resumen de tu actividad y actualizaciones importantes una vez a la semana.",
+      "marketing": "Marketing y Actualizaciones",
+      "productUpdates": "Actualizaciones del Producto y Noticias",
+      "productUpdatesDesc": "Recibe correos ocasionales sobre nuevas funciones y actualizaciones de la plataforma."
+    },
+    "preferences": {
+      "appearance": "Apariencia",
+      "theme": "Tema",
+      "light": "Claro",
+      "lightDesc": "Limpio y brillante",
+      "dark": "Oscuro",
+      "darkDesc": "Fácil para los ojos",
+      "system": "Sistema",
+      "systemDesc": "Predeterminado del sistema",
+      "dataDisplay": "Datos y Visualización",
+      "timezone": "Zona Horaria",
+      "dateFormat": "Formato de Fecha",
+      "itemsPerPage": "Elementos por Página",
+      "dataExport": "Exportación de Datos",
+      "dataExportDesc": "Descarga una copia de los datos de tu cuenta e información de investigación.",
+      "requestExport": "Solicitar Exportación de Datos"
+    },
+    "billing": {
+      "title": "Facturación y Suscripción",
+      "description": "Gestiona tu plan de suscripción, métodos de pago, historial de facturación y métricas de uso en la página de facturación dedicada.",
+      "goToBilling": "Ir a Facturación",
+      "currentPlan": "Plan Actual",
+      "nextBilling": "Próxima Facturación",
+      "paymentMethod": "Método de Pago",
+      "active": "Activo"
+    },
+    "collaboration": {
+      "settings": "Configuración de Colaboración",
+      "autoApprove": "Auto-aprobar Colaboraciones",
+      "autoApproveDesc": "Acepta automáticamente solicitudes de colaboración de instituciones verificadas.",
+      "defaultRole": "Rol Predeterminado para Miembros Invitados",
+      "visibility": "Visibilidad",
+      "profileVisibility": "Visibilidad del Perfil",
+      "studyVisibility": "Visibilidad Predeterminada de Estudios",
+      "blockedUsers": "Usuarios Bloqueados",
+      "blockedUsersDesc": "Gestiona los usuarios que has bloqueado para colaborar contigo.",
+      "viewBlocked": "Ver Usuarios Bloqueados",
+      "roles": {
+        "viewerReadOnly": "Observador (Solo lectura)",
+        "collaborator": "Colaborador",
+        "researchScientist": "Científico de Investigación"
+      },
+      "profileOptions": {
+        "public": "Público - Visible para todos los usuarios de GeneFlow",
+        "institutionOnly": "Solo Institución - Visible para tu institución",
+        "private": "Privado - Solo visible para colaboradores"
+      },
+      "studyOptions": {
+        "private": "Privado - Solo miembros del equipo",
+        "institution": "Institución - Visible para miembros de la institución",
+        "public": "Público - Visible para todos los usuarios"
+      }
+    },
+    "dialogs": {
+      "uploadPhoto": {
+        "title": "Subir Foto de Perfil",
+        "description": "Elige una nueva foto de perfil. JPG o PNG, máx 5MB.",
+        "clickToSelect": "Haz clic para seleccionar una foto",
+        "upload": "Subir"
+      },
+      "sessions": {
+        "title": "Sesiones Activas",
+        "description": "Gestiona los dispositivos que actualmente tienen sesión iniciada en tu cuenta.",
+        "current": "Actual",
+        "endSession": "Cerrar Sesión",
+        "done": "Listo"
+      },
+      "dataExport": {
+        "title": "Solicitar Exportación de Datos",
+        "description": "Prepararemos una descarga de los datos de tu cuenta y te enviaremos un correo cuando esté lista.",
+        "includesTitle": "Tu exportación incluirá:",
+        "profileInfo": "Información del perfil",
+        "studyData": "Datos de estudios y metadatos",
+        "analysisResults": "Resultados de análisis",
+        "activityLogs": "Registros de actividad",
+        "requestExport": "Solicitar Exportación"
+      },
+      "blockedUsers": {
+        "title": "Usuarios Bloqueados",
+        "description": "Los usuarios que has bloqueado no pueden colaborar contigo ni ver tus estudios.",
+        "noBlockedUsers": "No has bloqueado a ningún usuario.",
+        "unblock": "Desbloquear",
+        "done": "Listo"
+      },
+      "deactivate": {
+        "title": "Desactivar Cuenta",
+        "description": "Tu cuenta será deshabilitada temporalmente. Puedes reactivarla en cualquier momento iniciando sesión.",
+        "warning": "Mientras esté desactivada, tus estudios estarán ocultos y los miembros del equipo no podrán acceder a los datos compartidos.",
+        "confirm": "Desactivar Cuenta"
+      },
+      "deleteAccount": {
+        "title": "Eliminar Cuenta",
+        "description": "Esta acción es permanente y no se puede deshacer. Todos tus datos serán eliminados permanentemente.",
+        "warningTitle": "Esto eliminará permanentemente:",
+        "warningProfile": "Tu perfil y configuración de cuenta",
+        "warningStudies": "Todos los estudios que posees",
+        "warningTraces": "Todas las trazas subidas y resultados de análisis",
+        "confirmLabel": "Escribe \"ELIMINAR\" para confirmar",
+        "confirmPlaceholder": "ELIMINAR",
+        "confirm": "Eliminar Cuenta"
+      },
+      "remove2FA": {
+        "title": "Eliminar Autenticación de Dos Factores",
+        "description": "Esto eliminará la seguridad adicional de tu cuenta. ¿Estás seguro?",
+        "confirm": "Eliminar 2FA"
+      }
+    }
+  },
+  "discover": {
+    "title": "Descubrir Estudios Públicos de Secuenciación",
+    "badge": "Iniciativa de Ciencia Abierta",
+    "description": "Explora investigación genética de vanguardia de instituciones líderes en todo el mundo. Accede a conjuntos de datos públicos, colabora con investigadores y avanza la ciencia abierta.",
+    "searchPlaceholder": "Buscar estudios, instituciones o investigadores...",
+    "featuredStudies": "Estudios Destacados",
+    "filters": {
+      "button": "Filtros",
+      "clearFilters": "Limpiar filtros",
+      "clearAll": "Limpiar todos los filtros",
+      "allFields": "Todos los Campos",
+      "visibility": "Visibilidad",
+      "publicStudies": "Estudios Públicos",
+      "collaborativeProjects": "Proyectos Colaborativos",
+      "studyType": "Tipo de Estudio",
+      "wholeGenome": "Genoma Completo",
+      "rnaSeq": "RNA-Seq",
+      "targetedPanels": "Paneles Dirigidos",
+      "sampleSize": "Tamaño de Muestra",
+      "lessThan100": "< 100 muestras",
+      "between100And1000": "100 - 1,000 muestras",
+      "moreThan1000": "> 1,000 muestras"
+    },
+    "fields": {
+      "allFields": "Todos los Campos",
+      "cancerResearch": "Investigación del Cáncer",
+      "cardiovascularDisease": "Enfermedad Cardiovascular",
+      "diabetesResearch": "Investigación de Diabetes",
+      "rareDisease": "Enfermedades Raras",
+      "microbiome": "Microbioma",
+      "pharmacogenomics": "Farmacogenómica",
+      "populationGenetics": "Genética de Poblaciones",
+      "infectiousDisease": "Enfermedades Infecciosas"
+    },
+    "card": {
+      "traces": "Trazas",
+      "samples": "Muestras",
+      "public": "Público",
+      "collaborators": "Colaboradores",
+      "views": "Vistas",
+      "citations": "Citas"
+    },
+    "count": {
+      "study": "estudio",
+      "studies": "estudios"
+    },
+    "pagination": {
+      "showing": "Mostrando",
+      "of": "de",
+      "studies": "estudios",
+      "previous": "Anterior",
+      "next": "Siguiente"
+    },
+    "empty": {
+      "title": "No se encontraron estudios",
+      "description": "Intenta ajustar tu búsqueda o filtros para encontrar más estudios"
+    }
+  },
+  "profile": {
+    "title": "Perfil",
+    "description": "Tu información personal y estadísticas de investigación",
+    "editProfile": "Editar Perfil",
+    "settings": "Configuración",
+    "activityOverview": "Resumen de Actividad",
+    "stats": {
+      "activeStudies": "Estudios Activos",
+      "totalSamples": "Total de Muestras",
+      "collaborators": "Colaboradores",
+      "analysesRun": "Análisis Ejecutados"
+    },
+    "about": {
+      "title": "Acerca de",
+      "edit": "Editar",
+      "orcid": "ORCID",
+      "website": "Sitio Web",
+      "labWebsite": "Sitio del Laboratorio",
+      "memberSince": "Miembro Desde"
+    },
+    "studies": {
+      "title": "Mis Estudios",
+      "description": "Estudios que lideras o en los que contribuyes",
+      "samples": "muestras",
+      "roles": {
+        "principalInvestigator": "Investigador Principal",
+        "coInvestigator": "Co-Investigador",
+        "collaborator": "Colaborador"
+      }
+    },
+    "recentActivity": {
+      "title": "Actividad Reciente",
+      "viewAll": "Ver Toda la Actividad"
+    },
+    "quickActions": {
+      "title": "Acciones Rápidas",
+      "createStudy": "Crear Nuevo Estudio",
+      "runAnalysis": "Ejecutar Análisis",
+      "manageTeam": "Gestionar Equipo"
+    },
+    "dialogs": {
+      "editProfile": {
+        "title": "Editar Perfil",
+        "description": "Actualiza tu información de perfil y detalles de investigación.",
+        "firstName": "Nombre",
+        "lastName": "Apellido",
+        "role": "Rol",
+        "institution": "Institución",
+        "researchField": "Campo de Investigación",
+        "location": "Ubicación",
+        "saveChanges": "Guardar Cambios"
+      },
+      "editBio": {
+        "title": "Editar Biografía",
+        "description": "Actualiza tu biografía de investigación y enlaces externos.",
+        "biography": "Biografía",
+        "orcid": "ORCID",
+        "website": "Sitio Web",
+        "saveChanges": "Guardar Cambios"
+      },
+      "uploadPhoto": {
+        "title": "Subir Foto de Perfil",
+        "description": "Elige una nueva foto de perfil. JPG o PNG, máximo 5MB.",
+        "clickToSelect": "Haz clic para seleccionar una foto",
+        "upload": "Subir"
+      },
+      "activityHistory": {
+        "title": "Historial de Actividad",
+        "description": "Tu actividad reciente en todos los estudios."
+      }
+    }
+  },
+  "help": {
+    "title": "Centro de Ayuda",
+    "description": "Encuentra respuestas y obtén soporte",
+    "hero": {
+      "title": "¿Cómo podemos ayudarte?",
+      "description": "Busca en nuestra base de conocimientos o explora temas para encontrar respuestas",
+      "searchPlaceholder": "Buscar artículos de ayuda, guías o tutoriales..."
+    },
+    "quickStart": {
+      "title": "Guías de Inicio Rápido",
+      "description": "Comienza con flujos de trabajo esenciales",
+      "minRead": "min de lectura",
+      "guides": {
+        "createStudy": {
+          "title": "Crea Tu Primer Estudio",
+          "description": "Guía paso a paso para configurar un nuevo estudio de investigación"
+        },
+        "uploadTraces": {
+          "title": "Subir y Gestionar Trazas",
+          "description": "Aprende a subir y organizar datos de cromatogramas"
+        },
+        "runPipeline": {
+          "title": "Ejecutar un Pipeline de Análisis",
+          "description": "Ejecuta tu primer flujo de trabajo de análisis genómico"
+        }
+      }
+    },
+    "categories": {
+      "title": "Explorar por Tema",
+      "description": "Explora artículos de ayuda organizados por categoría",
+      "gettingStarted": {
+        "title": "Primeros Pasos",
+        "topics": {
+          "createStudy": "Creando tu primer estudio",
+          "setupProfile": "Configurando tu perfil",
+          "inviteTeam": "Invitando miembros del equipo",
+          "understandDashboard": "Entendiendo el panel"
+        }
+      },
+      "studiesData": {
+        "title": "Estudios y Datos",
+        "topics": {
+          "manageMetadata": "Gestionando metadatos de estudios",
+          "uploadTraces": "Subiendo trazas de cromatogramas",
+          "organizeSamples": "Organizando muestras",
+          "shareStudies": "Compartiendo estudios con colaboradores"
+        }
+      },
+      "pipelines": {
+        "title": "Pipelines",
+        "topics": {
+          "runPipelines": "Ejecutando pipelines de análisis",
+          "understandResults": "Entendiendo resultados",
+          "qcMetrics": "Métricas de control de calidad",
+          "exportData": "Exportando datos de análisis"
+        }
+      },
+      "collaboration": {
+        "title": "Colaboración",
+        "topics": {
+          "rolesPermissions": "Roles y permisos del equipo",
+          "inviteCollaborators": "Invitando colaboradores",
+          "shareSecurely": "Compartiendo datos de forma segura",
+          "manageAccess": "Gestionando controles de acceso"
+        }
+      },
+      "security": {
+        "title": "Seguridad y Privacidad",
+        "topics": {
+          "twoFactor": "Autenticación de dos factores",
+          "encryption": "Cifrado de datos",
+          "compliance": "Guías de cumplimiento",
+          "auditLogs": "Registros de acceso y auditoría"
+        }
+      },
+      "accountSettings": {
+        "title": "Cuenta y Configuración",
+        "topics": {
+          "profileCustomization": "Personalización del perfil",
+          "notificationPrefs": "Preferencias de notificaciones",
+          "billing": "Facturación y suscripciones",
+          "apiTokens": "Tokens de acceso API"
+        }
+      }
+    },
+    "workflows": {
+      "title": "Flujos de Trabajo Comunes",
+      "description": "Guías paso a paso para tareas clave de investigación",
+      "qc": {
+        "title": "Flujo de Control de Calidad",
+        "description": "Evalúa la calidad de las trazas y filtra muestras de baja calidad",
+        "steps": {
+          "upload": "Subir trazas",
+          "runQC": "Ejecutar pipeline de QC",
+          "reviewMetrics": "Revisar métricas",
+          "filterSamples": "Filtrar muestras"
+        }
+      },
+      "variantCalling": {
+        "title": "Flujo de Llamado de Variantes",
+        "description": "Identifica variantes genéticas de datos de secuenciación",
+        "steps": {
+          "align": "Alinear secuencias",
+          "callVariants": "Llamar variantes",
+          "annotate": "Anotar resultados",
+          "exportVCF": "Exportar VCF"
+        }
+      },
+      "collaborative": {
+        "title": "Flujo de Investigación Colaborativa",
+        "description": "Comparte estudios y colabora con equipos de investigación",
+        "steps": {
+          "createStudy": "Crear estudio",
+          "inviteMembers": "Invitar miembros",
+          "assignRoles": "Asignar roles",
+          "shareResults": "Compartir resultados"
+        }
+      }
+    },
+    "faq": {
+      "title": "Preguntas Frecuentes",
+      "description": "Respuestas rápidas a preguntas comunes",
+      "questions": {
+        "uploadTraces": {
+          "question": "¿Cómo subo trazas de cromatogramas a un estudio?",
+          "answer": "Navega a la página de Trazas de tu estudio y haz clic en el botón 'Subir Trazas'. Puedes arrastrar y soltar múltiples archivos .ab1, .scf o .abi, o hacer clic para explorar. Cada traza se asociará automáticamente con el estudio y se procesará para métricas de calidad."
+        },
+        "availablePipelines": {
+          "question": "¿Qué pipelines de análisis están disponibles?",
+          "answer": "GeneFlow ofrece varios pipelines preconfigurados incluyendo Llamado de Bases, Control de Calidad, Llamado de Variantes, Alineamiento de Secuencias y Ensamblaje Personalizado. Cada pipeline puede personalizarse con parámetros específicos para adaptarse a tus necesidades de investigación. Visita la página de Pipelines para explorar todas las opciones disponibles."
+        },
+        "inviteTeam": {
+          "question": "¿Cómo invito a miembros del equipo a colaborar en un estudio?",
+          "answer": "Abre el estudio que quieres compartir, haz clic en 'Compartir' en la esquina superior derecha e ingresa las direcciones de correo de tus colaboradores. Puedes asignar diferentes roles (Observador, Colaborador, Co-Investigador) con distintos niveles de permisos. Las invitaciones se enviarán por correo electrónico."
+        },
+        "exportResults": {
+          "question": "¿Puedo exportar mis resultados de análisis?",
+          "answer": "Sí, todos los resultados de análisis pueden exportarse en múltiples formatos. Haz clic en el botón 'Exportar' en cualquier página de análisis y elige entre formatos CSV, JSON o PDF. También puedes descargar archivos de trazas sin procesar y datos procesados para análisis externo."
+        },
+        "dataProtection": {
+          "question": "¿Cómo se protegen mis datos genómicos?",
+          "answer": "Todos los datos están cifrados en reposo usando cifrado AES-256 y en tránsito usando TLS 1.3. Mantenemos cumplimiento SOC 2 Tipo II y seguimos las guías HIPAA. Los controles de acceso aseguran que solo los miembros autorizados del equipo puedan ver datos sensibles. Aprende más en nuestra documentación de Seguridad."
+        },
+        "fileFormats": {
+          "question": "¿Qué formatos de archivo se admiten para subir trazas?",
+          "answer": "GeneFlow admite formatos estándar de cromatogramas incluyendo .ab1 (Applied Biosystems), .scf (Standard Chromatogram Format) y archivos .abi. Se admiten subidas por lotes de hasta 1,000 archivos, con un tamaño máximo de 50MB por traza."
+        }
+      }
+    },
+    "support": {
+      "title": "Contactar Soporte",
+      "description": "¿No encuentras lo que buscas? Nuestro equipo de soporte está aquí para ayudar.",
+      "emailSupport": "Soporte por Correo",
+      "emailResponse": "Respuesta en 24 horas",
+      "liveChat": "Chat en Vivo",
+      "liveChatHours": "Disponible 9am-5pm PT"
+    },
+    "resources": {
+      "title": "Recursos",
+      "documentation": "Documentación",
+      "videoTutorials": "Tutoriales en Video",
+      "apiReference": "Referencia API",
+      "sampleData": "Datos de Ejemplo"
+    },
+    "systemStatus": {
+      "title": "Estado del Sistema",
+      "operational": "Todos los Sistemas Operacionales",
+      "description": "Todos los servicios funcionan normalmente.",
+      "viewStatus": "Ver Página de Estado"
+    },
+    "stillNeedHelp": {
+      "title": "¿Aún necesitas ayuda?",
+      "description": "Nuestro equipo de soporte está disponible para responder tus preguntas y ayudarte a aprovechar al máximo GeneFlow.",
+      "contactSupport": "Contactar Soporte",
+      "browseDocumentation": "Explorar Documentación"
+    },
+    "dialogs": {
+      "contact": {
+        "title": "Contactar Soporte",
+        "description": "Envíanos un mensaje y te responderemos en 24 horas.",
+        "subject": "Asunto",
+        "subjectPlaceholder": "Breve descripción de tu problema",
+        "category": "Categoría",
+        "selectCategory": "Selecciona una categoría...",
+        "categories": {
+          "technical": "Problema Técnico",
+          "billing": "Pregunta de Facturación",
+          "feature": "Solicitud de Función",
+          "account": "Ayuda con Cuenta",
+          "other": "Otro"
+        },
+        "message": "Mensaje",
+        "messagePlaceholder": "Describe tu pregunta o problema en detalle...",
+        "send": "Enviar Mensaje"
+      },
+      "liveChat": {
+        "title": "Chat en Vivo con Soporte",
+        "description": "Chatea con nuestro equipo de soporte en tiempo real.",
+        "welcomeMessage": "¡Hola! ¿Cómo podemos ayudarte hoy?",
+        "autoResponse": "Gracias por tu mensaje. Un agente de soporte responderá en breve. Mientras tanto, puedes revisar nuestra sección de FAQ para respuestas rápidas.",
+        "placeholder": "Escribe tu mensaje..."
+      }
+    }
+  },
+  "billingPage": {
+    "title": "Facturación",
+    "description": "Gestiona tu suscripción, métodos de pago e historial de facturación",
+    "backToSettings": "Volver a Configuración",
+    "currentPlan": {
+      "title": "Plan Actual",
+      "plan": "Profesional",
+      "status": "Activo",
+      "price": "$49",
+      "perMonth": "/mes",
+      "renewsOn": "Renueva el {date}",
+      "changePlan": "Cambiar Plan",
+      "cancelSubscription": "Cancelar Suscripción"
+    },
+    "usage": {
+      "title": "Uso del Período Actual",
+      "period": "Período de Facturación",
+      "samples": {
+        "title": "Muestras Procesadas",
+        "used": "{used} de {total} usadas",
+        "unlimited": "Ilimitadas"
+      },
+      "storage": {
+        "title": "Almacenamiento",
+        "used": "{used} GB de {total} GB"
+      },
+      "pipelines": {
+        "title": "Ejecuciones de Pipelines",
+        "used": "{used} de {total} este mes"
+      },
+      "collaborators": {
+        "title": "Colaboradores del Equipo",
+        "used": "{used} de {total} asientos"
+      }
+    },
+    "paymentMethod": {
+      "title": "Método de Pago",
+      "cardEnding": "Tarjeta terminada en {last4}",
+      "expires": "Expira {date}",
+      "default": "Predeterminado",
+      "addNew": "Agregar Método de Pago",
+      "update": "Actualizar"
+    },
+    "billingHistory": {
+      "title": "Historial de Facturación",
+      "downloadAll": "Descargar Todo",
+      "invoice": "Factura",
+      "date": "Fecha",
+      "amount": "Monto",
+      "status": "Estado",
+      "paid": "Pagado",
+      "pending": "Pendiente",
+      "failed": "Fallido",
+      "download": "Descargar",
+      "viewAll": "Ver Todo el Historial"
+    },
+    "billingInfo": {
+      "title": "Información de Facturación",
+      "name": "Nombre de Facturación",
+      "email": "Correo de Facturación",
+      "address": "Dirección",
+      "taxId": "ID Fiscal / VAT",
+      "edit": "Editar Información"
+    },
+    "plans": {
+      "title": "Planes Disponibles",
+      "starter": {
+        "name": "Inicial",
+        "price": "Gratis",
+        "description": "Para investigadores individuales",
+        "features": {
+          "samples": "100 muestras/mes",
+          "storage": "1 GB de almacenamiento",
+          "pipelines": "3 pipelines",
+          "support": "Soporte comunitario"
+        }
+      },
+      "professional": {
+        "name": "Profesional",
+        "price": "$49",
+        "description": "Para equipos de investigación",
+        "features": {
+          "samples": "5,000 muestras/mes",
+          "storage": "100 GB de almacenamiento",
+          "pipelines": "Pipelines ilimitados",
+          "collaborators": "10 colaboradores",
+          "support": "Soporte prioritario"
+        },
+        "current": "Plan Actual"
+      },
+      "enterprise": {
+        "name": "Empresarial",
+        "price": "Personalizado",
+        "description": "Para grandes instituciones",
+        "features": {
+          "samples": "Muestras ilimitadas",
+          "storage": "Almacenamiento ilimitado",
+          "pipelines": "Pipelines ilimitados",
+          "collaborators": "Colaboradores ilimitados",
+          "support": "Soporte dedicado 24/7",
+          "sla": "SLA garantizado"
+        },
+        "contact": "Contactar Ventas"
+      }
+    },
+    "dialogs": {
+      "changePlan": {
+        "title": "Cambiar Plan",
+        "description": "Selecciona un nuevo plan para tu suscripción.",
+        "confirm": "Confirmar Cambio",
+        "prorate": "Se te cobrará o acreditará prorrateado por el resto del período de facturación."
+      },
+      "cancelSubscription": {
+        "title": "Cancelar Suscripción",
+        "description": "¿Estás seguro de que deseas cancelar tu suscripción?",
+        "warning": "Tu cuenta será degradada al plan gratuito al final del período de facturación actual. Perderás acceso a:",
+        "loseAccess": {
+          "storage": "Almacenamiento adicional",
+          "pipelines": "Pipelines ilimitados",
+          "collaborators": "Colaboradores adicionales",
+          "support": "Soporte prioritario"
+        },
+        "confirm": "Sí, Cancelar Suscripción",
+        "keepPlan": "Mantener Mi Plan"
+      },
+      "addPayment": {
+        "title": "Agregar Método de Pago",
+        "description": "Ingresa los detalles de tu tarjeta de forma segura.",
+        "cardNumber": "Número de Tarjeta",
+        "expiry": "Fecha de Expiración",
+        "cvc": "CVC",
+        "nameOnCard": "Nombre en la Tarjeta",
+        "setDefault": "Establecer como método de pago predeterminado",
+        "add": "Agregar Tarjeta"
+      },
+      "editBillingInfo": {
+        "title": "Editar Información de Facturación",
+        "description": "Actualiza tu información de facturación.",
+        "save": "Guardar Cambios"
+      }
+    }
+  },
+  "landing": {
+    "nav": {
+      "features": "Características",
+      "howItWorks": "Cómo Funciona",
+      "pricing": "Precios",
+      "about": "Acerca de",
+      "signIn": "Iniciar sesión",
+      "getStarted": "Comenzar"
+    },
+    "hero": {
+      "badge": "Ahora con llamado de variantes impulsado por IA",
+      "title": "Bioinformática Moderna",
+      "titleHighlight": "Simplificada",
+      "description": "La plataforma todo en uno para gestión de estudios genómicos, visualización de trazas y orquestación de pipelines. Acelera tu investigación con herramientas poderosas diseñadas para científicos.",
+      "startTrial": "Iniciar Prueba Gratuita",
+      "watchDemo": "Ver Demo",
+      "noCreditCard": "No se requiere tarjeta de crédito. Plan gratuito disponible para siempre.",
+      "dashboardAlt": "Vista previa del Panel de GeneFlow",
+      "pipelineComplete": "Pipeline Completado",
+      "pipelineDetails": "Análisis WGS - 2,340 muestras",
+      "qualityScore": "Puntuación de Calidad"
+    },
+    "logos": {
+      "trusted": "Confiado por instituciones de investigación líderes en todo el mundo"
+    },
+    "features": {
+      "title": "Todo lo que necesitas para la investigación genómica",
+      "description": "Una suite completa de herramientas diseñadas para optimizar tu flujo de trabajo desde la muestra hasta el conocimiento.",
+      "studyManagement": "Gestión de Estudios",
+      "studyManagementDesc": "Organiza y rastrea estudios genómicos con metadatos completos, seguimiento de muestras y herramientas de colaboración.",
+      "traceVisualization": "Visualización de Trazas",
+      "traceVisualizationDesc": "Analiza trazas de secuenciación Sanger con nuestro visor de cromatogramas interactivo con puntuaciones de calidad y llamado de bases.",
+      "pipelineOrchestration": "Orquestación de Pipelines",
+      "pipelineOrchestrationDesc": "Diseña, ejecuta y monitorea pipelines de bioinformática con seguimiento de progreso en tiempo real y gestión de recursos.",
+      "advancedAnalytics": "Analítica Avanzada",
+      "advancedAnalyticsDesc": "Genera conocimientos de tus datos genómicos con análisis estadístico integrado y visualizaciones personalizables.",
+      "teamCollaboration": "Colaboración en Equipo",
+      "teamCollaborationDesc": "Comparte estudios, asigna roles y colabora con tu equipo en tiempo real con controles de acceso granulares.",
+      "enterpriseSecurity": "Seguridad Empresarial",
+      "enterpriseSecurityDesc": "Infraestructura compatible con HIPAA con cifrado de extremo a extremo, registros de auditoría y certificación SOC 2 Tipo II."
+    },
+    "howItWorks": {
+      "title": "Comienza en minutos",
+      "description": "Nuestro flujo de trabajo intuitivo te lleva de datos crudos a conocimientos accionables más rápido que nunca.",
+      "step1Title": "Sube tus Datos",
+      "step1Desc": "Importa archivos de secuenciación, datos FASTA/FASTQ, o conéctate directamente a la salida de tu secuenciador.",
+      "step2Title": "Configura Pipelines",
+      "step2Desc": "Elige entre flujos de trabajo predefinidos o crea pipelines personalizados adaptados a tus necesidades de investigación.",
+      "step3Title": "Analiza y Colabora",
+      "step3Desc": "Explora resultados con visualizaciones interactivas y comparte hallazgos con tu equipo."
+    },
+    "stats": {
+      "studiesAnalyzed": "Estudios Analizados",
+      "samplesProcessed": "Muestras Procesadas",
+      "researchInstitutions": "Instituciones de Investigación",
+      "uptimeSLA": "SLA de Disponibilidad"
+    },
+    "testimonials": {
+      "title": "Amado por investigadores en todo el mundo",
+      "description": "Mira lo que científicos y bioinformáticos dicen sobre GeneFlow."
+    },
+    "pricing": {
+      "title": "Precios simples y transparentes",
+      "description": "Comienza gratis y escala a medida que crece tu investigación. Sin cargos ocultos.",
+      "mostPopular": "Más Popular",
+      "starter": "Inicial",
+      "starterDesc": "Perfecto para investigadores individuales y proyectos pequeños",
+      "professional": "Profesional",
+      "professionalDesc": "Para equipos de investigación que necesitan más potencia y colaboración",
+      "enterprise": "Empresarial",
+      "enterpriseDesc": "Para instituciones que requieren máxima escala y cumplimiento",
+      "free": "Gratis",
+      "custom": "Personalizado",
+      "perMonth": "/mes",
+      "getStarted": "Comenzar",
+      "startFreeTrial": "Iniciar Prueba Gratuita",
+      "contactSales": "Contactar Ventas",
+      "features": {
+        "samplesMonth100": "Hasta 100 muestras/mes",
+        "basicTrace": "Visualización básica de trazas",
+        "pipelines3": "3 pipelines concurrentes",
+        "communitySupport": "Soporte comunitario",
+        "retention7": "Retención de datos de 7 días",
+        "samplesMonth5000": "Hasta 5,000 muestras/mes",
+        "advancedTrace": "Análisis avanzado de trazas",
+        "unlimitedPipelines": "Pipelines ilimitados",
+        "prioritySupport": "Soporte prioritario",
+        "retention1Year": "Retención de datos de 1 año",
+        "teamCollab10": "Colaboración en equipo (hasta 10)",
+        "customWorkflows": "Flujos de trabajo personalizados",
+        "apiAccess": "Acceso API",
+        "unlimitedSamples": "Muestras ilimitadas",
+        "allProfessional": "Todas las funciones Profesionales",
+        "dedicatedInfra": "Infraestructura dedicada",
+        "support247": "Soporte premium 24/7",
+        "unlimitedRetention": "Retención ilimitada",
+        "unlimitedTeam": "Tamaño de equipo ilimitado",
+        "ssoSaml": "SSO y SAML",
+        "hipaa": "Cumplimiento HIPAA",
+        "customIntegrations": "Integraciones personalizadas"
+      }
+    },
+    "cta": {
+      "title": "¿Listo para acelerar tu investigación?",
+      "description": "Únete a miles de investigadores usando GeneFlow para transformar su flujo de trabajo genómico.",
+      "getStartedFree": "Comenzar Gratis",
+      "scheduleDemo": "Programar una Demo"
+    },
+    "footer": {
+      "description": "Plataforma de bioinformática moderna para la próxima generación de investigación genómica.",
+      "product": "Producto",
+      "features": "Características",
+      "pricing": "Precios",
+      "integrations": "Integraciones",
+      "changelog": "Registro de cambios",
+      "resources": "Recursos",
+      "documentation": "Documentación",
+      "apiReference": "Referencia API",
+      "blog": "Blog",
+      "community": "Comunidad",
+      "company": "Empresa",
+      "about": "Acerca de",
+      "careers": "Carreras",
+      "contact": "Contacto",
+      "privacy": "Privacidad",
+      "copyright": "GeneFlow. Todos los derechos reservados.",
+      "terms": "Términos",
+      "cookies": "Cookies"
+    }
+  },
+  "errors": {
+    "notFound": "Página no encontrada",
+    "notFoundDescription": "La página que buscas no existe.",
+    "goHome": "Ir al inicio",
+    "somethingWentWrong": "Algo salió mal",
+    "tryAgain": "Intentar de nuevo"
+  }
+}

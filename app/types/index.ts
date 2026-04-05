@@ -2,6 +2,7 @@ export * from "./user";
 export * from "./study";
 export * from "./trace";
 export * from "./pipeline";
+export * from "./auth";
 
 export interface PaginatedResponse<T> {
   data: T[];

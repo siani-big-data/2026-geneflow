@@ -1,3 +1,4 @@
+export { authService } from "./auth.service";
 export { studiesService } from "./studies.service";
 export { tracesService } from "./traces.service";
 export { pipelinesService } from "./pipelines.service";
