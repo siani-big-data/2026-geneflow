@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
+import numpy as np
 import torch
 import torch.nn as nn
 from torch.optim import AdamW
@@ -14,6 +15,13 @@ from torch.utils.data import DataLoader
 from ..models.base import BaseModel
 from .callbacks import TrainingCallback
 from .metrics import MetricsTracker
+from .report import (
+    TrainingReport,
+    analyze_model,
+    compute_accuracy_regression,
+    compute_regression_metrics_detailed,
+    generate_training_plots,
+)
 
 
 @dataclass
@@ -33,6 +41,14 @@ class TrainingConfig:
     mixed_precision: bool = True
     num_workers: int = 4
     pin_memory: bool = True
+    # Metrics config
+    task_type: str = "regression"  # "regression" or "classification"
+    accuracy_tolerance: float = 5.0  # For regression: within X units = correct
+    generate_plots: bool = True
+    generate_report: bool = True
+    # Data key mapping (for flexible batch format)
+    input_key: str = "signals"  # Key for input data in batch
+    target_key: str = "quality_enhanced"  # Key for target data in batch
 
 
 class Trainer:
@@ -68,6 +84,9 @@ class Trainer:
         self.current_epoch = 0
         self.global_step = 0
         self.best_val_loss = float("inf")
+        self.epoch_history = []  # Track all metrics per epoch
+        self.training_start_time = None
+        self.training_end_time = None
 
     def _create_scheduler(self):
         """Create learning rate scheduler."""
@@ -92,6 +111,8 @@ class Trainer:
         val_loader: DataLoader | None = None,
     ) -> dict:
         """Run training loop."""
+        self.training_start_time = time.time()
+
         # Callbacks: on_train_start
         for cb in self.callbacks:
             cb.on_train_start(self)
@@ -119,6 +140,19 @@ class Trainer:
                     if val_loss < self.best_val_loss:
                         self.best_val_loss = val_loss
 
+                # Store epoch history for report
+                epoch_record = {
+                    "epoch": epoch + 1,
+                    "train_loss": train_metrics.get("loss"),
+                    "train_accuracy": train_metrics.get("accuracy"),
+                    "train_mae": train_metrics.get("mae"),
+                    "val_loss": val_metrics.get("loss"),
+                    "val_accuracy": val_metrics.get("accuracy"),
+                    "val_mae": val_metrics.get("mae"),
+                    "lr": train_metrics.get("lr"),
+                }
+                self.epoch_history.append(epoch_record)
+
                 # Scheduler step
                 if self.scheduler:
                     if isinstance(self.scheduler, ReduceLROnPlateau):
@@ -133,15 +167,21 @@ class Trainer:
                         stop_training = True
 
                 if stop_training:
-                    print(f"Early stopping at epoch {epoch}")
+                    print(f"Early stopping at epoch {epoch + 1}")
                     break
 
         finally:
+            self.training_end_time = time.time()
             # Callbacks: on_train_end
             for cb in self.callbacks:
                 cb.on_train_end(self)
 
         self.model._is_trained = True
+
+        # Generate report if configured
+        if self.config.generate_report:
+            self._generate_final_report()
+
         return self.metrics.get_summary()
 
     def _train_epoch(self, loader: DataLoader) -> dict:
@@ -149,7 +189,12 @@ class Trainer:
         self.model.train()
         total_loss = 0.0
         num_batches = 0
+        all_preds = []
+        all_targets = []
         start_time = time.time()
+
+        input_key = self.config.input_key
+        target_key = self.config.target_key
 
         for batch_idx, batch in enumerate(loader):
             # Move to device
@@ -161,6 +206,9 @@ class Trainer:
             if self.scaler:
                 with torch.amp.autocast(device_type="cuda"):
                     loss = self._compute_loss(batch)
+                    # Get predictions for accuracy
+                    with torch.no_grad():
+                        preds = self.model(batch[input_key])
                 self.scaler.scale(loss).backward()
                 self.scaler.unscale_(self.optimizer)
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.config.gradient_clip)
@@ -168,6 +216,8 @@ class Trainer:
                 self.scaler.update()
             else:
                 loss = self._compute_loss(batch)
+                with torch.no_grad():
+                    preds = self.model(batch[input_key])
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.config.gradient_clip)
                 self.optimizer.step()
@@ -175,6 +225,10 @@ class Trainer:
             total_loss += loss.item()
             num_batches += 1
             self.global_step += 1
+
+            # Collect for accuracy calculation
+            all_preds.append(preds.detach().cpu())
+            all_targets.append(batch[target_key].detach().cpu())
 
             # Callbacks: on_batch_end
             for cb in self.callbacks:
@@ -189,8 +243,29 @@ class Trainer:
                 )
 
         elapsed = time.time() - start_time
+
+        # Compute metrics based on task type
+        preds_tensor = torch.cat(all_preds, dim=0)
+        targets_tensor = torch.cat(all_targets, dim=0)
+
+        if self.config.task_type == "classification":
+            # Classification: accuracy = correct predictions / total
+            preds_classes = preds_tensor.argmax(dim=-1) if preds_tensor.dim() > 1 else preds_tensor
+            accuracy = (preds_classes == targets_tensor).float().mean().item()
+            mae = 0.0  # Not applicable for classification
+        else:
+            # Regression: accuracy = within tolerance
+            preds = preds_tensor.numpy()
+            targets = targets_tensor.numpy()
+            accuracy = compute_accuracy_regression(preds, targets, self.config.accuracy_tolerance)
+            # Compute MAE
+            mask = targets > 0
+            mae = float(np.abs(preds[mask] - targets[mask]).mean()) if mask.any() else 0.0
+
         return {
             "loss": total_loss / num_batches,
+            "accuracy": accuracy,
+            "mae": mae,
             "time": elapsed,
             "lr": self.optimizer.param_groups[0]["lr"],
         }
@@ -204,6 +279,9 @@ class Trainer:
         all_preds = []
         all_targets = []
 
+        input_key = self.config.input_key
+        target_key = self.config.target_key
+
         for batch in loader:
             batch = self._to_device(batch)
             loss = self._compute_loss(batch)
@@ -212,31 +290,44 @@ class Trainer:
 
             # Collect predictions for metrics
             with torch.amp.autocast(device_type="cuda", enabled=bool(self.scaler)):
-                preds = self.model(batch["signals"])
+                preds = self.model(batch[input_key])
             all_preds.append(preds.cpu())
-            all_targets.append(batch["quality"].cpu())
+            all_targets.append(batch[target_key].cpu())
 
-        # Compute additional metrics
-        preds = torch.cat(all_preds, dim=0)
-        targets = torch.cat(all_targets, dim=0)
+        # Compute metrics
+        preds_tensor = torch.cat(all_preds, dim=0)
+        targets_tensor = torch.cat(all_targets, dim=0)
 
         metrics = {
             "loss": total_loss / num_batches,
         }
 
-        # MAE for regression
-        if preds.shape == targets.shape:
+        if self.config.task_type == "classification":
+            # Classification: accuracy = correct predictions / total
+            preds_classes = preds_tensor.argmax(dim=-1) if preds_tensor.dim() > 1 else preds_tensor
+            accuracy = (preds_classes == targets_tensor).float().mean().item()
+            metrics["accuracy"] = accuracy
+        else:
+            # Regression: accuracy = within tolerance
+            preds = preds_tensor.numpy()
+            targets = targets_tensor.numpy()
+            accuracy = compute_accuracy_regression(preds, targets, self.config.accuracy_tolerance)
+            metrics["accuracy"] = accuracy
+            # MAE for regression
             mask = targets > 0
             if mask.any():
-                mae = (preds[mask] - targets[mask]).abs().mean().item()
+                mae = float(np.abs(preds[mask] - targets[mask]).mean())
                 metrics["mae"] = mae
 
         return metrics
 
     def _compute_loss(self, batch: dict) -> torch.Tensor:
         """Compute loss for a batch."""
-        outputs = self.model(batch["signals"])
-        targets = batch["quality"]
+        input_key = self.config.input_key
+        target_key = self.config.target_key
+
+        outputs = self.model(batch[input_key])
+        targets = batch[target_key]
         mask = batch.get("mask", None)
 
         if mask is not None:
@@ -279,3 +370,77 @@ class Trainer:
         self.optimizer.load_state_dict(checkpoint["optimizer_state"])
         if self.scheduler and checkpoint["scheduler_state"]:
             self.scheduler.load_state_dict(checkpoint["scheduler_state"])
+
+    def _generate_final_report(self) -> None:
+        """Generate final training report with plots and metrics."""
+        save_dir = Path(self.config.save_dir)
+        save_dir.mkdir(parents=True, exist_ok=True)
+
+        print("\n" + "=" * 60)
+        print("GENERATING TRAINING REPORT")
+        print("=" * 60)
+
+        # Analyze model
+        model_info = analyze_model(self.model)
+
+        # Compute training time
+        training_time = 0.0
+        if self.training_start_time and self.training_end_time:
+            training_time = self.training_end_time - self.training_start_time
+
+        # Get best metrics
+        best_metrics = {}
+        if self.epoch_history:
+            val_losses = [e["val_loss"] for e in self.epoch_history if e.get("val_loss") is not None]
+            val_accs = [e["val_accuracy"] for e in self.epoch_history if e.get("val_accuracy") is not None]
+            train_losses = [e["train_loss"] for e in self.epoch_history if e.get("train_loss") is not None]
+
+            if val_losses:
+                best_idx = int(np.argmin(val_losses))
+                best_metrics["best_val_loss"] = val_losses[best_idx]
+                best_metrics["best_val_loss_epoch"] = best_idx + 1
+            if val_accs:
+                best_idx = int(np.argmax(val_accs))
+                best_metrics["best_val_accuracy"] = val_accs[best_idx]
+                best_metrics["best_val_accuracy_epoch"] = best_idx + 1
+            if train_losses:
+                best_metrics["best_train_loss"] = min(train_losses)
+
+        # Get final metrics
+        final_metrics = {}
+        if self.epoch_history:
+            last = self.epoch_history[-1]
+            final_metrics = {k: v for k, v in last.items() if v is not None and k != "epoch"}
+
+        # Create report
+        report = TrainingReport(
+            model_info=model_info,
+            training_config={
+                "epochs": self.config.epochs,
+                "batch_size": self.config.batch_size,
+                "learning_rate": self.config.learning_rate,
+                "weight_decay": self.config.weight_decay,
+                "scheduler": self.config.scheduler,
+                "accuracy_tolerance": self.config.accuracy_tolerance,
+            },
+            epoch_metrics=self.epoch_history,
+            final_metrics=final_metrics,
+            best_metrics=best_metrics,
+            training_time_seconds=training_time,
+        )
+
+        # Save JSON report
+        report.save(save_dir / "training_report.json")
+        print(f"  Saved: {save_dir / 'training_report.json'}")
+
+        # Generate plots
+        if self.config.generate_plots:
+            try:
+                plots = generate_training_plots(self.epoch_history, save_dir)
+                for p in plots:
+                    print(f"  Saved: {p}")
+            except Exception as e:
+                print(f"  Warning: Could not generate plots: {e}")
+
+        # Print summary
+        report.print_summary()
