@@ -25,29 +25,22 @@ class UsersHandler(BaseHandler):
             # Registration
             "UserRegisteredEvent": "handle_user_registered",
             "UserRegisteredViaOAuthEvent": "handle_user_registered_oauth",
-
             # Email verification
             "UserEmailVerifiedEvent": "handle_email_verified",
-
             # Password
             "UserPasswordChangedEvent": "handle_password_changed",
             "PasswordResetRequestedEvent": "handle_password_reset_requested",
-
             # Two-factor authentication
             "UserTwoFactorEnabledEvent": "handle_2fa_enabled",
             "UserTwoFactorDisabledEvent": "handle_2fa_disabled",
             "TwoFactorCodeGeneratedEvent": "handle_2fa_code_generated",
-
             # Account lockout
             "UserLockedOutEvent": "handle_user_locked_out",
-
             # Roles
             "UserRoleAddedEvent": "handle_role_added",
             "UserRoleRemovedEvent": "handle_role_removed",
-
             # Account status
             "UserDeactivatedEvent": "handle_user_deactivated",
-
             # External logins (OAuth)
             "ExternalLoginLinkedEvent": "handle_external_login_linked",
         }
@@ -278,9 +271,15 @@ class UsersHandler(BaseHandler):
     def _get_role_id(self, role) -> int:
         """Convert role name or value to role ID."""
         role_map = {
-            "User": 1, "user": 1, 1: 1,
-            "Admin": 2, "admin": 2, 2: 2,
-            "SuperAdmin": 3, "superadmin": 3, 3: 3,
+            "User": 1,
+            "user": 1,
+            1: 1,
+            "Admin": 2,
+            "admin": 2,
+            2: 2,
+            "SuperAdmin": 3,
+            "superadmin": 3,
+            3: 3,
         }
         return role_map.get(role, 1)  # Default to User role
 
