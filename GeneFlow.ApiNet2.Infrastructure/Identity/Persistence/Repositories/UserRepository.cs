@@ -49,48 +49,50 @@ public sealed class UserRepository : IUserRepository
     /// <inheritdoc />
     public async Task<User?> GetByEmailAsync(Email email, CancellationToken cancellationToken = default)
     {
-        return await _context.Users
-            .FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
+        var normalizedEmail = email.Value.ToLowerInvariant();
+        var users = await _context.Users.ToListAsync(cancellationToken);
+        return users.FirstOrDefault(u => u.Email.Value.ToLowerInvariant() == normalizedEmail);
     }
 
     /// <inheritdoc />
     public async Task<User?> GetByEmailStringAsync(string email, CancellationToken cancellationToken = default)
     {
         var normalizedEmail = email.Trim().ToLowerInvariant();
-        return await _context.Users
-            .FirstOrDefaultAsync(u => EF.Property<string>(u, "Email") == normalizedEmail, cancellationToken);
+        var users = await _context.Users.ToListAsync(cancellationToken);
+        return users.FirstOrDefault(u => u.Email.Value.ToLowerInvariant() == normalizedEmail);
     }
 
     /// <inheritdoc />
     public async Task<User?> GetByUsernameAsync(Username username, CancellationToken cancellationToken = default)
     {
-        return await _context.Users
-            .FirstOrDefaultAsync(u => u.Username == username, cancellationToken);
+        var users = await _context.Users.ToListAsync(cancellationToken);
+        return users.FirstOrDefault(u => u.Username.Value.ToLowerInvariant() == username.Value.ToLowerInvariant());
     }
 
     /// <inheritdoc />
     public async Task<User?> GetByEmailOrUsernameAsync(string identifier, CancellationToken cancellationToken = default)
     {
         var normalizedIdentifier = identifier.Trim().ToLowerInvariant();
-        return await _context.Users
-            .FirstOrDefaultAsync(u =>
-                EF.Property<string>(u.Email, "Value") == normalizedIdentifier ||
-                EF.Property<string>(u.Username, "Value") == normalizedIdentifier,
-                cancellationToken);
+        var users = await _context.Users.ToListAsync(cancellationToken);
+        return users.FirstOrDefault(u =>
+            u.Email.Value.ToLowerInvariant() == normalizedIdentifier ||
+            u.Username.Value.ToLowerInvariant() == normalizedIdentifier);
     }
 
     /// <inheritdoc />
     public async Task<bool> ExistsWithEmailAsync(Email email, CancellationToken cancellationToken = default)
     {
-        return await _context.Users
-            .AnyAsync(u => u.Email == email, cancellationToken);
+        var normalizedEmail = email.Value.ToLowerInvariant();
+        var users = await _context.Users.ToListAsync(cancellationToken);
+        return users.Any(u => u.Email.Value.ToLowerInvariant() == normalizedEmail);
     }
 
     /// <inheritdoc />
     public async Task<bool> ExistsWithUsernameAsync(Username username, CancellationToken cancellationToken = default)
     {
-        return await _context.Users
-            .AnyAsync(u => u.Username == username, cancellationToken);
+        var normalizedUsername = username.Value.ToLowerInvariant();
+        var users = await _context.Users.ToListAsync(cancellationToken);
+        return users.Any(u => u.Username.Value.ToLowerInvariant() == normalizedUsername);
     }
 
     /// <inheritdoc />
