@@ -10,7 +10,7 @@ from uuid import uuid4
 class AnalysisType(str, Enum):
     """Types of AI analysis."""
 
-    QUALITY = "quality"
+    QUALITY = "quality_enhanced"
     BLAST = "blast"
     VARIANTS = "variants"
     ANNOTATIONS = "annotations"
@@ -265,7 +265,7 @@ class AnalysisResult:
         if self.completedAt:
             data["completedAt"] = self.completedAt.isoformat()
         if self.quality:
-            data["quality"] = self.quality.to_dict()
+            data["quality_enhanced"] = self.quality.to_dict()
         if self.blastHits:
             data["blastHits"] = [h.to_dict() for h in self.blastHits]
         if self.variants:
@@ -295,8 +295,8 @@ class AnalysisResult:
             recommendations=data.get("recommendations", []),
         )
 
-        if data.get("quality"):
-            result.quality = QualityPrediction.from_dict(data["quality"])
+        if data.get("quality_enhanced"):
+            result.quality = QualityPrediction.from_dict(data["quality_enhanced"])
         if data.get("blastHits"):
             result.blastHits = [BlastHit.from_dict(h) for h in data["blastHits"]]
         if data.get("variants"):

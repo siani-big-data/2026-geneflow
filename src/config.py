@@ -6,7 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     """Application settings with AI_ prefix."""
 
-    model_config = SettingsConfigDict(env_prefix="AI_", env_file=".env")
+    model_config = SettingsConfigDict(env_prefix="AI_", env_file=".env", extra="ignore")
 
     # Redis
     redis_url: str = "redis://localhost:6379"
@@ -52,6 +52,13 @@ class Settings(BaseSettings):
     # Analysis
     analysis_timeout_seconds: int = 300
     max_sequence_length: int = 100000
+
+    # MinIO / S3 Storage
+    minio_endpoint: str = "localhost:9000"
+    minio_access_key: str = "minioadmin"
+    minio_secret_key: str = "minioadmin"
+    minio_secure: bool = False
+    minio_bucket: str = "geneflow-training-data"
 
     # Logging
     log_level: str = "INFO"
