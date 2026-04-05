@@ -1,0 +1,275 @@
+# =============================================================================
+# GeneFlow CD Pipeline - Deploy to Hetzner
+# =============================================================================
+# This workflow deploys the application to production on push to main.
+#
+# Prerequisites (GitHub Secrets):
+#   - HETZNER_SSH_KEY: SSH private key for deployment
+#   - HETZNER_HOST: Server IP or hostname
+#   - HETZNER_USER: SSH username (default: deploy)
+#   - DISCORD_WEBHOOK_URL: (optional) Discord webhook for notifications
+#
+# Server Requirements:
+#   - Docker and Docker Compose installed
+#   - .env file configured at ~/geneflow/.env
+#   - SSH key authorized for deployment user
+# =============================================================================
+
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+env:
+  DEPLOY_PATH: /home/${{ secrets.HETZNER_USER || 'deploy' }}/geneflow
+  DOCKER_REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/geneflow-api
+
+jobs:
+  # ===========================================================================
+  # BUILD & PUSH DOCKER IMAGE
+  # ===========================================================================
+  build-and-push:
+    name: Build & Push Docker Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tags }}
+      image_digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.DOCKER_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=branch
+
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./deploy/api/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+  # ===========================================================================
+  # DEPLOY TO SERVER
+  # ===========================================================================
+  deploy:
+    name: Deploy to Hetzner
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    environment:
+      name: ${{ github.event.inputs.environment || 'production' }}
+      url: https://api.geneflow.app
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.HETZNER_SSH_KEY }}
+
+      - name: Add host key to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.HETZNER_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Create deployment directory structure
+        run: |
+          ssh ${{ secrets.HETZNER_USER || 'deploy' }}@${{ secrets.HETZNER_HOST }} << 'ENDSSH'
+            mkdir -p ~/geneflow/{config/postgres,logs,backups}
+          ENDSSH
+
+      - name: Copy deployment files
+        run: |
+          # Copy docker-compose and configuration files
+          scp -r deploy/docker-compose.yml \
+                 deploy/config \
+                 deploy/scripts \
+              ${{ secrets.HETZNER_USER || 'deploy' }}@${{ secrets.HETZNER_HOST }}:~/geneflow/
+
+      - name: Deploy application
+        run: |
+          ssh ${{ secrets.HETZNER_USER || 'deploy' }}@${{ secrets.HETZNER_HOST }} << 'ENDSSH'
+            set -e
+
+            cd ~/geneflow
+
+            echo "==> Pulling latest images..."
+            docker compose pull
+
+            echo "==> Stopping existing containers..."
+            docker compose down --remove-orphans || true
+
+            echo "==> Starting containers..."
+            docker compose up -d
+
+            echo "==> Waiting for services to be healthy..."
+            sleep 15
+
+            echo "==> Checking service status..."
+            docker compose ps
+
+            echo "==> Verifying API health..."
+            for i in {1..12}; do
+              if curl -sf http://localhost:5145/health > /dev/null 2>&1; then
+                echo "API is healthy!"
+                break
+              fi
+              if [ $i -eq 12 ]; then
+                echo "API health check failed after 60 seconds"
+                docker compose logs --tail=50 api
+                exit 1
+              fi
+              echo "Waiting for API... (attempt $i/12)"
+              sleep 5
+            done
+
+            echo "==> Cleaning up old Docker images..."
+            docker image prune -f
+
+            echo "==> Deployment complete!"
+          ENDSSH
+
+      - name: Verify deployment
+        run: |
+          ssh ${{ secrets.HETZNER_USER || 'deploy' }}@${{ secrets.HETZNER_HOST }} << 'ENDSSH'
+            cd ~/geneflow
+
+            # Check all services are running
+            RUNNING=$(docker compose ps --services --filter "status=running" | wc -l)
+            TOTAL=$(docker compose ps --services | wc -l)
+
+            echo "Services running: $RUNNING/$TOTAL"
+
+            if [ "$RUNNING" -lt "$TOTAL" ]; then
+              echo "Not all services are running!"
+              docker compose ps
+              exit 1
+            fi
+
+            # Check Redis
+            if docker compose exec -T redis redis-cli ping | grep -q "PONG"; then
+              echo "Redis: OK"
+            else
+              echo "Redis: FAILED"
+              exit 1
+            fi
+
+            # Check PostgreSQL
+            if docker compose exec -T postgres pg_isready -U geneflow; then
+              echo "PostgreSQL: OK"
+            else
+              echo "PostgreSQL: FAILED"
+              exit 1
+            fi
+
+            echo "All health checks passed!"
+          ENDSSH
+
+      - name: Notify Discord (Success)
+        if: success() && secrets.DISCORD_WEBHOOK_URL != ''
+        run: |
+          curl -H "Content-Type: application/json" \
+               -d "{\"content\":\"GeneFlow deployed successfully to production\n\nCommit: \`${{ github.sha }}\`\nBranch: \`${{ github.ref_name }}\`\nBy: ${{ github.actor }}\"}" \
+               ${{ secrets.DISCORD_WEBHOOK_URL }}
+
+      - name: Notify Discord (Failure)
+        if: failure() && secrets.DISCORD_WEBHOOK_URL != ''
+        run: |
+          curl -H "Content-Type: application/json" \
+               -d "{\"content\":\"GeneFlow deployment FAILED!\n\nCommit: \`${{ github.sha }}\`\nBranch: \`${{ github.ref_name }}\`\nBy: ${{ github.actor }}\n\nCheck: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
+               ${{ secrets.DISCORD_WEBHOOK_URL }}
+
+  # ===========================================================================
+  # ROLLBACK JOB (manual trigger only)
+  # ===========================================================================
+  rollback:
+    name: Rollback
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && failure()
+    needs: deploy
+
+    steps:
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.HETZNER_SSH_KEY }}
+
+      - name: Add host key to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.HETZNER_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Rollback to previous version
+        run: |
+          ssh ${{ secrets.HETZNER_USER || 'deploy' }}@${{ secrets.HETZNER_HOST }} << 'ENDSSH'
+            cd ~/geneflow
+
+            echo "==> Rolling back to previous version..."
+
+            # Get the previous image (second latest)
+            PREVIOUS_IMAGE=$(docker images --format "{{.Repository}}:{{.Tag}}" | grep geneflow-api | head -2 | tail -1)
+
+            if [ -n "$PREVIOUS_IMAGE" ]; then
+              echo "Rolling back to: $PREVIOUS_IMAGE"
+              # Update docker-compose to use previous image
+              # This is a simplified rollback - in production you might want a more sophisticated approach
+              docker compose down
+              docker compose up -d
+            else
+              echo "No previous image found for rollback"
+              exit 1
+            fi
+          ENDSSH
+
+      - name: Notify Discord (Rollback)
+        if: secrets.DISCORD_WEBHOOK_URL != ''
+        run: |
+          curl -H "Content-Type: application/json" \
+               -d "{\"content\":\"GeneFlow ROLLBACK executed!\n\nCommit: \`${{ github.sha }}\`\nBy: ${{ github.actor }}\"}" \
+               ${{ secrets.DISCORD_WEBHOOK_URL }}

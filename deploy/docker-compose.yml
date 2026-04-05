@@ -1,0 +1,323 @@
+# =============================================================================
+# GeneFlow Docker Compose - Production
+# =============================================================================
+# Event-Driven Architecture with Redis Streams
+#
+# Services:
+#   - postgres: PostgreSQL database (Datamart - reconstructible)
+#   - redis: Redis for Event Bus (Streams) and caching
+#   - api: .NET 8 API
+#   - worker: Python trace processing worker
+#   - datalake: Python event store (Source of Truth)
+#   - caddy: Reverse proxy with automatic SSL
+#
+# Usage:
+#   docker compose up -d
+#   docker compose logs -f api
+#   docker compose down
+# =============================================================================
+
+services:
+  # ===========================================================================
+  # POSTGRESQL (Datamart - Reconstructible via Mounter)
+  # ===========================================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: geneflow_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-geneflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:-geneflow_db}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      # No init.sql needed - PostgreSQL Mounter creates schemas/tables from events
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-geneflow} -d ${POSTGRES_DB:-geneflow_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - geneflow-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  # ===========================================================================
+  # REDIS (Event Bus via Streams + Cache)
+  # ===========================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: geneflow_redis
+    restart: unless-stopped
+    command: >
+      redis-server
+      --maxmemory 256mb
+      --maxmemory-policy noeviction
+      --appendonly yes
+      --appendfsync everysec
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - geneflow-network
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  # ===========================================================================
+  # .NET API
+  # ===========================================================================
+  api:
+    image: ${DOCKER_REGISTRY:-ghcr.io}/${IMAGE_NAME:-geneflow-api}:${IMAGE_TAG:-latest}
+    build:
+      context: ..
+      dockerfile: deploy/api/Dockerfile
+    container_name: geneflow_api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # ASP.NET Core
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:5145
+
+      # Database
+      ConnectionStrings__GeneFlowDB: "Host=postgres;Port=5432;Database=${POSTGRES_DB:-geneflow_db};Username=${POSTGRES_USER:-geneflow};Password=${POSTGRES_PASSWORD}"
+
+      # JWT Authentication
+      Jwt__SecretKey: ${JWT_SECRET_KEY:?JWT_SECRET_KEY is required}
+      Jwt__Issuer: GeneFlow
+      Jwt__Audience: GeneFlow
+      Jwt__AccessTokenExpiryMinutes: 15
+      Jwt__RefreshTokenExpiryDays: 7
+
+      # Two-Factor Authentication
+      TwoFactor__Issuer: GeneFlow
+      TwoFactor__EncryptionKey: ${TWOFACTOR_ENCRYPTION_KEY:?TWOFACTOR_ENCRYPTION_KEY is required}
+
+      # Account Lockout
+      Lockout__MaxFailedAttempts: 5
+      Lockout__LockoutDurationMinutes: 15
+
+      # Redis Event Bus
+      EventBus__RedisConnectionString: redis:6379
+      EventBus__StreamPrefix: geneflow:events
+      EventBus__MaxStreamLength: 100000
+      EventBus__Enabled: "true"
+      EventBus__TimeoutMs: 5000
+
+      # Redis (Legacy/Worker queues)
+      Redis__ConnectionString: redis:6379
+      Redis__StreamPrefix: geneflow
+      Redis__MaxRetries: 3
+      Redis__RetryDelaySeconds: 5
+      Redis__DefaultConsumerGroup: trace-workers
+      Redis__AutoCreateStreams: "true"
+
+      # Trace Processing
+      TraceProcessing__QueueName: traces:processing
+      TraceProcessing__CallbackTimeoutSeconds: 300
+
+      # File Storage
+      FileStorage__Provider: Local
+      FileStorage__MaxFileSizeBytes: 10485760
+      FileStorage__AllowedExtensions: ".ab1,.scf,.fastq,.fasta,.fa,.fq,.txt"
+      FileStorage__Local__BasePath: /app/traces
+      FileStorage__Local__CreateDirectoryIfNotExists: "true"
+
+      # Notifications
+      Notifications__BaseUrl: ${BASE_URL:-https://api.geneflow.app}
+      Notifications__FromName: GeneFlow
+      Notifications__Email__Enabled: "true"
+      Notifications__Email__SmtpHost: ${SMTP_HOST:-smtp.mailersend.net}
+      Notifications__Email__SmtpPort: ${SMTP_PORT:-587}
+      Notifications__Email__SmtpUsername: ${SMTP_USERNAME}
+      Notifications__Email__SmtpPassword: ${SMTP_PASSWORD}
+      Notifications__Email__UseSsl: "true"
+      Notifications__Email__FromEmail: ${SMTP_FROM_EMAIL:-noreply@geneflow.app}
+
+      # CORS
+      Cors__AllowedOrigins__0: ${FRONTEND_URL:-https://app.geneflow.app}
+      Cors__AllowedMethods__0: GET
+      Cors__AllowedMethods__1: POST
+      Cors__AllowedMethods__2: PUT
+      Cors__AllowedMethods__3: DELETE
+      Cors__AllowedMethods__4: PATCH
+      Cors__AllowedMethods__5: OPTIONS
+      Cors__AllowedHeaders__0: Content-Type
+      Cors__AllowedHeaders__1: Authorization
+      Cors__AllowedHeaders__2: X-Correlation-Id
+      Cors__AllowCredentials: "true"
+      Cors__MaxAgeSeconds: 600
+
+    volumes:
+      - traces-data:/app/traces
+      - ./logs/api:/app/logs
+    expose:
+      - "5145"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5145/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - geneflow-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  # ===========================================================================
+  # PYTHON WORKER (Trace Processing)
+  # ===========================================================================
+  worker:
+    image: ${DOCKER_REGISTRY:-ghcr.io}/${WORKER_IMAGE_NAME:-geneflow-worker}:${IMAGE_TAG:-latest}
+    build:
+      context: ../../geneflow-analysis
+      dockerfile: Dockerfile
+    container_name: geneflow_worker
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      GENEFLOW_REDIS_URL: redis://redis:6379
+      GENEFLOW_REDIS_STREAM: traces:processing
+      GENEFLOW_REDIS_CONSUMER_GROUP: trace-workers
+      GENEFLOW_REDIS_CONSUMER_NAME: worker-1
+      GENEFLOW_REDIS_BLOCK_MS: 5000
+      GENEFLOW_API_BASE_URL: http://api:5145
+      GENEFLOW_API_TIMEOUT: 30
+      GENEFLOW_STORAGE_PROVIDER: local
+      GENEFLOW_LOCAL_STORAGE_PATH: /app/traces
+      GENEFLOW_MAX_RETRIES: 3
+      GENEFLOW_RETRY_DELAY_SECONDS: 5
+      GENEFLOW_TEMP_DIR: /tmp/trace-processing
+      GENEFLOW_LOG_LEVEL: INFO
+      GENEFLOW_LOG_FORMAT: json
+    volumes:
+      - traces-data:/app/traces:ro
+      - worker-temp:/tmp/trace-processing
+    networks:
+      - geneflow-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  # ===========================================================================
+  # PYTHON DATALAKE (Event Store - Source of Truth)
+  # ===========================================================================
+  datalake:
+    image: ${DOCKER_REGISTRY:-ghcr.io}/${DATALAKE_IMAGE_NAME:-geneflow-datalake}:${IMAGE_TAG:-latest}
+    build:
+      context: ../../geneflow-datalake
+      dockerfile: Dockerfile
+    container_name: geneflow_datalake
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    environment:
+      # Redis Event Bus
+      REDIS_URL: redis://redis:6379
+      REDIS_STREAM_PREFIX: geneflow:events
+      REDIS_CONSUMER_GROUP: datalake-consumers
+      REDIS_CONSUMER_NAME: datalake-1
+
+      # Storage
+      DATALAKE_STORAGE_PATH: /data/events
+      DATALAKE_RETENTION_DAYS: 365
+
+      # PostgreSQL Mounter
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER:-geneflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-geneflow_db}
+      MOUNTER_ENABLED: "true"
+
+      # API
+      DATALAKE_API_PORT: 8082
+      DATALAKE_LOG_LEVEL: INFO
+    volumes:
+      - datalake-data:/data/events
+      - ./logs/datalake:/app/logs
+    ports:
+      - "8082:8082"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - geneflow-network
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  # ===========================================================================
+  # CADDY (Reverse Proxy + Automatic SSL)
+  # ===========================================================================
+  caddy:
+    image: caddy:2-alpine
+    container_name: geneflow_caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./config/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - api
+    networks:
+      - geneflow-network
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+
+# =============================================================================
+# VOLUMES
+# =============================================================================
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+  traces-data:
+    driver: local
+  worker-temp:
+    driver: local
+  datalake-data:
+    driver: local
+  caddy-data:
+    driver: local
+  caddy-config:
+    driver: local
+
+# =============================================================================
+# NETWORKS
+# =============================================================================
+networks:
+  geneflow-network:
+    driver: bridge
