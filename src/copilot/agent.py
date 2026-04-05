@@ -1,16 +1,22 @@
-"""Molecular Biology Agent for GeneFlow AI."""
+"""Molecular Biology Agent for GeneFlow AI.
+
+This module provides the main agent that powers the GeneFlow copilot,
+combining Claude LLM capabilities with ML models and external APIs.
+"""
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Callable, Optional
 from uuid import uuid4
 
+import numpy as np
 import structlog
 from anthropic import AsyncAnthropic
 
 from src.config import Settings
 from src.models import AnalysisResult
 
+from .ai_service import GeneFlowAIService, get_ai_service, initialize_ai_service
 from .tools import get_tools_for_api
 
 logger = structlog.get_logger()
@@ -51,6 +57,12 @@ class MolecularBiologyAgent:
 
     Usa Claude con herramientas para responder preguntas sobre
     secuencias, análisis BLAST, variantes y anotaciones.
+
+    Integra modelos de ML para:
+    - Clasificación taxonómica jerárquica
+    - Detección de heterocigotos
+    - Predicción de puntos de recorte
+    - Clasificación de calidad
     """
 
     SYSTEM_PROMPT = """Eres un experto en biología molecular y bioinformática, \
@@ -58,12 +70,23 @@ especializado en análisis de secuenciación Sanger.
 
 Tu rol es ayudar a investigadores a interpretar resultados de secuenciación:
 - Análisis de calidad de secuencias
-- Identificación de organismos mediante BLAST
+- Identificación de organismos mediante BLAST o clasificación por ML
 - Detección e interpretación de variantes
 - Anotación de características genómicas
 
-Tienes acceso a herramientas para consultar datos de trazas, ejecutar BLAST, \
-y obtener información sobre variantes.
+Tienes acceso a herramientas para:
+1. Consultar datos de trazas y análisis previos
+2. Ejecutar búsquedas BLAST en NCBI
+3. Clasificar taxonómicamente secuencias (modelo de red neuronal)
+4. Detectar posiciones heterocigotas en cromatogramas
+5. Predecir puntos óptimos de recorte por calidad
+6. Clasificar calidad por posición
+
+Modelos de ML disponibles:
+- TaxonomyClassifier: Clasifica secuencias desde reino hasta género
+- HeterozygoteClassifier: Detecta posiciones con doble pico (SNPs)
+- TrimmingPredictor: Recomienda puntos de recorte
+- QualityClassifier: Clasifica calidad en bins Q10-Q50+
 
 Directrices:
 - Responde siempre en español
@@ -72,6 +95,7 @@ Directrices:
 - Si los datos son insuficientes para una conclusión, indícalo
 - Sugiere análisis adicionales cuando sea apropiado
 - Usa nomenclatura estándar (HGVS para variantes, etc.)
+- Indica el nivel de confianza de las predicciones de ML
 
 Contexto actual del usuario:
 {context}"""
@@ -81,20 +105,29 @@ Contexto actual del usuario:
         settings: Settings,
         trace_provider: Optional[Callable[[str], Optional[AnalysisResult]]] = None,
         blast_handler: Optional[ToolHandler] = None,
+        ai_service: Optional[GeneFlowAIService] = None,
     ):
         self._settings = settings
         self._client: Optional[AsyncAnthropic] = None
         self._contexts: dict[str, AgentContext] = {}
         self._trace_provider = trace_provider
         self._blast_handler = blast_handler
+        self._ai_service = ai_service
 
-        # Tool handlers
+        # Tool handlers - core tools
         self._tool_handlers: dict[str, ToolHandler] = {
+            # Core tools
             "get_trace_analysis": self._handle_get_trace,
             "search_blast": self._handle_search_blast,
             "get_quality_assessment": self._handle_get_quality,
             "explain_variant": self._handle_explain_variant,
             "compaREDACTED": self._handle_compaREDACTED,
+            # ML-powered tools
+            "classify_taxonomy": self._handle_classify_taxonomy,
+            "detect_heterozygotes": self._handle_detect_heterozygotes,
+            "predict_trim_points": self._handle_predict_trim_points,
+            "classify_quality_ml": self._handle_classify_quality_ml,
+            "analyze_trace_ml": self._handle_analyze_trace_ml,
         }
 
         if settings.claude_api_key:
@@ -104,6 +137,7 @@ Contexto actual del usuario:
         self._requests = 0
         self._tool_calls = 0
         self._errors = 0
+        self._ml_calls = 0
 
     @property
     def is_available(self) -> bool:
@@ -116,10 +150,25 @@ Contexto actual del usuario:
         return {
             "requests": self._requests,
             "toolCalls": self._tool_calls,
+            "mlCalls": self._ml_calls,
             "errors": self._errors,
             "activeContexts": len(self._contexts),
             "available": self.is_available,
+            "mlModelsLoaded": self._ai_service.loaded_models if self._ai_service else [],
         }
+
+    async def initialize(self) -> None:
+        """Initialize the agent and its dependencies."""
+        if self._ai_service is None:
+            self._ai_service = await initialize_ai_service()
+        elif not self._ai_service.is_initialized:
+            await self._ai_service.initialize()
+
+        logger.info(
+            "agent_initialized",
+            claude_available=self.is_available,
+            ml_models=self._ai_service.available_models if self._ai_service else [],
+        )
 
     def set_trace_provider(self, provider: Callable[[str], Optional[AnalysisResult]]) -> None:
         """Set the trace data provider function."""
@@ -128,6 +177,10 @@ Contexto actual del usuario:
     def set_blast_handler(self, handler: ToolHandler) -> None:
         """Set the BLAST search handler."""
         self._blast_handler = handler
+
+    def set_ai_service(self, service: GeneFlowAIService) -> None:
+        """Set the AI service for ML models."""
+        self._ai_service = service
 
     def get_context(self, context_id: str) -> Optional[AgentContext]:
         """Get a context by ID."""
@@ -166,6 +219,10 @@ Contexto actual del usuario:
                 "answer": "Agente no disponible. Configure AI_CLAUDE_API_KEY.",
                 "error": True,
             }
+
+        # Ensure AI service is initialized
+        if self._ai_service is None or not self._ai_service.is_initialized:
+            await self.initialize()
 
         # Get or create context
         if context_id and context_id in self._contexts:
@@ -308,7 +365,14 @@ Contexto actual del usuario:
 
         try:
             # Pass context for tools that need it
-            if tool_name in ("get_trace_analysis", "get_quality_assessment"):
+            if tool_name in (
+                "get_trace_analysis",
+                "get_quality_assessment",
+                "detect_heterozygotes",
+                "predict_trim_points",
+                "classify_quality_ml",
+                "analyze_trace_ml",
+            ):
                 return await handler(tool_input, context)
             else:
                 return await handler(tool_input)
@@ -354,13 +418,17 @@ Contexto actual del usuario:
             if data.get("variants"):
                 parts.append(f"Variantes detectadas: {len(data['variants'])}")
 
+        # Add ML service info
+        if self._ai_service and self._ai_service.is_initialized:
+            parts.append(f"Modelos ML disponibles: {', '.join(self._ai_service.available_models)}")
+
         if not parts:
             return "Sin contexto de traza activo."
 
         return "\n".join(parts)
 
     # =========================================================================
-    # Tool Handlers
+    # Core Tool Handlers
     # =========================================================================
 
     async def _handle_get_trace(self, params: dict, context: AgentContext) -> dict[str, Any]:
@@ -423,7 +491,6 @@ Contexto actual del usuario:
         elif len(alternate) < len(reference):
             variant_type = "deleción"
 
-        # This is a simplified response - in production would query ClinVar, etc.
         return {
             "position": position,
             "change": f"{reference}>{alternate}",
@@ -470,3 +537,166 @@ Contexto actual del usuario:
             if min_len > 0
             else 0,
         }
+
+    # =========================================================================
+    # ML-Powered Tool Handlers
+    # =========================================================================
+
+    async def _handle_classify_taxonomy(self, params: dict) -> dict[str, Any]:
+        """Handle classify_taxonomy tool using TaxonomyClassifier."""
+        if not self._ai_service:
+            return {"error": "Servicio de ML no disponible"}
+
+        sequence = params.get("sequence", "")
+        if len(sequence) < 100:
+            return {"error": "Secuencia muy corta (mínimo 100 bp)"}
+
+        self._ml_calls += 1
+        result = await self._ai_service.classify_taxonomy(sequence)
+
+        if "error" not in result:
+            # Format for better readability
+            if "hierarchy" in result:
+                result["taxonomia"] = " > ".join(result["hierarchy"])
+
+        return result
+
+    async def _handle_detect_heterozygotes(
+        self, params: dict, context: AgentContext
+    ) -> dict[str, Any]:
+        """Handle detect_heterozygotes tool using HeterozygoteClassifier."""
+        if not self._ai_service:
+            return {"error": "Servicio de ML no disponible"}
+
+        trace_id = params.get("traceId") or context.traceId
+        threshold = params.get("threshold", 0.5)
+
+        if not trace_id:
+            return {"error": "No se especificó traceId"}
+
+        # Get signals from trace data
+        if context.analysisData and context.traceId == trace_id:
+            signals = context.analysisData.get("signals")
+            if signals is None:
+                return {"error": "No hay señales de cromatograma disponibles"}
+
+            # Convert to numpy array if needed
+            if isinstance(signals, dict):
+                signals = np.array([
+                    signals.get("A", []),
+                    signals.get("C", []),
+                    signals.get("G", []),
+                    signals.get("T", []),
+                ])
+            elif isinstance(signals, list):
+                signals = np.array(signals)
+
+            self._ml_calls += 1
+            return await self._ai_service.detect_heterozygotes(signals, threshold)
+
+        return {"error": f"Datos de traza no disponibles para {trace_id}"}
+
+    async def _handle_predict_trim_points(
+        self, params: dict, context: AgentContext
+    ) -> dict[str, Any]:
+        """Handle predict_trim_points tool using TrimmingPredictor."""
+        if not self._ai_service:
+            return {"error": "Servicio de ML no disponible"}
+
+        trace_id = params.get("traceId") or context.traceId
+
+        if not trace_id:
+            return {"error": "No se especificó traceId"}
+
+        # Get quality scores from trace data
+        if context.analysisData and context.traceId == trace_id:
+            quality_scores = context.analysisData.get("qualityScores")
+            if quality_scores is None:
+                quality_scores = context.analysisData.get("quality", {}).get("scores")
+
+            if quality_scores is None:
+                return {"error": "No hay scores de calidad disponibles"}
+
+            self._ml_calls += 1
+            return await self._ai_service.predict_trim_points(quality_scores)
+
+        return {"error": f"Datos de traza no disponibles para {trace_id}"}
+
+    async def _handle_classify_quality_ml(
+        self, params: dict, context: AgentContext
+    ) -> dict[str, Any]:
+        """Handle classify_quality_ml tool using QualityClassifierCNN."""
+        if not self._ai_service:
+            return {"error": "Servicio de ML no disponible"}
+
+        trace_id = params.get("traceId") or context.traceId
+
+        if not trace_id:
+            return {"error": "No se especificó traceId"}
+
+        # Get signals from trace data
+        if context.analysisData and context.traceId == trace_id:
+            signals = context.analysisData.get("signals")
+            if signals is None:
+                return {"error": "No hay señales de cromatograma disponibles"}
+
+            # Convert to numpy array
+            if isinstance(signals, dict):
+                signals = np.array([
+                    signals.get("A", []),
+                    signals.get("C", []),
+                    signals.get("G", []),
+                    signals.get("T", []),
+                ])
+            elif isinstance(signals, list):
+                signals = np.array(signals)
+
+            self._ml_calls += 1
+            return await self._ai_service.classify_quality(signals)
+
+        return {"error": f"Datos de traza no disponibles para {trace_id}"}
+
+    async def _handle_analyze_trace_ml(
+        self, params: dict, context: AgentContext
+    ) -> dict[str, Any]:
+        """Handle analyze_trace_ml tool - comprehensive ML analysis."""
+        if not self._ai_service:
+            return {"error": "Servicio de ML no disponible"}
+
+        trace_id = params.get("traceId") or context.traceId
+
+        if not trace_id:
+            return {"error": "No se especificó traceId"}
+
+        if not context.analysisData or context.traceId != trace_id:
+            return {"error": f"Datos de traza no disponibles para {trace_id}"}
+
+        data = context.analysisData
+
+        # Extract required data
+        sequence = data.get("sequence", "")
+        quality_scores = data.get("qualityScores") or data.get("quality", {}).get("scores", [])
+        signals = data.get("signals")
+
+        if not sequence:
+            return {"error": "No hay secuencia disponible"}
+
+        # Convert signals if available
+        signals_array = None
+        if signals:
+            if isinstance(signals, dict):
+                signals_array = np.array([
+                    signals.get("A", []),
+                    signals.get("C", []),
+                    signals.get("G", []),
+                    signals.get("T", []),
+                ])
+            elif isinstance(signals, list):
+                signals_array = np.array(signals)
+
+        self._ml_calls += 1
+        return await self._ai_service.analyze_trace(
+            sequence=sequence,
+            quality_scores=quality_scores,
+            signals=signals_array,
+        )

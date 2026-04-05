@@ -1,8 +1,18 @@
-"""Tool definitions for the Molecular Biology Agent."""
+"""Tool definitions for the Molecular Biology Agent.
+
+Defines all tools available to the Claude-powered copilot agent, including:
+- Trace analysis tools (get_trace_analysis, get_quality_assessment)
+- BLAST search tools
+- ML-powered tools (taxonomy, heterozygote, trimming, quality)
+- Variant analysis tools
+"""
 
 from typing import Any
 
-# Tool definitions for Claude API
+# =============================================================================
+# Core Agent Tools
+# =============================================================================
+
 AGENT_TOOLS = [
     {
         "name": "get_trace_analysis",
@@ -125,12 +135,306 @@ AGENT_TOOLS = [
     },
 ]
 
+# =============================================================================
+# ML-Powered Tools (Neural Network Models)
+# =============================================================================
+
+ML_TOOLS = [
+    {
+        "name": "classify_taxonomy",
+        "description": (
+            "Clasifica una secuencia de ADN taxonómicamente usando un modelo "
+            "de red neuronal jerárquica. Predice: reino, filo, clase, orden, "
+            "familia y género. Alternativa rápida a BLAST para identificación "
+            "de organismos. Usar cuando se tenga una secuencia y se quiera "
+            "saber de qué organismo proviene."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "sequence": {
+                    "type": "string",
+                    "description": "Secuencia de ADN (mínimo 100 bp)",
+                },
+            },
+            "required": ["sequence"],
+        },
+    },
+    {
+        "name": "detect_heterozygotes",
+        "description": (
+            "Detecta posiciones heterocigotas en un cromatograma usando "
+            "un clasificador CNN. Identifica posiciones donde hay dos alelos "
+            "presentes (doble pico). Útil para detectar SNPs y variantes. "
+            "Requiere las señales normalizadas del cromatograma."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "traceId": {
+                    "type": "string",
+                    "description": "ID de la traza con señales de cromatograma",
+                },
+                "threshold": {
+                    "type": "number",
+                    "description": "Umbral de probabilidad (default: 0.5)",
+                },
+            },
+            "required": ["traceId"],
+        },
+    },
+    {
+        "name": "predict_trim_points",
+        "description": (
+            "Predice los puntos óptimos de recorte para una secuencia "
+            "basándose en los scores de calidad. Usa un modelo CNN entrenado "
+            "para identificar regiones de baja calidad en los extremos. "
+            "Retorna posiciones de inicio y fin recomendadas."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "traceId": {
+                    "type": "string",
+                    "description": "ID de la traza con scores de calidad",
+                },
+            },
+            "required": ["traceId"],
+        },
+    },
+    {
+        "name": "classify_quality_ml",
+        "description": (
+            "Clasifica la calidad de cada posición en bins (Q10, Q20, Q30, "
+            "Q40, Q50+) usando un modelo CNN con contexto espacial. "
+            "Considera el patrón de señales vecinas para una clasificación "
+            "más precisa que usar solo el score Phred."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "traceId": {
+                    "type": "string",
+                    "description": "ID de la traza",
+                },
+            },
+            "required": ["traceId"],
+        },
+    },
+    {
+        "name": "analyze_trace_ml",
+        "description": (
+            "Análisis completo de una traza usando todos los modelos de ML. "
+            "Ejecuta: clasificación taxonómica, detección de heterocigotos, "
+            "predicción de recorte y clasificación de calidad. "
+            "Ideal para obtener un reporte completo de una muestra."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "traceId": {
+                    "type": "string",
+                    "description": "ID de la traza a analizar",
+                },
+            },
+            "required": ["traceId"],
+        },
+    },
+]
+
+# =============================================================================
+# Analysis Tools (Heuristic/Algorithmic)
+# =============================================================================
+
+ANALYSIS_TOOLS = [
+    {
+        "name": "analyze_quality",
+        "description": (
+            "Analiza métricas de calidad (Q20, Q30, accuracy) a partir de "
+            "scores Phred. Método heurístico rápido."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "quality_scores": {
+                    "type": "array",
+                    "items": {"type": "integer"},
+                    "description": "Lista de scores de calidad Phred",
+                }
+            },
+            "required": ["quality_scores"],
+        },
+    },
+    {
+        "name": "find_orfs",
+        "description": (
+            "Encuentra marcos de lectura abiertos (ORFs) en una secuencia. "
+            "Identifica posibles regiones codificantes."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "sequence": {
+                    "type": "string",
+                    "description": "Secuencia de ADN",
+                },
+                "min_length": {
+                    "type": "integer",
+                    "description": "Longitud mínima del ORF en bp (default: 100)",
+                },
+            },
+            "required": ["sequence"],
+        },
+    },
+    {
+        "name": "scan_motifs",
+        "description": (
+            "Busca motivos regulatorios en una secuencia (TATA box, Kozak, "
+            "sitios de splicing, etc.)."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "sequence": {
+                    "type": "string",
+                    "description": "Secuencia de ADN",
+                },
+            },
+            "required": ["sequence"],
+        },
+    },
+    {
+        "name": "calculate_gc_content",
+        "description": (
+            "Calcula el contenido GC de una secuencia y estadísticas "
+            "relacionadas (GC skew, AT skew, etc.)."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "sequence": {
+                    "type": "string",
+                    "description": "Secuencia de ADN",
+                },
+            },
+            "required": ["sequence"],
+        },
+    },
+    {
+        "name": "find_restriction_sites",
+        "description": (
+            "Encuentra sitios de restricción en una secuencia para las "
+            "enzimas más comunes (EcoRI, BamHI, HindIII, etc.)."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "sequence": {
+                    "type": "string",
+                    "description": "Secuencia de ADN",
+                },
+                "enzymes": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Lista de enzimas (opcional, default: comunes)",
+                },
+            },
+            "required": ["sequence"],
+        },
+    },
+]
+
+# =============================================================================
+# External Database Tools
+# =============================================================================
+
+EXTERNAL_TOOLS = [
+    {
+        "name": "lookup_clinvar",
+        "description": (
+            "Consulta ClinVar para obtener significancia clínica de una "
+            "variante. Retorna: clasificación, condiciones asociadas, "
+            "nivel de evidencia."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "variant": {
+                    "type": "string",
+                    "description": "Variante en formato HGVS o rsID (ej: rs123456)",
+                },
+                "gene": {
+                    "type": "string",
+                    "description": "Gen asociado (opcional)",
+                },
+            },
+            "required": ["variant"],
+        },
+    },
+    {
+        "name": "lookup_ensembl",
+        "description": (
+            "Consulta Ensembl para información de genes. Retorna: "
+            "ubicación genómica, transcritos, dominios proteicos."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "gene_symbol": {
+                    "type": "string",
+                    "description": "Símbolo del gen (ej: BRCA1)",
+                },
+                "species": {
+                    "type": "string",
+                    "description": "Especie (default: human)",
+                },
+            },
+            "required": ["gene_symbol"],
+        },
+    },
+    {
+        "name": "lookup_ncbi_taxonomy",
+        "description": (
+            "Consulta la taxonomía NCBI para un organismo. Retorna: "
+            "clasificación completa, nombres comunes, linaje."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "Nombre del organismo o taxon ID",
+                },
+            },
+            "required": ["query"],
+        },
+    },
+]
+
 
 def get_tools_for_api() -> list[dict[str, Any]]:
-    """Get tools formatted for Claude API."""
-    return AGENT_TOOLS
+    """Get all tools formatted for Claude API."""
+    return AGENT_TOOLS + ML_TOOLS
+
+
+def get_all_tools() -> list[dict[str, Any]]:
+    """Get all available tools including analysis and external."""
+    return AGENT_TOOLS + ML_TOOLS + ANALYSIS_TOOLS + EXTERNAL_TOOLS
 
 
 def get_tool_names() -> list[str]:
     """Get list of available tool names."""
-    return [tool["name"] for tool in AGENT_TOOLS]
+    return [tool["name"] for tool in get_all_tools()]
+
+
+def get_ml_tool_names() -> list[str]:
+    """Get list of ML-powered tool names."""
+    return [tool["name"] for tool in ML_TOOLS]
+
+
+def get_tool_by_name(name: str) -> dict[str, Any] | None:
+    """Get a tool definition by name."""
+    for tool in get_all_tools():
+        if tool["name"] == name:
+            return tool
+    return None
