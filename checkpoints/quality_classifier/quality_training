@@ -1,0 +1,663 @@
+﻿er-class: Q10: 37% | Q20: 66% | Q30: 20% | Q40: 23% | Q50+: 73%
+  -> New best (loss=0.6020, acc=54.8%)
+Epoch   7/300 | Train: Loss=0.5277 Acc=51.3% | Val: Loss=0.5661 Acc=57.0%
+         Per-class: Q10: 40% | Q20: 68% | Q30: 21% | Q40: 26% | Q50+: 76%
+  -> New best (loss=0.5661, acc=57.0%)
+Epoch   8/300 | Train: Loss=0.5045 Acc=53.1% | Val: Loss=0.5307 Acc=60.3%
+         Per-class: Q10: 40% | Q20: 73% | Q30: 22% | Q40: 36% | Q50+: 78%
+  -> New best (loss=0.5307, acc=60.3%)
+Epoch   9/300 | Train: Loss=0.4822 Acc=54.5% | Val: Loss=0.4954 Acc=62.3%
+         Per-class: Q10: 43% | Q20: 73% | Q30: 27% | Q40: 44% | Q50+: 78%
+  -> New best (loss=0.4954, acc=62.3%)
+Epoch  10/300 | Train: Loss=0.4620 Acc=55.4% | Val: Loss=0.4745 Acc=63.7%
+         Per-class: Q10: 39% | Q20: 73% | Q30: 25% | Q40: 54% | Q50+: 82%
+  -> New best (loss=0.4745, acc=63.7%)
+Epoch  11/300 | Train: Loss=0.4450 Acc=55.9% | Val: Loss=0.4434 Acc=63.1%
+         Per-class: Q10: 45% | Q20: 74% | Q30: 26% | Q40: 53% | Q50+: 78%
+  -> New best (loss=0.4434, acc=63.1%)
+Epoch  12/300 | Train: Loss=0.4296 Acc=56.5% | Val: Loss=0.4279 Acc=64.5%
+         Per-class: Q10: 45% | Q20: 74% | Q30: 29% | Q40: 57% | Q50+: 79%
+  -> New best (loss=0.4279, acc=64.5%)
+Epoch  13/300 | Train: Loss=0.4168 Acc=56.9% | Val: Loss=0.4162 Acc=64.6%
+         Per-class: Q10: 42% | Q20: 74% | Q30: 31% | Q40: 59% | Q50+: 79%
+  -> New best (loss=0.4162, acc=64.6%)
+Epoch  14/300 | Train: Loss=0.4051 Acc=57.4% | Val: Loss=0.3985 Acc=64.1%
+         Per-class: Q10: 46% | Q20: 72% | Q30: 33% | Q40: 59% | Q50+: 78%
+  -> New best (loss=0.3985, acc=64.1%)
+Epoch  15/300 | Train: Loss=0.3951 Acc=58.1% | Val: Loss=0.3843 Acc=63.4%
+         Per-class: Q10: 47% | Q20: 71% | Q30: 32% | Q40: 59% | Q50+: 77%
+  -> New best (loss=0.3843, acc=63.4%)
+Epoch  16/300 | Train: Loss=0.3858 Acc=58.6% | Val: Loss=0.3940 Acc=64.2%
+         Per-class: Q10: 37% | Q20: 69% | Q30: 38% | Q40: 66% | Q50+: 79%
+Epoch  17/300 | Train: Loss=0.3780 Acc=59.2% | Val: Loss=0.3708 Acc=64.6%
+         Per-class: Q10: 44% | Q20: 71% | Q30: 37% | Q40: 62% | Q50+: 78%
+  -> New best (loss=0.3708, acc=64.6%)
+Epoch  18/300 | Train: Loss=0.3712 Acc=59.7% | Val: Loss=0.3647 Acc=64.5%
+         Per-class: Q10: 42% | Q20: 70% | Q30: 40% | Q40: 63% | Q50+: 77%
+  -> New best (loss=0.3647, acc=64.5%)
+Epoch  19/300 | Train: Loss=0.3643 Acc=60.2% | Val: Loss=0.3531 Acc=64.2%
+         Per-class: Q10: 46% | Q20: 70% | Q30: 39% | Q40: 61% | Q50+: 76%
+  -> New best (loss=0.3531, acc=64.2%)
+Epoch  20/300 | Train: Loss=0.3584 Acc=60.5% | Val: Loss=0.3487 Acc=64.6%
+         Per-class: Q10: 43% | Q20: 70% | Q30: 42% | Q40: 62% | Q50+: 77%
+  -> New best (loss=0.3487, acc=64.6%)
+Epoch  21/300 | Train: Loss=0.3536 Acc=60.8% | Val: Loss=0.3467 Acc=64.8%
+         Per-class: Q10: 39% | Q20: 69% | Q30: 43% | Q40: 65% | Q50+: 78%
+  -> New best (loss=0.3467, acc=64.8%)
+Epoch  22/300 | Train: Loss=0.3487 Acc=61.1% | Val: Loss=0.3389 Acc=64.6%
+         Per-class: Q10: 40% | Q20: 69% | Q30: 44% | Q40: 64% | Q50+: 77%
+  -> New best (loss=0.3389, acc=64.6%)
+Epoch  23/300 | Train: Loss=0.3446 Acc=61.2% | Val: Loss=0.3346 Acc=64.7%
+         Per-class: Q10: 41% | Q20: 68% | Q30: 44% | Q40: 64% | Q50+: 77%
+  -> New best (loss=0.3346, acc=64.7%)
+Epoch  24/300 | Train: Loss=0.3407 Acc=61.5% | Val: Loss=0.3341 Acc=65.2%
+         Per-class: Q10: 40% | Q20: 67% | Q30: 46% | Q40: 66% | Q50+: 79%
+  -> New best (loss=0.3341, acc=65.2%)
+Epoch  25/300 | Train: Loss=0.3373 Acc=61.6% | Val: Loss=0.3504 Acc=63.7%
+         Per-class: Q10: 32% | Q20: 63% | Q30: 44% | Q40: 71% | Q50+: 80%
+Epoch  26/300 | Train: Loss=0.3347 Acc=61.7% | Val: Loss=0.3223 Acc=64.8%
+         Per-class: Q10: 43% | Q20: 69% | Q30: 46% | Q40: 63% | Q50+: 77%
+  -> New best (loss=0.3223, acc=64.8%)
+Epoch  27/300 | Train: Loss=0.3307 Acc=61.9% | Val: Loss=0.3330 Acc=64.2%
+         Per-class: Q10: 35% | Q20: 64% | Q30: 45% | Q40: 70% | Q50+: 79%
+Epoch  28/300 | Train: Loss=0.3279 Acc=62.1% | Val: Loss=0.3137 Acc=65.0%
+         Per-class: Q10: 52% | Q20: 68% | Q30: 47% | Q40: 58% | Q50+: 75%
+  -> New best (loss=0.3137, acc=65.0%)
+Epoch  29/300 | Train: Loss=0.3257 Acc=62.1% | Val: Loss=0.3124 Acc=64.4%
+         Per-class: Q10: 52% | Q20: 66% | Q30: 48% | Q40: 59% | Q50+: 75%
+  -> New best (loss=0.3124, acc=64.4%)
+Epoch  30/300 | Train: Loss=0.3231 Acc=62.3% | Val: Loss=0.3149 Acc=65.6%
+         Per-class: Q10: 46% | Q20: 66% | Q30: 50% | Q40: 64% | Q50+: 78%
+Epoch  31/300 | Train: Loss=0.3219 Acc=62.4% | Val: Loss=0.3136 Acc=65.3%
+         Per-class: Q10: 46% | Q20: 66% | Q30: 51% | Q40: 64% | Q50+: 77%
+Epoch  32/300 | Train: Loss=0.3192 Acc=62.6% | Val: Loss=0.3161 Acc=65.4%
+         Per-class: Q10: 42% | Q20: 65% | Q30: 49% | Q40: 66% | Q50+: 79%
+Epoch  33/300 | Train: Loss=0.3174 Acc=62.7% | Val: Loss=0.3062 Acc=65.1%
+         Per-class: Q10: 54% | Q20: 66% | Q30: 50% | Q40: 59% | Q50+: 75%
+  -> New best (loss=0.3062, acc=65.1%)
+Epoch  34/300 | Train: Loss=0.3170 Acc=62.7% | Val: Loss=0.3096 Acc=65.6%
+         Per-class: Q10: 44% | Q20: 66% | Q30: 52% | Q40: 63% | Q50+: 78%
+Epoch  35/300 | Train: Loss=0.3147 Acc=62.9% | Val: Loss=0.3078 Acc=65.5%
+         Per-class: Q10: 44% | Q20: 67% | Q30: 52% | Q40: 63% | Q50+: 77%
+Epoch  36/300 | Train: Loss=0.3134 Acc=63.0% | Val: Loss=0.3079 Acc=66.1%
+         Per-class: Q10: 43% | Q20: 67% | Q30: 52% | Q40: 63% | Q50+: 79%
+Epoch  37/300 | Train: Loss=0.3123 Acc=63.1% | Val: Loss=0.3040 Acc=66.2%
+         Per-class: Q10: 46% | Q20: 67% | Q30: 53% | Q40: 62% | Q50+: 78%
+  -> New best (loss=0.3040, acc=66.2%)
+Epoch  38/300 | Train: Loss=0.3114 Acc=63.1% | Val: Loss=0.3101 Acc=65.4%
+         Per-class: Q10: 41% | Q20: 65% | Q30: 51% | Q40: 66% | Q50+: 79%
+Epoch  39/300 | Train: Loss=0.3092 Acc=63.3% | Val: Loss=0.2995 Acc=65.8%
+         Per-class: Q10: 52% | Q20: 67% | Q30: 53% | Q40: 58% | Q50+: 76%
+  -> New best (loss=0.2995, acc=65.8%)
+Epoch  40/300 | Train: Loss=0.3082 Acc=63.4% | Val: Loss=0.2987 Acc=66.2%
+         Per-class: Q10: 50% | Q20: 68% | Q30: 53% | Q40: 59% | Q50+: 77%
+  -> New best (loss=0.2987, acc=66.2%)
+Epoch  41/300 | Train: Loss=0.3071 Acc=63.4% | Val: Loss=0.3065 Acc=66.3%
+         Per-class: Q10: 40% | Q20: 65% | Q30: 53% | Q40: 67% | Q50+: 80%
+Epoch  42/300 | Train: Loss=0.3060 Acc=63.6% | Val: Loss=0.3016 Acc=66.3%
+         Per-class: Q10: 44% | Q20: 67% | Q30: 53% | Q40: 65% | Q50+: 78%
+Epoch  43/300 | Train: Loss=0.3046 Acc=63.8% | Val: Loss=0.2966 Acc=66.4%
+         Per-class: Q10: 50% | Q20: 68% | Q30: 53% | Q40: 60% | Q50+: 77%
+  -> New best (loss=0.2966, acc=66.4%)
+Epoch  44/300 | Train: Loss=0.3043 Acc=64.0% | Val: Loss=0.3116 Acc=65.6%
+         Per-class: Q10: 37% | Q20: 64% | Q30: 52% | Q40: 68% | Q50+: 80%
+Epoch  45/300 | Train: Loss=0.3029 Acc=64.1% | Val: Loss=0.2938 Acc=67.0%
+         Per-class: Q10: 55% | Q20: 68% | Q30: 53% | Q40: 57% | Q50+: 78%
+  -> New best (loss=0.2938, acc=67.0%)
+Epoch  46/300 | Train: Loss=0.3018 Acc=64.3% | Val: Loss=0.2982 Acc=67.0%
+         Per-class: Q10: 44% | Q20: 66% | Q30: 55% | Q40: 65% | Q50+: 80%
+Epoch  47/300 | Train: Loss=0.3007 Acc=64.4% | Val: Loss=0.2927 Acc=67.0%
+         Per-class: Q10: 48% | Q20: 68% | Q30: 53% | Q40: 61% | Q50+: 79%
+  -> New best (loss=0.2927, acc=67.0%)
+Epoch  48/300 | Train: Loss=0.2998 Acc=64.5% | Val: Loss=0.3001 Acc=66.5%
+         Per-class: Q10: 42% | Q20: 65% | Q30: 54% | Q40: 67% | Q50+: 80%
+Epoch  49/300 | Train: Loss=0.2984 Acc=64.6% | Val: Loss=0.2913 Acc=67.1%
+         Per-class: Q10: 48% | Q20: 68% | Q30: 54% | Q40: 61% | Q50+: 79%
+  -> New best (loss=0.2913, acc=67.1%)
+Epoch  50/300 | Train: Loss=0.2985 Acc=64.6% | Val: Loss=0.2892 Acc=67.3%
+         Per-class: Q10: 51% | Q20: 68% | Q30: 54% | Q40: 60% | Q50+: 79%
+  -> New best (loss=0.2892, acc=67.3%)
+Epoch  51/300 | Train: Loss=0.2968 Acc=64.7% | Val: Loss=0.2913 Acc=68.0%
+         Per-class: Q10: 47% | Q20: 66% | Q30: 53% | Q40: 66% | Q50+: 82%
+Epoch  52/300 | Train: Loss=0.2965 Acc=64.7% | Val: Loss=0.2878 Acc=66.9%
+         Per-class: Q10: 51% | Q20: 68% | Q30: 54% | Q40: 58% | Q50+: 78%
+  -> New best (loss=0.2878, acc=66.9%)
+Epoch  53/300 | Train: Loss=0.2951 Acc=64.8% | Val: Loss=0.2866 Acc=67.3%
+         Per-class: Q10: 51% | Q20: 69% | Q30: 55% | Q40: 60% | Q50+: 79%
+  -> New best (loss=0.2866, acc=67.3%)
+Epoch  54/300 | Train: Loss=0.2941 Acc=64.9% | Val: Loss=0.2874 Acc=67.4%
+         Per-class: Q10: 48% | Q20: 69% | Q30: 55% | Q40: 62% | Q50+: 79%
+Epoch  55/300 | Train: Loss=0.2928 Acc=65.0% | Val: Loss=0.2863 Acc=67.8%
+         Per-class: Q10: 50% | Q20: 68% | Q30: 53% | Q40: 63% | Q50+: 80%
+  -> New best (loss=0.2863, acc=67.8%)
+Epoch  56/300 | Train: Loss=0.2927 Acc=64.9% | Val: Loss=0.2870 Acc=67.6%
+         Per-class: Q10: 57% | Q20: 68% | Q30: 53% | Q40: 59% | Q50+: 78%
+Epoch  57/300 | Train: Loss=0.2915 Acc=65.0% | Val: Loss=0.2863 Acc=66.9%
+         Per-class: Q10: 51% | Q20: 68% | Q30: 53% | Q40: 61% | Q50+: 78%
+Epoch  58/300 | Train: Loss=0.2907 Acc=65.1% | Val: Loss=0.2892 Acc=66.8%
+         Per-class: Q10: 45% | Q20: 68% | Q30: 54% | Q40: 63% | Q50+: 78%
+Epoch  59/300 | Train: Loss=0.2903 Acc=65.1% | Val: Loss=0.2836 Acc=67.4%
+         Per-class: Q10: 49% | Q20: 68% | Q30: 54% | Q40: 62% | Q50+: 79%
+  -> New best (loss=0.2836, acc=67.4%)
+Epoch  60/300 | Train: Loss=0.2891 Acc=65.2% | Val: Loss=0.2856 Acc=68.0%
+         Per-class: Q10: 47% | Q20: 67% | Q30: 54% | Q40: 66% | Q50+: 81%
+Epoch  61/300 | Train: Loss=0.2887 Acc=65.2% | Val: Loss=0.2959 Acc=66.8%
+         Per-class: Q10: 38% | Q20: 65% | Q30: 55% | Q40: 70% | Q50+: 81%
+Epoch  62/300 | Train: Loss=0.2885 Acc=65.2% | Val: Loss=0.2863 Acc=67.5%
+         Per-class: Q10: 46% | Q20: 67% | Q30: 53% | Q40: 68% | Q50+: 80%
+Epoch  63/300 | Train: Loss=0.2876 Acc=65.3% | Val: Loss=0.2809 Acc=68.7%
+         Per-class: Q10: 52% | Q20: 68% | Q30: 53% | Q40: 64% | Q50+: 82%
+  -> New best (loss=0.2809, acc=68.7%)
+Epoch  64/300 | Train: Loss=0.2868 Acc=65.4% | Val: Loss=0.2819 Acc=68.3%
+         Per-class: Q10: 48% | Q20: 68% | Q30: 56% | Q40: 66% | Q50+: 80%
+Epoch  65/300 | Train: Loss=0.2865 Acc=65.5% | Val: Loss=0.2795 Acc=68.2%
+         Per-class: Q10: 54% | Q20: 68% | Q30: 53% | Q40: 63% | Q50+: 80%
+  -> New best (loss=0.2795, acc=68.2%)
+Epoch  66/300 | Train: Loss=0.2858 Acc=65.4% | Val: Loss=0.2800 Acc=67.9%
+         Per-class: Q10: 59% | Q20: 67% | Q30: 51% | Q40: 60% | Q50+: 79%
+Epoch  67/300 | Train: Loss=0.2852 Acc=65.6% | Val: Loss=0.2869 Acc=66.2%
+         Per-class: Q10: 67% | Q20: 62% | Q30: 53% | Q40: 51% | Q50+: 78%
+Epoch  68/300 | Train: Loss=0.2846 Acc=65.6% | Val: Loss=0.2783 Acc=68.4%
+         Per-class: Q10: 52% | Q20: 68% | Q30: 54% | Q40: 64% | Q50+: 80%
+  -> New best (loss=0.2783, acc=68.4%)
+Epoch  69/300 | Train: Loss=0.2842 Acc=65.6% | Val: Loss=0.2812 Acc=67.8%
+         Per-class: Q10: 61% | Q20: 67% | Q30: 54% | Q40: 56% | Q50+: 79%
+Epoch  70/300 | Train: Loss=0.2834 Acc=65.7% | Val: Loss=0.2809 Acc=67.4%
+         Per-class: Q10: 61% | Q20: 67% | Q30: 55% | Q40: 55% | Q50+: 78%
+Epoch  71/300 | Train: Loss=0.2830 Acc=65.8% | Val: Loss=0.2815 Acc=67.9%
+         Per-class: Q10: 47% | Q20: 68% | Q30: 56% | Q40: 65% | Q50+: 80%
+Epoch  72/300 | Train: Loss=0.2827 Acc=65.9% | Val: Loss=0.2799 Acc=67.9%
+         Per-class: Q10: 47% | Q20: 69% | Q30: 55% | Q40: 65% | Q50+: 80%
+Epoch  73/300 | Train: Loss=0.2819 Acc=66.0% | Val: Loss=0.2773 Acc=68.9%
+         Per-class: Q10: 52% | Q20: 68% | Q30: 54% | Q40: 65% | Q50+: 82%
+  -> New best (loss=0.2773, acc=68.9%)
+Epoch  74/300 | Train: Loss=0.2812 Acc=66.0% | Val: Loss=0.2776 Acc=67.9%
+         Per-class: Q10: 50% | Q20: 69% | Q30: 54% | Q40: 62% | Q50+: 79%
+Epoch  75/300 | Train: Loss=0.2808 Acc=66.1% | Val: Loss=0.2776 Acc=68.2%
+         Per-class: Q10: 52% | Q20: 68% | Q30: 52% | Q40: 64% | Q50+: 81%
+Epoch  76/300 | Train: Loss=0.2802 Acc=66.1% | Val: Loss=0.2787 Acc=68.1%
+         Per-class: Q10: 47% | Q20: 68% | Q30: 55% | Q40: 66% | Q50+: 80%
+Epoch  77/300 | Train: Loss=0.2799 Acc=66.2% | Val: Loss=0.2742 Acc=68.5%
+         Per-class: Q10: 54% | Q20: 68% | Q30: 54% | Q40: 62% | Q50+: 80%
+  -> New best (loss=0.2742, acc=68.5%)
+Epoch  78/300 | Train: Loss=0.2798 Acc=66.2% | Val: Loss=0.2753 Acc=67.9%
+         Per-class: Q10: 52% | Q20: 68% | Q30: 53% | Q40: 63% | Q50+: 80%
+Epoch  79/300 | Train: Loss=0.2788 Acc=66.3% | Val: Loss=0.2733 Acc=68.4%
+         Per-class: Q10: 58% | Q20: 68% | Q30: 53% | Q40: 60% | Q50+: 80%
+  -> New best (loss=0.2733, acc=68.4%)
+Epoch  80/300 | Train: Loss=0.2785 Acc=66.3% | Val: Loss=0.2761 Acc=68.2%
+         Per-class: Q10: 54% | Q20: 67% | Q30: 52% | Q40: 64% | Q50+: 80%
+Epoch  81/300 | Train: Loss=0.2779 Acc=66.3% | Val: Loss=0.2765 Acc=67.9%
+         Per-class: Q10: 50% | Q20: 67% | Q30: 55% | Q40: 64% | Q50+: 80%
+Epoch  82/300 | Train: Loss=0.2775 Acc=66.4% | Val: Loss=0.2854 Acc=67.5%
+         Per-class: Q10: 42% | Q20: 67% | Q30: 55% | Q40: 69% | Q50+: 81%
+Epoch  83/300 | Train: Loss=0.2770 Acc=66.4% | Val: Loss=0.2719 Acc=68.8%
+         Per-class: Q10: 56% | Q20: 68% | Q30: 55% | Q40: 62% | Q50+: 80%
+  -> New best (loss=0.2719, acc=68.8%)
+Epoch  84/300 | Train: Loss=0.2763 Acc=66.4% | Val: Loss=0.2744 Acc=68.1%
+         Per-class: Q10: 52% | Q20: 68% | Q30: 54% | Q40: 62% | Q50+: 80%
+Epoch  85/300 | Train: Loss=0.2762 Acc=66.5% | Val: Loss=0.2753 Acc=67.8%
+         Per-class: Q10: 64% | Q20: 65% | Q30: 53% | Q40: 55% | Q50+: 79%
+Epoch  86/300 | Train: Loss=0.2762 Acc=66.4% | Val: Loss=0.2756 Acc=67.4%
+         Per-class: Q10: 62% | Q20: 66% | Q30: 54% | Q40: 56% | Q50+: 78%
+Epoch  87/300 | Train: Loss=0.2754 Acc=66.5% | Val: Loss=0.2746 Acc=68.6%
+         Per-class: Q10: 53% | Q20: 66% | Q30: 54% | Q40: 66% | Q50+: 81%
+Epoch  88/300 | Train: Loss=0.2748 Acc=66.5% | Val: Loss=0.2713 Acc=68.9%
+         Per-class: Q10: 56% | Q20: 67% | Q30: 54% | Q40: 63% | Q50+: 81%
+  -> New best (loss=0.2713, acc=68.9%)
+Epoch  89/300 | Train: Loss=0.2745 Acc=66.5% | Val: Loss=0.2722 Acc=68.6%
+         Per-class: Q10: 57% | Q20: 66% | Q30: 51% | Q40: 65% | Q50+: 81%
+Epoch  90/300 | Train: Loss=0.2740 Acc=66.5% | Val: Loss=0.2727 Acc=68.3%
+         Per-class: Q10: 54% | Q20: 66% | Q30: 55% | Q40: 64% | Q50+: 80%
+Epoch  91/300 | Train: Loss=0.2739 Acc=66.5% | Val: Loss=0.2715 Acc=68.9%
+         Per-class: Q10: 54% | Q20: 67% | Q30: 55% | Q40: 64% | Q50+: 82%
+Epoch  92/300 | Train: Loss=0.2735 Acc=66.5% | Val: Loss=0.2716 Acc=68.1%
+         Per-class: Q10: 54% | Q20: 67% | Q30: 55% | Q40: 62% | Q50+: 79%
+Epoch  93/300 | Train: Loss=0.2730 Acc=66.6% | Val: Loss=0.2719 Acc=67.7%
+         Per-class: Q10: 60% | Q20: 67% | Q30: 54% | Q40: 57% | Q50+: 79%
+Epoch  94/300 | Train: Loss=0.2725 Acc=66.7% | Val: Loss=0.2784 Acc=69.1%
+         Per-class: Q10: 51% | Q20: 66% | Q30: 54% | Q40: 69% | Q50+: 83%
+Epoch  95/300 | Train: Loss=0.2722 Acc=66.6% | Val: Loss=0.2693 Acc=68.7%
+         Per-class: Q10: 57% | Q20: 67% | Q30: 55% | Q40: 62% | Q50+: 81%
+  -> New best (loss=0.2693, acc=68.7%)
+Epoch  96/300 | Train: Loss=0.2719 Acc=66.7% | Val: Loss=0.2700 Acc=68.2%
+         Per-class: Q10: 59% | Q20: 66% | Q30: 52% | Q40: 62% | Q50+: 80%
+Epoch  97/300 | Train: Loss=0.2717 Acc=66.7% | Val: Loss=0.2791 Acc=68.6%
+         Per-class: Q10: 47% | Q20: 66% | Q30: 55% | Q40: 69% | Q50+: 82%
+Epoch  98/300 | Train: Loss=0.2713 Acc=66.8% | Val: Loss=0.2685 Acc=68.6%
+         Per-class: Q10: 58% | Q20: 66% | Q30: 54% | Q40: 63% | Q50+: 81%
+  -> New best (loss=0.2685, acc=68.6%)
+Epoch  99/300 | Train: Loss=0.2712 Acc=66.8% | Val: Loss=0.2715 Acc=67.4%
+         Per-class: Q10: 60% | Q20: 66% | Q30: 53% | Q40: 57% | Q50+: 79%
+Epoch 100/300 | Train: Loss=0.2707 Acc=66.8% | Val: Loss=0.2701 Acc=68.6%
+         Per-class: Q10: 56% | Q20: 66% | Q30: 56% | Q40: 63% | Q50+: 81%
+Epoch 101/300 | Train: Loss=0.2704 Acc=66.9% | Val: Loss=0.2693 Acc=68.2%
+         Per-class: Q10: 59% | Q20: 67% | Q30: 52% | Q40: 61% | Q50+: 80%
+Epoch 102/300 | Train: Loss=0.2701 Acc=66.9% | Val: Loss=0.2696 Acc=69.5%
+         Per-class: Q10: 54% | Q20: 67% | Q30: 55% | Q40: 66% | Q50+: 83%
+Epoch 103/300 | Train: Loss=0.2698 Acc=66.9% | Val: Loss=0.2706 Acc=68.2%
+         Per-class: Q10: 57% | Q20: 67% | Q30: 52% | Q40: 63% | Q50+: 80%
+Epoch 104/300 | Train: Loss=0.2695 Acc=67.0% | Val: Loss=0.2719 Acc=68.7%
+         Per-class: Q10: 54% | Q20: 66% | Q30: 56% | Q40: 65% | Q50+: 81%
+Epoch 105/300 | Train: Loss=0.2690 Acc=66.9% | Val: Loss=0.2735 Acc=69.5%
+         Per-class: Q10: 52% | Q20: 67% | Q30: 55% | Q40: 68% | Q50+: 83%
+Epoch 106/300 | Train: Loss=0.2690 Acc=67.0% | Val: Loss=0.2669 Acc=68.5%
+         Per-class: Q10: 60% | Q20: 66% | Q30: 54% | Q40: 60% | Q50+: 81%
+  -> New best (loss=0.2669, acc=68.5%)
+Epoch 107/300 | Train: Loss=0.2686 Acc=67.0% | Val: Loss=0.2748 Acc=69.0%
+         Per-class: Q10: 52% | Q20: 66% | Q30: 53% | Q40: 71% | Q50+: 82%
+Epoch 108/300 | Train: Loss=0.2684 Acc=67.0% | Val: Loss=0.2666 Acc=68.7%
+         Per-class: Q10: 58% | Q20: 66% | Q30: 56% | Q40: 63% | Q50+: 80%
+  -> New best (loss=0.2666, acc=68.7%)
+Epoch 109/300 | Train: Loss=0.2679 Acc=67.1% | Val: Loss=0.2688 Acc=68.8%
+         Per-class: Q10: 56% | Q20: 67% | Q30: 55% | Q40: 64% | Q50+: 81%
+Epoch 110/300 | Train: Loss=0.2678 Acc=67.1% | Val: Loss=0.2694 Acc=69.6%
+         Per-class: Q10: 55% | Q20: 66% | Q30: 55% | Q40: 69% | Q50+: 83%
+Epoch 111/300 | Train: Loss=0.2674 Acc=67.1% | Val: Loss=0.2678 Acc=68.8%
+         Per-class: Q10: 56% | Q20: 67% | Q30: 55% | Q40: 64% | Q50+: 81%
+Epoch 112/300 | Train: Loss=0.2673 Acc=67.1% | Val: Loss=0.2773 Acc=69.0%
+         Per-class: Q10: 49% | Q20: 66% | Q30: 56% | Q40: 70% | Q50+: 82%
+Epoch 113/300 | Train: Loss=0.2670 Acc=67.1% | Val: Loss=0.2663 Acc=68.6%
+         Per-class: Q10: 59% | Q20: 65% | Q30: 55% | Q40: 63% | Q50+: 81%
+  -> New best (loss=0.2663, acc=68.6%)
+Epoch 114/300 | Train: Loss=0.2667 Acc=67.1% | Val: Loss=0.2736 Acc=69.2%
+         Per-class: Q10: 51% | Q20: 66% | Q30: 55% | Q40: 70% | Q50+: 82%
+Epoch 115/300 | Train: Loss=0.2665 Acc=67.2% | Val: Loss=0.2730 Acc=67.2%
+         Per-class: Q10: 69% | Q20: 62% | Q30: 52% | Q40: 56% | Q50+: 79%
+Epoch 116/300 | Train: Loss=0.2660 Acc=67.2% | Val: Loss=0.2693 Acc=68.9%
+         Per-class: Q10: 54% | Q20: 66% | Q30: 57% | Q40: 67% | Q50+: 81%
+Epoch 117/300 | Train: Loss=0.2660 Acc=67.2% | Val: Loss=0.2664 Acc=68.9%
+         Per-class: Q10: 57% | Q20: 65% | Q30: 55% | Q40: 64% | Q50+: 82%
+Epoch 118/300 | Train: Loss=0.2656 Acc=67.2% | Val: Loss=0.2677 Acc=68.6%
+         Per-class: Q10: 56% | Q20: 66% | Q30: 56% | Q40: 64% | Q50+: 80%
+Epoch 119/300 | Train: Loss=0.2654 Acc=67.3% | Val: Loss=0.2675 Acc=69.5%
+         Per-class: Q10: 56% | Q20: 66% | Q30: 55% | Q40: 66% | Q50+: 83%
+Epoch 120/300 | Train: Loss=0.2651 Acc=67.3% | Val: Loss=0.2676 Acc=69.0%
+         Per-class: Q10: 55% | Q20: 65% | Q30: 55% | Q40: 67% | Q50+: 82%
+Epoch 121/300 | Train: Loss=0.2646 Acc=67.3% | Val: Loss=0.2664 Acc=68.8%
+         Per-class: Q10: 57% | Q20: 66% | Q30: 56% | Q40: 63% | Q50+: 81%
+Epoch 122/300 | Train: Loss=0.2645 Acc=67.3% | Val: Loss=0.2657 Acc=69.0%
+         Per-class: Q10: 57% | Q20: 66% | Q30: 54% | Q40: 65% | Q50+: 82%
+  -> New best (loss=0.2657, acc=69.0%)
+Epoch 123/300 | Train: Loss=0.2646 Acc=67.3% | Val: Loss=0.2662 Acc=68.9%
+         Per-class: Q10: 56% | Q20: 66% | Q30: 55% | Q40: 65% | Q50+: 81%
+Epoch 124/300 | Train: Loss=0.2642 Acc=67.3% | Val: Loss=0.2673 Acc=68.5%
+         Per-class: Q10: 57% | Q20: 65% | Q30: 56% | Q40: 64% | Q50+: 80%
+Epoch 125/300 | Train: Loss=0.2639 Acc=67.4% | Val: Loss=0.2658 Acc=68.7%
+         Per-class: Q10: 58% | Q20: 65% | Q30: 53% | Q40: 64% | Q50+: 81%
+Epoch 126/300 | Train: Loss=0.2638 Acc=67.4% | Val: Loss=0.2653 Acc=68.5%
+         Per-class: Q10: 59% | Q20: 66% | Q30: 53% | Q40: 62% | Q50+: 81%
+  -> New best (loss=0.2653, acc=68.5%)
+Epoch 127/300 | Train: Loss=0.2634 Acc=67.4% | Val: Loss=0.2643 Acc=68.7%
+         Per-class: Q10: 61% | Q20: 64% | Q30: 53% | Q40: 62% | Q50+: 82%
+  -> New best (loss=0.2643, acc=68.7%)
+Epoch 128/300 | Train: Loss=0.2632 Acc=67.4% | Val: Loss=0.2661 Acc=69.0%
+         Per-class: Q10: 56% | Q20: 65% | Q30: 56% | Q40: 65% | Q50+: 81%
+Epoch 129/300 | Train: Loss=0.2632 Acc=67.5% | Val: Loss=0.2649 Acc=69.2%
+         Per-class: Q10: 57% | Q20: 65% | Q30: 56% | Q40: 65% | Q50+: 82%
+Epoch 130/300 | Train: Loss=0.2628 Acc=67.5% | Val: Loss=0.2680 Acc=67.8%
+         Per-class: Q10: 69% | Q20: 62% | Q30: 52% | Q40: 58% | Q50+: 80%
+Epoch 131/300 | Train: Loss=0.2626 Acc=67.5% | Val: Loss=0.2648 Acc=68.9%
+         Per-class: Q10: 57% | Q20: 65% | Q30: 56% | Q40: 64% | Q50+: 81%
+Epoch 132/300 | Train: Loss=0.2626 Acc=67.5% | Val: Loss=0.2662 Acc=68.4%
+         Per-class: Q10: 61% | Q20: 64% | Q30: 53% | Q40: 64% | Q50+: 81%
+Epoch 133/300 | Train: Loss=0.2623 Acc=67.5% | Val: Loss=0.2637 Acc=69.0%
+         Per-class: Q10: 61% | Q20: 64% | Q30: 54% | Q40: 64% | Q50+: 82%
+  -> New best (loss=0.2637, acc=69.0%)
+Epoch 134/300 | Train: Loss=0.2620 Acc=67.5% | Val: Loss=0.2654 Acc=69.2%
+         Per-class: Q10: 57% | Q20: 65% | Q30: 54% | Q40: 67% | Q50+: 82%
+Epoch 135/300 | Train: Loss=0.2618 Acc=67.5% | Val: Loss=0.2696 Acc=69.2%
+         Per-class: Q10: 53% | Q20: 65% | Q30: 57% | Q40: 67% | Q50+: 82%
+Epoch 136/300 | Train: Loss=0.2618 Acc=67.5% | Val: Loss=0.2652 Acc=68.4%
+         Per-class: Q10: 62% | Q20: 64% | Q30: 52% | Q40: 61% | Q50+: 81%
+Epoch 137/300 | Train: Loss=0.2616 Acc=67.5% | Val: Loss=0.2655 Acc=69.1%
+         Per-class: Q10: 55% | Q20: 65% | Q30: 56% | Q40: 68% | Q50+: 82%
+Epoch 138/300 | Train: Loss=0.2615 Acc=67.5% | Val: Loss=0.2645 Acc=69.2%
+         Per-class: Q10: 58% | Q20: 65% | Q30: 56% | Q40: 66% | Q50+: 82%
+Epoch 139/300 | Train: Loss=0.2614 Acc=67.5% | Val: Loss=0.2641 Acc=69.4%
+         Per-class: Q10: 58% | Q20: 65% | Q30: 55% | Q40: 67% | Q50+: 82%
+Epoch 140/300 | Train: Loss=0.2610 Acc=67.5% | Val: Loss=0.2710 Acc=69.1%
+         Per-class: Q10: 51% | Q20: 65% | Q30: 57% | Q40: 69% | Q50+: 82%
+Epoch 141/300 | Train: Loss=0.2608 Acc=67.6% | Val: Loss=0.2678 Acc=69.3%
+         Per-class: Q10: 54% | Q20: 65% | Q30: 55% | Q40: 68% | Q50+: 82%
+Epoch 142/300 | Train: Loss=0.2607 Acc=67.6% | Val: Loss=0.2642 Acc=69.0%
+         Per-class: Q10: 60% | Q20: 64% | Q30: 55% | Q40: 65% | Q50+: 82%
+Epoch 143/300 | Train: Loss=0.2605 Acc=67.6% | Val: Loss=0.2644 Acc=69.4%
+         Per-class: Q10: 59% | Q20: 64% | Q30: 56% | Q40: 66% | Q50+: 83%
+Epoch 144/300 | Train: Loss=0.2605 Acc=67.6% | Val: Loss=0.2651 Acc=68.9%
+         Per-class: Q10: 58% | Q20: 65% | Q30: 55% | Q40: 66% | Q50+: 81%
+Epoch 145/300 | Train: Loss=0.2605 Acc=67.6% | Val: Loss=0.2680 Acc=69.5%
+         Per-class: Q10: 54% | Q20: 65% | Q30: 54% | Q40: 69% | Q50+: 83%
+Epoch 146/300 | Train: Loss=0.2603 Acc=67.5% | Val: Loss=0.2688 Acc=69.8%
+         Per-class: Q10: 53% | Q20: 65% | Q30: 55% | Q40: 68% | Q50+: 84%
+Epoch 147/300 | Train: Loss=0.2600 Acc=67.6% | Val: Loss=0.2640 Acc=69.6%
+         Per-class: Q10: 58% | Q20: 65% | Q30: 57% | Q40: 66% | Q50+: 82%
+Epoch 148/300 | Train: Loss=0.2597 Acc=67.6% | Val: Loss=0.2650 Acc=69.5%
+         Per-class: Q10: 57% | Q20: 65% | Q30: 58% | Q40: 67% | Q50+: 82%
+Epoch 149/300 | Train: Loss=0.2597 Acc=67.6% | Val: Loss=0.2655 Acc=69.3%
+         Per-class: Q10: 57% | Q20: 65% | Q30: 56% | Q40: 68% | Q50+: 82%
+Epoch 150/300 | Train: Loss=0.2596 Acc=67.6% | Val: Loss=0.2677 Acc=69.4%
+         Per-class: Q10: 54% | Q20: 65% | Q30: 54% | Q40: 68% | Q50+: 83%
+Epoch 151/300 | Train: Loss=0.2595 Acc=67.6% | Val: Loss=0.2625 Acc=69.6%
+         Per-class: Q10: 59% | Q20: 65% | Q30: 56% | Q40: 66% | Q50+: 82%
+  -> New best (loss=0.2625, acc=69.6%)
+Epoch 152/300 | Train: Loss=0.2594 Acc=67.6% | Val: Loss=0.2632 Acc=69.5%
+         Per-class: Q10: 61% | Q20: 63% | Q30: 54% | Q40: 67% | Q50+: 83%
+Epoch 153/300 | Train: Loss=0.2592 Acc=67.6% | Val: Loss=0.2632 Acc=69.4%
+         Per-class: Q10: 62% | Q20: 64% | Q30: 53% | Q40: 66% | Q50+: 83%
+Epoch 154/300 | Train: Loss=0.2592 Acc=67.6% | Val: Loss=0.2647 Acc=69.7%
+         Per-class: Q10: 57% | Q20: 65% | Q30: 55% | Q40: 69% | Q50+: 83%
+Epoch 155/300 | Train: Loss=0.2589 Acc=67.6% | Val: Loss=0.2671 Acc=69.5%
+         Per-class: Q10: 56% | Q20: 64% | Q30: 54% | Q40: 69% | Q50+: 83%
+Epoch 156/300 | Train: Loss=0.2589 Acc=67.6% | Val: Loss=0.2645 Acc=68.9%
+         Per-class: Q10: 67% | Q20: 63% | Q30: 53% | Q40: 59% | Q50+: 82%
+Epoch 157/300 | Train: Loss=0.2586 Acc=67.7% | Val: Loss=0.2629 Acc=69.5%
+         Per-class: Q10: 59% | Q20: 65% | Q30: 55% | Q40: 67% | Q50+: 82%
+Epoch 158/300 | Train: Loss=0.2586 Acc=67.7% | Val: Loss=0.2639 Acc=69.2%
+         Per-class: Q10: 58% | Q20: 65% | Q30: 55% | Q40: 67% | Q50+: 82%
+Epoch 159/300 | Train: Loss=0.2587 Acc=67.7% | Val: Loss=0.2622 Acc=69.4%
+         Per-class: Q10: 61% | Q20: 65% | Q30: 56% | Q40: 64% | Q50+: 82%
+  -> New best (loss=0.2622, acc=69.4%)
+Epoch 160/300 | Train: Loss=0.2583 Acc=67.7% | Val: Loss=0.2653 Acc=69.2%
+         Per-class: Q10: 58% | Q20: 64% | Q30: 55% | Q40: 68% | Q50+: 82%
+Epoch 161/300 | Train: Loss=0.2583 Acc=67.7% | Val: Loss=0.2626 Acc=69.6%
+         Per-class: Q10: 61% | Q20: 63% | Q30: 54% | Q40: 68% | Q50+: 83%
+Epoch 162/300 | Train: Loss=0.2580 Acc=67.7% | Val: Loss=0.2630 Acc=69.7%
+         Per-class: Q10: 57% | Q20: 66% | Q30: 56% | Q40: 65% | Q50+: 82%
+Epoch 163/300 | Train: Loss=0.2579 Acc=67.7% | Val: Loss=0.2636 Acc=69.5%
+         Per-class: Q10: 58% | Q20: 65% | Q30: 56% | Q40: 65% | Q50+: 82%
+Epoch 164/300 | Train: Loss=0.2579 Acc=67.7% | Val: Loss=0.2623 Acc=69.2%
+         Per-class: Q10: 65% | Q20: 64% | Q30: 54% | Q40: 60% | Q50+: 82%
+Epoch 165/300 | Train: Loss=0.2577 Acc=67.7% | Val: Loss=0.2632 Acc=69.7%
+         Per-class: Q10: 58% | Q20: 65% | Q30: 56% | Q40: 68% | Q50+: 83%
+Epoch 166/300 | Train: Loss=0.2576 Acc=67.7% | Val: Loss=0.2633 Acc=69.4%
+         Per-class: Q10: 59% | Q20: 64% | Q30: 55% | Q40: 67% | Q50+: 83%
+Epoch 167/300 | Train: Loss=0.2575 Acc=67.7% | Val: Loss=0.2636 Acc=69.1%
+         Per-class: Q10: 59% | Q20: 63% | Q30: 55% | Q40: 68% | Q50+: 82%
+Epoch 168/300 | Train: Loss=0.2575 Acc=67.7% | Val: Loss=0.2616 Acc=69.7%
+         Per-class: Q10: 61% | Q20: 64% | Q30: 55% | Q40: 67% | Q50+: 83%
+  -> New best (loss=0.2616, acc=69.7%)
+Epoch 169/300 | Train: Loss=0.2574 Acc=67.7% | Val: Loss=0.2605 Acc=69.6%
+         Per-class: Q10: 63% | Q20: 63% | Q30: 56% | Q40: 65% | Q50+: 83%
+  -> New best (loss=0.2605, acc=69.6%)
+Epoch 170/300 | Train: Loss=0.2573 Acc=67.7% | Val: Loss=0.2669 Acc=69.5%
+         Per-class: Q10: 53% | Q20: 66% | Q30: 61% | Q40: 64% | Q50+: 82%
+Epoch 171/300 | Train: Loss=0.2572 Acc=67.7% | Val: Loss=0.2621 Acc=69.2%
+         Per-class: Q10: 60% | Q20: 63% | Q30: 56% | Q40: 67% | Q50+: 82%
+Epoch 172/300 | Train: Loss=0.2572 Acc=67.7% | Val: Loss=0.2612 Acc=69.5%
+         Per-class: Q10: 60% | Q20: 64% | Q30: 58% | Q40: 65% | Q50+: 82%
+Epoch 173/300 | Train: Loss=0.2570 Acc=67.7% | Val: Loss=0.2612 Acc=69.4%
+         Per-class: Q10: 61% | Q20: 64% | Q30: 55% | Q40: 65% | Q50+: 82%
+Epoch 174/300 | Train: Loss=0.2569 Acc=67.7% | Val: Loss=0.2607 Acc=69.4%
+         Per-class: Q10: 60% | Q20: 65% | Q30: 55% | Q40: 66% | Q50+: 82%
+Epoch 175/300 | Train: Loss=0.2571 Acc=67.7% | Val: Loss=0.2623 Acc=69.1%
+         Per-class: Q10: 61% | Q20: 64% | Q30: 54% | Q40: 63% | Q50+: 82%
+Epoch 176/300 | Train: Loss=0.2568 Acc=67.7% | Val: Loss=0.2610 Acc=69.9%
+         Per-class: Q10: 63% | Q20: 63% | Q30: 53% | Q40: 66% | Q50+: 84%
+Epoch 177/300 | Train: Loss=0.2568 Acc=67.7% | Val: Loss=0.2642 Acc=69.5%
+         Per-class: Q10: 58% | Q20: 64% | Q30: 56% | Q40: 69% | Q50+: 82%
+Epoch 178/300 | Train: Loss=0.2567 Acc=67.7% | Val: Loss=0.2622 Acc=69.9%
+         Per-class: Q10: 58% | Q20: 65% | Q30: 56% | Q40: 66% | Q50+: 83%
+Epoch 179/300 | Train: Loss=0.2567 Acc=67.8% | Val: Loss=0.2625 Acc=68.4%
+         Per-class: Q10: 63% | Q20: 64% | Q30: 53% | Q40: 62% | Q50+: 81%
+Epoch 180/300 | Train: Loss=0.2567 Acc=67.8% | Val: Loss=0.2672 Acc=70.0%
+         Per-class: Q10: 55% | Q20: 65% | Q30: 55% | Q40: 70% | Q50+: 84%
+Epoch 181/300 | Train: Loss=0.2563 Acc=67.8% | Val: Loss=0.2616 Acc=69.7%
+         Per-class: Q10: 60% | Q20: 64% | Q30: 54% | Q40: 68% | Q50+: 83%
+Epoch 182/300 | Train: Loss=0.2565 Acc=67.8% | Val: Loss=0.2647 Acc=69.6%
+         Per-class: Q10: 58% | Q20: 64% | Q30: 56% | Q40: 67% | Q50+: 83%
+Epoch 183/300 | Train: Loss=0.2565 Acc=67.8% | Val: Loss=0.2611 Acc=69.8%
+         Per-class: Q10: 65% | Q20: 63% | Q30: 53% | Q40: 65% | Q50+: 84%
+Epoch 184/300 | Train: Loss=0.2565 Acc=67.8% | Val: Loss=0.2686 Acc=69.8%
+         Per-class: Q10: 53% | Q20: 65% | Q30: 56% | Q40: 71% | Q50+: 83%
+Epoch 185/300 | Train: Loss=0.2563 Acc=67.8% | Val: Loss=0.2623 Acc=69.5%
+         Per-class: Q10: 60% | Q20: 64% | Q30: 57% | Q40: 66% | Q50+: 83%
+Epoch 186/300 | Train: Loss=0.2560 Acc=67.8% | Val: Loss=0.2646 Acc=69.8%
+         Per-class: Q10: 57% | Q20: 65% | Q30: 55% | Q40: 70% | Q50+: 83%
+Epoch 187/300 | Train: Loss=0.2561 Acc=67.8% | Val: Loss=0.2660 Acc=69.5%
+         Per-class: Q10: 56% | Q20: 64% | Q30: 55% | Q40: 68% | Q50+: 84%
+Epoch 188/300 | Train: Loss=0.2560 Acc=67.8% | Val: Loss=0.2633 Acc=69.7%
+         Per-class: Q10: 56% | Q20: 65% | Q30: 56% | Q40: 67% | Q50+: 83%
+Epoch 189/300 | Train: Loss=0.2558 Acc=67.8% | Val: Loss=0.2660 Acc=69.5%
+         Per-class: Q10: 57% | Q20: 64% | Q30: 53% | Q40: 71% | Q50+: 83%
+Epoch 190/300 | Train: Loss=0.2558 Acc=67.8% | Val: Loss=0.2642 Acc=69.7%
+         Per-class: Q10: 57% | Q20: 65% | Q30: 55% | Q40: 69% | Q50+: 83%
+Epoch 191/300 | Train: Loss=0.2560 Acc=67.8% | Val: Loss=0.2621 Acc=69.6%
+         Per-class: Q10: 60% | Q20: 63% | Q30: 54% | Q40: 67% | Q50+: 83%
+Epoch 192/300 | Train: Loss=0.2557 Acc=67.8% | Val: Loss=0.2627 Acc=69.4%
+         Per-class: Q10: 59% | Q20: 64% | Q30: 57% | Q40: 66% | Q50+: 82%
+Epoch 193/300 | Train: Loss=0.2557 Acc=67.8% | Val: Loss=0.2629 Acc=69.5%
+         Per-class: Q10: 59% | Q20: 64% | Q30: 54% | Q40: 69% | Q50+: 83%
+Epoch 194/300 | Train: Loss=0.2556 Acc=67.8% | Val: Loss=0.2602 Acc=70.0%
+         Per-class: Q10: 61% | Q20: 64% | Q30: 55% | Q40: 65% | Q50+: 84%
+  -> New best (loss=0.2602, acc=70.0%)
+Epoch 195/300 | Train: Loss=0.2555 Acc=67.8% | Val: Loss=0.2652 Acc=69.5%
+         Per-class: Q10: 55% | Q20: 65% | Q30: 58% | Q40: 68% | Q50+: 82%
+Epoch 196/300 | Train: Loss=0.2557 Acc=67.8% | Val: Loss=0.2659 Acc=70.1%
+         Per-class: Q10: 56% | Q20: 65% | Q30: 56% | Q40: 69% | Q50+: 84%
+Epoch 197/300 | Train: Loss=0.2556 Acc=67.8% | Val: Loss=0.2706 Acc=69.8%
+         Per-class: Q10: 51% | Q20: 65% | Q30: 55% | Q40: 69% | Q50+: 85%
+Epoch 198/300 | Train: Loss=0.2553 Acc=67.8% | Val: Loss=0.2609 Acc=69.6%
+         Per-class: Q10: 60% | Q20: 64% | Q30: 54% | Q40: 66% | Q50+: 83%
+Epoch 199/300 | Train: Loss=0.2554 Acc=67.8% | Val: Loss=0.2716 Acc=67.0%
+         Per-class: Q10: 73% | Q20: 60% | Q30: 51% | Q40: 54% | Q50+: 79%
+Epoch 200/300 | Train: Loss=0.2553 Acc=67.8% | Val: Loss=0.2612 Acc=69.8%
+         Per-class: Q10: 63% | Q20: 62% | Q30: 54% | Q40: 67% | Q50+: 84%
+Epoch 201/300 | Train: Loss=0.2553 Acc=67.8% | Val: Loss=0.2602 Acc=69.6%
+         Per-class: Q10: 62% | Q20: 64% | Q30: 54% | Q40: 66% | Q50+: 83%
+  -> New best (loss=0.2602, acc=69.6%)
+Epoch 202/300 | Train: Loss=0.2550 Acc=67.9% | Val: Loss=0.2645 Acc=69.9%
+         Per-class: Q10: 57% | Q20: 65% | Q30: 56% | Q40: 68% | Q50+: 84%
+Epoch 203/300 | Train: Loss=0.2552 Acc=67.8% | Val: Loss=0.2633 Acc=68.6%
+         Per-class: Q10: 64% | Q20: 64% | Q30: 52% | Q40: 60% | Q50+: 81%
+Epoch 204/300 | Train: Loss=0.2549 Acc=67.9% | Val: Loss=0.2612 Acc=69.9%
+         Per-class: Q10: 59% | Q20: 64% | Q30: 56% | Q40: 66% | Q50+: 84%
+Epoch 205/300 | Train: Loss=0.2549 Acc=67.9% | Val: Loss=0.2669 Acc=70.5%
+         Per-class: Q10: 56% | Q20: 65% | Q30: 55% | Q40: 71% | Q50+: 85%
+Epoch 206/300 | Train: Loss=0.2550 Acc=67.9% | Val: Loss=0.2627 Acc=68.9%
+         Per-class: Q10: 60% | Q20: 63% | Q30: 53% | Q40: 67% | Q50+: 82%
+Epoch 207/300 | Train: Loss=0.2548 Acc=67.9% | Val: Loss=0.2619 Acc=69.7%
+         Per-class: Q10: 59% | Q20: 64% | Q30: 57% | Q40: 66% | Q50+: 83%
+Epoch 208/300 | Train: Loss=0.2548 Acc=67.9% | Val: Loss=0.2668 Acc=69.9%
+         Per-class: Q10: 56% | Q20: 64% | Q30: 54% | Q40: 71% | Q50+: 84%
+Epoch 209/300 | Train: Loss=0.2549 Acc=67.9% | Val: Loss=0.2610 Acc=69.8%
+         Per-class: Q10: 58% | Q20: 65% | Q30: 57% | Q40: 66% | Q50+: 82%
+Epoch 210/300 | Train: Loss=0.2549 Acc=67.9% | Val: Loss=0.2617 Acc=69.5%
+         Per-class: Q10: 59% | Q20: 63% | Q30: 57% | Q40: 66% | Q50+: 83%
+Epoch 211/300 | Train: Loss=0.2547 Acc=67.9% | Val: Loss=0.2614 Acc=69.0%
+         Per-class: Q10: 63% | Q20: 64% | Q30: 52% | Q40: 65% | Q50+: 82%
+Epoch 212/300 | Train: Loss=0.2549 Acc=67.9% | Val: Loss=0.2600 Acc=69.4%
+         Per-class: Q10: 60% | Q20: 65% | Q30: 55% | Q40: 66% | Q50+: 82%
+  -> New best (loss=0.2600, acc=69.4%)
+Epoch 213/300 | Train: Loss=0.2547 Acc=67.9% | Val: Loss=0.2633 Acc=69.6%
+         Per-class: Q10: 58% | Q20: 64% | Q30: 57% | Q40: 68% | Q50+: 83%
+Epoch 214/300 | Train: Loss=0.2547 Acc=67.9% | Val: Loss=0.2621 Acc=69.2%
+         Per-class: Q10: 61% | Q20: 63% | Q30: 54% | Q40: 67% | Q50+: 83%
+Epoch 215/300 | Train: Loss=0.2548 Acc=67.9% | Val: Loss=0.2599 Acc=69.9%
+         Per-class: Q10: 65% | Q20: 63% | Q30: 54% | Q40: 65% | Q50+: 84%
+  -> New best (loss=0.2599, acc=69.9%)
+Epoch 216/300 | Train: Loss=0.2546 Acc=67.9% | Val: Loss=0.2623 Acc=69.6%
+         Per-class: Q10: 59% | Q20: 64% | Q30: 56% | Q40: 68% | Q50+: 83%
+Epoch 217/300 | Train: Loss=0.2547 Acc=67.9% | Val: Loss=0.2608 Acc=69.9%
+         Per-class: Q10: 60% | Q20: 64% | Q30: 54% | Q40: 67% | Q50+: 84%
+Epoch 218/300 | Train: Loss=0.2546 Acc=67.9% | Val: Loss=0.2648 Acc=69.8%
+         Per-class: Q10: 56% | Q20: 65% | Q30: 56% | Q40: 69% | Q50+: 83%
+Epoch 219/300 | Train: Loss=0.2546 Acc=67.9% | Val: Loss=0.2641 Acc=69.8%
+         Per-class: Q10: 57% | Q20: 65% | Q30: 56% | Q40: 68% | Q50+: 83%
+Epoch 220/300 | Train: Loss=0.2544 Acc=67.9% | Val: Loss=0.2610 Acc=69.5%
+         Per-class: Q10: 60% | Q20: 64% | Q30: 55% | Q40: 65% | Q50+: 83%
+Epoch 221/300 | Train: Loss=0.2543 Acc=67.9% | Val: Loss=0.2622 Acc=69.4%
+         Per-class: Q10: 58% | Q20: 64% | Q30: 57% | Q40: 66% | Q50+: 82%
+Epoch 222/300 | Train: Loss=0.2545 Acc=67.9% | Val: Loss=0.2649 Acc=70.3%
+         Per-class: Q10: 58% | Q20: 64% | Q30: 53% | Q40: 70% | Q50+: 85%
+Epoch 223/300 | Train: Loss=0.2544 Acc=67.9% | Val: Loss=0.2681 Acc=67.4%
+         Per-class: Q10: 72% | Q20: 60% | Q30: 51% | Q40: 57% | Q50+: 80%
+Epoch 224/300 | Train: Loss=0.2543 Acc=67.9% | Val: Loss=0.2674 Acc=69.4%
+         Per-class: Q10: 54% | Q20: 65% | Q30: 56% | Q40: 70% | Q50+: 82%
+Epoch 225/300 | Train: Loss=0.2543 Acc=68.0% | Val: Loss=0.2632 Acc=70.1%
+         Per-class: Q10: 57% | Q20: 65% | Q30: 56% | Q40: 70% | Q50+: 83%
+Epoch 226/300 | Train: Loss=0.2544 Acc=68.0% | Val: Loss=0.2605 Acc=69.5%
+         Per-class: Q10: 60% | Q20: 64% | Q30: 56% | Q40: 67% | Q50+: 83%
+Epoch 227/300 | Train: Loss=0.2541 Acc=68.0% | Val: Loss=0.2668 Acc=70.1%
+         Per-class: Q10: 55% | Q20: 65% | Q30: 56% | Q40: 70% | Q50+: 84%
+Epoch 228/300 | Train: Loss=0.2541 Acc=68.0% | Val: Loss=0.2660 Acc=67.6%
+         Per-class: Q10: 69% | Q20: 61% | Q30: 51% | Q40: 59% | Q50+: 80%
+Epoch 229/300 | Train: Loss=0.2543 Acc=68.0% | Val: Loss=0.2603 Acc=69.5%
+         Per-class: Q10: 63% | Q20: 63% | Q30: 54% | Q40: 65% | Q50+: 83%
+Epoch 230/300 | Train: Loss=0.2540 Acc=68.0% | Val: Loss=0.2603 Acc=69.5%
+         Per-class: Q10: 61% | Q20: 63% | Q30: 56% | Q40: 65% | Q50+: 83%
+Epoch 231/300 | Train: Loss=0.2541 Acc=68.0% | Val: Loss=0.2622 Acc=69.1%
+         Per-class: Q10: 59% | Q20: 63% | Q30: 55% | Q40: 68% | Q50+: 82%
+Epoch 232/300 | Train: Loss=0.2543 Acc=68.0% | Val: Loss=0.2602 Acc=69.1%
+         Per-class: Q10: 65% | Q20: 63% | Q30: 53% | Q40: 63% | Q50+: 82%
+Epoch 233/300 | Train: Loss=0.2541 Acc=68.0% | Val: Loss=0.2625 Acc=69.5%
+         Per-class: Q10: 58% | Q20: 64% | Q30: 56% | Q40: 68% | Q50+: 82%
+Epoch 234/300 | Train: Loss=0.2542 Acc=67.9% | Val: Loss=0.2705 Acc=69.7%
+         Per-class: Q10: 53% | Q20: 64% | Q30: 55% | Q40: 71% | Q50+: 84%
+Epoch 235/300 | Train: Loss=0.2541 Acc=68.0% | Val: Loss=0.2622 Acc=69.1%
+         Per-class: Q10: 59% | Q20: 64% | Q30: 55% | Q40: 67% | Q50+: 82%
+Epoch 236/300 | Train: Loss=0.2542 Acc=68.0% | Val: Loss=0.2625 Acc=69.6%
+         Per-class: Q10: 58% | Q20: 64% | Q30: 55% | Q40: 68% | Q50+: 83%
+Epoch 237/300 | Train: Loss=0.2539 Acc=68.0% | Val: Loss=0.2624 Acc=69.3%
+         Per-class: Q10: 59% | Q20: 64% | Q30: 56% | Q40: 67% | Q50+: 82%
+Epoch 238/300 | Train: Loss=0.2539 Acc=68.0% | Val: Loss=0.2643 Acc=70.0%
+         Per-class: Q10: 56% | Q20: 65% | Q30: 57% | Q40: 67% | Q50+: 83%
+Epoch 239/300 | Train: Loss=0.2540 Acc=67.9% | Val: Loss=0.2612 Acc=69.6%
+         Per-class: Q10: 60% | Q20: 65% | Q30: 54% | Q40: 66% | Q50+: 83%
+Epoch 240/300 | Train: Loss=0.2538 Acc=68.0% | Val: Loss=0.2602 Acc=69.4%
+         Per-class: Q10: 60% | Q20: 64% | Q30: 54% | Q40: 67% | Q50+: 83%
+Epoch 241/300 | Train: Loss=0.2538 Acc=68.0% | Val: Loss=0.2618 Acc=70.1%
+         Per-class: Q10: 59% | Q20: 65% | Q30: 58% | Q40: 67% | Q50+: 83%
+Epoch 242/300 | Train: Loss=0.2538 Acc=68.0% | Val: Loss=0.2667 Acc=69.6%
+         Per-class: Q10: 55% | Q20: 65% | Q30: 56% | Q40: 69% | Q50+: 83%
+Epoch 243/300 | Train: Loss=0.2538 Acc=68.0% | Val: Loss=0.2635 Acc=70.0%
+         Per-class: Q10: 57% | Q20: 65% | Q30: 55% | Q40: 69% | Q50+: 83%
+Epoch 244/300 | Train: Loss=0.2538 Acc=68.0% | Val: Loss=0.2642 Acc=69.6%
+         Per-class: Q10: 57% | Q20: 65% | Q30: 58% | Q40: 68% | Q50+: 82%
+Epoch 245/300 | Train: Loss=0.2539 Acc=68.0% | Val: Loss=0.2624 Acc=68.8%
+         Per-class: Q10: 65% | Q20: 64% | Q30: 52% | Q40: 62% | Q50+: 81%
+Epoch 246/300 | Train: Loss=0.2538 Acc=68.0% | Val: Loss=0.2618 Acc=69.2%
+         Per-class: Q10: 59% | Q20: 63% | Q30: 54% | Q40: 69% | Q50+: 82%
+Epoch 247/300 | Train: Loss=0.2539 Acc=68.0% | Val: Loss=0.2611 Acc=69.8%
+         Per-class: Q10: 60% | Q20: 63% | Q30: 56% | Q40: 67% | Q50+: 84%
+Epoch 248/300 | Train: Loss=0.2537 Acc=68.0% | Val: Loss=0.2634 Acc=69.9%
+         Per-class: Q10: 57% | Q20: 65% | Q30: 57% | Q40: 68% | Q50+: 83%
+Epoch 249/300 | Train: Loss=0.2537 Acc=68.0% | Val: Loss=0.2619 Acc=70.0%
+         Per-class: Q10: 59% | Q20: 64% | Q30: 55% | Q40: 68% | Q50+: 84%
+Epoch 250/300 | Train: Loss=0.2537 Acc=68.0% | Val: Loss=0.2665 Acc=69.8%
+         Per-class: Q10: 54% | Q20: 66% | Q30: 57% | Q40: 70% | Q50+: 83%
+Epoch 251/300 | Train: Loss=0.2538 Acc=68.0% | Val: Loss=0.2761 Acc=69.1%
+         Per-class: Q10: 49% | Q20: 64% | Q30: 55% | Q40: 71% | Q50+: 84%
+Epoch 252/300 | Train: Loss=0.2538 Acc=68.0% | Val: Loss=0.2611 Acc=69.3%
+         Per-class: Q10: 62% | Q20: 64% | Q30: 56% | Q40: 63% | Q50+: 82%
+Epoch 253/300 | Train: Loss=0.2539 Acc=68.0% | Val: Loss=0.2702 Acc=70.1%
+         Per-class: Q10: 53% | Q20: 64% | Q30: 55% | Q40: 72% | Q50+: 85%
+Epoch 254/300 | Train: Loss=0.2537 Acc=68.0% | Val: Loss=0.2611 Acc=69.2%
+         Per-class: Q10: 58% | Q20: 64% | Q30: 55% | Q40: 67% | Q50+: 82%
+Epoch 255/300 | Train: Loss=0.2537 Acc=68.0% | Val: Loss=0.2629 Acc=69.7%
+         Per-class: Q10: 57% | Q20: 65% | Q30: 57% | Q40: 68% | Q50+: 82%
+Epoch 256/300 | Train: Loss=0.2537 Acc=68.0% | Val: Loss=0.2608 Acc=70.0%
+         Per-class: Q10: 59% | Q20: 64% | Q30: 56% | Q40: 67% | Q50+: 84%
+Epoch 257/300 | Train: Loss=0.2539 Acc=68.0% | Val: Loss=0.2661 Acc=70.3%
+         Per-class: Q10: 56% | Q20: 64% | Q30: 54% | Q40: 71% | Q50+: 85%
+Epoch 258/300 | Train: Loss=0.2538 Acc=68.0% | Val: Loss=0.2677 Acc=69.4%
+         Per-class: Q10: 53% | Q20: 65% | Q30: 57% | Q40: 69% | Q50+: 82%
+Epoch 259/300 | Train: Loss=0.2536 Acc=68.0% | Val: Loss=0.2614 Acc=69.3%
+         Per-class: Q10: 59% | Q20: 64% | Q30: 55% | Q40: 68% | Q50+: 82%
+Epoch 260/300 | Train: Loss=0.2537 Acc=68.0% | Val: Loss=0.2609 Acc=69.9%
+         Per-class: Q10: 59% | Q20: 64% | Q30: 58% | Q40: 66% | Q50+: 83%
+Epoch 261/300 | Train: Loss=0.2535 Acc=68.0% | Val: Loss=0.2615 Acc=69.7%
+         Per-class: Q10: 58% | Q20: 65% | Q30: 56% | Q40: 68% | Q50+: 82%
+Epoch 262/300 | Train: Loss=0.2538 Acc=68.0% | Val: Loss=0.2654 Acc=69.6%
+         Per-class: Q10: 56% | Q20: 64% | Q30: 57% | Q40: 68% | Q50+: 83%
+Epoch 263/300 | Train: Loss=0.2537 Acc=68.0% | Val: Loss=0.2597 Acc=70.0%
+         Per-class: Q10: 63% | Q20: 63% | Q30: 53% | Q40: 67% | Q50+: 84%
+  -> New best (loss=0.2597, acc=70.0%)
+Epoch 264/300 | Train: Loss=0.2538 Acc=68.0% | Val: Loss=0.2603 Acc=69.3%
+         Per-class: Q10: 60% | Q20: 64% | Q30: 56% | Q40: 66% | Q50+: 82%
+Epoch 265/300 | Train: Loss=0.2538 Acc=68.0% | Val: Loss=0.2615 Acc=70.0%
+         Per-class: Q10: 59% | Q20: 64% | Q30: 55% | Q40: 67% | Q50+: 84%
+Epoch 266/300 | Train: Loss=0.2536 Acc=68.0% | Val: Loss=0.2617 Acc=70.2%
+         Per-class: Q10: 59% | Q20: 64% | Q30: 55% | Q40: 67% | Q50+: 84%
+Epoch 267/300 | Train: Loss=0.2536 Acc=68.0% | Val: Loss=0.2605 Acc=69.4%
+         Per-class: Q10: 60% | Q20: 64% | Q30: 55% | Q40: 66% | Q50+: 83%
+Epoch 268/300 | Train: Loss=0.2536 Acc=68.0% | Val: Loss=0.2683 Acc=69.3%
+         Per-class: Q10: 53% | Q20: 65% | Q30: 56% | Q40: 70% | Q50+: 83%
+Epoch 269/300 | Train: Loss=0.2536 Acc=68.0% | Val: Loss=0.2713 Acc=69.8%
+         Per-class: Q10: 51% | Q20: 65% | Q30: 55% | Q40: 72% | Q50+: 84%
+Epoch 270/300 | Train: Loss=0.2536 Acc=68.0% | Val: Loss=0.2595 Acc=69.7%
+         Per-class: Q10: 62% | Q20: 63% | Q30: 55% | Q40: 66% | Q50+: 83%
+  -> New best (loss=0.2595, acc=69.7%)
+Epoch 271/300 | Train: Loss=0.2536 Acc=68.0% | Val: Loss=0.2659 Acc=69.7%
+         Per-class: Q10: 56% | Q20: 64% | Q30: 55% | Q40: 69% | Q50+: 83%
+Epoch 272/300 | Train: Loss=0.2538 Acc=68.0% | Val: Loss=0.2642 Acc=69.9%
+         Per-class: Q10: 56% | Q20: 65% | Q30: 57% | Q40: 67% | Q50+: 83%
+Epoch 273/300 | Train: Loss=0.2535 Acc=68.0% | Val: Loss=0.2632 Acc=69.1%
+         Per-class: Q10: 58% | Q20: 63% | Q30: 54% | Q40: 69% | Q50+: 82%
+Epoch 274/300 | Train: Loss=0.2534 Acc=68.0% | Val: Loss=0.2625 Acc=69.1%
+         Per-class: Q10: 58% | Q20: 64% | Q30: 55% | Q40: 67% | Q50+: 82%
+Epoch 275/300 | Train: Loss=0.2536 Acc=68.0% | Val: Loss=0.2609 Acc=69.3%
+         Per-class: Q10: 61% | Q20: 64% | Q30: 53% | Q40: 66% | Q50+: 83%
+Epoch 276/300 | Train: Loss=0.2537 Acc=68.0% | Val: Loss=0.2624 Acc=69.2%
+         Per-class: Q10: 58% | Q20: 64% | Q30: 56% | Q40: 68% | Q50+: 82%
+Epoch 277/300 | Train: Loss=0.2535 Acc=68.0% | Val: Loss=0.2596 Acc=69.8%
+         Per-class: Q10: 62% | Q20: 64% | Q30: 54% | Q40: 66% | Q50+: 84%
+Epoch 278/300 | Train: Loss=0.2535 Acc=68.0% | Val: Loss=0.2688 Acc=69.2%
+         Per-class: Q10: 52% | Q20: 65% | Q30: 58% | Q40: 69% | Q50+: 82%
+Epoch 279/300 | Train: Loss=0.2536 Acc=68.0% | Val: Loss=0.2637 Acc=68.1%
+         Per-class: Q10: 68% | Q20: 62% | Q30: 53% | Q40: 57% | Q50+: 81%
+Epoch 280/300 | Train: Loss=0.2538 Acc=68.0% | Val: Loss=0.2689 Acc=69.8%
+         Per-class: Q10: 52% | Q20: 65% | Q30: 56% | Q40: 68% | Q50+: 84%
+Epoch 281/300 | Train: Loss=0.2535 Acc=68.0% | Val: Loss=0.2606 Acc=69.5%
+         Per-class: Q10: 60% | Q20: 64% | Q30: 55% | Q40: 66% | Q50+: 83%
+Epoch 282/300 | Train: Loss=0.2537 Acc=68.0% | Val: Loss=0.2616 Acc=69.6%
+         Per-class: Q10: 59% | Q20: 63% | Q30: 56% | Q40: 67% | Q50+: 83%
+Epoch 283/300 | Train: Loss=0.2538 Acc=68.0% | Val: Loss=0.2606 Acc=69.6%
+         Per-class: Q10: 62% | Q20: 63% | Q30: 53% | Q40: 67% | Q50+: 83%
+Epoch 284/300 | Train: Loss=0.2535 Acc=68.0% | Val: Loss=0.2624 Acc=69.7%
+         Per-class: Q10: 57% | Q20: 65% | Q30: 58% | Q40: 67% | Q50+: 82%
+Epoch 285/300 | Train: Loss=0.2536 Acc=68.0% | Val: Loss=0.2698 Acc=69.9%
+         Per-class: Q10: 51% | Q20: 66% | Q30: 57% | Q40: 69% | Q50+: 84%
+Epoch 286/300 | Train: Loss=0.2537 Acc=68.0% | Val: Loss=0.2681 Acc=67.6%
+         Per-class: Q10: 71% | Q20: 60% | Q30: 51% | Q40: 56% | Q50+: 81%
+Epoch 287/300 | Train: Loss=0.2534 Acc=68.0% | Val: Loss=0.2601 Acc=70.0%
+         Per-class: Q10: 63% | Q20: 63% | Q30: 54% | Q40: 65% | Q50+: 84%
+Epoch 288/300 | Train: Loss=0.2535 Acc=68.0% | Val: Loss=0.2612 Acc=69.8%
+         Per-class: Q10: 60% | Q20: 64% | Q30: 54% | Q40: 65% | Q50+: 84%
+Epoch 289/300 | Train: Loss=0.2536 Acc=68.0% | Val: Loss=0.2589 Acc=69.7%
+         Per-class: Q10: 62% | Q20: 63% | Q30: 55% | Q40: 67% | Q50+: 83%
+  -> New best (loss=0.2589, acc=69.7%)
+Epoch 290/300 | Train: Loss=0.2535 Acc=68.0% | Val: Loss=0.2646 Acc=70.3%
+         Per-class: Q10: 56% | Q20: 65% | Q30: 56% | Q40: 68% | Q50+: 84%
+Epoch 291/300 | Train: Loss=0.2537 Acc=68.0% | Val: Loss=0.2612 Acc=69.5%
+         Per-class: Q10: 60% | Q20: 64% | Q30: 54% | Q40: 67% | Q50+: 83%
+Epoch 292/300 | Train: Loss=0.2536 Acc=68.0% | Val: Loss=0.2631 Acc=70.1%
+         Per-class: Q10: 58% | Q20: 65% | Q30: 55% | Q40: 70% | Q50+: 84%
+Epoch 293/300 | Train: Loss=0.2536 Acc=68.0% | Val: Loss=0.2608 Acc=70.1%
+         Per-class: Q10: 61% | Q20: 64% | Q30: 55% | Q40: 66% | Q50+: 85%
+Epoch 294/300 | Train: Loss=0.2536 Acc=68.0% | Val: Loss=0.2638 Acc=69.1%
+         Per-class: Q10: 57% | Q20: 64% | Q30: 55% | Q40: 69% | Q50+: 82%
+Epoch 295/300 | Train: Loss=0.2535 Acc=68.0% | Val: Loss=0.2717 Acc=69.7%
+         Per-class: Q10: 54% | Q20: 64% | Q30: 52% | Q40: 72% | Q50+: 85%
+Epoch 296/300 | Train: Loss=0.2535 Acc=68.0% | Val: Loss=0.2627 Acc=69.5%
+         Per-class: Q10: 58% | Q20: 64% | Q30: 56% | Q40: 69% | Q50+: 82%
+Epoch 297/300 | Train: Loss=0.2536 Acc=68.0% | Val: Loss=0.2628 Acc=69.4%
+         Per-class: Q10: 58% | Q20: 64% | Q30: 56% | Q40: 69% | Q50+: 82%
+Epoch 298/300 | Train: Loss=0.2536 Acc=68.0% | Val: Loss=0.2614 Acc=69.1%
+         Per-class: Q10: 61% | Q20: 64% | Q30: 53% | Q40: 66% | Q50+: 82%
+Epoch 299/300 | Train: Loss=0.2536 Acc=68.0% | Val: Loss=0.2609 Acc=69.9%
+         Per-class: Q10: 58% | Q20: 65% | Q30: 55% | Q40: 67% | Q50+: 83%
+Epoch 300/300 | Train: Loss=0.2534 Acc=68.0% | Val: Loss=0.2593 Acc=70.3%
+         Per-class: Q10: 62% | Q20: 64% | Q30: 54% | Q40: 67% | Q50+: 85%
+
+======================================================================
+COMPLETE - Best: epoch 289, Loss=0.2589, Acc=69.7%
+
+Per-class accuracy:
+  Q10: 61.8% (415,544 samples)
+  Q20: 63.3% (910,232 samples)
+  Q30: 54.7% (478,151 samples)
+  Q40: 66.5% (325,970 samples)
+  Q50+: 83.0% (1,286,058 samples)
+
+Saved to: checkpoints\quality_classifier_cnn
