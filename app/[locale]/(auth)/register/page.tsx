@@ -4,12 +4,14 @@ import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/lib/navigation";
 import { useRouter } from "@/lib/navigation";
-import { Eye, EyeOff, AlertCircle, Loader2, Mail, Check, X } from "lucide-react";
+import { Eye, EyeOff, Loader2, Mail, Check, X } from "lucide-react";
 import { Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth-store";
 import { authService } from "@/services";
 import { ApiClientError } from "@/lib/api-client";
+import { ErrorAlert } from "@/components/auth/ErrorAlert";
+import { getErrorInfo, extractErrorCode, type ErrorInfo } from "@/lib/error-messages";
 
 export default function RegisterPage() {
   const t = useTranslations("auth");
@@ -27,7 +29,7 @@ export default function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<ErrorInfo | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
 
@@ -36,6 +38,13 @@ export default function RegisterPage() {
       router.push("/dashboard");
     }
   }, [isAuthenticated, router]);
+
+  // Clear errors when inputs change
+  useEffect(() => {
+    if (error) {
+      setError(null);
+    }
+  }, [username, email, password, confirmPassword]);
 
   const usernameValid = username.length >= 3 && /^[a-zA-Z0-9]+$/.test(username);
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -53,7 +62,7 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitted(true);
-    setError("");
+    setError(null);
 
     if (!usernameValid || !emailValid || !passwordValid || !passwordsMatch || !acceptTerms) {
       return;
@@ -66,11 +75,13 @@ export default function RegisterPage() {
       setRegistrationSuccess(true);
     } catch (err) {
       if (err instanceof ApiClientError) {
-        setError(err.message);
+        const errorInfo = getErrorInfo(err.code, err.message);
+        setError(errorInfo);
       } else if (err instanceof Error) {
-        setError(err.message);
+        const code = extractErrorCode(err);
+        setError(getErrorInfo(code, err.message));
       } else {
-        setError("Registration failed");
+        setError(getErrorInfo("UNKNOWN_ERROR", "Registration failed"));
       }
     } finally {
       setIsLoading(false);
@@ -123,12 +134,7 @@ export default function RegisterPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
-        {error && (
-          <div className="flex items-center gap-3 p-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-sm">
-            <AlertCircle className="h-5 w-5 flex-shrink-0" />
-            {error}
-          </div>
-        )}
+        {error && <ErrorAlert error={error} />}
 
         <div className="space-y-2">
           <label htmlFor="username" className="block text-sm font-medium text-slate-700 dark:text-slate-200">

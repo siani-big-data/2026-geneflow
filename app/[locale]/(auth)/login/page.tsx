@@ -5,12 +5,14 @@ import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { Link } from "@/lib/navigation";
 import { useRouter } from "@/lib/navigation";
-import { Eye, EyeOff, AlertCircle, Loader2, Mail, CheckCircle } from "lucide-react";
+import { Eye, EyeOff, Loader2, Mail, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth-store";
 import { authService } from "@/services";
 import { ApiClientError } from "@/lib/api-client";
+import { ErrorAlert } from "@/components/auth/ErrorAlert";
+import { getErrorInfo, extractErrorCode, type ErrorInfo } from "@/lib/error-messages";
 
 export default function LoginPage() {
   const t = useTranslations("auth");
@@ -40,7 +42,7 @@ export default function LoginPage() {
 
   // UI state
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<ErrorInfo | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
   // 2FA state
@@ -63,14 +65,14 @@ export default function LoginPage() {
   // Sync auth errors to local state
   useEffect(() => {
     if (authError) {
-      setError(authError);
+      setError(getErrorInfo("UNKNOWN_ERROR", authError));
     }
   }, [authError]);
 
   // Clear errors when inputs change
   useEffect(() => {
     if (error) {
-      setError("");
+      setError(null);
       clearError();
     }
   }, [email, password, twoFactorCode]);
@@ -78,7 +80,7 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitted(true);
-    setError("");
+    setError(null);
 
     if (!emailValid || !passwordValid) {
       return;
@@ -97,11 +99,13 @@ export default function LoginPage() {
       }
     } catch (err) {
       if (err instanceof ApiClientError) {
-        setError(err.message);
+        const errorInfo = getErrorInfo(err.code, err.message);
+        setError(errorInfo);
       } else if (err instanceof Error) {
-        setError(err.message);
+        const code = extractErrorCode(err);
+        setError(getErrorInfo(code, err.message));
       } else {
-        setError(t("errors.loginFailed"));
+        setError(getErrorInfo("UNKNOWN_ERROR", t("errors.loginFailed")));
       }
     } finally {
       setIsLoading(false);
@@ -111,7 +115,7 @@ export default function LoginPage() {
   const handleTwoFactorSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setTwoFactorSubmitted(true);
-    setError("");
+    setError(null);
 
     if (!twoFactorCodeValid) {
       return;
@@ -124,11 +128,13 @@ export default function LoginPage() {
       router.push(redirectTo);
     } catch (err) {
       if (err instanceof ApiClientError) {
-        setError(err.message);
+        const errorInfo = getErrorInfo(err.code, err.message);
+        setError(errorInfo);
       } else if (err instanceof Error) {
-        setError(err.message);
+        const code = extractErrorCode(err);
+        setError(getErrorInfo(code, err.message));
       } else {
-        setError(t("errors.verificationFailed"));
+        setError(getErrorInfo("UNKNOWN_ERROR", t("errors.verificationFailed")));
       }
     } finally {
       setIsLoading(false);
@@ -137,14 +143,16 @@ export default function LoginPage() {
 
   const resendCode = async () => {
     setIsLoading(true);
-    setError("");
+    setError(null);
 
     try {
       await authService.requestTwoFactorCode(email);
       setCodeSent(true);
     } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
+      if (err instanceof ApiClientError) {
+        setError(getErrorInfo(err.code, err.message));
+      } else if (err instanceof Error) {
+        setError(getErrorInfo("UNKNOWN_ERROR", err.message));
       }
     } finally {
       setIsLoading(false);
@@ -180,12 +188,7 @@ export default function LoginPage() {
 
         <form onSubmit={handleTwoFactorSubmit} className="space-y-6">
           {/* Error message */}
-          {error && (
-            <div className="flex items-center gap-3 p-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-sm">
-              <AlertCircle className="h-5 w-5 flex-shrink-0" />
-              {error}
-            </div>
-          )}
+          {error && <ErrorAlert error={error} />}
 
           {/* Success message */}
           {codeSent && !error && (
@@ -270,12 +273,7 @@ export default function LoginPage() {
 
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Error message */}
-        {error && (
-          <div className="flex items-center gap-3 p-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-sm">
-            <AlertCircle className="h-5 w-5 flex-shrink-0" />
-            {error}
-          </div>
-        )}
+        {error && <ErrorAlert error={error} />}
 
         {/* Email field */}
         <div className="space-y-2">

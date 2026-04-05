@@ -1,14 +1,33 @@
 "use client";
 
-import { Search, Upload, Moon, Sun, Bell } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Search, Upload, Moon, Sun, Bell, User, LogOut, Settings, ChevronDown } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useRouter } from "@/lib/navigation";
 import { useTheme } from "@/providers";
 import { Button } from "@/components/ui";
 import { LocaleSwitcher } from "@/components/shared";
+import { useAuthStore } from "@/stores/auth-store";
 
 export function Header() {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const t = useTranslations("header");
+  const router = useRouter();
+  const { user, logout, isLoading } = useAuthStore();
+
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const toggleTheme = () => {
     if (theme === "system") {
@@ -16,6 +35,12 @@ export function Header() {
     } else {
       setTheme(theme === "dark" ? "light" : "dark");
     }
+  };
+
+  const handleLogout = async () => {
+    setUserMenuOpen(false);
+    await logout();
+    router.push("/login");
   };
 
   return (
@@ -73,6 +98,61 @@ export function Header() {
             aria-hidden="true"
           />
         </button>
+
+        {/* User Menu */}
+        <div className="relative" ref={userMenuRef}>
+          <button
+            onClick={() => setUserMenuOpen(!userMenuOpen)}
+            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-all duration-200 hover:bg-muted/50 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            aria-expanded={userMenuOpen}
+            aria-haspopup="true"
+          >
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-teal/10 text-teal">
+              <User className="h-4 w-4" />
+            </div>
+            <span className="hidden md:block font-medium text-foreground">
+              {user?.username || "User"}
+            </span>
+            <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${userMenuOpen ? "rotate-180" : ""}`} />
+          </button>
+
+          {/* Dropdown Menu */}
+          {userMenuOpen && (
+            <div className="absolute right-0 top-full z-50 mt-2 w-56 origin-top-right rounded-lg border border-border bg-card py-1 shadow-lg ring-1 ring-black/5 focus:outline-none">
+              {/* User Info */}
+              <div className="border-b border-border px-4 py-3">
+                <p className="text-sm font-medium text-foreground">{user?.username}</p>
+                <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
+              </div>
+
+              {/* Menu Items */}
+              <div className="py-1">
+                <button
+                  onClick={() => {
+                    setUserMenuOpen(false);
+                    router.push("/settings");
+                  }}
+                  className="flex w-full items-center gap-3 px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                >
+                  <Settings className="h-4 w-4" />
+                  {t("settings")}
+                </button>
+              </div>
+
+              {/* Logout */}
+              <div className="border-t border-border py-1">
+                <button
+                  onClick={handleLogout}
+                  disabled={isLoading}
+                  className="flex w-full items-center gap-3 px-4 py-2 text-sm text-red-500 transition-colors hover:bg-red-500/10 disabled:opacity-50"
+                >
+                  <LogOut className="h-4 w-4" />
+                  {t("logout")}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );

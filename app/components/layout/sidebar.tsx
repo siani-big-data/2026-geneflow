@@ -6,8 +6,9 @@ import { ChevronLeft, ChevronRight, User, LogOut } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/stores/ui-store";
+import { useAuthStore } from "@/stores/auth-store";
 import { mainNavigation, bottomNavigation } from "./navigation";
-import { Link } from "@/lib/navigation";
+import { Link, useRouter } from "@/lib/navigation";
 import {
   Tooltip,
   TooltipContent,
@@ -16,9 +17,18 @@ import {
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { sidebarCollapsed, toggleSidebar } = useUIStore();
+  const { user, logout } = useAuthStore();
   const t = useTranslations("navigation");
   const tCommon = useTranslations("common");
+
+  const handleLogout = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    await logout();
+    router.push("/login");
+  };
 
   const isActive = (href: string) => {
     // Remove locale prefix from pathname for comparison
@@ -169,32 +179,34 @@ export function Sidebar() {
       <div className="flex-shrink-0 border-t border-border p-4">
         <Tooltip delayDuration={0}>
           <TooltipTrigger asChild>
-            <Link
-              href="/profile"
+            <div
               className={cn(
                 "group flex items-center gap-3 rounded-lg bg-muted/30 px-3 py-2.5 transition-all duration-300 ease-out hover:bg-muted/50 overflow-hidden",
                 sidebarCollapsed && "justify-center"
               )}
             >
-              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-deep to-teal">
-                <User className="h-4 w-4 text-white" />
-              </div>
-              <div
-                className={cn(
-                  "min-w-0 flex-1 overflow-hidden whitespace-nowrap transition-all duration-300 ease-out",
-                  sidebarCollapsed ? "w-0 opacity-0" : "w-auto opacity-100"
-                )}
-              >
-                <p className="truncate text-sm font-medium text-foreground">
-                  Dr. Sarah Martinez
-                </p>
-                <p className="truncate text-xs text-muted-foreground">
-                  Principal Investigator
-                </p>
-              </div>
+              <Link href="/profile" className="flex items-center gap-3 flex-1 min-w-0">
+                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-deep to-teal">
+                  <User className="h-4 w-4 text-white" />
+                </div>
+                <div
+                  className={cn(
+                    "min-w-0 flex-1 overflow-hidden whitespace-nowrap transition-all duration-300 ease-out",
+                    sidebarCollapsed ? "w-0 opacity-0" : "w-auto opacity-100"
+                  )}
+                >
+                  <p className="truncate text-sm font-medium text-foreground">
+                    {user?.username || "User"}
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {user?.email || ""}
+                  </p>
+                </div>
+              </Link>
               <button
+                onClick={handleLogout}
                 className={cn(
-                  "text-muted-foreground transition-all duration-300 ease-out hover:text-foreground",
+                  "text-muted-foreground transition-all duration-300 ease-out hover:text-red-500",
                   sidebarCollapsed ? "w-0 opacity-0" : "opacity-0 group-hover:opacity-100"
                 )}
                 aria-label={t("logout")}
@@ -202,10 +214,10 @@ export function Sidebar() {
               >
                 <LogOut className="h-4 w-4" />
               </button>
-            </Link>
+            </div>
           </TooltipTrigger>
           {sidebarCollapsed && (
-            <TooltipContent side="right">Dr. Sarah Martinez</TooltipContent>
+            <TooltipContent side="right">{user?.username || "User"}</TooltipContent>
           )}
         </Tooltip>
       </div>

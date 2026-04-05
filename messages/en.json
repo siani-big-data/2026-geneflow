@@ -69,7 +69,9 @@
     "uploadTraces": "Upload Traces",
     "notifications": "View notifications",
     "switchToDark": "Switch to dark mode",
-    "switchToLight": "Switch to light mode"
+    "switchToLight": "Switch to light mode",
+    "settings": "Settings",
+    "logout": "Log out"
   },
   "localeSwitcher": {
     "language": "Language",

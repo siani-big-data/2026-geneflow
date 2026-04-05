@@ -69,7 +69,9 @@
     "uploadTraces": "Subir Trazas",
     "notifications": "Ver notificaciones",
     "switchToDark": "Cambiar a modo oscuro",
-    "switchToLight": "Cambiar a modo claro"
+    "switchToLight": "Cambiar a modo claro",
+    "settings": "Configuración",
+    "logout": "Cerrar sesión"
   },
   "localeSwitcher": {
     "language": "Idioma",
