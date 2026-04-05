@@ -1,8 +1,8 @@
 """LLM providers abstraction layer.
 
 Supports multiple LLM backends:
-- Claude (Anthropic) - High quality, higher cost
-- DeepSeek - Good quality, very low cost ($0.07/100K tokens)
+- Claude (Anthropic) - High quality_enhanced, higher cost
+- DeepSeek - Good quality_enhanced, very low cost ($0.07/100K tokens)
 
 Usage:
     from src.copilot.llm import get_llm_client, LLMProvider

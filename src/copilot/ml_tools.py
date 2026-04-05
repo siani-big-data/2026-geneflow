@@ -29,10 +29,10 @@ def ensuREDACTED() -> None:
 
 
 async def analyze_quality(quality_scores: list[int]) -> dict:
-    """Analyze sequence quality using ML strategy.
+    """Analyze sequence quality_enhanced using ML strategy.
 
     Args:
-        quality_scores: List of Phred quality scores
+        quality_scores: List of Phred quality_enhanced scores
 
     Returns:
         Quality analysis results
@@ -52,7 +52,7 @@ async def auto_trim(quality_scores: list[int]) -> dict:
     """Find optimal trim points for sequence.
 
     Args:
-        quality_scores: List of Phred quality scores
+        quality_scores: List of Phred quality_enhanced scores
 
     Returns:
         Trim start/end positions
@@ -108,7 +108,7 @@ async def call_snps(
     Args:
         query_sequence: Query DNA sequence
         reference_sequence: Reference DNA sequence
-        quality_scores: Optional quality scores
+        quality_scores: Optional quality_enhanced scores
 
     Returns:
         List of detected SNPs
@@ -311,14 +311,14 @@ def _format_result(result: StrategyResult) -> dict:
 ML_TOOLS = [
     {
         "name": "analyze_quality",
-        "description": "Analyze sequence quality metrics (Q20, Q30, accuracy) from Phred scores",
+        "description": "Analyze sequence quality_enhanced metrics (Q20, Q30, accuracy) from Phred scores",
         "input_schema": {
             "type": "object",
             "properties": {
                 "quality_scores": {
                     "type": "array",
                     "items": {"type": "integer"},
-                    "description": "List of Phred quality scores",
+                    "description": "List of Phred quality_enhanced scores",
                 }
             },
             "required": ["quality_scores"],
@@ -326,14 +326,14 @@ ML_TOOLS = [
     },
     {
         "name": "auto_trim",
-        "description": "Find optimal trim points to remove low-quality regions from sequence ends",
+        "description": "Find optimal trim points to remove low-quality_enhanced regions from sequence ends",
         "input_schema": {
             "type": "object",
             "properties": {
                 "quality_scores": {
                     "type": "array",
                     "items": {"type": "integer"},
-                    "description": "List of Phred quality scores",
+                    "description": "List of Phred quality_enhanced scores",
                 }
             },
             "required": ["quality_scores"],

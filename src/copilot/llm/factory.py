@@ -100,7 +100,7 @@ def get_cheapest_available() -> Optional[LLMClient]:
 
 
 def get_best_available() -> Optional[LLMClient]:
-    """Get the best quality available LLM client.
+    """Get the best quality_enhanced available LLM client.
 
     Priority: Claude > OpenAI > DeepSeek
     """

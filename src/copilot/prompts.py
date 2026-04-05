@@ -153,7 +153,7 @@ Proporciona:
 
     @staticmethod
     def format_quality_section(quality: Optional[dict]) -> str:
-        """Format quality data for prompts."""
+        """Format quality_enhanced data for prompts."""
         if not quality:
             return "No hay datos de calidad disponibles."
 
