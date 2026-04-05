@@ -1,0 +1,21 @@
+{
+  "timestamp": "2026-04-02T18:28:51.957747",
+  "epochs_trained": 156,
+  "best_val_loss": 0.0009508939601894434,
+  "best_val_acc": 0.9547213970654425,
+  "final_val_mae": 0.0155368994980801,
+  "final_val_acc": 0.9538212260329463,
+  "args": {
+    "data_dir": ".\\datalake\\datasets\\trimming",
+    "checkpoint_dir": "checkpoints/trimming",
+    "epochs": 300,
+    "batch_size": 64,
+    "lr": 0.001,
+    "patience": 50,
+    "max_length": 500,
+    "hidden_dim": 64,
+    "num_layers": 4,
+    "dropout": 0.5,
+    "tolerance": 0.1
+  }
+}

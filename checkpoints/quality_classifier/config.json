@@ -1,0 +1,52 @@
+{
+  "args": {
+    "data_dir": "datalake/datasets/quality_context",
+    "checkpoint_dir": "checkpoints/quality_classifier_cnn",
+    "select_features": null,
+    "num_classes": 5,
+    "hidden_channels": 16,
+    "num_layers": 2,
+    "kernel_size": 3,
+    "dropout": 0.5,
+    "epochs": 300,
+    "batch_size": 128,
+    "lr": 0.0001,
+    "patience": 50,
+    "focal_gamma": 2.0
+  },
+  "num_classes": 5,
+  "class_names": [
+    "Q10 (0-9)",
+    "Q20 (10-19)",
+    "Q30 (20-29)",
+    "Q40 (30-39)",
+    "Q50+ (40+)"
+  ],
+  "n_features": 13,
+  "selected_features": [
+    "signal_A",
+    "signal_C",
+    "signal_G",
+    "signal_T",
+    "p1am_norm",
+    "p2am_norm",
+    "ratio_norm",
+    "position_relative",
+    "local_variance",
+    "local_snr",
+    "peak_spacing_prev",
+    "peak_spacing_next",
+    "signal_trend"
+  ],
+  "best_epoch": 289,
+  "best_loss": 0.2589090551058451,
+  "best_accuracy": 0.6965036131916258,
+  "class_accuracy": [
+    0.6179417823368454,
+    0.6333846755545472,
+    0.5474191207368647,
+    0.6652176580646525,
+    0.8299205790090105
+  ],
+  "timestamp": "2026-04-04T22:10:00.864231"
+}

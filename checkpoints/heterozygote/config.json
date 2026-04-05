@@ -1,0 +1,20 @@
+{
+  "timestamp": "2026-04-03T16:49:40.479306",
+  "epochs_trained": 187,
+  "best_val_f1": 0.8792329200440591,
+  "best_val_precision": 0.791754622447163,
+  "best_val_recall": 0.9884426099380854,
+  "args": {
+    "data_dir": ".\\datalake\\datasets\\heterozygote_enhanced",
+    "checkpoint_dir": "checkpoints/heterozygote2",
+    "epochs": 200,
+    "batch_size": 512,
+    "lr": 0.0001,
+    "patience": 50,
+    "max_length": 500,
+    "hidden_dim": 32,
+    "num_layers": 2,
+    "dropout": 0.4,
+    "class_weight": 15.0
+  }
+}
