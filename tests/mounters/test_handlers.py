@@ -30,59 +30,53 @@ class TestUsersHandler:
         return UsersHandler(mock_connection)
 
     async def test_insert_user(self, handler, mock_connection):
-        """Test inserting a new user."""
+        """Test inserting a new user via UserRegisteredEvent."""
         payload = {
-            "id": "user-123",
+            "user_id": "user-123",
             "email": "test@example.com",
             "username": "testuser",
-            "password_hash": "hashed_password",
-            "is_active": True,
-            "email_verified": False,
-            "created_at": "2026-03-26T10:00:00Z",
+            "occurred_at": "2026-03-26T10:00:00Z",
         }
 
-        await handler.insert(payload)
+        await handler.handle_user_registered(payload)
 
-        mock_connection.execute.assert_called_once()
-        call_args = mock_connection.execute.call_args
-        assert "INSERT INTO identity.users" in call_args[0][0]
-        assert call_args[0][1] == "user-123"
-        assert call_args[0][2] == "test@example.com"
+        # Should have two calls: insert user and add default role
+        assert mock_connection.execute.call_count == 2
+        first_call = mock_connection.execute.call_args_list[0]
+        assert "INSERT INTO identity.users" in first_call[0][0]
+        assert first_call[0][1] == "user-123"
+        assert first_call[0][2] == "test@example.com"
 
     async def test_update_user(self, handler, mock_connection):
-        """Test updating a user."""
+        """Test updating a user via UserEmailVerifiedEvent."""
         payload = {
-            "id": "user-123",
-            "email": "newemail@example.com",
-            "updated_at": "2026-03-26T12:00:00Z",
+            "user_id": "user-123",
         }
 
-        await handler.update(payload)
+        await handler.handle_email_verified(payload)
 
         mock_connection.execute.assert_called_once()
         call_args = mock_connection.execute.call_args
         assert "UPDATE identity.users" in call_args[0][0]
-        assert "email = $1" in call_args[0][0]
+        assert "email_verified = TRUE" in call_args[0][0]
 
     async def test_soft_delete_user(self, handler, mock_connection):
-        """Test soft deleting a user."""
+        """Test deactivating a user via UserDeactivatedEvent."""
         payload = {
-            "id": "user-123",
-            "deleted_at": "2026-03-26T14:00:00Z",
-            "deleted_by": "admin-456",
+            "user_id": "user-123",
         }
 
-        await handler.soft_delete(payload)
+        await handler.handle_user_deactivated(payload)
 
         mock_connection.execute.assert_called_once()
         call_args = mock_connection.execute.call_args
-        assert "is_deleted = TRUE" in call_args[0][0]
+        assert "is_active = FALSE" in call_args[0][0]
 
     async def test_event_routing(self, handler):
         """Test event type to handler method mapping."""
-        assert handler._event_mappings["UserRegistered"] == "insert"
-        assert handler._event_mappings["UserUpdated"] == "update"
-        assert handler._event_mappings["UserDeleted"] == "soft_delete"
+        assert handler._event_mappings["UserRegisteredEvent"] == "handle_user_registered"
+        assert handler._event_mappings["UserEmailVerifiedEvent"] == "handle_email_verified"
+        assert handler._event_mappings["UserDeactivatedEvent"] == "handle_user_deactivated"
 
 
 class TestStudiesHandler:
