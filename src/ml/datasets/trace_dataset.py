@@ -12,7 +12,7 @@ from torch.utils.data import Dataset
 
 @dataclass
 class TraceSample:
-    """A single trace sample with signals and quality scores."""
+    """A single trace sample with signals and quality_enhanced scores."""
 
     file_path: str
     sequence: str
@@ -36,7 +36,7 @@ class TraceSample:
         """Convert to PyTorch tensors."""
         return {
             "signals": torch.tensor(self.signals, dtype=torch.float32),
-            "quality": torch.tensor(self.quality_scores, dtype=torch.float32),
+            "quality_enhanced": torch.tensor(self.quality_scores, dtype=torch.float32),
             "peak_locs": torch.tensor(self.peak_locations, dtype=torch.long),
         }
 
@@ -111,7 +111,7 @@ class AB1Parser:
         return ""
 
     def get_quality_scores(self) -> np.ndarray:
-        """Get Phred quality scores."""
+        """Get Phred quality_enhanced scores."""
         for tag in ["PCON1", "PCON2"]:
             if tag in self._data:
                 data = self._read_data(self._data[tag])
@@ -215,7 +215,7 @@ class TraceDataset(Dataset):
             # Return dummy sample on error
             return {
                 "signals": torch.zeros(4, self.max_length),
-                "quality": torch.zeros(self.max_length),
+                "quality_enhanced": torch.zeros(self.max_length),
                 "mask": torch.zeros(self.max_length, dtype=torch.bool),
             }
 
@@ -257,7 +257,7 @@ class TraceDataset(Dataset):
 
         return {
             "signals": torch.tensor(signals, dtype=torch.float32),
-            "quality": torch.tensor(quality, dtype=torch.float32),
+            "quality_enhanced": torch.tensor(quality, dtype=torch.float32),
             "mask": torch.tensor(mask, dtype=torch.bool),
         }
 
