@@ -87,7 +87,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      await login({ email, password });
+      await login({ identifier: email, password });
 
       // If 2FA not required, redirect will happen via useEffect
       if (!requiresTwoFactor) {
