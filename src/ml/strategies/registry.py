@@ -1,5 +1,13 @@
 """Strategy registry - initializes and registers all available strategies.
 
+This module only registers strategies that provide value beyond geneflow-analysis:
+- ArtifactDetector: Pattern recognition in chromatograms (ML candidate)
+- MotifScanner: Biological regulatory motifs
+- MutationImpact: Functional impact prediction (ML candidate)
+
+For other analyses (ORF detection, trimming, SNP calling, diversity metrics),
+use geneflow-analysis which has more complete algorithmic implementations.
+
 Usage:
     from src.ml.strategies import get_provider, StrategyType
 
@@ -8,34 +16,23 @@ Usage:
 
     # Get provider and use strategies
     provider = get_provider()
-    provider.preferred_type = StrategyType.MARKET  # Try market models first
-
-    strategy = provider.get("quality_predictor")
-    result = await strategy.execute(quality_scores=[30, 35, 40])
+    strategy = provider.get("artifact_detector")
+    result = await strategy.execute(signal_a=[...], signal_t=[...], ...)
 """
 
 import structlog
 
 from .base import StrategyType
 
-# Import heuristic strategies
+# Import heuristic strategies (only those that add value)
 from .heuristic import (
     HeuristicArtifactStrategy,
-    HeuristicClusterStrategy,
-    HeuristicDiversityStrategy,
-    HeuristicGeneFinderStrategy,
-    HeuristicHeterozygoteStrategy,
     HeuristicMotifStrategy,
     HeuristicMutationImpactStrategy,
-    HeuristicQualityStrategy,
-    HeuristicRNAStructureStrategy,
-    HeuristicSNPStrategy,
-    HeuristicTrimStrategy,
 )
 
-# Import market strategies
+# Import market strategies (external tools)
 from .market import (
-    DeepVariantStrategy,
     SIFTStrategy,
     TracyQualityStrategy,
     ViennaRNAStrategy,
@@ -63,35 +60,18 @@ def init_strategies(
 
     provider.preferred_type = preferred_type
 
-    # Register Quality strategies
-    provider.register("quality_predictor", HeuristicQualityStrategy())
-    provider.register("quality_predictor", TracyQualityStrategy())
-
-    provider.register("auto_trimmer", HeuristicTrimStrategy())
-
+    # Quality strategies - only artifact detection (ML candidate)
     provider.register("artifact_detector", HeuristicArtifactStrategy())
+    provider.register("quality_predictor", TracyQualityStrategy())  # External tool
 
-    # Register Variant strategies
-    provider.register("snp_caller", HeuristicSNPStrategy())
-    provider.register("snp_caller", DeepVariantStrategy())
-
-    provider.register("heterozygote_detector", HeuristicHeterozygoteStrategy())
-
-    # Register Annotation strategies
-    provider.register("gene_finder", HeuristicGeneFinderStrategy())
-
+    # Annotation strategies - biological motifs
     provider.register("motif_scanner", HeuristicMotifStrategy())
 
-    # Register Phylo strategies
-    provider.register("sequence_clusterer", HeuristicClusterStrategy())
-
-    provider.register("diversity_calculator", HeuristicDiversityStrategy())
-
-    # Register Functional strategies
+    # Functional strategies - mutation impact (ML candidate)
     provider.register("mutation_impact", HeuristicMutationImpactStrategy())
-    provider.register("mutation_impact", SIFTStrategy())
+    provider.register("mutation_impact", SIFTStrategy())  # External tool
 
-    provider.register("rna_structure", HeuristicRNAStructureStrategy())
+    # RNA structure - external tool only (ViennaRNA is superior to Nussinov)
     provider.register("rna_structure", ViennaRNAStrategy())
 
     logger.info(
@@ -107,14 +87,8 @@ def init_strategies(
 class ModelKeys:
     """Constants for model keys used in the registry."""
 
-    QUALITY_PREDICTOR = "quality_predictor"
-    AUTO_TRIMMER = "auto_trimmer"
     ARTIFACT_DETECTOR = "artifact_detector"
-    SNP_CALLER = "snp_caller"
-    HETEROZYGOTE_DETECTOR = "heterozygote_detector"
-    GENE_FINDER = "gene_finder"
+    QUALITY_PREDICTOR = "quality_predictor"
     MOTIF_SCANNER = "motif_scanner"
-    SEQUENCE_CLUSTERER = "sequence_clusterer"
-    DIVERSITY_CALCULATOR = "diversity_calculator"
     MUTATION_IMPACT = "mutation_impact"
     RNA_STRUCTURE = "rna_structure"

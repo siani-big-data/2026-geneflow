@@ -23,12 +23,12 @@ class ModelProvider:
 
     Usage:
         provider = ModelProvider()
-        provider.register("quality_predictor", HeuristicQualityStrategy())
-        provider.register("quality_predictor", MarketQualityStrategy())
+        provider.register("artifact_detector", HeuristicArtifactStrategy())
+        provider.register("mutation_impact", SIFTStrategy())
 
         # Get strategy (respects preference order)
-        strategy = provider.get("quality_predictor")
-        result = await strategy.execute(scores=[30, 35, 40])
+        strategy = provider.get("artifact_detector")
+        result = await strategy.execute(signal_a=[...], signal_t=[...], ...)
     """
 
     def __init__(self, preferred_type: StrategyType = StrategyType.HEURISTIC):

@@ -1,9 +1,12 @@
 """Quality Predictor Model.
 
 Predicts Phred quality scores from chromatogram signals.
-Architecture: 1D CNN with dilated convolutions for multi-scale feature extraction.
 
-Input: 4-channel signal (A, T, C, G) at each position
+Two architectures available:
+- QualityPredictor: Contextual CNN with dilated convolutions (recommended)
+- QualityPredictorPointwise: Legacy pointwise MLP (no spatial context)
+
+Input: N-channel features at each position (4 ACGT or 7 enhanced)
 Output: Quality score (0-60) per position
 """
 
@@ -22,68 +25,72 @@ class QualityPredictorConfig(ModelConfig):
     """Configuration for Quality Predictor."""
 
     name: str = "quality_predictor"
-    version: str = "1.0.0"
-    input_channels: int = 4  # A, T, C, G signals
-    hidden_channels: int = 64
-    num_layers: int = 6
-    kernel_size: int = 7
+    version: str = "3.0.0"
+    input_channels: int = 7  # 4 ACGT + 3 peak features (or 4 for basic)
+    hidden_channels: int = 128
+    num_layers: int = 6  # Number of residual blocks
+    kernel_size: int = 7  # Convolution kernel size
     dropout: float = 0.1
-    use_residual: bool = True
     use_batch_norm: bool = True
-    max_quality: float = 60.0  # Max Phred score
+    max_quality: float = 62.0  # Max Phred score
+    use_dilations: bool = True  # Use dilated convolutions for multi-scale context
     extra: dict = field(default_factory=dict)
 
 
-class DilatedConvBlock(nn.Module):
-    """Dilated convolution block with optional residual connection."""
+class ResidualConvBlock(nn.Module):
+    """Residual convolutional block with spatial context."""
 
     def __init__(
         self,
-        in_channels: int,
-        out_channels: int,
-        kernel_size: int,
-        dilation: int,
+        channels: int,
+        kernel_size: int = 7,
+        dilation: int = 1,
         dropout: float = 0.1,
-        use_residual: bool = True,
         use_batch_norm: bool = True,
     ):
         super().__init__()
-        self.use_residual = use_residual and (in_channels == out_channels)
-
         padding = (kernel_size - 1) * dilation // 2
 
-        self.conv = nn.Conv1d(
-            in_channels,
-            out_channels,
-            kernel_size,
-            padding=padding,
-            dilation=dilation,
+        self.conv1 = nn.Conv1d(
+            channels, channels, kernel_size,
+            padding=padding, dilation=dilation, bias=not use_batch_norm
         )
-        self.bn = nn.BatchNorm1d(out_channels) if use_batch_norm else nn.Identity()
+        self.bn1 = nn.BatchNorm1d(channels) if use_batch_norm else nn.Identity()
+
+        self.conv2 = nn.Conv1d(
+            channels, channels, kernel_size,
+            padding=padding, dilation=dilation, bias=not use_batch_norm
+        )
+        self.bn2 = nn.BatchNorm1d(channels) if use_batch_norm else nn.Identity()
+
         self.dropout = nn.Dropout(dropout)
         self.activation = nn.GELU()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         residual = x
 
-        out = self.conv(x)
-        out = self.bn(out)
+        out = self.conv1(x)
+        out = self.bn1(out)
         out = self.activation(out)
         out = self.dropout(out)
 
-        if self.use_residual:
-            out = out + residual
+        out = self.conv2(out)
+        out = self.bn2(out)
+
+        out = out + residual  # Skip connection
+        out = self.activation(out)
 
         return out
 
 
 class QualityPredictor(BaseModel):
-    """CNN model for predicting quality scores from chromatogram signals.
+    """CNN model for predicting quality scores with spatial context.
 
-    Architecture:
-    - Input projection: 4 channels -> hidden_channels
-    - Stack of dilated conv blocks with increasing dilation
-    - Output projection: hidden_channels -> 1 (quality score)
+    Architecture: Dilated Residual CNN
+    - Uses convolutions with kernel_size > 1 for spatial context
+    - Dilated convolutions capture multi-scale patterns
+    - Residual connections for stable training
+    - Quality at position i depends on neighboring signal patterns
     """
 
     def __init__(self, config: QualityPredictorConfig | None = None):
@@ -98,27 +105,31 @@ class QualityPredictor(BaseModel):
             nn.GELU(),
         )
 
-        # Dilated conv blocks
+        # Residual blocks with increasing dilation
         self.blocks = nn.ModuleList()
         for i in range(config.num_layers):
-            dilation = 2 ** (i % 4)  # 1, 2, 4, 8, 1, 2, ...
-            self.blocks.append(
-                DilatedConvBlock(
-                    in_channels=config.hidden_channels,
-                    out_channels=config.hidden_channels,
-                    kernel_size=config.kernel_size,
-                    dilation=dilation,
-                    dropout=config.dropout,
-                    use_residual=config.use_residual,
-                    use_batch_norm=config.use_batch_norm,
-                )
-            )
+            if config.use_dilations:
+                # Cycle through dilations: 1, 2, 4, 1, 2, 4, ...
+                dilation = 2 ** (i % 3)
+            else:
+                dilation = 1
 
-        # Output projection
+            self.blocks.append(ResidualConvBlock(
+                channels=config.hidden_channels,
+                kernel_size=config.kernel_size,
+                dilation=dilation,
+                dropout=config.dropout,
+                use_batch_norm=config.use_batch_norm,
+            ))
+
+        # Output projection with gradual channel reduction
         self.output_proj = nn.Sequential(
             nn.Conv1d(config.hidden_channels, config.hidden_channels // 2, kernel_size=1),
             nn.GELU(),
-            nn.Conv1d(config.hidden_channels // 2, 1, kernel_size=1),
+            nn.Dropout(config.dropout),
+            nn.Conv1d(config.hidden_channels // 2, config.hidden_channels // 4, kernel_size=1),
+            nn.GELU(),
+            nn.Conv1d(config.hidden_channels // 4, 1, kernel_size=1),
         )
 
         # Initialize weights
@@ -139,15 +150,15 @@ class QualityPredictor(BaseModel):
         """Forward pass.
 
         Args:
-            x: Input tensor of shape (batch, 4, seq_len)
+            x: Input tensor of shape (batch, channels, seq_len)
 
         Returns:
             Quality scores of shape (batch, seq_len)
         """
-        # Input projection
+        # Project to hidden dimension
         h = self.input_proj(x)  # (batch, hidden, seq_len)
 
-        # Dilated conv blocks
+        # Apply residual blocks
         for block in self.blocks:
             h = block(h)
 
@@ -162,6 +173,157 @@ class QualityPredictor(BaseModel):
 
     def predict(self, signals: np.ndarray | torch.Tensor) -> np.ndarray:
         """Predict quality scores from signals.
+
+        Args:
+            signals: Signal array of shape (channels, seq_len) or (batch, channels, seq_len)
+
+        Returns:
+            Quality scores of shape (seq_len,) or (batch, seq_len)
+        """
+        self.eval()
+
+        if isinstance(signals, np.ndarray):
+            signals = torch.tensor(signals, dtype=torch.float32)
+
+        if signals.dim() == 2:
+            signals = signals.unsqueeze(0)
+            squeeze_output = True
+        else:
+            squeeze_output = False
+
+        signals = signals.to(self.device)
+
+        with torch.no_grad():
+            quality = self.forward(signals)
+
+        quality = quality.cpu().numpy()
+
+        if squeeze_output:
+            quality = quality.squeeze(0)
+
+        return quality
+
+    def predict_with_confidence(
+        self, signals: np.ndarray | torch.Tensor, n_samples: int = 10
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Predict with uncertainty estimation using MC Dropout.
+
+        Args:
+            signals: Signal array
+            n_samples: Number of forward passes for uncertainty
+
+        Returns:
+            Tuple of (mean_quality, std_quality)
+        """
+        self.train()  # Enable dropout
+
+        if isinstance(signals, np.ndarray):
+            signals = torch.tensor(signals, dtype=torch.float32)
+
+        if signals.dim() == 2:
+            signals = signals.unsqueeze(0)
+
+        signals = signals.to(self.device)
+
+        predictions = []
+        with torch.no_grad():
+            for _ in range(n_samples):
+                pred = self.forward(signals)
+                predictions.append(pred.cpu().numpy())
+
+        predictions = np.stack(predictions)
+        mean_quality = predictions.mean(axis=0).squeeze()
+        std_quality = predictions.std(axis=0).squeeze()
+
+        self.eval()
+        return mean_quality, std_quality
+
+
+# =============================================================================
+# Legacy Pointwise Model (kept for backwards compatibility)
+# =============================================================================
+
+class PointwiseMLPBlock(nn.Module):
+    """MLP block using 1x1 convolutions (position-independent)."""
+
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        dropout: float = 0.1,
+        use_batch_norm: bool = True,
+    ):
+        super().__init__()
+        self.conv = nn.Conv1d(in_channels, out_channels, kernel_size=1)
+        self.bn = nn.BatchNorm1d(out_channels) if use_batch_norm else nn.Identity()
+        self.dropout = nn.Dropout(dropout)
+        self.activation = nn.GELU()
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        out = self.conv(x)
+        out = self.bn(out)
+        out = self.activation(out)
+        out = self.dropout(out)
+        return out
+
+
+class QualityPredictorPointwise(BaseModel):
+    """Legacy MLP model without spatial context.
+
+    Architecture: Pointwise MLP (1x1 convolutions)
+    - Each position is processed independently
+    - No spatial context
+    - Kept for backwards compatibility
+    """
+
+    def __init__(self, config: QualityPredictorConfig | None = None):
+        config = config or QualityPredictorConfig()
+        super().__init__(config)
+        self.cfg = config
+
+        # Build MLP layers
+        layers = []
+        in_ch = config.input_channels
+
+        for i in range(config.num_layers):
+            out_ch = config.hidden_channels
+            layers.append(PointwiseMLPBlock(
+                in_ch, out_ch,
+                dropout=config.dropout,
+                use_batch_norm=config.use_batch_norm,
+            ))
+            in_ch = out_ch
+
+        self.mlp = nn.Sequential(*layers)
+
+        # Output projection
+        self.output_proj = nn.Sequential(
+            nn.Conv1d(config.hidden_channels, config.hidden_channels // 2, kernel_size=1),
+            nn.GELU(),
+            nn.Conv1d(config.hidden_channels // 2, 1, kernel_size=1),
+        )
+
+        self._init_weights()
+
+    def _init_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv1d):
+                nn.init.kaiming_normal_(m.weight, mode="fan_out", nonlinearity="relu")
+                if m.bias is not None:
+                    nn.init.zeros_(m.bias)
+            elif isinstance(m, nn.BatchNorm1d):
+                nn.init.ones_(m.weight)
+                nn.init.zeros_(m.bias)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        h = self.mlp(x)
+        out = self.output_proj(h)
+        out = out.squeeze(1)
+        out = torch.clamp(out, 0.0, self.cfg.max_quality)
+        return out
+
+    def predict(self, signals: np.ndarray | torch.Tensor) -> np.ndarray:
+        """Predict quality_enhanced scores from signals.
 
         Args:
             signals: Signal array of shape (4, seq_len) or (batch, 4, seq_len)
@@ -234,7 +396,7 @@ class QualityPredictor(BaseModel):
 
 
 class QualityLoss(nn.Module):
-    """Loss function for quality prediction.
+    """Loss function for quality_enhanced prediction.
 
     Combines MSE loss with gradient penalty for smoothness.
     """
@@ -253,8 +415,8 @@ class QualityLoss(nn.Module):
         """Compute loss.
 
         Args:
-            predictions: Predicted quality scores (batch, seq_len)
-            targets: Target quality scores (batch, seq_len)
+            predictions: Predicted quality_enhanced scores (batch, seq_len)
+            targets: Target quality_enhanced scores (batch, seq_len)
             mask: Valid position mask (batch, seq_len)
         """
         if mask is not None:

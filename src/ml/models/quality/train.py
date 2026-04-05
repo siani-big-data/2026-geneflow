@@ -8,12 +8,12 @@ from torch.utils.data import DataLoader, random_split
 
 from ...datasets.trace_dataset import TraceDataset
 from ...training import (
+    DetailedProgressLogger,
     EarlyStopping,
     ModelCheckpoint,
     Trainer,
     TrainingConfig,
 )
-from ...training.callbacks import ProgressLogger
 from .model import QualityLoss, QualityPredictor, QualityPredictorConfig
 
 
@@ -28,7 +28,7 @@ def train_quality_predictor(
     val_split: float = 0.1,
     seed: int = 42,
 ):
-    """Train the quality predictor model.
+    """Train the quality_enhanced predictor model.
 
     Args:
         data_dir: Directory containing .ab1 trace files
@@ -121,7 +121,7 @@ def train_quality_predictor(
     loss_fn = QualityLoss(mse_weight=1.0, smooth_weight=0.1)
 
     callbacks = [
-        ProgressLogger(),
+        DetailedProgressLogger(),
         EarlyStopping(patience=15, metric="loss", mode="min"),
         ModelCheckpoint(
             save_dir=output_path,

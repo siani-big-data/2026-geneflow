@@ -1,7 +1,13 @@
 """
 Central model registry for GeneFlow AI.
 
-Registra y gestiona todos los modelos ML locales.
+Registra y gestiona los modelos ML locales que aportan valor
+sobre los análisis algorítmicos de geneflow-analysis.
+
+Modelos incluidos:
+- ArtifactDetector: Detección de artefactos en cromatogramas (ML pattern recognition)
+- MotifScanner: Motivos biológicos predefinidos (TATA, Kozak, splice sites)
+- MutationImpactPredictor: Predicción de impacto funcional de variantes
 """
 
 from pathlib import Path
@@ -28,36 +34,20 @@ def get_registry() -> ModelRegistry:
 
 def _register_all_models(registry: ModelRegistry) -> None:
     """Register all available models."""
-    # Quality models
-    from .quality import ArtifactDetector, AutoTrimmer, QualityPredictor
+    # Quality models - ML-based artifact detection
+    from .quality import ArtifactDetector
 
-    registry.register(AutoTrimmer())
     registry.register(ArtifactDetector())
-    registry.register(QualityPredictor())
 
-    # Variant models
-    from .variants import HeterozygoteDetector, SNPCaller
+    # Annotation models - biological motif scanning
+    from .annotation import MotifScanner
 
-    registry.register(SNPCaller())
-    registry.register(HeterozygoteDetector())
-
-    # Annotation models
-    from .annotation import GeneFinder, MotifScanner
-
-    registry.register(GeneFinder())
     registry.register(MotifScanner())
 
-    # Phylo models
-    from .phylo import DiversityCalculator, SequenceClusterer
-
-    registry.register(SequenceClusterer())
-    registry.register(DiversityCalculator())
-
-    # Functional models
-    from .functional import MutationImpactPredictor, RNAStructurePredictor
+    # Functional models - mutation impact prediction
+    from .functional import MutationImpactPredictor
 
     registry.register(MutationImpactPredictor())
-    registry.register(RNAStructurePredictor())
 
     logger.info(
         "models_registered",

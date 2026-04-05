@@ -216,7 +216,7 @@ class MotifScanner(LocalModel):
                         end=match.end(),
                         sequence=match.group(),
                         strand=strand,
-                        score=0.9,  # TODO: Score basado en match quality
+                        score=0.9,  # TODO: Score basado en match quality_enhanced
                     )
                 )
 

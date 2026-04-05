@@ -1,26 +1,17 @@
-"""Heuristic strategies - rule-based implementations."""
+"""Heuristic strategies - rule-based implementations.
 
-from .annotation import HeuristicGeneFinderStrategy, HeuristicMotifStrategy
-from .functional import HeuristicMutationImpactStrategy, HeuristicRNAStructureStrategy
-from .phylo import HeuristicClusterStrategy, HeuristicDiversityStrategy
-from .quality import HeuristicArtifactStrategy, HeuristicQualityStrategy, HeuristicTrimStrategy
-from .variants import HeuristicHeterozygoteStrategy, HeuristicSNPStrategy
+Only includes strategies that provide value beyond geneflow-analysis:
+- ArtifactDetector: Pattern recognition in chromatograms (ML candidate)
+- MotifScanner: Biological regulatory motifs
+- MutationImpact: Functional impact prediction (ML candidate)
+"""
+
+from .annotation import HeuristicMotifStrategy
+from .functional import HeuristicMutationImpactStrategy
+from .quality import HeuristicArtifactStrategy
 
 __all__ = [
-    # Quality
-    "HeuristicQualityStrategy",
-    "HeuristicTrimStrategy",
     "HeuristicArtifactStrategy",
-    # Variants
-    "HeuristicSNPStrategy",
-    "HeuristicHeterozygoteStrategy",
-    # Annotation
-    "HeuristicGeneFinderStrategy",
     "HeuristicMotifStrategy",
-    # Phylo
-    "HeuristicClusterStrategy",
-    "HeuristicDiversityStrategy",
-    # Functional
     "HeuristicMutationImpactStrategy",
-    "HeuristicRNAStructureStrategy",
 ]

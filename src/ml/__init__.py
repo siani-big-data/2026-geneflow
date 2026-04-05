@@ -5,7 +5,7 @@ Este módulo contiene modelos ML locales especializados que proveen
 información al agente conversacional (DeepSeek/Claude).
 
 Categorías:
-- quality: Análisis de calidad de secuencias Sanger
+- quality_enhanced: Análisis de calidad de secuencias Sanger
 - variants: Detección de variantes y mutaciones
 - annotation: Anotación automática de secuencias
 - phylo: Clustering y análisis filogenético

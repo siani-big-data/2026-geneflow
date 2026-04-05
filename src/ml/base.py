@@ -15,7 +15,7 @@ logger = structlog.get_logger()
 class ModelCategory(str, Enum):
     """Categorías de modelos."""
 
-    QUALITY = "quality"
+    QUALITY = "quality_enhanced"
     VARIANTS = "variants"
     ANNOTATION = "annotation"
     PHYLO = "phylo"
@@ -54,7 +54,7 @@ class LocalModel(ABC):
     Cada modelo debe implementar:
     - name: Nombre único del modelo
     - version: Versión del modelo
-    - category: Categoría (quality, variants, etc.)
+    - category: Categoría (quality_enhanced, variants, etc.)
     - load(): Cargar modelo en memoria
     - predict(): Ejecutar predicción
     """

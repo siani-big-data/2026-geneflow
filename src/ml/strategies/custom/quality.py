@@ -1,4 +1,4 @@
-"""Custom quality strategy using trained model."""
+"""Custom quality_enhanced strategy using trained model."""
 
 from pathlib import Path
 
@@ -63,21 +63,21 @@ class CustomQualityStrategy(ModelStrategy):
         quality_scores: list[int] | None = None,
         **kwargs,
     ) -> StrategyResult:
-        """Predict quality scores from signals.
+        """Predict quality_enhanced scores from signals.
 
         Args:
             signal_a: A channel signal
             signal_t: T channel signal
             signal_c: C channel signal
             signal_g: G channel signal
-            quality_scores: Existing quality scores (for comparison)
+            quality_scores: Existing quality_enhanced scores (for comparison)
 
         Returns:
-            StrategyResult with predicted quality metrics
+            StrategyResult with predicted quality_enhanced metrics
         """
         if not self.is_available:
             return StrategyResult(
-                data={"error": "Custom quality model not available"},
+                data={"error": "Custom quality_enhanced model not available"},
                 confidence=0.0,
                 strategy_used=self.strategy_type,
                 model_name=self.model_name,

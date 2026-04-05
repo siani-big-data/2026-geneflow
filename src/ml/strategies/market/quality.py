@@ -1,6 +1,6 @@
-"""Market strategies for quality analysis.
+"""Market strategies for quality_enhanced analysis.
 
-Wrappers for external quality analysis tools.
+Wrappers for external quality_enhanced analysis tools.
 """
 
 import shutil
@@ -10,11 +10,11 @@ from ..base import ModelStrategy, StrategyResult, StrategyType
 
 
 class TracyQualityStrategy(ModelStrategy):
-    """Wrapper for Tracy basecaller/quality analyzer.
+    """Wrapper for Tracy basecaller/quality_enhanced analyzer.
 
     Tracy: https://github.com/gear-genomics/tracy
     - Sanger trace file analysis
-    - Basecalling and quality assessment
+    - Basecalling and quality_enhanced assessment
     - Requires tracy binary installed
     """
 
@@ -37,11 +37,11 @@ class TracyQualityStrategy(ModelStrategy):
         quality_scores: list[int] | None = None,
         **kwargs,
     ) -> StrategyResult:
-        """Analyze quality using Tracy.
+        """Analyze quality_enhanced using Tracy.
 
         Args:
             trace_file: Path to .ab1 trace file
-            quality_scores: Pre-extracted quality scores
+            quality_scores: Pre-extracted quality_enhanced scores
 
         Note: Full implementation would call tracy subprocess
         """
@@ -74,7 +74,7 @@ class PhredQualityStrategy(ModelStrategy):
     """Wrapper for Phred basecaller.
 
     Phred: https://www.phrap.org/phredphrapconsed.html
-    - Original Sanger quality scoring algorithm
+    - Original Sanger quality_enhanced scoring algorithm
     - Requires phred binary (commercial license)
     """
 
@@ -88,7 +88,7 @@ class PhredQualityStrategy(ModelStrategy):
         return shutil.which("phred") is not None
 
     async def execute(self, **kwargs) -> StrategyResult:
-        """Analyze quality using Phred."""
+        """Analyze quality_enhanced using Phred."""
         if not self.is_available:
             return StrategyResult(
                 data={"error": "Phred not installed"},
