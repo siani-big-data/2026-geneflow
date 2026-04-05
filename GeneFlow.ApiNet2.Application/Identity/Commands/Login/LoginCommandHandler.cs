@@ -19,6 +19,7 @@ public sealed class LoginCommandHandler
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtTokenGenerator _tokenGenerator;
     private readonly IUserAuthenticationValidator _authValidator;
+    private readonly ITwoFactorAuthenticator _twoFactorAuthenticator;
 
     /// <summary>
     /// Initializes a new instance of the handler.
@@ -28,13 +29,15 @@ public sealed class LoginCommandHandler
         IUserUnitOfWork unitOfWork,
         IPasswordHasher passwordHasher,
         IJwtTokenGenerator tokenGenerator,
-        IUserAuthenticationValidator authValidator)
+        IUserAuthenticationValidator authValidator,
+        ITwoFactorAuthenticator twoFactorAuthenticator)
     {
         _userRepository = userRepository;
         _unitOfWork = unitOfWork;
         _passwordHasher = passwordHasher;
         _tokenGenerator = tokenGenerator;
         _authValidator = authValidator;
+        _twoFactorAuthenticator = twoFactorAuthenticator;
     }
 
     /// <inheritdoc />
@@ -72,10 +75,23 @@ public sealed class LoginCommandHandler
                 });
             }
 
-            var twoFactorResult = user.ValidateTwoFactorCode(request.TwoFactorCode);
-            if (twoFactorResult.IsFailure)
+            // Try TOTP validation first if configured
+            if (user.IsTotpConfigured)
             {
-                return Result.Failure<LoginResultDto>(twoFactorResult.Error);
+                var decryptedSecret = _twoFactorAuthenticator.DecryptSecret(user.TotpSecret!);
+                if (!_twoFactorAuthenticator.ValidateCode(decryptedSecret, request.TwoFactorCode))
+                {
+                    return Result.Failure<LoginResultDto>(UserErrors.InvalidTwoFactorCode);
+                }
+            }
+            else
+            {
+                // Fall back to email-based code validation
+                var twoFactorResult = user.ValidateTwoFactorCode(request.TwoFactorCode);
+                if (twoFactorResult.IsFailure)
+                {
+                    return Result.Failure<LoginResultDto>(twoFactorResult.Error);
+                }
             }
         }
 

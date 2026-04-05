@@ -6,6 +6,7 @@ using GeneFlow.ApiNet2.Infrastructure.Identity.Configuration;
 using GeneFlow.ApiNet2.Infrastructure.Identity.Persistence.Context;
 using GeneFlow.ApiNet2.Infrastructure.Identity.Persistence.Repositories;
 using GeneFlow.ApiNet2.Infrastructure.Identity.Services;
+using GeneFlow.ApiNet2.Infrastructure.Identity.Services.OAuth;
 using GeneFlow.ApiNet2.Infrastructure.Redis;
 using GeneFlow.ApiNet2.Infrastructure.Redis.Configuration;
 using GeneFlow.ApiNet2.SharedKernel.Infrastructure;
@@ -107,11 +108,23 @@ public static class DependencyInjection
         services.Configure<EmailSettings>(
             configuration.GetSection(EmailSettings.SectionName));
 
+        services.Configure<TwoFactorSettings>(
+            configuration.GetSection(TwoFactorSettings.SectionName));
+
+        services.Configure<OAuthSettings>(
+            configuration.GetSection(OAuthSettings.SectionName));
+
         services.AddScoped<IPasswordHasher, PasswordHasher>();
+        services.AddScoped<ITwoFactorAuthenticator, TwoFactorAuthenticator>();
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<IUserAuthenticationValidator, UserAuthenticationValidator>();
+
+        // OAuth services
+        services.AddHttpClient<GoogleTokenValidator>();
+        services.AddHttpClient<GitHubTokenValidator>();
+        services.AddScoped<IOAuthTokenValidator, OAuthTokenValidator>();
 
         services.AddHttpContextAccessor();
 

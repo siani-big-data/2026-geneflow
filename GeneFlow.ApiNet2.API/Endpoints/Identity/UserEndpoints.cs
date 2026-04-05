@@ -2,12 +2,17 @@ using GeneFlow.ApiNet2.API.Contracts.Identity.Requests;
 using GeneFlow.ApiNet2.API.Contracts.Identity.Responses;
 using GeneFlow.ApiNet2.API.Extensions;
 using GeneFlow.ApiNet2.API.Routes;
+using GeneFlow.ApiNet2.Application.Identity.Commands.ConfirmTwoFactorSetup;
 using GeneFlow.ApiNet2.Application.Identity.Commands.DisableTwoFactor;
 using GeneFlow.ApiNet2.Application.Identity.Commands.EnableTwoFactor;
+using GeneFlow.ApiNet2.Application.Identity.Commands.LinkExternalLogin;
+using GeneFlow.ApiNet2.Application.Identity.Commands.SetupTwoFactor;
+using GeneFlow.ApiNet2.Application.Identity.Commands.UnlinkExternalLogin;
 using GeneFlow.ApiNet2.Application.Identity.Commands.VerifyEmail;
 using GeneFlow.ApiNet2.Application.Identity.Interfaces;
 using GeneFlow.ApiNet2.Application.Identity.Queries.GetCurrentUser;
 using GeneFlow.ApiNet2.Application.Identity.Queries.GetUserById;
+using GeneFlow.ApiNet2.Application.Identity.Queries.GetUserExternalLogins;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -74,6 +79,49 @@ public sealed class UserEndpoints : IEndpoint
             .WithDescription("Disables 2FA for the user.")
             .Produces(StatusCodes.Status204NoContent)
             .ProducesValidationProblem();
+
+        // TOTP (Authenticator App) endpoints
+        twoFactorGroup.MapGet("/setup", SetupTwoFactor)
+            .WithName("Users_SetupTwoFactor")
+            .WithSummary("Setup TOTP-based two-factor authentication")
+            .WithDescription("Generates a secret and QR code URI for authenticator app setup.")
+            .Produces<TwoFactorSetupResponse>(StatusCodes.Status200OK)
+            .Produces<ApiError>(StatusCodes.Status409Conflict);
+
+        twoFactorGroup.MapPost("/confirm", ConfirmTwoFactorSetup)
+            .WithName("Users_ConfirmTwoFactorSetup")
+            .WithSummary("Confirm TOTP-based two-factor authentication setup")
+            .WithDescription("Validates the code from the authenticator app and enables TOTP 2FA.")
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesValidationProblem()
+            .Produces<ApiError>(StatusCodes.Status401Unauthorized);
+
+        // External Login Management
+        var externalLoginsGroup = group.MapGroup("/external-logins")
+            .RequireAuthorization();
+
+        externalLoginsGroup.MapGet("/", GetExternalLogins)
+            .WithName("Users_GetExternalLogins")
+            .WithSummary("Get linked external logins")
+            .WithDescription("Returns the list of OAuth providers linked to the current user.")
+            .Produces<IReadOnlyList<ExternalLoginResponse>>(StatusCodes.Status200OK);
+
+        externalLoginsGroup.MapPost("/", LinkExternalLogin)
+            .WithName("Users_LinkExternalLogin")
+            .WithSummary("Link an external OAuth login")
+            .WithDescription("Links a new OAuth provider to the current user's account.")
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesValidationProblem()
+            .Produces<ApiError>(StatusCodes.Status409Conflict);
+
+        externalLoginsGroup.MapDelete("/{provider}", UnlinkExternalLogin)
+            .WithName("Users_UnlinkExternalLogin")
+            .WithSummary("Unlink an external OAuth login")
+            .WithDescription("Removes an OAuth provider link from the current user. " +
+                             "Cannot unlink if it's the only authentication method.")
+            .Produces(StatusCodes.Status204NoContent)
+            .Produces<ApiError>(StatusCodes.Status400BadRequest)
+            .Produces<ApiError>(StatusCodes.Status404NotFound);
     }
 
     private static async Task<IResult> GetCurrentUser(
@@ -160,6 +208,109 @@ public sealed class UserEndpoints : IEndpoint
             return Results.Unauthorized();
 
         var command = new DisableTwoFactorCommand(currentUser.UserId.Value.ToString());
+        var result = await sender.Send(command, cancellationToken);
+
+        if (result.IsFailure)
+            return result.ToHttpResult();
+
+        return Results.NoContent();
+    }
+
+    private static async Task<IResult> SetupTwoFactor(
+        [FromServices] ISender sender,
+        [FromServices] ICurrentUserService currentUser,
+        CancellationToken cancellationToken)
+    {
+        if (currentUser.UserId is null)
+            return Results.Unauthorized();
+
+        var command = new SetupTwoFactorCommand(currentUser.UserId.Value.ToString());
+        var result = await sender.Send(command, cancellationToken);
+
+        if (result.IsFailure)
+            return result.ToHttpResult();
+
+        return Results.Ok(new TwoFactorSetupResponse(result.Value.Secret, result.Value.QrCodeUri));
+    }
+
+    private static async Task<IResult> ConfirmTwoFactorSetup(
+        [FromBody] ConfirmTwoFactorSetupRequest request,
+        [FromServices] ISender sender,
+        [FromServices] ICurrentUserService currentUser,
+        CancellationToken cancellationToken)
+    {
+        if (currentUser.UserId is null)
+            return Results.Unauthorized();
+
+        var command = new ConfirmTwoFactorSetupCommand(
+            currentUser.UserId.Value.ToString(),
+            request.Secret,
+            request.Code);
+        var result = await sender.Send(command, cancellationToken);
+
+        if (result.IsFailure)
+            return result.ToHttpResult();
+
+        return Results.NoContent();
+    }
+
+    private static async Task<IResult> GetExternalLogins(
+        [FromServices] ISender sender,
+        [FromServices] ICurrentUserService currentUser,
+        CancellationToken cancellationToken)
+    {
+        if (currentUser.UserId is null)
+            return Results.Unauthorized();
+
+        var query = new GetUserExternalLoginsQuery(currentUser.UserId.Value.ToString());
+        var result = await sender.Send(query, cancellationToken);
+
+        if (result.IsFailure)
+            return result.ToHttpResult();
+
+        var response = result.Value.Select(e => new ExternalLoginResponse
+        {
+            Provider = e.Provider,
+            DisplayName = e.DisplayName,
+            LinkedAt = e.LinkedAt
+        }).ToList();
+
+        return Results.Ok(response);
+    }
+
+    private static async Task<IResult> LinkExternalLogin(
+        [FromBody] LinkExternalLoginRequest request,
+        [FromServices] ISender sender,
+        [FromServices] ICurrentUserService currentUser,
+        CancellationToken cancellationToken)
+    {
+        if (currentUser.UserId is null)
+            return Results.Unauthorized();
+
+        var command = new LinkExternalLoginCommand(
+            currentUser.UserId.Value.ToString(),
+            request.Provider,
+            request.Token);
+        var result = await sender.Send(command, cancellationToken);
+
+        if (result.IsFailure)
+            return result.ToHttpResult();
+
+        return Results.NoContent();
+    }
+
+    private static async Task<IResult> UnlinkExternalLogin(
+        [FromRoute] string provider,
+        [FromServices] ISender sender,
+        [FromServices] ICurrentUserService currentUser,
+        CancellationToken cancellationToken)
+    {
+        if (currentUser.UserId is null)
+            return Results.Unauthorized();
+
+        var command = new UnlinkExternalLoginCommand(
+            currentUser.UserId.Value.ToString(),
+            provider);
         var result = await sender.Send(command, cancellationToken);
 
         if (result.IsFailure)

@@ -105,6 +105,17 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
                 .HasColumnName("two_factor_enabled")
                 .IsRequired();
 
+            // TOTP Secret (owned type within TwoFactorAuth)
+            tfa.OwnsOne(t => t.TotpSecret, ts =>
+            {
+                ts.Property(s => s.EncryptedSecret)
+                    .HasColumnName("totp_secret")
+                    .HasMaxLength(512);
+
+                ts.Property(s => s.CreatedAt)
+                    .HasColumnName("totp_secret_created_at");
+            });
+
             tfa.OwnsMany(t => t.Codes, code =>
             {
                 code.ToTable("two_factor_codes");
@@ -265,5 +276,9 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Ignore(u => u.RefreshTokens);
         builder.Ignore(u => u.ExternalLogins);
         builder.Ignore(u => u.TwoFactorCodes);
+
+        // Ignore computed properties
+        builder.Ignore(u => u.TotpSecret);
+        builder.Ignore(u => u.IsTotpConfigured);
     }
 }

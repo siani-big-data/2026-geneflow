@@ -284,6 +284,40 @@ public sealed class User : FullAuditableAggregateRoot<UserId>
     }
 
     /// <summary>
+    /// Enables TOTP-based two-factor authentication with an encrypted secret.
+    /// </summary>
+    /// <param name="encryptedSecret">The encrypted TOTP secret.</param>
+    /// <returns>Success if enabled; failure otherwise.</returns>
+    public Result EnableTotpTwoFactor(string encryptedSecret)
+    {
+        var secretResult = ValueObjects.TwoFactorSecret.Create(encryptedSecret);
+        if (secretResult.IsFailure)
+            return Result.Failure(secretResult.Error);
+
+        var result = TwoFactorAuth.EnableWithTotp(secretResult.Value);
+
+        if (result.IsFailure)
+            return Result.Failure(result.Error);
+
+        TwoFactorAuth = result.Value;
+        SetModified();
+
+        RaiseDomainEvent(new UserTwoFactorEnabledEvent(Id));
+
+        return Result.Success();
+    }
+
+    /// <summary>
+    /// Gets the encrypted TOTP secret if configured.
+    /// </summary>
+    public string? TotpSecret => TwoFactorAuth.TotpSecret?.EncryptedSecret;
+
+    /// <summary>
+    /// Gets whether TOTP (authenticator app) is configured.
+    /// </summary>
+    public bool IsTotpConfigured => TwoFactorAuth.IsTotpConfigured;
+
+    /// <summary>
     /// Generates a new two-factor authentication code.
     /// </summary>
     /// <returns>The generated two-factor code.</returns>
