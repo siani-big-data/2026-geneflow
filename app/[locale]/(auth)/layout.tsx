@@ -5,12 +5,14 @@ import Image from "next/image";
 import { Dna, ArrowLeft, Moon, Sun } from "lucide-react";
 import { useTheme } from "@/providers";
 import { GuestGuard } from "@/components/auth";
+import {useTranslations} from "next-intl";
 
 export default function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const t = useTranslations("auth");
   const { theme, setTheme, resolvedTheme } = useTheme();
 
   const toggleTheme = () => {
@@ -44,7 +46,7 @@ export default function AuthLayout({
             className="inline-flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 hover:text-teal transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to home
+            {t("backToHome")}
           </Link>
 
           <button

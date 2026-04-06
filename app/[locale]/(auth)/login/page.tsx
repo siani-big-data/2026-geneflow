@@ -13,6 +13,7 @@ import { authService } from "@/services";
 import { ApiClientError } from "@/lib/api-client";
 import { ErrorAlert } from "@/components/auth/ErrorAlert";
 import { getErrorInfo, extractErrorCode, type ErrorInfo } from "@/lib/error-messages";
+import { signInWithGoogle, signInWithGitHub } from "@/lib/oauth";
 
 export default function LoginPage() {
   const t = useTranslations("auth");
@@ -26,6 +27,7 @@ export default function LoginPage() {
   // Auth store
   const {
     login,
+    oAuthLogin,
     verifyTwoFactor,
     isLoading: authLoading,
     error: authError,
@@ -167,6 +169,58 @@ export default function LoginPage() {
     setCodeSent(false);
     // Reload the page to reset the store's requiresTwoFactor state
     window.location.reload();
+  };
+
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const token = await signInWithGoogle();
+      await oAuthLogin("google", token);
+      router.push(redirectTo);
+    } catch (err) {
+      if (err instanceof ApiClientError) {
+        setError(getErrorInfo(err.code, err.message));
+      } else if (err instanceof Error) {
+        // Handle OAuth-specific errors
+        if (err.message.includes("not configured")) {
+          setError(getErrorInfo("UNKNOWN_ERROR", "Google sign-in is not available at this time."));
+        } else if (err.message.includes("cancelled")) {
+          // User cancelled, no error needed
+        } else {
+          setError(getErrorInfo("UNKNOWN_ERROR", err.message));
+        }
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGitHubSignIn = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const token = await signInWithGitHub();
+      await oAuthLogin("github", token);
+      router.push(redirectTo);
+    } catch (err) {
+      if (err instanceof ApiClientError) {
+        setError(getErrorInfo(err.code, err.message));
+      } else if (err instanceof Error) {
+        // Handle OAuth-specific errors
+        if (err.message.includes("not configured")) {
+          setError(getErrorInfo("UNKNOWN_ERROR", "GitHub sign-in is not available at this time."));
+        } else if (err.message.includes("cancelled")) {
+          // User cancelled, no error needed
+        } else {
+          setError(getErrorInfo("UNKNOWN_ERROR", err.message));
+        }
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const effectiveLoading = isLoading || authLoading;
@@ -383,7 +437,14 @@ export default function LoginPage() {
       <div className="flex justify-center gap-4">
         <button
           type="button"
-          className="flex items-center justify-center w-12 h-12 rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600 hover:border-slate-400 dark:hover:border-slate-500 transition-all"
+          onClick={handleGoogleSignIn}
+          disabled={effectiveLoading}
+          className={cn(
+            "flex items-center justify-center w-12 h-12 rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 transition-all",
+            effectiveLoading
+              ? "opacity-50 cursor-not-allowed"
+              : "hover:bg-slate-50 dark:hover:bg-slate-600 hover:border-slate-400 dark:hover:border-slate-500"
+          )}
           aria-label="Sign in with Google"
         >
           <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -395,7 +456,14 @@ export default function LoginPage() {
         </button>
         <button
           type="button"
-          className="flex items-center justify-center w-12 h-12 rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600 hover:border-slate-400 dark:hover:border-slate-500 transition-all"
+          onClick={handleGitHubSignIn}
+          disabled={effectiveLoading}
+          className={cn(
+            "flex items-center justify-center w-12 h-12 rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 transition-all",
+            effectiveLoading
+              ? "opacity-50 cursor-not-allowed"
+              : "hover:bg-slate-50 dark:hover:bg-slate-600 hover:border-slate-400 dark:hover:border-slate-500"
+          )}
           aria-label="Sign in with GitHub"
         >
           <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">

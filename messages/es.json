@@ -81,6 +81,7 @@
   "auth": {
     "welcomeBack": "Bienvenido de nuevo",
     "signInToAccount": "Inicia sesión en tu cuenta de GeneFlow",
+    "backToHome": "Volver a inicio",
     "email": "Correo electrónico",
     "emailPlaceholder": "nombre@empresa.com",
     "password": "Contraseña",

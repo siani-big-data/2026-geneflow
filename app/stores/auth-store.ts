@@ -31,6 +31,7 @@ interface AuthStore extends AuthState {
 
   // Actions
   login: (data: LoginRequest) => Promise<void>;
+  oAuthLogin: (provider: string, token: string) => Promise<void>;
   verifyTwoFactor: (data: TwoFactorVerifyRequest) => Promise<void>;
   register: (data: RegisterRequest) => Promise<{ success: boolean; message: string }>;
   logout: () => Promise<void>;
@@ -86,10 +87,13 @@ export const useAuthStore = create<AuthStore>()(
 
           if (response.requiresTwoFactor) {
             // 2FA required - store email and wait for code
+            // Use the user email from response, or fall back to identifier if it's an email
+            const email = response.user?.email ||
+              (data.identifier.includes("@") ? data.identifier : null);
             set({
               isLoading: false,
               requiresTwoFactor: true,
-              pendingTwoFactorEmail: data.email,
+              pendingTwoFactorEmail: email,
             });
             return;
           }
@@ -108,6 +112,46 @@ export const useAuthStore = create<AuthStore>()(
         } catch (error) {
           const message =
             error instanceof Error ? error.message : "Login failed";
+          set({
+            isLoading: false,
+            error: message,
+          });
+          throw error;
+        }
+      },
+
+      // ===========================================================================
+      // OAUTH LOGIN
+      // ===========================================================================
+
+      oAuthLogin: async (provider: string, token: string) => {
+        set({ isLoading: true, error: null });
+
+        try {
+          const response = await authService.oAuthLogin(provider, { token });
+
+          if (response.requiresTwoFactor) {
+            set({
+              isLoading: false,
+              requiresTwoFactor: true,
+              pendingTwoFactorEmail: response.user.email,
+            });
+            return;
+          }
+
+          set({
+            user: response.user,
+            accessToken: response.tokens.accessToken,
+            refreshToken: response.tokens.refreshToken,
+            expiresAt: response.tokens.expiresAt,
+            isAuthenticated: true,
+            isLoading: false,
+            requiresTwoFactor: false,
+            pendingTwoFactorEmail: null,
+          });
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : "OAuth login failed";
           set({
             isLoading: false,
             error: message,

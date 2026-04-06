@@ -153,6 +153,42 @@ const errorMessages: Record<string, ErrorInfo> = {
   },
 
   // =============================================================================
+  // OAUTH ERRORS
+  // =============================================================================
+  "OAuth.InvalidToken": {
+    title: "Authentication failed",
+    message: "The authentication token is invalid or expired. Please try again.",
+  },
+  "OAuth.TokenValidationFailed": {
+    title: "Authentication failed",
+    message: "Could not verify your account with the provider. Please try again.",
+  },
+  "OAuth.EmailNotProvided": {
+    title: "Email required",
+    message: "Your account does not have an email address. Please use email/password login.",
+  },
+  "OAuth.ProviderNotSupported": {
+    title: "Provider not supported",
+    message: "This authentication provider is not supported.",
+  },
+  "OAuth.AccountAlreadyLinked": {
+    title: "Already linked",
+    message: "This external account is already linked to another user.",
+  },
+  "OAuth.ProviderAlreadyLinked": {
+    title: "Provider already linked",
+    message: "You already have an account linked with this provider.",
+  },
+  "OAuth.CannotUnlinkLastLogin": {
+    title: "Cannot unlink",
+    message: "You cannot unlink your only login method. Set a password first or link another provider.",
+  },
+  "OAuth.ProviderNotLinked": {
+    title: "Not linked",
+    message: "This provider is not linked to your account.",
+  },
+
+  // =============================================================================
   // GENERIC ERRORS
   // =============================================================================
   "InternalServerError": {

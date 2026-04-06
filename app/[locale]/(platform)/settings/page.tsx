@@ -39,6 +39,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { TwoFactorSetup, ExternalLogins } from "@/components/auth";
 
 type SettingsSection = "account" | "security" | "notifications" | "preferences" | "billing" | "collaboration";
 
@@ -81,7 +82,6 @@ export default function SettingsPage() {
   const [blockedUsersOpen, setBlockedUsersOpen] = useState(false);
   const [deactivateOpen, setDeactivateOpen] = useState(false);
   const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
-  const [remove2FAOpen, setRemove2FAOpen] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -120,10 +120,6 @@ export default function SettingsPage() {
     console.log("Ending session:", sessionId);
   };
 
-  const handleRemove2FA = () => {
-    setTwoFactorEnabled(false);
-    setRemove2FAOpen(false);
-  };
 
   return (
     <div className="space-y-6">
@@ -410,44 +406,12 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <div className="rounded-xl border border-border bg-card p-6">
-                <h2 className="mb-5 text-lg font-semibold text-foreground">{t("security.twoFactor")}</h2>
-                <div className="mb-6 flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="mb-2 flex items-center gap-2">
-                      <h3 className="text-sm font-medium text-foreground">{t("security.enable2FA")}</h3>
-                      {twoFactorEnabled && (
-                        <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-500">
-                          {t("security.active")}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {t("security.twoFactorDesc")}
-                    </p>
-                  </div>
-                  <Switch checked={twoFactorEnabled} onCheckedChange={setTwoFactorEnabled} />
-                </div>
-                {twoFactorEnabled && (
-                  <div className="rounded-lg border border-border bg-muted/30 p-4">
-                    <div className="flex items-start gap-3">
-                      <Smartphone className="mt-0.5 h-5 w-5 text-teal" />
-                      <div className="flex-1">
-                        <p className="mb-1 text-sm font-medium text-foreground">{t("security.authenticatorConnected")}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {t("security.authenticatorDesc")}
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => setRemove2FAOpen(true)}
-                        className="text-xs font-medium text-red-500 hover:text-red-500/80"
-                      >
-                        {t("security.remove")}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
+              <TwoFactorSetup
+                isEnabled={twoFactorEnabled}
+                onEnableChange={setTwoFactorEnabled}
+              />
+
+              <ExternalLogins />
 
               <div className="rounded-xl border border-border bg-card p-6">
                 <h2 className="mb-4 text-lg font-semibold text-foreground">{t("security.securityOptions")}</h2>
@@ -1069,31 +1033,6 @@ export default function SettingsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Remove 2FA Dialog */}
-      <Dialog open={remove2FAOpen} onOpenChange={setRemove2FAOpen}>
-        <DialogContent className="sm:max-w-[420px]">
-          <DialogHeader>
-            <DialogTitle>{t("dialogs.remove2FA.title")}</DialogTitle>
-            <DialogDescription>
-              {t("dialogs.remove2FA.description")}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="mt-4">
-            <button
-              onClick={() => setRemove2FAOpen(false)}
-              className="rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-muted"
-            >
-              {tCommon("cancel")}
-            </button>
-            <button
-              onClick={handleRemove2FA}
-              className="rounded-lg bg-red-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-500/90"
-            >
-              {t("dialogs.remove2FA.confirm")}
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

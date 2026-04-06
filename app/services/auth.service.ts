@@ -23,6 +23,10 @@ import type {
   TwoFactorVerifyRequest,
   TwoFactorSetupResponse,
   EnableTwoFactorRequest,
+  ConfirmTwoFactorSetupRequest,
+  OAuthLoginRequest,
+  LinkExternalLoginRequest,
+  ExternalLogin,
   AuthUser,
 } from "@/types";
 
@@ -212,6 +216,59 @@ export const authService = {
    */
   async disableTwoFactor(code: string): Promise<void> {
     return api.post("/api/v1/users/2fa/disable", { code });
+  },
+
+  /**
+   * Confirm TOTP 2FA setup with code from authenticator app.
+   */
+  async confirmTwoFactorSetup(data: ConfirmTwoFactorSetupRequest): Promise<void> {
+    return api.post("/api/v1/users/2fa/confirm", data);
+  },
+
+  // ===========================================================================
+  // OAUTH
+  // ===========================================================================
+
+  /**
+   * Login or register via OAuth provider.
+   */
+  async oAuthLogin(provider: string, data: OAuthLoginRequest): Promise<LoginResponse> {
+    const response = await api.post<LoginResponse>(
+      `/api/v1/auth/oauth/${provider}`,
+      data,
+      { skipAuth: true }
+    );
+
+    if (response.tokens && !response.requiresTwoFactor) {
+      tokenStorage.setTokens(
+        response.tokens.accessToken,
+        response.tokens.refreshToken,
+        response.tokens.expiresAt
+      );
+    }
+
+    return response;
+  },
+
+  /**
+   * Get user's linked external logins.
+   */
+  async getExternalLogins(): Promise<ExternalLogin[]> {
+    return api.get<ExternalLogin[]>("/api/v1/users/external-logins");
+  },
+
+  /**
+   * Link an external OAuth login to the current user.
+   */
+  async linkExternalLogin(data: LinkExternalLoginRequest): Promise<void> {
+    return api.post("/api/v1/users/external-logins", data);
+  },
+
+  /**
+   * Unlink an external OAuth login from the current user.
+   */
+  async unlinkExternalLogin(provider: string): Promise<void> {
+    return api.delete(`/api/v1/users/external-logins/${provider}`);
   },
 
   // ===========================================================================

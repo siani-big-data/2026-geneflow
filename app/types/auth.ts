@@ -81,7 +81,31 @@ export interface RefreshTokenResponse {
 
 export interface TwoFactorSetupResponse {
   secret: string;
-  qrCodeUrl: string;
+  qrCodeUri: string;
+}
+
+export interface ConfirmTwoFactorSetupRequest {
+  secret: string;
+  code: string;
+}
+
+// =============================================================================
+// OAUTH TYPES
+// =============================================================================
+
+export interface OAuthLoginRequest {
+  token: string;
+}
+
+export interface LinkExternalLoginRequest {
+  provider: string;
+  token: string;
+}
+
+export interface ExternalLogin {
+  provider: string;
+  displayName: string | null;
+  linkedAt: string;
 }
 
 // =============================================================================
