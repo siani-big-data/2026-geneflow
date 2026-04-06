@@ -14,11 +14,13 @@ from src.mounters.base import BaseMounter
 from src.mounters.postgres.connection import PostgresConnection
 from src.mounters.postgres.handlers.alignments import AlignmentsHandler
 from src.mounters.postgres.handlers.billing import BillingHandler
+from src.mounters.postgres.handlers.profiles import ProfilesHandler
 from src.mounters.postgres.handlers.studies import StudiesHandler
 from src.mounters.postgres.handlers.traces import TracesHandler
 from src.mounters.postgres.handlers.users import UsersHandler
 from src.mounters.postgres.schemas.alignments import ALIGNMENTS_SCHEMA
 from src.mounters.postgres.schemas.billing import BILLING_SCHEMA
+from src.mounters.postgres.schemas.profiles import PROFILES_SCHEMA
 from src.mounters.postgres.schemas.studies import STUDIES_SCHEMA
 from src.mounters.postgres.schemas.traces import TRACES_SCHEMA
 from src.mounters.postgres.schemas.users import USERS_SCHEMA
@@ -40,7 +42,7 @@ class PostgresMounter(BaseMounter):
     def __init__(self, dsn: str):
         super().__init__(
             name="postgres",
-            categories=["users", "studies", "traces", "alignments", "billing"],
+            categories=["users", "studies", "traces", "alignments", "billing", "profiles"],
         )
         self._dsn = dsn
         self._connection = PostgresConnection(dsn=dsn)
@@ -60,6 +62,7 @@ class PostgresMounter(BaseMounter):
             "traces": TracesHandler(self._connection),
             "alignments": AlignmentsHandler(self._connection),
             "billing": BillingHandler(self._connection),
+            "profiles": ProfilesHandler(self._connection),
         }
 
         self._running = True
@@ -80,6 +83,7 @@ class PostgresMounter(BaseMounter):
             ("traces", TRACES_SCHEMA),
             ("alignments", ALIGNMENTS_SCHEMA),
             ("billing", BILLING_SCHEMA),
+            ("profiles", PROFILES_SCHEMA),
         ]
 
         for name, schema in schemas:
