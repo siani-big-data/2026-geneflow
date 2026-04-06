@@ -1,5 +1,6 @@
 using GeneFlow.ApiNet2.Application.Identity.Interfaces;
 using GeneFlow.ApiNet2.Domain.Identity.Enumerations;
+using GeneFlow.ApiNet2.SharedKernel.Domain.Results;
 
 namespace GeneFlow.ApiNet2.Infrastructure.Identity.Services.OAuth;
 

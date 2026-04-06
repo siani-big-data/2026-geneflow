@@ -16,6 +16,7 @@ public class LoginCommandHandlerTests
     private readonly IPasswordHasher _passwordHasher = Substitute.For<IPasswordHasher>();
     private readonly IJwtTokenGenerator _tokenGenerator = Substitute.For<IJwtTokenGenerator>();
     private readonly IUserAuthenticationValidator _authValidator = Substitute.For<IUserAuthenticationValidator>();
+    private readonly ITwoFactorAuthenticator _twoFactorAuthenticator = Substitute.For<ITwoFactorAuthenticator>();
     private readonly LoginCommandHandler _handler;
 
     public LoginCommandHandlerTests()
@@ -25,7 +26,8 @@ public class LoginCommandHandlerTests
             _unitOfWork,
             _passwordHasher,
             _tokenGenerator,
-            _authValidator);
+            _authValidator,
+            _twoFactorAuthenticator);
     }
 
     #region Helper Methods

@@ -1,5 +1,6 @@
 using GeneFlow.ApiNet2.API.Middleware;
 using GeneFlow.ApiNet2.Infrastructure;
+using Microsoft.OpenApi.Models;
 
 namespace GeneFlow.ApiNet2.API.Extensions;
 
@@ -36,7 +37,7 @@ public static class ServiceCollectionExtensions
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen(options =>
         {
-            options.SwaggerDoc("v1", new()
+            options.SwaggerDoc("v1", new OpenApiInfo
             {
                 Title = "GeneFlow API",
                 Version = "v1",
@@ -44,23 +45,23 @@ public static class ServiceCollectionExtensions
             });
 
             // Add JWT support in Swagger
-            options.AddSecurityDefinition("Bearer", new()
+            options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
                 Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] and then your token.",
                 Name = "Authorization",
-                In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-                Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.ApiKey,
                 Scheme = "Bearer"
             });
 
-            options.AddSecurityRequirement(new()
+            options.AddSecurityRequirement(new OpenApiSecurityRequirement
             {
                 {
-                    new()
+                    new OpenApiSecurityScheme
                     {
-                        Reference = new()
+                        Reference = new OpenApiReference
                         {
-                            Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                            Type = ReferenceType.SecurityScheme,
                             Id = "Bearer"
                         }
                     },
