@@ -106,4 +106,19 @@ public static class ProfileErrors
     public static Error InvalidResearchField => Error.Validation(
         "Profile.InvalidResearchField",
         "The specified research field is not valid.");
+
+    /// <summary>Photo format is not supported.</summary>
+    public static Error InvalidPhotoFormat => Error.Validation(
+        "Profile.InvalidPhotoFormat",
+        "Photo format is not supported. Allowed formats: JPEG, PNG, GIF, WebP.");
+
+    /// <summary>Photo is too large.</summary>
+    public static Error PhotoTooLarge => Error.Validation(
+        "Profile.PhotoTooLarge",
+        "Photo size cannot exceed 10 MB.");
+
+    /// <summary>Photo data is invalid or empty.</summary>
+    public static Error InvalidPhotoData => Error.Validation(
+        "Profile.InvalidPhotoData",
+        "Photo data is invalid or empty.");
 }
