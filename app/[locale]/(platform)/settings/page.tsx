@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/lib/navigation";
 import { PageHeader } from "@/components/layout";
@@ -37,9 +37,14 @@ import {
   MapPin,
   Clock,
   AlertTriangle,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TwoFactorSetup, ExternalLogins } from "@/components/auth";
+import { profileService } from "@/services/profile.service";
+import { useAuthStore } from "@/stores/auth-store";
+import type { Profile, UpdateProfileRequest, UpdateResearchIdentifiersRequest } from "@/types";
+import { RESEARCH_FIELDS } from "@/types/profile";
 
 type SettingsSection = "account" | "security" | "notifications" | "preferences" | "billing" | "collaboration";
 
@@ -63,6 +68,30 @@ const mockBlockedUsers: { id: string; name: string; email: string; blockedAt: st
 export default function SettingsPage() {
   const t = useTranslations("settings");
   const tCommon = useTranslations("common");
+  const { user } = useAuthStore();
+
+  // Profile state
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Form data
+  const [formData, setFormData] = useState<UpdateProfileRequest>({
+    firstName: "",
+    lastName: null,
+    bio: null,
+    location: null,
+    professionalRole: null,
+    institutionName: null,
+    institutionDepartment: null,
+    researchField: null,
+  });
+
+  const [identifiersData, setIdentifiersData] = useState<UpdateResearchIdentifiersRequest>({
+    orcidId: null,
+    website: null,
+  });
+
   const [activeSection, setActiveSection] = useState<SettingsSection>("account");
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [studyUpdates, setStudyUpdates] = useState(true);
@@ -87,9 +116,66 @@ export default function SettingsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
 
-  const handleSaveChanges = () => {
-    setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 2000);
+  // Fetch profile data
+  const fetchProfile = useCallback(async () => {
+    try {
+      setIsLoadingProfile(true);
+      const profileData = await profileService.getCurrentProfile();
+      setProfile(profileData);
+
+      // Initialize form data
+      setFormData({
+        firstName: profileData.firstName,
+        lastName: profileData.lastName,
+        bio: profileData.bio,
+        location: profileData.location,
+        professionalRole: profileData.professionalRole,
+        institutionName: profileData.institutionName,
+        institutionDepartment: profileData.institutionDepartment,
+        researchField: profileData.researchField,
+      });
+
+      setIdentifiersData({
+        orcidId: profileData.orcidId,
+        website: profileData.website,
+      });
+    } catch (err) {
+      console.error("Failed to load profile:", err);
+    } finally {
+      setIsLoadingProfile(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
+
+  const handleSaveChanges = async () => {
+    try {
+      setIsSaving(true);
+      const updatedProfile = await profileService.updateProfile(formData);
+      setProfile(updatedProfile);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 2000);
+    } catch (err) {
+      console.error("Failed to save profile:", err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveIdentifiers = async () => {
+    try {
+      setIsSaving(true);
+      const updatedProfile = await profileService.updateResearchIdentifiers(identifiersData);
+      setProfile(updatedProfile);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 2000);
+    } catch (err) {
+      console.error("Failed to save identifiers:", err);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -159,161 +245,222 @@ export default function SettingsPage() {
           {/* Account Section */}
           {activeSection === "account" && (
             <>
-              <div className="rounded-xl border border-border bg-card p-6">
-                <h2 className="mb-5 text-lg font-semibold text-foreground">{t("account.profileInfo")}</h2>
-
-                <div className="mb-6 flex items-start gap-6 border-b border-border pb-6">
-                  <div className="group relative">
-                    <div className="flex h-20 w-20 items-center justify-center rounded-xl bg-gradient-to-br from-teal to-blue-deep text-2xl font-semibold text-white shadow-sm">
-                      SM
-                    </div>
-                    <button
-                      className="absolute bottom-0 right-0 rounded-lg border border-border bg-background p-1.5 opacity-0 shadow-md transition-all hover:bg-muted group-hover:opacity-100"
-                      aria-label="Change profile photo"
-                    >
-                      <Camera className="h-3.5 w-3.5 text-foreground" />
-                    </button>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="mb-1 text-base font-medium text-foreground">{t("account.profilePhoto")}</h3>
-                    <p className="mb-3 text-sm text-muted-foreground">{t("account.profilePhotoDesc")}</p>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setUploadPhotoOpen(true)}
-                        className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium transition-all hover:bg-muted/50"
-                      >
-                        {t("account.uploadNew")}
-                      </button>
-                      <button
-                        onClick={handleRemovePhoto}
-                        className="px-3 py-1.5 text-xs font-medium text-muted-foreground transition-all hover:text-foreground"
-                      >
-                        {t("account.remove")}
-                      </button>
-                    </div>
-                  </div>
+              {isLoadingProfile ? (
+                <div className="flex min-h-[200px] items-center justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-teal" />
                 </div>
+              ) : (
+                <>
+                  <div className="rounded-xl border border-border bg-card p-6">
+                    <h2 className="mb-5 text-lg font-semibold text-foreground">{t("account.profileInfo")}</h2>
 
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label htmlFor="first-name" className="text-sm font-medium text-foreground">
-                        {t("account.firstName")}
-                      </label>
-                      <input
-                        id="first-name"
-                        type="text"
-                        defaultValue="Sarah"
-                        className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
-                      />
+                    <div className="mb-6 flex items-start gap-6 border-b border-border pb-6">
+                      <div className="group relative">
+                        {profile?.photoUrl ? (
+                          <img
+                            src={profile.photoThumbnailUrl || profile.photoUrl}
+                            alt={profile.fullName}
+                            className="h-20 w-20 rounded-xl object-cover shadow-sm"
+                          />
+                        ) : (
+                          <div className="flex h-20 w-20 items-center justify-center rounded-xl bg-gradient-to-br from-teal to-blue-deep text-2xl font-semibold text-white shadow-sm">
+                            {profile?.initials || "??"}
+                          </div>
+                        )}
+                        <button
+                          className="absolute bottom-0 right-0 rounded-lg border border-border bg-background p-1.5 opacity-0 shadow-md transition-all hover:bg-muted group-hover:opacity-100"
+                          aria-label="Change profile photo"
+                          onClick={() => setUploadPhotoOpen(true)}
+                        >
+                          <Camera className="h-3.5 w-3.5 text-foreground" />
+                        </button>
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="mb-1 text-base font-medium text-foreground">{t("account.profilePhoto")}</h3>
+                        <p className="mb-3 text-sm text-muted-foreground">{t("account.profilePhotoDesc")}</p>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setUploadPhotoOpen(true)}
+                            className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium transition-all hover:bg-muted/50"
+                          >
+                            {t("account.uploadNew")}
+                          </button>
+                          <button
+                            onClick={handleRemovePhoto}
+                            className="px-3 py-1.5 text-xs font-medium text-muted-foreground transition-all hover:text-foreground"
+                          >
+                            {t("account.remove")}
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <label htmlFor="last-name" className="text-sm font-medium text-foreground">
-                        {t("account.lastName")}
-                      </label>
-                      <input
-                        id="last-name"
-                        type="text"
-                        defaultValue="Martinez"
-                        className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
-                      />
+
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label htmlFor="first-name" className="text-sm font-medium text-foreground">
+                            {t("account.firstName")}
+                          </label>
+                          <input
+                            id="first-name"
+                            type="text"
+                            value={formData.firstName}
+                            onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                            className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label htmlFor="last-name" className="text-sm font-medium text-foreground">
+                            {t("account.lastName")}
+                          </label>
+                          <input
+                            id="last-name"
+                            type="text"
+                            value={formData.lastName || ""}
+                            onChange={(e) => setFormData({ ...formData, lastName: e.target.value || null })}
+                            className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label htmlFor="email" className="text-sm font-medium text-foreground">
+                          {t("account.emailAddress")}
+                        </label>
+                        <div className="relative">
+                          <Mail className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                          <input
+                            id="email"
+                            type="email"
+                            value={user?.email || ""}
+                            disabled
+                            className="w-full rounded-lg border border-border bg-muted/30 py-2.5 pl-10 pr-3.5 text-sm text-muted-foreground transition-all"
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground">{t("account.emailReadOnly")}</p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label htmlFor="role" className="text-sm font-medium text-foreground">
+                            {t("account.role")}
+                          </label>
+                          <input
+                            id="role"
+                            type="text"
+                            value={formData.professionalRole || ""}
+                            onChange={(e) => setFormData({ ...formData, professionalRole: e.target.value || null })}
+                            className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label htmlFor="institution" className="text-sm font-medium text-foreground">
+                            {t("account.institution")}
+                          </label>
+                          <input
+                            id="institution"
+                            type="text"
+                            value={formData.institutionName || ""}
+                            onChange={(e) => setFormData({ ...formData, institutionName: e.target.value || null })}
+                            className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label htmlFor="research-field" className="text-sm font-medium text-foreground">
+                          {t("account.researchField")}
+                        </label>
+                        <select
+                          id="research-field"
+                          value={formData.researchField || ""}
+                          onChange={(e) => setFormData({ ...formData, researchField: e.target.value || null })}
+                          className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
+                        >
+                          <option value="">Select a field...</option>
+                          {RESEARCH_FIELDS.map((field) => (
+                            <option key={field.id} value={field.name}>
+                              {field.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label htmlFor="bio" className="text-sm font-medium text-foreground">
+                          {t("account.bio")}
+                        </label>
+                        <textarea
+                          id="bio"
+                          rows={4}
+                          value={formData.bio || ""}
+                          onChange={(e) => setFormData({ ...formData, bio: e.target.value || null })}
+                          className="w-full resize-none rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mt-6 flex items-center justify-end gap-3 border-t border-border pt-6">
+                      <Button variant="ghost" onClick={fetchProfile} disabled={isSaving}>
+                        {tCommon("cancel")}
+                      </Button>
+                      <Button onClick={handleSaveChanges} disabled={isSaving}>
+                        {isSaving ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Save className="h-4 w-4" />
+                        )}
+                        {saveSuccess ? t("account.saved") : t("account.saveChanges")}
+                      </Button>
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <label htmlFor="email" className="text-sm font-medium text-foreground">
-                      {t("account.emailAddress")}
-                    </label>
-                    <div className="relative">
-                      <Mail className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <input
-                        id="email"
-                        type="email"
-                        defaultValue="s.martinez@stanford.edu"
-                        className="w-full rounded-lg border border-border bg-background py-2.5 pl-10 pr-3.5 text-sm text-foreground transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
-                      />
+                  <div className="rounded-xl border border-border bg-card p-6">
+                    <h2 className="mb-4 text-lg font-semibold text-foreground">{t("account.researchIdentifiers")}</h2>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <label htmlFor="orcid" className="text-sm font-medium text-foreground">
+                          {t("account.orcid")}
+                        </label>
+                        <input
+                          id="orcid"
+                          type="text"
+                          placeholder="0000-0000-0000-0000"
+                          value={identifiersData.orcidId || ""}
+                          onChange={(e) => setIdentifiersData({ ...identifiersData, orcidId: e.target.value || null })}
+                          className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 font-mono text-sm text-foreground transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label htmlFor="website" className="text-sm font-medium text-foreground">
+                          {t("account.website")}
+                        </label>
+                        <div className="relative">
+                          <Globe className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                          <input
+                            id="website"
+                            type="url"
+                            placeholder="https://"
+                            value={identifiersData.website || ""}
+                            onChange={(e) => setIdentifiersData({ ...identifiersData, website: e.target.value || null })}
+                            className="w-full rounded-lg border border-border bg-background py-2.5 pl-10 pr-3.5 text-sm text-foreground transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-6 flex items-center justify-end border-t border-border pt-6">
+                      <Button onClick={handleSaveIdentifiers} disabled={isSaving}>
+                        {isSaving ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Save className="h-4 w-4" />
+                        )}
+                        {t("account.saveChanges")}
+                      </Button>
                     </div>
                   </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label htmlFor="role" className="text-sm font-medium text-foreground">
-                        {t("account.role")}
-                      </label>
-                      <input
-                        id="role"
-                        type="text"
-                        defaultValue="Principal Investigator"
-                        className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label htmlFor="institution" className="text-sm font-medium text-foreground">
-                        {t("account.institution")}
-                      </label>
-                      <input
-                        id="institution"
-                        type="text"
-                        defaultValue="Stanford Medical Center"
-                        className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label htmlFor="bio" className="text-sm font-medium text-foreground">
-                      {t("account.bio")}
-                    </label>
-                    <textarea
-                      id="bio"
-                      rows={4}
-                      defaultValue="Molecular geneticist specializing in Type 2 Diabetes research with a focus on genome-wide association studies and precision medicine approaches."
-                      className="w-full resize-none rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
-                    />
-                  </div>
-                </div>
-
-                <div className="mt-6 flex items-center justify-end gap-3 border-t border-border pt-6">
-                  <Button variant="ghost" onClick={() => setActiveSection("account")}>
-                    {tCommon("cancel")}
-                  </Button>
-                  <Button onClick={handleSaveChanges}>
-                    <Save className="h-4 w-4" />
-                    {saveSuccess ? t("account.saved") : t("account.saveChanges")}
-                  </Button>
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-border bg-card p-6">
-                <h2 className="mb-4 text-lg font-semibold text-foreground">{t("account.researchIdentifiers")}</h2>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label htmlFor="orcid" className="text-sm font-medium text-foreground">
-                      {t("account.orcid")}
-                    </label>
-                    <input
-                      id="orcid"
-                      type="text"
-                      defaultValue="0000-0002-1234-5678"
-                      className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 font-mono text-sm text-foreground transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label htmlFor="website" className="text-sm font-medium text-foreground">
-                      {t("account.website")}
-                    </label>
-                    <div className="relative">
-                      <Globe className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <input
-                        id="website"
-                        type="url"
-                        defaultValue="https://martinez-lab.stanford.edu"
-                        className="w-full rounded-lg border border-border bg-background py-2.5 pl-10 pr-3.5 text-sm text-foreground transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
+                </>
+              )}
 
               {/* Danger Zone */}
               <div className="rounded-xl border border-red-500/30 bg-card p-6">
