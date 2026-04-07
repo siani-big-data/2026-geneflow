@@ -1,7 +1,9 @@
-"""Storage mounter for trace binary data."""
+"""Storage mounter for trace and profile binary data."""
 
+import base64
 import json
 from datetime import datetime
+from io import BytesIO
 
 import structlog
 
@@ -11,9 +13,14 @@ from src.mounters.storage.connection import StorageConnection
 
 logger = structlog.get_logger()
 
+# Photo settings
+MAX_PHOTO_SIZE = 10 * 1024 * 1024  # 10 MB
+ALLOWED_PHOTO_EXTENSIONS = {"jpg", "jpeg", "png", "gif", "webp"}
+THUMBNAIL_SIZE = (150, 150)
+
 
 class StorageMounter(BaseMounter):
-    """Mounter for storing trace binary data in S3-compatible storage."""
+    """Mounter for storing trace and profile binary data in S3-compatible storage."""
 
     def __init__(
         self,
@@ -25,7 +32,7 @@ class StorageMounter(BaseMounter):
     ):
         super().__init__(
             name="storage",
-            categories=["traces"],
+            categories=["traces", "profiles"],
         )
         self._connection = StorageConnection(
             endpoint_url=endpoint_url,
@@ -50,13 +57,19 @@ class StorageMounter(BaseMounter):
 
     async def handle_event(self, event: dict) -> None:
         """Handle an incoming event."""
-        event_type = event.get("type", "")
-        payload = event.get("payload", {})
+        event_type = event.get("type", "") or event.get("event_type", "")
+        payload = event.get("payload", {}) or event.get("data", {})
 
+        # Trace events
         if event_type == "TraceUploaded":
             await self._handle_trace_uploaded(payload)
         elif event_type == "TraceDeleted":
             await self._handle_trace_deleted(payload)
+        # Profile photo events
+        elif event_type == "ProfilePhotoUploadedEvent":
+            await self._handle_profile_photo_uploaded(payload)
+        elif event_type == "ProfilePhotoDeletedEvent":
+            await self._handle_profile_photo_deleted(payload)
 
         self._metrics["events_processed"] += 1
 
@@ -87,6 +100,193 @@ class StorageMounter(BaseMounter):
             await self._connection.delete_object(self._bucket, obj["key"])
 
         logger.info("storage_trace_deleted", trace_id=trace_id)
+
+    # =========================================================================
+    # PROFILE PHOTO HANDLERS
+    # =========================================================================
+
+    async def _handle_profile_photo_uploaded(self, payload: dict) -> None:
+        """Handle ProfilePhotoUploadedEvent."""
+        profile_id = payload.get("profile_id") or payload.get("ProfileId")
+        photo_data_b64 = payload.get("photo_data") or payload.get("PhotoData")
+        extension = payload.get("extension") or payload.get("Extension") or "jpg"
+        content_type = payload.get("content_type") or payload.get("ContentType") or "image/jpeg"
+
+        if not profile_id or not photo_data_b64:
+            logger.warning("profile_photo_upload_missing_data", profile_id=profile_id)
+            return
+
+        # Decode base64 photo data
+        try:
+            photo_data = base64.b64decode(photo_data_b64)
+        except Exception as e:
+            logger.error("profile_photo_decode_failed", profile_id=profile_id, error=str(e))
+            return
+
+        # Validate size
+        if len(photo_data) > MAX_PHOTO_SIZE:
+            logger.warning(
+                "profile_photo_too_large",
+                profile_id=profile_id,
+                size=len(photo_data),
+                max_size=MAX_PHOTO_SIZE,
+            )
+            return
+
+        # Validate extension
+        ext_lower = extension.lower().lstrip(".")
+        if ext_lower not in ALLOWED_PHOTO_EXTENSIONS:
+            logger.warning(
+                "profile_photo_invalid_extension",
+                profile_id=profile_id,
+                extension=extension,
+            )
+            return
+
+        # Store original photo
+        photo_key = f"profiles/{profile_id}/photo.{ext_lower}"
+        await self._connection.put_object(self._bucket, photo_key, photo_data)
+
+        # Generate and store thumbnail
+        thumbnail_data = await self._generate_thumbnail(photo_data, ext_lower)
+        if thumbnail_data:
+            thumbnail_key = f"profiles/{profile_id}/thumbnail.{ext_lower}"
+            await self._connection.put_object(self._bucket, thumbnail_key, thumbnail_data)
+
+        # Store metadata
+        metadata = {
+            "profile_id": profile_id,
+            "extension": ext_lower,
+            "content_type": content_type,
+            "size_bytes": len(photo_data),
+            "thumbnail_size_bytes": len(thumbnail_data) if thumbnail_data else 0,
+            "uploaded_at": datetime.utcnow().isoformat() + "Z",
+        }
+        metadata_key = f"profiles/{profile_id}/photo_metadata.json"
+        await self._connection.put_object(
+            self._bucket, metadata_key, json.dumps(metadata).encode()
+        )
+
+        logger.info(
+            "storage_profile_photo_uploaded",
+            profile_id=profile_id,
+            size=len(photo_data),
+        )
+
+    async def _handle_profile_photo_deleted(self, payload: dict) -> None:
+        """Handle ProfilePhotoDeletedEvent."""
+        profile_id = payload.get("profile_id") or payload.get("ProfileId")
+
+        if not profile_id:
+            return
+
+        prefix = f"profiles/{profile_id}/"
+
+        # List and delete all photo-related objects
+        objects = await self._connection.list_objects(self._bucket, prefix)
+        for obj in objects:
+            await self._connection.delete_object(self._bucket, obj["key"])
+
+        logger.info("storage_profile_photo_deleted", profile_id=profile_id)
+
+    async def _generate_thumbnail(self, photo_data: bytes, extension: str) -> bytes | None:
+        """Generate a thumbnail from photo data."""
+        try:
+            from PIL import Image
+
+            image = Image.open(BytesIO(photo_data))
+
+            # Convert to RGB if necessary (for PNG with transparency)
+            if image.mode in ("RGBA", "P"):
+                image = image.convert("RGB")
+
+            # Create thumbnail
+            image.thumbnail(THUMBNAIL_SIZE, Image.Resampling.LANCZOS)
+
+            # Save to bytes
+            output = BytesIO()
+            format_map = {"jpg": "JPEG", "jpeg": "JPEG", "png": "PNG", "gif": "GIF", "webp": "WEBP"}
+            save_format = format_map.get(extension.lower(), "JPEG")
+            image.save(output, format=save_format, quality=85)
+            output.seek(0)
+
+            return output.read()
+        except ImportError:
+            logger.warning("pillow_not_installed_skipping_thumbnail")
+            return None
+        except Exception as e:
+            logger.error("thumbnail_generation_failed", error=str(e))
+            return None
+
+    # =========================================================================
+    # PROFILE PHOTO GETTERS
+    # =========================================================================
+
+    async def get_profile_photo(self, profile_id: str) -> tuple[bytes, str] | None:
+        """Get the profile photo for a profile."""
+        metadata_key = f"profiles/{profile_id}/photo_metadata.json"
+
+        if not await self._connection.object_exists(self._bucket, metadata_key):
+            return None
+
+        metadata_data = await self._connection.get_object(self._bucket, metadata_key)
+        metadata = json.loads(metadata_data.decode())
+        extension = metadata.get("extension", "jpg")
+
+        photo_key = f"profiles/{profile_id}/photo.{extension}"
+        photo_data = await self._connection.get_object(self._bucket, photo_key)
+
+        return photo_data, extension
+
+    async def get_profile_thumbnail(self, profile_id: str) -> tuple[bytes, str] | None:
+        """Get the thumbnail for a profile photo."""
+        metadata_key = f"profiles/{profile_id}/photo_metadata.json"
+
+        if not await self._connection.object_exists(self._bucket, metadata_key):
+            return None
+
+        metadata_data = await self._connection.get_object(self._bucket, metadata_key)
+        metadata = json.loads(metadata_data.decode())
+        extension = metadata.get("extension", "jpg")
+
+        thumbnail_key = f"profiles/{profile_id}/thumbnail.{extension}"
+        if not await self._connection.object_exists(self._bucket, thumbnail_key):
+            return None
+
+        thumbnail_data = await self._connection.get_object(self._bucket, thumbnail_key)
+        return thumbnail_data, extension
+
+    async def get_profile_photo_url(self, profile_id: str) -> str | None:
+        """Get the URL for a profile photo."""
+        metadata_key = f"profiles/{profile_id}/photo_metadata.json"
+
+        if not await self._connection.object_exists(self._bucket, metadata_key):
+            return None
+
+        metadata_data = await self._connection.get_object(self._bucket, metadata_key)
+        metadata = json.loads(metadata_data.decode())
+        extension = metadata.get("extension", "jpg")
+
+        photo_key = f"profiles/{profile_id}/photo.{extension}"
+        return f"/{self._bucket}/{photo_key}"
+
+    async def get_profile_thumbnail_url(self, profile_id: str) -> str | None:
+        """Get the URL for a profile thumbnail."""
+        metadata_key = f"profiles/{profile_id}/photo_metadata.json"
+
+        if not await self._connection.object_exists(self._bucket, metadata_key):
+            return None
+
+        metadata_data = await self._connection.get_object(self._bucket, metadata_key)
+        metadata = json.loads(metadata_data.decode())
+        extension = metadata.get("extension", "jpg")
+
+        thumbnail_key = f"profiles/{profile_id}/thumbnail.{extension}"
+        return f"/{self._bucket}/{thumbnail_key}"
+
+    # =========================================================================
+    # TRACE CHUNKING
+    # =========================================================================
 
     async def _stoREDACTED(self, trace_id: str, parsed_data: dict) -> TraceManifest:
         """Store trace data in chunks."""
@@ -182,11 +382,15 @@ class StorageMounter(BaseMounter):
         """Check if storage connection is healthy."""
         return await self._connection.health_check()
 
-    async def rebuild(self) -> None:
+    async def rebuild(self, categories: list[str] | None = None) -> None:
         """Rebuild by deleting all stored data."""
-        objects = await self._connection.list_objects(self._bucket, "traces/")
-        for obj in objects:
-            await self._connection.delete_object(self._bucket, obj["key"])
+        target_categories = categories or ["traces", "profiles"]
+
+        for category in target_categories:
+            objects = await self._connection.list_objects(self._bucket, f"{category}/")
+            for obj in objects:
+                await self._connection.delete_object(self._bucket, obj["key"])
+            logger.info("storage_category_cleared", category=category)
 
         self._metrics["events_processed"] = 0
-        logger.info("storage_mounter_rebuild")
+        logger.info("storage_mounter_rebuild", categories=target_categories)
