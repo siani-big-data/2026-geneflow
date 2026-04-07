@@ -2,6 +2,8 @@ using GeneFlow.ApiNet2.Application.Profiles.Commands.DeleteProfilePhoto;
 using GeneFlow.ApiNet2.Domain.Identity;
 using GeneFlow.ApiNet2.Domain.Profiles;
 using GeneFlow.ApiNet2.Domain.Profiles.ValueObjects;
+using GeneFlow.ApiNet2.SharedKernel.Infrastructure;
+using Microsoft.Extensions.Logging;
 
 namespace GeneFlow.ApiNet2.Tests.Application.Profiles.Commands;
 
@@ -12,13 +14,17 @@ public class DeleteProfilePhotoCommandHandlerTests
 {
     private readonly IProfileRepository _profileRepository = Substitute.For<IProfileRepository>();
     private readonly IProfileUnitOfWork _unitOfWork = Substitute.For<IProfileUnitOfWork>();
+    private readonly IEventBusPublisher _eventBusPublisher = Substitute.For<IEventBusPublisher>();
+    private readonly ILogger<DeleteProfilePhotoCommandHandler> _logger = Substitute.For<ILogger<DeleteProfilePhotoCommandHandler>>();
     private readonly DeleteProfilePhotoCommandHandler _handler;
 
     public DeleteProfilePhotoCommandHandlerTests()
     {
         _handler = new DeleteProfilePhotoCommandHandler(
             _profileRepository,
-            _unitOfWork);
+            _unitOfWork,
+            _eventBusPublisher,
+            _logger);
     }
 
     private static Profile CreateTestProfile()
