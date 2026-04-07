@@ -1,12 +1,15 @@
 using GeneFlow.ApiNet2.Application.Identity.Interfaces;
 using GeneFlow.ApiNet2.Application.Identity.Services;
 using GeneFlow.ApiNet2.Domain.Identity;
+using GeneFlow.ApiNet2.Domain.Profiles;
 using GeneFlow.ApiNet2.Infrastructure.Events;
 using GeneFlow.ApiNet2.Infrastructure.Identity.Configuration;
 using GeneFlow.ApiNet2.Infrastructure.Identity.Persistence.Context;
 using GeneFlow.ApiNet2.Infrastructure.Identity.Persistence.Repositories;
 using GeneFlow.ApiNet2.Infrastructure.Identity.Services;
 using GeneFlow.ApiNet2.Infrastructure.Identity.Services.OAuth;
+using GeneFlow.ApiNet2.Infrastructure.Profiles.Persistence.Context;
+using GeneFlow.ApiNet2.Infrastructure.Profiles.Persistence.Repositories;
 using GeneFlow.ApiNet2.Infrastructure.Redis;
 using GeneFlow.ApiNet2.Infrastructure.Redis.Configuration;
 using GeneFlow.ApiNet2.SharedKernel.Infrastructure;
@@ -64,6 +67,21 @@ public static class DependencyInjection
         // Identity Repositories
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IUserUnitOfWork, UserUnitOfWork>();
+
+        // Profiles DbContext
+        services.AddDbContext<ProfileContext>(options =>
+            options.UseNpgsql(connectionString, npgsqlOptions =>
+            {
+                npgsqlOptions.MigrationsAssembly(typeof(ProfileContext).Assembly.FullName);
+                npgsqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: 3,
+                    maxRetryDelay: TimeSpan.FromSeconds(5),
+                    errorCodesToAdd: null);
+            }));
+
+        // Profiles Repositories
+        services.AddScoped<IProfileRepository, ProfileRepository>();
+        services.AddScoped<IProfileUnitOfWork, ProfileUnitOfWork>();
 
         return services;
     }
