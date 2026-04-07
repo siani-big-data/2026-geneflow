@@ -27,4 +27,11 @@ public static class ApiRoutes
         /// <summary>Base path for user endpoints.</summary>
         public const string Base = $"{ApiRoutes.Base}/users";
     }
+
+    /// <summary>Profile management routes.</summary>
+    public static class Profiles
+    {
+        /// <summary>Base path for profile endpoints.</summary>
+        public const string Base = $"{ApiRoutes.Base}/profiles";
+    }
 }

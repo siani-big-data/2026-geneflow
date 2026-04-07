@@ -7,6 +7,7 @@ using GeneFlow.ApiNet2.Application.Profiles.Commands.DeleteProfilePhoto;
 using GeneFlow.ApiNet2.Application.Profiles.Commands.UpdateProfile;
 using GeneFlow.ApiNet2.Application.Profiles.Commands.UpdateProfilePhoto;
 using GeneFlow.ApiNet2.Application.Profiles.Commands.UpdateResearchIdentifiers;
+using GeneFlow.ApiNet2.Application.Profiles.Commands.UploadProfilePhoto;
 using GeneFlow.ApiNet2.Application.Profiles.Queries.GetCurrentUserProfile;
 using GeneFlow.ApiNet2.Application.Profiles.Queries.GetProfileByUserId;
 using GeneFlow.ApiNet2.Application.Profiles.Queries.GetProfilesByUserIds;
@@ -78,6 +79,16 @@ public sealed class ProfileEndpoints : IEndpoint
             .WithDescription("Removes the profile photo for the currently authenticated user.")
             .RequireAuthorization()
             .Produces(StatusCodes.Status204NoContent)
+            .Produces(StatusCodes.Status401Unauthorized);
+
+        group.MapPost("/me/photo/upload", UploadProfilePhoto)
+            .WithName("Profiles_UploadPhoto")
+            .WithSummary("Upload profile photo")
+            .WithDescription("Uploads a profile photo for the currently authenticated user. Max size: 10MB. Supported formats: JPEG, PNG, GIF, WebP.")
+            .RequireAuthorization()
+            .DisableAntiforgery()
+            .Produces<ProfileResponse>(StatusCodes.Status200OK)
+            .ProducesValidationProblem()
             .Produces(StatusCodes.Status401Unauthorized);
 
         // Profile by user ID endpoints
@@ -215,6 +226,38 @@ public sealed class ProfileEndpoints : IEndpoint
             return result.ToHttpResult();
 
         return Results.NoContent();
+    }
+
+    private static async Task<IResult> UploadProfilePhoto(
+        IFormFile file,
+        [FromServices] ISender sender,
+        [FromServices] ICurrentUserService currentUser,
+        CancellationToken cancellationToken)
+    {
+        if (currentUser.UserId is null)
+            return Results.Unauthorized();
+
+        if (file is null || file.Length == 0)
+            return Results.BadRequest(new { error = "No file provided" });
+
+        // Read file to base64
+        using var memoryStream = new MemoryStream();
+        await file.CopyToAsync(memoryStream, cancellationToken);
+        var photoDataBase64 = Convert.ToBase64String(memoryStream.ToArray());
+
+        var command = new UploadProfilePhotoCommand(
+            currentUser.UserId.Value.ToString(),
+            photoDataBase64,
+            file.FileName,
+            file.ContentType,
+            file.Length);
+
+        var result = await sender.Send(command, cancellationToken);
+
+        if (result.IsFailure)
+            return result.ToHttpResult();
+
+        return Results.Ok(result.Value.ToResponse());
     }
 
     private static async Task<IResult> GetProfileByUserId(
