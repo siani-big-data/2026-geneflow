@@ -14,12 +14,14 @@ from src.mounters.base import BaseMounter
 from src.mounters.postgres.connection import PostgresConnection
 from src.mounters.postgres.handlers.alignments import AlignmentsHandler
 from src.mounters.postgres.handlers.billing import BillingHandler
+from src.mounters.postgres.handlers.payments import PaymentsHandler
 from src.mounters.postgres.handlers.profiles import ProfilesHandler
 from src.mounters.postgres.handlers.studies import StudiesHandler
 from src.mounters.postgres.handlers.traces import TracesHandler
 from src.mounters.postgres.handlers.users import UsersHandler
 from src.mounters.postgres.schemas.alignments import ALIGNMENTS_SCHEMA
 from src.mounters.postgres.schemas.billing import BILLING_SCHEMA
+from src.mounters.postgres.schemas.payments import PAYMENTS_SCHEMA
 from src.mounters.postgres.schemas.profiles import PROFILES_SCHEMA
 from src.mounters.postgres.schemas.studies import STUDIES_SCHEMA
 from src.mounters.postgres.schemas.traces import TRACES_SCHEMA
@@ -37,12 +39,14 @@ class PostgresMounter(BaseMounter):
     - traces
     - alignments
     - billing (plans + subscriptions)
+    - payments (payment methods)
+    - profiles
     """
 
     def __init__(self, dsn: str):
         super().__init__(
             name="postgres",
-            categories=["users", "studies", "traces", "alignments", "billing", "profiles"],
+            categories=["users", "studies", "traces", "alignments", "billing", "payments", "profiles"],
         )
         self._dsn = dsn
         self._connection = PostgresConnection(dsn=dsn)
@@ -62,6 +66,7 @@ class PostgresMounter(BaseMounter):
             "traces": TracesHandler(self._connection),
             "alignments": AlignmentsHandler(self._connection),
             "billing": BillingHandler(self._connection),
+            "payments": PaymentsHandler(self._connection),
             "profiles": ProfilesHandler(self._connection),
         }
 
@@ -83,6 +88,7 @@ class PostgresMounter(BaseMounter):
             ("traces", TRACES_SCHEMA),
             ("alignments", ALIGNMENTS_SCHEMA),
             ("billing", BILLING_SCHEMA),
+            ("payments", PAYMENTS_SCHEMA),
             ("profiles", PROFILES_SCHEMA),
         ]
 
