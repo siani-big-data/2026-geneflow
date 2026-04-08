@@ -1,6 +1,7 @@
 """Payments event handler for PostgreSQL."""
 
 import json
+
 from src.mounters.postgres.handlers.base import BaseHandler
 
 
