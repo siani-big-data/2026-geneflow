@@ -204,18 +204,25 @@ class TestStorageMounter:
 
     async def test_rebuild(self, storage_mounter, mock_connection):
         """Test rebuilding storage."""
-        mock_connection.list_objects.return_value = [
-            {"key": "traces/trace-1/original.ab1"},
-            {"key": "traces/trace-2/manifest.json"},
-        ]
+        # Mock returns different objects for each category prefix
+        def list_objects_side_effect(bucket, prefix):
+            if prefix == "traces/":
+                return [
+                    {"key": "traces/trace-1/original.ab1"},
+                    {"key": "traces/trace-2/manifest.json"},
+                ]
+            return []  # No profile objects
+
+        mock_connection.list_objects.side_effect = list_objects_side_effect
 
         await storage_mounter.rebuild()
 
-        # Should delete all objects
+        # Should delete all objects (only traces, profiles is empty)
         assert mock_connection.delete_object.call_count == 2
 
     def test_categories(self, storage_mounter):
         """Test mounter categories."""
-        assert storage_mounter.categories == ["traces"]
+        assert storage_mounter.categories == ["traces", "profiles"]
         assert storage_mounter.handles_category("traces") is True
+        assert storage_mounter.handles_category("profiles") is True
         assert storage_mounter.handles_category("users") is False
