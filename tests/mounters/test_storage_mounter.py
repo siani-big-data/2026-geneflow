@@ -204,6 +204,7 @@ class TestStorageMounter:
 
     async def test_rebuild(self, storage_mounter, mock_connection):
         """Test rebuilding storage."""
+
         # Mock returns different objects for each category prefix
         def list_objects_side_effect(bucket, prefix):
             if prefix == "traces/":
