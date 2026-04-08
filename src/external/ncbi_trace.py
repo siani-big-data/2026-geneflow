@@ -3,10 +3,8 @@
 import asyncio
 import gzip
 import json
-import io
 from dataclasses import dataclass, field
 from datetime import datetime
-from pathlib import Path
 
 import httpx
 import structlog
@@ -76,7 +74,10 @@ class DownloadStats:
             "successful": self.successful,
             "failed": self.failed,
             "totalBytes": self.total_bytes,
-            "successRate": f"{(self.successful / self.total * 100):.1f}%" if self.total > 0 else "0%",
+            "successRate": (
+                f"{(self.successful / self.total * 100):.1f}%"
+                if self.total > 0 else "0%"
+            ),
         }
 
 

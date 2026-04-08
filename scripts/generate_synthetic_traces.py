@@ -27,7 +27,10 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.ml.datasets.augmentation import TraceGenerator, TraceGeneratorConfig
+from src.ml.datasets.augmentation import (  # noqa: E402
+    TraceGenerator,
+    TraceGeneratorConfig,
+)
 
 logging.basicConfig(
     level=logging.INFO,

@@ -44,13 +44,18 @@ class RFModelWrapper:
         results = []
         for i in range(len(X)):
             pred_idx = int(np.argmax(probs[i]))
-            pred_name = self.class_names[pred_idx] if pred_idx < len(self.class_names) else f"class_{pred_idx}"
+            if pred_idx < len(self.class_names):
+                pred_name = self.class_names[pred_idx]
+            else:
+                pred_name = f"class_{pred_idx}"
             results.append({
                 "label": pred_name,
                 "confidence": float(probs[i, pred_idx]),
                 "level": self.level,
                 "all_probs": {
-                    self.class_names[j] if j < len(self.class_names) else f"class_{j}": float(probs[i, j])
+                    (
+                        self.class_names[j] if j < len(self.class_names) else f"class_{j}"
+                    ): float(probs[i, j])
                     for j in np.argsort(probs[i])[-5:][::-1]  # Top 5
                 },
             })
@@ -204,7 +209,9 @@ class GeneFlowAIService:
         checkpoint_path = Path(self._model_info[model_name].checkpoint_path)
 
         if not checkpoint_path.exists():
-            logger.warning("model_checkpoint_not_found", model=model_name, path=str(checkpoint_path))
+            logger.warning(
+                "model_checkpoint_not_found", model=model_name, path=str(checkpoint_path)
+            )
             self._models[model_name] = None
             return None
 
@@ -273,13 +280,13 @@ class GeneFlowAIService:
             # Try different loading strategies
             model = None
 
-            # Strategy 1: Class has a classmethod load (like TaxonomyClassifier.load_from_checkpoint)
+            # Strategy 1: Class has load_from_checkpoint (like TaxonomyClassifier)
             if hasattr(model_class, "load_from_checkpoint"):
                 model = model_class.load_from_checkpoint(checkpoint_path)
 
             # Strategy 2: Class has a classmethod load (like HeterozygoteClassifier.load)
             elif hasattr(model_class, "load"):
-                load_method = getattr(model_class, "load")
+                getattr(model_class, "load")
                 # Check if it's a classmethod by trying to call it
                 try:
                     model = model_class.load(checkpoint_path)
@@ -345,7 +352,9 @@ class GeneFlowAIService:
                     import dataclasses
                     if dataclasses.is_dataclass(config_class):
                         valid_fields = {f.name for f in dataclasses.fields(config_class)}
-                        filtered_config = {k: v for k, v in config_data.items() if k in valid_fields}
+                        filtered_config = {
+                            k: v for k, v in config_data.items() if k in valid_fields
+                        }
                     else:
                         filtered_config = config_data
 
@@ -547,7 +556,12 @@ class GeneFlowAIService:
                     second_max = np.sort(signals, axis=0)[-2]
                     signals = np.vstack([a, c, g, t, gc_ratio, at_ratio, max_signal, second_max])
                 else:
-                    return {"error": f"Model expects {expected_channels} channels, got {signals.shape[0]}"}
+                    return {
+                    "error": (
+                        f"Model expects {expected_channels} channels, "
+                        f"got {signals.shape[0]}"
+                    )
+                }
 
             # Predict using model's predict method
             probs = model.predict(signals)
@@ -750,7 +764,10 @@ class GeneFlowAIService:
 
         # Heterozygote detection (requires 4-channel chromatogram)
         if chromatogram_signals is not None and chromatogram_signals.shape[0] >= 4:
-            hetero_signals = chromatogram_signals[:4] if chromatogram_signals.shape[0] > 4 else chromatogram_signals
+            if chromatogram_signals.shape[0] > 4:
+                hetero_signals = chromatogram_signals[:4]
+            else:
+                hetero_signals = chromatogram_signals
             hetero_result = await self.detect_heterozygotes(hetero_signals)
             if "error" not in hetero_result:
                 results["analyses"]["heterozygotes"] = hetero_result

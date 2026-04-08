@@ -61,7 +61,10 @@ class SpeciesDiscovery:
         "animalia": "Metazoa[Organism]",
         "plantae": "Viridiplantae[Organism]",
         "fungi": "Fungi[Organism]",
-        "protista": "(Eukaryota[Organism] NOT Metazoa[Organism] NOT Viridiplantae[Organism] NOT Fungi[Organism])",
+        "protista": (
+            "(Eukaryota[Organism] NOT Metazoa[Organism] "
+            "NOT Viridiplantae[Organism] NOT Fungi[Organism])"
+        ),
         "monera": "(Bacteria[Organism] OR Archaea[Organism])",  # Prokaryotes
     }
 
@@ -127,12 +130,24 @@ class SpeciesDiscovery:
             total_count = int(results.get("Count", 0))
         except Exception as e:
             logger.error(f"Search failed: {e}")
-            return DiscoveryResult(kingdom=kingdom, total_species=0, species_with_sequences=0, total_available=0, total_target=0)
+            return DiscoveryResult(
+                kingdom=kingdom,
+                total_species=0,
+                species_with_sequences=0,
+                total_available=0,
+                total_target=0,
+            )
 
         logger.info(f"Total sequences found: {total_count:,}")
 
         if total_count == 0:
-            return DiscoveryResult(kingdom=kingdom, total_species=0, species_with_sequences=0, total_available=0, total_target=0)
+            return DiscoveryResult(
+                kingdom=kingdom,
+                total_species=0,
+                species_with_sequences=0,
+                total_available=0,
+                total_target=0,
+            )
 
         # Sample sequences to discover species
         # Use LARGE sample size to discover more species (key insight from GeneFlowDatalake)
@@ -163,7 +178,10 @@ class SpeciesDiscovery:
         # For small profiles, iterate from most common (reliable data)
         # For large profiles, iterate from rarest (diversity)
         reverse_order = max_species <= 10
-        for species_key, count in sorted(species_counts.items(), key=lambda x: x[1], reverse=reverse_order):
+        sorted_species = sorted(
+            species_counts.items(), key=lambda x: x[1], reverse=reverse_order
+        )
+        for species_key, count in sorted_species:
             if len(species_targets) >= max_species:
                 break
 
@@ -195,7 +213,10 @@ class SpeciesDiscovery:
                 total_available += count
                 total_target += target
 
-        logger.debug(f"Species skipped - no taxon_id: {skipped_no_taxid}, no target: {skipped_no_target}")
+        logger.debug(
+            f"Species skipped - no taxon_id: {skipped_no_taxid}, "
+            f"no target: {skipped_no_target}"
+        )
 
         # For small targets, prioritize common species (more likely to have data)
         # For large targets, prioritize rare species (diversity)
@@ -304,7 +325,8 @@ class SpeciesDiscovery:
                                 species_counts[key] += 1
 
                     if i % 10000 == 0 and i > 0:
-                        logger.info(f"  Processed {i:,} summaries, {len(species_counts):,} species...")
+                        species_found = len(species_counts)
+                        logger.info(f"  Processed {i:,} summaries, {species_found:,} species...")
 
                 except Exception as e:
                     logger.warning(f"Error at batch {i}: {e}")
@@ -324,8 +346,8 @@ class SpeciesDiscovery:
     def _extract_taxon_id(self, summary: dict) -> int:
         """Extract taxon ID from NCBI summary."""
         # Try multiple field names (NCBI varies between API versions)
-        for field in ["TaxId", "Taxid", "taxid", "TaxID"]:
-            value = summary.get(field)
+        for field_name in ["TaxId", "Taxid", "taxid", "TaxID"]:
+            value = summary.get(field_name)
             # Check if value exists and is not None/empty
             # Note: Biopython returns IntegerElement which needs explicit int() conversion
             if value is not None:

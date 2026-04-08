@@ -3,7 +3,8 @@
 Create quality prediction dataset from real FASTQ files with data augmentation.
 
 Usage:
-    uv run python scripts/create_quality_dataset_fastq.py --input datalake/fastq_real --output datalake/datasets/quality_enhanced --samples 42000
+    uv run python scripts/create_quality_dataset_fastq.py --input datalake/fastq_real \\
+        --output datalake/datasets/quality_enhanced --samples 42000
 """
 
 import argparse
@@ -32,7 +33,7 @@ def read_fastq(fastq_path: Path, max_reads: int = None) -> list[dict]:
             if not header:
                 break
             seq = f.readline().strip().upper()
-            plus = f.readline()
+            f.readline()
             qual_str = f.readline().strip()
 
             # Convert ASCII to Phred (offset 33)
@@ -53,7 +54,12 @@ def read_fastq(fastq_path: Path, max_reads: int = None) -> list[dict]:
     return reads
 
 
-def augment_read(seq: str, qualities: np.ndarray, mutation_rate: float = 0.02, quality_noise: float = 3.0) -> tuple[str, np.ndarray]:
+def augment_read(
+    seq: str,
+    qualities: np.ndarray,
+    mutation_rate: float = 0.02,
+    quality_noise: float = 3.0
+) -> tuple[str, np.ndarray]:
     """Apply data augmentation to a read.
 
     Augmentations:
@@ -114,13 +120,13 @@ def compute_features(sequence: str) -> np.ndarray:
         features.append(sequence.count(base) / n)
 
     # 3. Dinucleotide frequencies (16)
-    dinucs = [''.join([a, b]) for a in 'ACGT' for b in 'ACGT']
+    dinucs = [a + b for a in 'ACGT' for b in 'ACGT']
     for di in dinucs:
         count = sum(1 for i in range(n-1) if sequence[i:i+2] == di)
         features.append(count / max(n-1, 1))
 
     # 4. Trinucleotide frequencies (64)
-    trinucs = [''.join([a, b, c]) for a in 'ACGT' for b in 'ACGT' for c in 'ACGT']
+    trinucs = [a + b + c for a in 'ACGT' for b in 'ACGT' for c in 'ACGT']
     for tri in trinucs:
         count = sum(1 for i in range(n-2) if sequence[i:i+3] == tri)
         features.append(count / max(n-2, 1))
@@ -166,7 +172,9 @@ def encode_sequence(sequence: str, max_length: int) -> np.ndarray:
     return encoded
 
 
-def generate_samples_from_reads(reads: list, target_count: int, max_length: int, augment_ratio: int) -> list:
+def generate_samples_from_reads(
+    reads: list, target_count: int, max_length: int, augment_ratio: int
+) -> list:
     """Generate augmented samples from a list of reads."""
     samples = []
     read_idx = 0
@@ -210,13 +218,28 @@ def generate_samples_from_reads(reads: list, target_count: int, max_length: int,
 
 def main():
     parser = argparse.ArgumentParser(description="Create quality dataset from FASTQ")
-    parser.add_argument("--input", type=str, default="datalake/fastq_real", help="FASTQ directory")
-    parser.add_argument("--output", type=str, default="datalake/datasets/quality_enhanced", help="Output directory")
-    parser.add_argument("--samples", type=int, default=42000, help="Total samples to generate")
-    parser.add_argument("--max-length", type=int, default=500, help="Max sequence length")
-    parser.add_argument("--val-split", type=float, default=0.1, help="Validation split")
-    parser.add_argument("--test-split", type=float, default=0.1, help="Test split")
-    parser.add_argument("--augment-ratio", type=int, default=10, help="Augmentations per original read")
+    parser.add_argument(
+        "--input", type=str, default="datalake/fastq_real", help="FASTQ directory"
+    )
+    parser.add_argument(
+        "--output", type=str, default="datalake/datasets/quality_enhanced",
+        help="Output directory"
+    )
+    parser.add_argument(
+        "--samples", type=int, default=42000, help="Total samples to generate"
+    )
+    parser.add_argument(
+        "--max-length", type=int, default=500, help="Max sequence length"
+    )
+    parser.add_argument(
+        "--val-split", type=float, default=0.1, help="Validation split"
+    )
+    parser.add_argument(
+        "--test-split", type=float, default=0.1, help="Test split"
+    )
+    parser.add_argument(
+        "--augment-ratio", type=int, default=10, help="Augmentations per original read"
+    )
     args = parser.parse_args()
 
     input_dir = Path(args.input)
@@ -238,7 +261,7 @@ def main():
     val_files = all_files[n_train_files:n_train_files + n_val_files]
     test_files = all_files[n_train_files + n_val_files:]
 
-    print(f"\nFile-level split (NO DATA LEAKAGE):")
+    print("\nFile-level split (NO DATA LEAKAGE):")
     print(f"  Train files: {len(train_files)}")
     print(f"  Val files: {len(val_files)}")
     print(f"  Test files: {len(test_files)}")
@@ -251,7 +274,7 @@ def main():
             reads.extend(file_reads)
         return reads
 
-    print(f"\nLoading reads...")
+    print("\nLoading reads...")
     train_reads = load_reads_from_files(train_files)
     val_reads = load_reads_from_files(val_files)
     test_reads = load_reads_from_files(test_files)
@@ -270,12 +293,18 @@ def main():
     n_val = int(args.samples * args.val_split)  # 10%
     n_test = args.samples - n_train - n_val  # 10%
 
-    print(f"\nGenerating samples (file-level isolated)...")
+    print("\nGenerating samples (file-level isolated)...")
     print(f"  Target: train={n_train:,}, val={n_val:,}, test={n_test:,}")
 
-    train_samples = generate_samples_from_reads(train_reads, n_train, args.max_length, args.augment_ratio)
-    val_samples = generate_samples_from_reads(val_reads, n_val, args.max_length, args.augment_ratio)
-    test_samples = generate_samples_from_reads(test_reads, n_test, args.max_length, args.augment_ratio)
+    train_samples = generate_samples_from_reads(
+        train_reads, n_train, args.max_length, args.augment_ratio
+    )
+    val_samples = generate_samples_from_reads(
+        val_reads, n_val, args.max_length, args.augment_ratio
+    )
+    test_samples = generate_samples_from_reads(
+        test_reads, n_test, args.max_length, args.augment_ratio
+    )
 
     # Shuffle within each split
     random.shuffle(train_samples)
@@ -288,7 +317,10 @@ def main():
         'test': test_samples,
     }
 
-    print(f"\nGenerated: train={len(train_samples):,} | val={len(val_samples):,} | test={len(test_samples):,}")
+    print(
+        f"\nGenerated: train={len(train_samples):,} | "
+        f"val={len(val_samples):,} | test={len(test_samples):,}"
+    )
 
     # Compute statistics
     all_samples = train_samples + val_samples + test_samples
@@ -299,8 +331,10 @@ def main():
 
     mean_quals = [np.mean(s['qualities']) for s in all_samples]
 
-    print(f"\nQuality statistics:")
-    print(f"  Per-base: mean={all_quals.mean():.1f}, std={all_quals.std():.1f}, range=[{all_quals.min()}, {all_quals.max()}]")
+    print("\nQuality statistics:")
+    q_mean, q_std = all_quals.mean(), all_quals.std()
+    q_min, q_max = all_quals.min(), all_quals.max()
+    print(f"  Per-base: mean={q_mean:.1f}, std={q_std:.1f}, range=[{q_min}, {q_max}]")
     print(f"  Per-sequence mean: mean={np.mean(mean_quals):.1f}, std={np.std(mean_quals):.1f}")
 
     # Save datasets
@@ -371,8 +405,8 @@ def main():
     print("DONE!")
     print("=" * 70)
     print(f"\nDataset saved to: {output_dir}")
-    print(f"Features: 101 (sequence-only, NO quality leakage)")
-    print(f"Target: mean_quality per sequence")
+    print("Features: 101 (sequence-only, NO quality leakage)")
+    print("Target: mean_quality per sequence")
 
     return 0
 

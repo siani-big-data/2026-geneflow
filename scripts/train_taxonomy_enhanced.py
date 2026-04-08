@@ -11,8 +11,10 @@ Usage:
     uv run python scripts/generate_training_datasets.py --taxonomy --level phylum
 
     # Then train
-    uv run python scripts/train_taxonomy_enhanced.py --data datalake/datasets/taxonomy_phylum
-    uv run python scripts/train_taxonomy_enhanced.py --data datalake/datasets/taxonomy_phylum --epochs 50 --batch-size 64
+    uv run python scripts/train_taxonomy_enhanced.py \\
+        --data datalake/datasets/taxonomy_phylum
+    uv run python scripts/train_taxonomy_enhanced.py \\
+        --data datalake/datasets/taxonomy_phylum --epochs 50 --batch-size 64
 """
 
 import argparse
@@ -175,9 +177,15 @@ def main():
     print(f"\nDataset: {data_dir}")
     print(f"Classification level: {config_info.get('classification_level', 'unknown')}")
     print(f"Total samples: {metadata['total_samples']}")
-    print(f"Train: {metadata['train_samples']} | Val: {metadata['val_samples']} | Test: {metadata['test_samples']}")
+    train_n = metadata['train_samples']
+    val_n = metadata['val_samples']
+    test_n = metadata['test_samples']
+    print(f"Train: {train_n} | Val: {val_n} | Test: {test_n}")
     print(f"Number of classes: {num_classes}")
-    print(f"Classes: {class_labels[:10]}..." if len(class_labels) > 10 else f"Classes: {class_labels}")
+    if len(class_labels) > 10:
+        print(f"Classes: {class_labels[:10]}...")
+    else:
+        print(f"Classes: {class_labels}")
 
     # Create datasets
     print("\n" + "-" * 70)
@@ -249,7 +257,7 @@ def main():
             class_labels=class_labels,
         )
         model = EnhancedTaxonomyClassifier(model_config)
-        print(f"Model: EnhancedTaxonomyClassifier")
+        print("Model: EnhancedTaxonomyClassifier")
         print(f"Sequence encoder: CNN with {args.num_layers} layers")
         print(f"Feature encoder: {num_features} dims -> MLP")
         print(f"Fusion dimension: {args.fusion_dim}")
@@ -262,10 +270,11 @@ def main():
             class_labels=class_labels,
         )
         model = TaxonomyClassifier(model_config)
-        print(f"Model: TaxonomyClassifier (base)")
+        print("Model: TaxonomyClassifier (base)")
 
     model = model.to(device)
-    print(f"Parameters: {sum(p.numel() for p in model.parameters() if p.requires_grad):,}")
+    n_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print(f"Parameters: {n_params:,}")
     print(f"Device: {device}")
 
     # Loss with class weights
@@ -319,8 +328,10 @@ def main():
         history["val_loss"].append(val_metrics["loss"])
         history["val_acc"].append(val_metrics["accuracy"])
 
-        print(f"Train Loss: {train_metrics['loss']:.4f} | Train Acc: {train_metrics['accuracy']:.2%}")
-        print(f"Val Loss: {val_metrics['loss']:.4f} | Val Acc: {val_metrics['accuracy']:.2%}")
+        t_loss, t_acc = train_metrics['loss'], train_metrics['accuracy']
+        print(f"Train Loss: {t_loss:.4f} | Train Acc: {t_acc:.2%}")
+        v_loss, v_acc = val_metrics['loss'], val_metrics['accuracy']
+        print(f"Val Loss: {v_loss:.4f} | Val Acc: {v_acc:.2%}")
         print(f"LR: {scheduler.get_last_lr()[0]:.6f}")
 
         # Save best model
@@ -341,7 +352,10 @@ def main():
 
         # Early stopping
         if no_improve >= args.patience:
-            print(f"\nEarly stopping at epoch {epoch + 1} (no improvement for {args.patience} epochs)")
+            print(
+                f"\nEarly stopping at epoch {epoch + 1} "
+                f"(no improvement for {args.patience} epochs)"
+            )
             break
 
     # Save final model
@@ -404,11 +418,11 @@ def main():
                         class_correct[label] += 1
 
         print("\nPer-class accuracy (top 10):")
-        sorted_classes = sorted(
-            [(label, class_correct[label] / max(class_total[label], 1), class_total[label])
-             for label in class_labels if class_total[label] > 0],
-            key=lambda x: -x[2]
-        )[:10]
+        class_stats = [
+            (label, class_correct[label] / max(class_total[label], 1), class_total[label])
+            for label in class_labels if class_total[label] > 0
+        ]
+        sorted_classes = sorted(class_stats, key=lambda x: -x[2])[:10]
 
         for label, acc, count in sorted_classes:
             print(f"  {label}: {acc:.2%} ({class_correct[label]}/{count})")

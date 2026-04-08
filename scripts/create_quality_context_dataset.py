@@ -31,7 +31,6 @@ from pathlib import Path
 import numpy as np
 from Bio import SeqIO
 
-
 CLASS_BINS = {
     5: [0, 10, 20, 30, 40, 100],
     4: [0, 15, 25, 35, 100],
@@ -199,7 +198,8 @@ def extract_ab1_data(ab1_path: Path) -> dict | None:
             return None
 
         p1am = np.array(p1am, dtype=np.float32)
-        p2am = np.array(p2am, dtype=np.float32) if p2am and len(p2am) == len(sequence) else np.zeros_like(p1am)
+        p2am_valid = p2am and len(p2am) == len(sequence)
+        p2am = np.array(p2am, dtype=np.float32) if p2am_valid else np.zeros_like(p1am)
 
         # Sample trace at peak locations
         seq_len = len(sequence)
@@ -317,7 +317,7 @@ def create_dataset(
     all_quality = np.concatenate([d["quality"] for d in all_data])
     all_classes = phred_to_class(all_quality, num_classes)
 
-    print(f"\nClass distribution:")
+    print("\nClass distribution:")
     for c in range(num_classes):
         count = (all_classes == c).sum()
         pct = 100 * count / len(all_classes)
@@ -380,7 +380,7 @@ def create_dataset(
     class_weights = len(valid_classes) / (num_classes * class_counts + 1)
     class_weights = class_weights / class_weights.sum() * num_classes
 
-    print(f"\nClass weights:")
+    print("\nClass weights:")
     for c in range(num_classes):
         print(f"  {CLASS_NAMES[num_classes][c]}: {class_weights[c]:.3f}")
 
@@ -416,8 +416,14 @@ def create_dataset(
         "train_samples": len(train_samples),
         "val_samples": len(val_samples),
         "window_size": window_size,
-        "train_class_dist": {CLASS_NAMES[num_classes][c]: int((train_classes == c).sum()) for c in range(num_classes)},
-        "val_class_dist": {CLASS_NAMES[num_classes][c]: int((val_classes == c).sum()) for c in range(num_classes)},
+        "train_class_dist": {
+            CLASS_NAMES[num_classes][c]: int((train_classes == c).sum())
+            for c in range(num_classes)
+        },
+        "val_class_dist": {
+            CLASS_NAMES[num_classes][c]: int((val_classes == c).sum())
+            for c in range(num_classes)
+        },
     }
 
     with open(output_dir / "metadata.json", "w") as f:
@@ -464,7 +470,9 @@ def main():
     else:
         print("COMPLETE")
         print(f"Output: {args.output_dir}")
-        print(f"Features: {stats['n_features']} ({len(stats['local_features'])} local + {len(stats['context_features'])} context)")
+        n_local = len(stats['local_features'])
+        n_context = len(stats['context_features'])
+        print(f"Features: {stats['n_features']} ({n_local} local + {n_context} context)")
         print(f"Samples: {stats['train_samples']} train, {stats['val_samples']} val")
 
 

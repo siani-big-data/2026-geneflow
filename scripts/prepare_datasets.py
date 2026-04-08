@@ -56,13 +56,28 @@ def collect_samples(data_dir: Path) -> list[dict]:
                 "sequence_count": metadata.get("sequence_count", 0),
                 "taxonomy": taxonomy,
                 "kingdom": kingdom.lower() if kingdom else "unknown",
-                "phylum": taxonomy.get("phylum", "").lower() if taxonomy.get("phylum") else "unknown",
-                "class": taxonomy.get("class", "").lower() if taxonomy.get("class") else "unknown",
-                "order": taxonomy.get("order", "").lower() if taxonomy.get("order") else "unknown",
-                "family": taxonomy.get("family", "").lower() if taxonomy.get("family") else "unknown",
-                "genus": taxonomy.get("genus", "").lower() if taxonomy.get("genus") else "unknown",
+                "phylum": (
+                    taxonomy.get("phylum", "").lower()
+                    if taxonomy.get("phylum") else "unknown"
+                ),
+                "class": (
+                    taxonomy.get("class", "").lower()
+                    if taxonomy.get("class") else "unknown"
+                ),
+                "order": (
+                    taxonomy.get("order", "").lower()
+                    if taxonomy.get("order") else "unknown"
+                ),
+                "family": (
+                    taxonomy.get("family", "").lower()
+                    if taxonomy.get("family") else "unknown"
+                ),
+                "genus": (
+                    taxonomy.get("genus", "").lower()
+                    if taxonomy.get("genus") else "unknown"
+                ),
             })
-        except Exception as e:
+        except Exception:
             continue
 
     return samples

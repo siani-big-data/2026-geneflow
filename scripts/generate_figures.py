@@ -7,7 +7,8 @@ Usage:
     uv run python scripts/generate_figures.py --run checkpoints/randomforest_kingdom_20260402
 
     # From legacy results (pkl + metadata)
-    uv run python scripts/generate_figures.py --legacy checkpoints/taxonomy_rf/rf_kingdom_20260402_171647.pkl
+    uv run python scripts/generate_figures.py \\
+        --legacy checkpoints/taxonomy_rf/rf_kingdom_20260402_171647.pkl
 
     # List all available runs
     uv run python scripts/generate_figures.py --list
@@ -26,8 +27,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from src.ml.training import (
     PaperFigures,
     ResultsReader,
-    TrainingResult,
-    Predictions,
 )
 
 
@@ -101,7 +100,7 @@ def generate_from_legacy_rf(pkl_path: Path, output_dir: Path = None, data_dir: P
     cache_path = cache_dir / f"features_{level}_{kmers_str}.npz"
 
     if cache_path.exists():
-        print(f"\nRe-evaluating model with cached features...")
+        print("\nRe-evaluating model with cached features...")
         cache_data = np.load(cache_path, allow_pickle=True)
         X = cache_data["X"]
         y = cache_data["y"]
@@ -156,14 +155,17 @@ def generate_from_legacy_rf(pkl_path: Path, output_dir: Path = None, data_dir: P
         # Class distribution
         from collections import Counter
         class_counts = Counter(y)
-        class_dist = {eval_class_names[i]: int(c) for i, c in class_counts.items() if i < len(eval_class_names)}
+        class_dist = {
+        eval_class_names[i]: int(c)
+        for i, c in class_counts.items() if i < len(eval_class_names)
+    }
         path = figures.class_distribution(class_dist)
         generated.append(path)
         print(f"  - {path.name}")
 
     # Print summary
     if metadata:
-        print(f"\nModel Summary:")
+        print("\nModel Summary:")
         print(f"  Level: {metadata.get('level')}")
         print(f"  Classes: {metadata.get('n_classes')}")
         print(f"  Train Accuracy: {metadata.get('train_accuracy', 0)*100:.2f}%")
@@ -235,28 +237,33 @@ def generate_from_legacy_nn(checkpoint_dir: Path, output_dir: Path = None):
     # Try to load model and re-evaluate for more figures
     best_model_path = checkpoint_dir / "best.pt"
     if best_model_path.exists():
-        print(f"\nLoading model for re-plots...")
+        print("\nLoading model for re-plots...")
 
         # Detect model type from checkpoint
         checkpoint = torch.load(best_model_path, map_location="cpu", weights_only=False)
 
         # Check for quality model
         if "input_dim" in checkpoint and "hidden_dims" in checkpoint:
-            generated.extend(_generate_quality_figures(checkpoint_dir, checkpoint, figures))
+            generated.extend(
+                _generate_quality_figures(checkpoint_dir, checkpoint, figures)
+            )
 
         # Check for trimming model
         if "config" in checkpoint and "TrimmingConfig" in str(checkpoint["config"]):
-            generated.extend(_generate_trimming_figures(checkpoint_dir, checkpoint, figures))
+            generated.extend(
+                _generate_trimming_figures(checkpoint_dir, checkpoint, figures)
+            )
 
     print(f"\nGenerated {len(generated)} figures in {output_dir}")
     return generated
 
 
-def _generate_quality_figures(checkpoint_dir: Path, checkpoint: dict, figures: PaperFigures) -> list:
+def _generate_quality_figures(
+    checkpoint_dir: Path, checkpoint: dict, figures: PaperFigures
+) -> list:
     """Generate figures for quality prediction model."""
     import torch
     import torch.nn as nn
-    from torch.utils.data import DataLoader
 
     generated = []
 
@@ -377,10 +384,12 @@ def _generate_quality_figures(checkpoint_dir: Path, checkpoint: dict, figures: P
     return generated
 
 
-def _generate_trimming_figures(checkpoint_dir: Path, checkpoint: dict, figures: PaperFigures) -> list:
+def _generate_trimming_figures(
+    checkpoint_dir: Path, checkpoint: dict, figures: PaperFigures
+) -> list:
     """Generate figures for trimming prediction model."""
-    import torch
     import matplotlib
+    import torch
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
@@ -482,10 +491,11 @@ def _generate_trimming_figures(checkpoint_dir: Path, checkpoint: dict, figures: 
     # Figure 2: Error distributions
     fig, axes = plt.subplots(1, 2, figsize=(14, 5))
 
-    for ax, pred, true, title, color in [
+    error_data = [
         (axes[0], pred_start, true_start, "Start Position Error", figures.COLORS[0]),
         (axes[1], pred_end, true_end, "End Position Error", figures.COLORS[1]),
-    ]:
+    ]
+    for ax, pred, true, title, color in error_data:
         errors = pred - true
         ax.hist(errors, bins=50, color=color, edgecolor='white', alpha=0.8)
         ax.axvline(0, color='red', linestyle='--', lw=1.5)
@@ -509,7 +519,8 @@ def _generate_trimming_figures(checkpoint_dir: Path, checkpoint: dict, figures: 
     fig, axes = plt.subplots(2, 3, figsize=(15, 8))
     axes = axes.flatten()
 
-    sample_indices = np.random.choice(len(files), min(6, len(files)), replace=False)
+    n_samples = min(6, len(files))
+    sample_indices = np.random.choice(len(files), n_samples, replace=False)
 
     for ax, idx in zip(axes, sample_indices):
         data = np.load(files[idx])
@@ -525,17 +536,31 @@ def _generate_trimming_figures(checkpoint_dir: Path, checkpoint: dict, figures: 
         pred_e = int(ratios[0, 1].item() * len(quality))
 
         ax.plot(quality, color='gray', alpha=0.7, lw=0.8, label='Quality')
-        ax.axvline(true_s, color=figures.COLORS[0], lw=2, linestyle='--', label=f'True start: {true_s}')
-        ax.axvline(true_e, color=figures.COLORS[0], lw=2, linestyle='-', label=f'True end: {true_e}')
-        ax.axvline(pred_s, color=figures.COLORS[1], lw=2, linestyle='--', label=f'Pred start: {pred_s}')
-        ax.axvline(pred_e, color=figures.COLORS[1], lw=2, linestyle='-', label=f'Pred end: {pred_e}')
+        ax.axvline(
+            true_s, color=figures.COLORS[0], lw=2, linestyle='--',
+            label=f'True start: {true_s}'
+        )
+        ax.axvline(
+            true_e, color=figures.COLORS[0], lw=2, linestyle='-',
+            label=f'True end: {true_e}'
+        )
+        ax.axvline(
+            pred_s, color=figures.COLORS[1], lw=2, linestyle='--',
+            label=f'Pred start: {pred_s}'
+        )
+        ax.axvline(
+            pred_e, color=figures.COLORS[1], lw=2, linestyle='-',
+            label=f'Pred end: {pred_e}'
+        )
 
         ax.set_xlabel('Position')
         ax.set_ylabel('Quality')
         ax.set_ylim(0, 45)
         ax.legend(fontsize=7, loc='lower right')
 
-    fig.suptitle('Example Predictions (blue=actual, orange=predicted)', fontweight='bold')
+    fig.suptitle(
+        'Example Predictions (blue=actual, orange=predicted)', fontweight='bold'
+    )
     plt.tight_layout()
 
     path = figures.output_dir / f"examples_trimming.{figures.format}"

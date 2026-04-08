@@ -6,28 +6,33 @@ at multiple taxonomic levels simultaneously (kingdom, phylum, class, etc.).
 
 Usage:
     # Using precomputed dataset (recommended - faster):
-    python scripts/train_taxonomy_hierarchical.py --dataset-dir datalake/datasets/taxonomy_hierarchical_kingdom_phylum_class --epochs 50
+    python scripts/train_taxonomy_hierarchical.py \\
+        --dataset-dir datalake/datasets/taxonomy_hierarchical_kingdom_phylum_class \\
+        --epochs 50
 
     # Using raw data (slower, extracts features on-the-fly):
-    python scripts/train_taxonomy_hierarchical.py --data-dir datalake/raw --levels kingdom phylum class --epochs 50
+    python scripts/train_taxonomy_hierarchical.py \\
+        --data-dir datalake/raw --levels kingdom phylum class --epochs 50
 """
 
 import argparse
 import json
+
 import matplotlib
+
 matplotlib.use('Agg')  # Non-interactive backend for plots
 from datetime import datetime
 from pathlib import Path
 
 import torch
-from torch.utils.data import DataLoader, random_split, Subset
+from torch.utils.data import DataLoader, Subset, random_split
 
 from src.ml.datasets import (
     PrecomputedHierarchicalTaxonomyDataset,
 )
 from src.ml.datasets.hierarchical_taxonomy_dataset import (
-    HierarchicalTaxonomyDataset,
     TAXONOMY_LEVELS,
+    HierarchicalTaxonomyDataset,
 )
 from src.ml.models.taxonomy import (
     TaxonomyClassifier,
@@ -64,14 +69,33 @@ def parse_args():
     parser.add_argument("--lr", type=float, default=1e-3, help="Learning rate")
     parser.add_argument("--max-seq-length", type=int, default=2000, help="Max sequence length")
     parser.add_argument("--min-samples", type=int, default=5, help="Min samples per class")
-    parser.add_argument("--val-split", type=float, default=0.2, help="Validation split ratio (only for raw data)")
-    parser.add_argument("--hierarchy-weight", type=float, default=0.1, help="Hierarchy loss weight")
-    parser.add_argument("--checkpoint-dir", type=str, default="checkpoints/taxonomy", help="Checkpoint directory")
-    parser.add_argument("--use-weights", action="stoREDACTED", help="Use class weights for imbalanced data")
+    parser.add_argument(
+        "--val-split", type=float, default=0.2,
+        help="Validation split ratio (only for raw data)"
+    )
+    parser.add_argument(
+        "--hierarchy-weight", type=float, default=0.1, help="Hierarchy loss weight"
+    )
+    parser.add_argument(
+        "--checkpoint-dir", type=str, default="checkpoints/taxonomy",
+        help="Checkpoint directory"
+    )
+    parser.add_argument(
+        "--use-weights", action="stoREDACTED",
+        help="Use class weights for imbalanced data"
+    )
     parser.add_argument("--num-workers", type=int, default=0, help="DataLoader workers")
-    parser.add_argument("--sample-fraction", type=float, default=1, help="Fraction of dataset to use (0.15 = 15 percent)")
-    parser.add_argument("--patience", type=int, default=50, help="Early stopping patience (0 to disable)")
-    parser.add_argument("--focal-loss", action="stoREDACTED", help="Use focal loss for class imbalance")
+    parser.add_argument(
+        "--sample-fraction", type=float, default=1,
+        help="Fraction of dataset to use (0.15 = 15 percent)"
+    )
+    parser.add_argument(
+        "--patience", type=int, default=50,
+        help="Early stopping patience (0 to disable)"
+    )
+    parser.add_argument(
+        "--focal-loss", action="stoREDACTED", help="Use focal loss for class imbalance"
+    )
     parser.add_argument("--focal-gamma", type=float, default=2.0, help="Focal loss gamma parameter")
     return parser.parse_args()
 
@@ -116,8 +140,13 @@ def generate_plots(history: dict, levels: list, save_dir: Path) -> list:
         color = colors[i % len(colors)]
         train_acc = [m.get(f"acc_{level}", 0) * 100 for m in train_metrics]
         val_acc = [m.get(f"acc_{level}", 0) * 100 for m in val_metrics]
-        ax.plot(epochs, val_acc, label=f"{level.capitalize()} (val)", linewidth=2, color=color)
-        ax.plot(epochs, train_acc, label=f"{level.capitalize()} (train)", linewidth=1, linestyle="--", color=color, alpha=0.5)
+        val_label = f"{level.capitalize()} (val)"
+        train_label = f"{level.capitalize()} (train)"
+        ax.plot(epochs, val_acc, label=val_label, linewidth=2, color=color)
+        ax.plot(
+            epochs, train_acc, label=train_label,
+            linewidth=1, linestyle="--", color=color, alpha=0.5
+        )
 
     ax.set_xlabel("Epoch", fontsize=12)
     ax.set_ylabel("Accuracy (%)", fontsize=12)
@@ -519,7 +548,7 @@ def main():
         hierarchy_loss_weight=args.hierarchy_weight,
     )
 
-    print(f"\nModel configuration:")
+    print("\nModel configuration:")
     print(f"  Classes per level: {config.num_classes_per_level}")
 
     model = TaxonomyClassifier(config)
@@ -610,7 +639,11 @@ def main():
             best_epoch = epoch + 1
             patience_counter = 0
             model.save(checkpoint_dir / "best.pt")
-            print(f"  -> New best model saved (loss: {best_val_loss:.4f}, avg acc: {avg_val_acc*100:.2f}%)")
+            avg_acc_pct = avg_val_acc * 100
+            print(
+                f"  -> New best model saved (loss: {best_val_loss:.4f}, "
+                f"avg acc: {avg_acc_pct:.2f}%)"
+            )
         else:
             patience_counter += 1
             if args.patience > 0 and patience_counter >= args.patience:
@@ -644,16 +677,16 @@ def main():
     print(f"Best epoch: {best_epoch}")
     print(f"Best validation loss: {best_val_loss:.4f}")
     print(f"Best average validation accuracy: {best_val_acc*100:.2f}%")
-    print(f"Final accuracies per level:")
+    print("Final accuracies per level:")
     for level in model.active_levels:
         acc = history["val"][-1].get(f"acc_{level}", 0) * 100
         print(f"  {level}: {acc:.2f}%")
     print(f"\nResults saved to: {checkpoint_dir}/")
-    print(f"  ├── config.json          # Run configuration")
-    print(f"  ├── best.pt              # Best model checkpoint")
-    print(f"  ├── final.pt             # Final model checkpoint")
-    print(f"  ├── history.json         # Training history")
-    print(f"  └── plots/               # Training plots")
+    print("  ├── config.json          # Run configuration")
+    print("  ├── best.pt              # Best model checkpoint")
+    print("  ├── final.pt             # Final model checkpoint")
+    print("  ├── history.json         # Training history")
+    print("  └── plots/               # Training plots")
     for p in plots:
         print(f"      └── {p.name}")
 

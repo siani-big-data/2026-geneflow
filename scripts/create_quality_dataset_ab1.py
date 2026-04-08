@@ -80,7 +80,7 @@ def extract_ab1_data(ab1_path: Path) -> dict | None:
             "sequence": sequence,
         }
 
-    except Exception as e:
+    except Exception:
         return None
 
 
@@ -227,8 +227,12 @@ def create_quality_dataset(
     print(f"Original data: {total_positions} positions")
 
     quality_values = np.array(quality_values)
-    print(f"Quality stats: min={quality_values.min():.0f}, max={quality_values.max():.0f}, "
-          f"mean={quality_values.mean():.1f}, std={quality_values.std():.1f}")
+    q_min, q_max = quality_values.min(), quality_values.max()
+    q_mean, q_std = quality_values.mean(), quality_values.std()
+    print(
+        f"Quality stats: min={q_min:.0f}, max={q_max:.0f}, "
+        f"mean={q_mean:.1f}, std={q_std:.1f}"
+    )
 
     # Split at FILE level to prevent data leakage
     np.random.shuffle(all_data)
@@ -240,7 +244,10 @@ def create_quality_dataset(
     val_files = all_data[train_end:val_end]
     test_files = all_data[val_end:]
 
-    print(f"\nFile-level split: {len(train_files)} train, {len(val_files)} val, {len(test_files)} test files")
+    print(
+        f"\nFile-level split: {len(train_files)} train, "
+        f"{len(val_files)} val, {len(test_files)} test files"
+    )
 
     # Calculate target samples per split
     augmenter = QualityAugmenter(window_size=window_size)
@@ -296,7 +303,10 @@ def create_quality_dataset(
     print("Generating test samples (no augmentation)...")
     test_samples = generate_samples(test_files, test_target, augment=False)
 
-    print(f"\nGenerated {len(train_samples)} train, {len(val_samples)} val, {len(test_samples)} test samples")
+    print(
+        f"\nGenerated {len(train_samples)} train, {len(val_samples)} val, "
+        f"{len(test_samples)} test samples"
+    )
 
     # Shuffle
     np.random.shuffle(train_samples)
@@ -304,7 +314,10 @@ def create_quality_dataset(
     np.random.shuffle(test_samples)
 
     # Save
-    for split_name, samples in [("train", train_samples), ("val", val_samples), ("test", test_samples)]:
+    splits = [
+        ("train", train_samples), ("val", val_samples), ("test", test_samples)
+    ]
+    for split_name, samples in splits:
         split_dir = output_dir / split_name
         split_dir.mkdir(parents=True, exist_ok=True)
 
@@ -362,7 +375,7 @@ def main():
     print("=" * 70)
     print("QUALITY PREDICTION DATASET - FROM AB1 FILES")
     print("=" * 70)
-    print(f"Task: Predict Phred quality score per position from chromatogram signals")
+    print("Task: Predict Phred quality score per position from chromatogram signals")
     print(f"Input: signals (4, {args.window_size}) - ACGT channel intensities")
     print(f"Output: quality ({args.window_size},) - Phred score per position")
     print()

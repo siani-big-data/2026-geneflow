@@ -1,6 +1,5 @@
 """NCBI Taxonomy client for taxonomic classification."""
 
-import asyncio
 from dataclasses import dataclass, field
 
 import httpx
@@ -67,7 +66,10 @@ class TaxonomyInfo:
     def get_path(self, include_ranks: list[str] | None = None) -> str:
         """Get filesystem path based on taxonomy."""
         if include_ranks is None:
-            include_ranks = ["superkingdom", "kingdom", "phylum", "class", "order", "family", "genus", "species"]
+            include_ranks = [
+                "superkingdom", "kingdom", "phylum", "class",
+                "order", "family", "genus", "species"
+            ]
 
         parts = []
         for rank in include_ranks:
@@ -208,7 +210,10 @@ class NCBITaxonomyClient:
             lineage_xml = lineage_match.group(1)
 
             # Extract each taxon
-            taxon_pattern = r"<Taxon>\s*<TaxId>(\d+)</TaxId>\s*<ScientificName>([^<]+)</ScientificName>\s*<Rank>([^<]+)</Rank>"
+            taxon_pattern = (
+                r"<Taxon>\s*<TaxId>(\d+)</TaxId>\s*"
+                r"<ScientificName>([^<]+)</ScientificName>\s*<Rank>([^<]+)</Rank>"
+            )
             for match in re.finditer(taxon_pattern, lineage_xml):
                 rank = match.group(3).lower()
                 name = match.group(2)

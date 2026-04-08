@@ -6,7 +6,7 @@ and generating publication-ready figures and statistics.
 
 import json
 import pickle
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Literal
@@ -388,11 +388,11 @@ def compute_classification_result(
     """
     from sklearn.metrics import (
         accuracy_score,
+        classification_report,
+        confusion_matrix,
         f1_score,
         precision_score,
         recall_score,
-        confusion_matrix,
-        classification_report,
     )
 
     metrics = {

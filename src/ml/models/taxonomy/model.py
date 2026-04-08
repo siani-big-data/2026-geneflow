@@ -15,7 +15,6 @@ import torch.nn.functional as F
 
 from ..base import BaseModel, ModelConfig
 
-
 # Taxonomic levels in hierarchical order
 TAXONOMY_LEVELS = ["kingdom", "phylum", "class", "order", "family", "genus"]
 
@@ -466,7 +465,11 @@ class TaxonomyClassifier(BaseModel):
 
         return {"predictions": predictions, "count": len(sequences)}
 
-    def predict_hierarchy(self, sequences: list[str] | str, features: torch.Tensor | None = None) -> list[dict]:
+    def predict_hierarchy(
+        self,
+        sequences: list[str] | str,
+        features: torch.Tensor | None = None,
+    ) -> list[dict]:
         """Get full taxonomy prediction for each sequence."""
         result = self.predict(sequences, features)
         preds = result["predictions"]

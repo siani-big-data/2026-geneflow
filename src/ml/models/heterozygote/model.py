@@ -7,9 +7,9 @@ Classifies positions as homozygous or heterozygous based on sequence context and
 from dataclasses import dataclass
 from pathlib import Path
 
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
 
 
 @dataclass
@@ -66,7 +66,12 @@ class HeterozygoteClassifier(nn.Module):
 
         # Initial projection from input channels to hidden_dim
         self.input_proj = nn.Sequential(
-            nn.Conv1d(config.input_channels, config.hidden_dim, kernel_size=config.context_size, padding=config.context_size // 2),
+            nn.Conv1d(
+                config.input_channels,
+                config.hidden_dim,
+                kernel_size=config.context_size,
+                padding=config.context_size // 2,
+            ),
             nn.BatchNorm1d(config.hidden_dim),
             nn.ReLU(),
         )

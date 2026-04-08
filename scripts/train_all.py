@@ -43,7 +43,7 @@ def main():
         print("-" * 70)
 
         try:
-            result = subprocess.run(model["cmd"], check=True)
+            subprocess.run(model["cmd"], check=True)
             results.append((model["name"], "SUCCESS"))
             print(f"\n{model['name']} completed successfully!")
         except subprocess.CalledProcessError as e:

@@ -21,13 +21,13 @@ from torch.utils.data import DataLoader, Dataset, random_split
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.ml.models.quality import QualityPredictor, QualityPredictorConfig, QualityLoss
+from src.ml.models.quality import QualityLoss, QualityPredictor, QualityPredictorConfig
 from src.ml.training import (
-    Trainer,
-    TrainingConfig,
+    DetailedProgressLogger,
     EarlyStopping,
     ModelCheckpoint,
-    DetailedProgressLogger,
+    Trainer,
+    TrainingConfig,
 )
 
 
@@ -119,7 +119,7 @@ def main():
     print("=" * 60)
     print("QUALITY PREDICTOR - TEST TRAINING")
     print("=" * 60)
-    print(f"\nUsing synthetic data to test training pipeline")
+    print("\nUsing synthetic data to test training pipeline")
     print(f"Samples: {args.samples}")
     print(f"Sequence length: {args.seq_length}")
     print(f"Epochs: {args.epochs}")
@@ -223,7 +223,7 @@ def main():
     print("STARTING TRAINING")
     print("=" * 60)
 
-    summary = trainer.train(train_loader, val_loader)
+    trainer.train(train_loader, val_loader)
 
     # Save final model
     model.save(output_path / "final_model.pt")
@@ -232,11 +232,11 @@ def main():
     print("TRAINING COMPLETE")
     print("=" * 60)
     print(f"\nCheckpoints saved to: {output_path}")
-    print(f"  - best.pt (best validation loss)")
-    print(f"  - last.pt (last epoch)")
-    print(f"  - final_model.pt (model weights only)")
-    print(f"  - training_report.json")
-    print(f"  - training_summary.png")
+    print("  - best.pt (best validation loss)")
+    print("  - last.pt (last epoch)")
+    print("  - final_model.pt (model weights only)")
+    print("  - training_report.json")
+    print("  - training_summary.png")
 
     return 0
 

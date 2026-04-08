@@ -6,7 +6,8 @@ optimized datasets for model training.
 
 Usage:
     python scripts/generate_training_datasets.py --taxonomy --level phylum
-    python scripts/generate_training_datasets.py --taxonomy-hierarchical --levels kingdom phylum class
+    python scripts/generate_training_datasets.py \\
+        --taxonomy-hierarchical --levels kingdom phylum class
     python scripts/generate_training_datasets.py --quality_enhanced --input traces/
     python scripts/generate_training_datasets.py --all
 """
@@ -41,7 +42,7 @@ def generate_taxonomy_dataset(
     from src.ml.datasets import TaxonomyDatasetBuilder, TaxonomyDatasetConfig
 
     print(f"\n{'='*60}")
-    print(f"Generating Taxonomy Dataset")
+    print("Generating Taxonomy Dataset")
     print(f"{'='*60}")
     print(f"Input: {input_dir}")
     print(f"Output: {output_dir}")
@@ -83,7 +84,7 @@ def generate_taxonomy_dataset(
     for label, count in sorted(stats['class_counts'].items()):
         print(f"  {label}: {count}")
 
-    print(f"\nFeature statistics (first 10):")
+    print("\nFeature statistics (first 10):")
     for name, mean, std in zip(
         stats['featuREDACTED'][:10],
         stats['featuREDACTED'][:10],
@@ -120,7 +121,7 @@ def generate_hierarchical_taxonomy_dataset(
     )
 
     print(f"\n{'='*60}")
-    print(f"Generating Hierarchical Taxonomy Dataset")
+    print("Generating Hierarchical Taxonomy Dataset")
     print(f"{'='*60}")
     print(f"Input: {input_dir}")
     print(f"Output: {output_dir}")
@@ -173,7 +174,7 @@ def generate_hierarchical_taxonomy_dataset(
         if len(class_counts) > 10:
             print(f"    ... and {len(class_counts) - 10} more classes")
 
-    print(f"\nFeature statistics (first 10):")
+    print("\nFeature statistics (first 10):")
     for name, mean, std in zip(
         stats['featuREDACTED'][:10],
         stats['featuREDACTED'][:10],
@@ -201,7 +202,7 @@ def generate_quality_dataset(
     from src.ml.datasets import QualityDatasetBuilder, QualityDatasetConfig
 
     print(f"\n{'='*60}")
-    print(f"Generating Quality Prediction Dataset")
+    print("Generating Quality Prediction Dataset")
     print(f"{'='*60}")
     print(f"Input: {input_dir}")
     print(f"Output: {output_dir}")
@@ -235,10 +236,10 @@ def generate_quality_dataset(
     print(f"Total samples: {stats['total_samples']}")
     print(f"Train samples: {stats['train_samples']}")
     print(f"Val samples: {stats['val_samples']}")
-    print(f"\nQuality scores:")
+    print("\nQuality scores:")
     print(f"  Mean: {stats['quality_mean']:.2f}")
     print(f"  Std: {stats['quality_std']:.2f}")
-    print(f"\nSignal-to-Noise Ratio:")
+    print("\nSignal-to-Noise Ratio:")
     print(f"  Mean: {stats['snr_mean']:.2f}")
     print(f"  Std: {stats['snr_std']:.2f}")
 
@@ -398,7 +399,8 @@ def main():
     if generate_taxonomy_hier:
         input_dir = args.input or (datalake_dir / "raw")
         levels_str = "_".join(args.levels)
-        output_dir = args.output or (datalake_dir / "datasets" / f"taxonomy_hierarchical_{levels_str}")
+        out_name = f"taxonomy_hierarchical_{levels_str}"
+        output_dir = args.output or (datalake_dir / "datasets" / out_name)
 
         if not input_dir.exists():
             print(f"Error: Input directory does not exist: {input_dir}")

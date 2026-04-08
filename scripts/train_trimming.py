@@ -15,15 +15,15 @@ from datetime import datetime
 from pathlib import Path
 
 import matplotlib
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn as nn
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader, Dataset
 
-from src.ml.models.trimming import TrimmingPredictor, TrimmingConfig
-
+from src.ml.models.trimming import TrimmingConfig, TrimmingPredictor
 
 # =============================================================================
 # Dataset
@@ -176,8 +176,12 @@ def generate_plots(history: dict, save_dir: Path):
 
     # Loss plot
     ax = axes[0]
-    ax.plot(epochs, history["train_loss"], label="Train", linewidth=2, color="#2196F3")
-    ax.plot(epochs, history["val_loss"], label="Val", linewidth=2, color="#FF5722")
+    ax.plot(
+        epochs, history["train_loss"], label="Train", linewidth=2, color="#2196F3"
+    )
+    ax.plot(
+        epochs, history["val_loss"], label="Val", linewidth=2, color="#FF5722"
+    )
     ax.set_xlabel("Epoch")
     ax.set_ylabel("Loss (MSE)")
     ax.set_title("Loss", fontweight="bold")
@@ -186,8 +190,12 @@ def generate_plots(history: dict, save_dir: Path):
 
     # MAE plot
     ax = axes[1]
-    ax.plot(epochs, history["train_mae"], label="Train", linewidth=2, color="#2196F3")
-    ax.plot(epochs, history["val_mae"], label="Val", linewidth=2, color="#FF5722")
+    ax.plot(
+        epochs, history["train_mae"], label="Train", linewidth=2, color="#2196F3"
+    )
+    ax.plot(
+        epochs, history["val_mae"], label="Val", linewidth=2, color="#FF5722"
+    )
     ax.set_xlabel("Epoch")
     ax.set_ylabel("MAE")
     ax.set_title("Mean Absolute Error", fontweight="bold")
@@ -196,8 +204,10 @@ def generate_plots(history: dict, save_dir: Path):
 
     # Accuracy plot
     ax = axes[2]
-    ax.plot(epochs, [x * 100 for x in history["train_acc"]], label="Train", linewidth=2, color="#2196F3")
-    ax.plot(epochs, [x * 100 for x in history["val_acc"]], label="Val", linewidth=2, color="#FF5722")
+    train_acc = [x * 100 for x in history["train_acc"]]
+    ax.plot(epochs, train_acc, label="Train", linewidth=2, color="#2196F3")
+    val_acc = [x * 100 for x in history["val_acc"]]
+    ax.plot(epochs, val_acc, label="Val", linewidth=2, color="#FF5722")
     ax.set_xlabel("Epoch")
     ax.set_ylabel("Accuracy (%)")
     ax.set_title("Accuracy", fontweight="bold")
@@ -231,7 +241,10 @@ def parse_args():
     parser.add_argument("--hidden-dim", type=int, default=64, help="Hidden dimension")
     parser.add_argument("--num-layers", type=int, default=4, help="Number of conv layers")
     parser.add_argument("--dropout", type=float, default=0.5, help="Dropout rate")
-    parser.add_argument("--tolerance", type=float, default=0.1, help="Tolerance for accuracy (ratio, default 0.1 = 10%%)")
+    parser.add_argument(
+        "--tolerance", type=float, default=0.1,
+        help="Tolerance for accuracy (ratio, default 0.1 = 10%%)"
+    )
 
     return parser.parse_args()
 
@@ -278,7 +291,10 @@ def main():
     )
 
     model = TrimmingPredictor(config).to(device)
-    print(f"\nModel: 1D CNN with {args.num_layers} layers, hidden_dim={args.hidden_dim}, dropout={args.dropout}")
+    n_layers = args.num_layers
+    hidden = args.hidden_dim
+    drop = args.dropout
+    print(f"\nModel: 1D CNN with {n_layers} layers, hidden_dim={hidden}, dropout={drop}")
     print(f"Model parameters: {sum(p.numel() for p in model.parameters()):,}")
 
     # Setup training
@@ -305,15 +321,20 @@ def main():
     print("\n" + "=" * 70)
     print("STARTING TRAINING")
     print("=" * 70)
-    print(f"Accuracy metric: % predictions within ±{args.tolerance*100:.0f}% of correct trim points")
+    tol_pct = args.tolerance * 100
+    print(f"Accuracy metric: % predictions within +/-{tol_pct:.0f}% of correct trim points")
 
     for epoch in range(args.epochs):
         # Train
-        train_metrics = train_epoch(model, train_loader, optimizer, criterion, device, args.tolerance)
+        train_metrics = train_epoch(
+            model, train_loader, optimizer, criterion, device, args.tolerance
+        )
 
         # Evaluate with diagnostics every 10 epochs
         verbose = (epoch + 1) % 10 == 0 or epoch == 0
-        val_metrics = evaluate(model, val_loader, criterion, device, args.tolerance, verbose=verbose)
+        val_metrics = evaluate(
+            model, val_loader, criterion, device, args.tolerance, verbose=verbose
+        )
 
         # Update scheduler
         scheduler.step()
@@ -327,9 +348,17 @@ def main():
         history["val_acc"].append(val_metrics["accuracy"])
 
         # Print progress
-        print(f"Epoch {epoch+1:3d}/{args.epochs} | "
-              f"Train: Loss={train_metrics['loss']:.4f} MAE={train_metrics['mae']:.4f} Acc={train_metrics['accuracy']:.1%} | "
-              f"Val: Loss={val_metrics['loss']:.4f} MAE={val_metrics['mae']:.4f} Acc={val_metrics['accuracy']:.1%}")
+        t_loss = train_metrics['loss']
+        t_mae = train_metrics['mae']
+        t_acc = train_metrics['accuracy']
+        v_loss = val_metrics['loss']
+        v_mae = val_metrics['mae']
+        v_acc = val_metrics['accuracy']
+        print(
+            f"Epoch {epoch+1:3d}/{args.epochs} | "
+            f"Train: Loss={t_loss:.4f} MAE={t_mae:.4f} Acc={t_acc:.1%} | "
+            f"Val: Loss={v_loss:.4f} MAE={v_mae:.4f} Acc={v_acc:.1%}"
+        )
 
         # Save best model
         if val_metrics["loss"] < best_val_loss:
@@ -376,7 +405,11 @@ def main():
     print("\n" + "=" * 70)
     print("TRAINING COMPLETE")
     print("=" * 70)
-    print(f"Best @ epoch {best_epoch}: Loss={best_val_loss:.4f} | MAE={history['val_mae'][best_epoch-1]:.4f} | Acc={best_val_acc:.1%}")
+    best_mae = history['val_mae'][best_epoch-1]
+    print(
+        f"Best @ epoch {best_epoch}: Loss={best_val_loss:.4f} | "
+        f"MAE={best_mae:.4f} | Acc={best_val_acc:.1%}"
+    )
     print(f"Checkpoints saved to: {checkpoint_dir}")
 
 

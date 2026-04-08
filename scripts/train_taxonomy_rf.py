@@ -25,7 +25,6 @@ Usage:
 import argparse
 import gzip
 import json
-import pickle
 import sys
 import time
 from collections import Counter
@@ -55,9 +54,7 @@ except ImportError:
 
 # Try cuML first (Linux only)
 try:
-    import cuml
     from cuml.ensemble import RandomForestClassifier as cuMLRandomForestClassifier
-    import cupy as cp
     CUML_AVAILABLE = True
 except ImportError:
     pass
@@ -71,11 +68,10 @@ try:
 except ImportError:
     pass
 
-from src.ml.datasets.features.sequence_features import (
+from src.ml.datasets.features.sequence_features import (  # noqa: E402
     SequenceFeatureExtractor,
     SequenceFeatures,
 )
-
 
 # =============================================================================
 # Data Loading
@@ -90,7 +86,7 @@ def load_sequence(fasta_path: Path) -> str:
         else:
             with open(fasta_path, "r") as f:
                 lines = f.readlines()
-    except Exception as e:
+    except Exception:
         return ""
 
     sequence_parts = []
@@ -309,7 +305,7 @@ def train_random_forest(
     2. XGBoost (GPU) - Windows/Linux
     3. sklearn (CPU) - Fallback
     """
-    print(f"\nTraining Random Forest...")
+    print("\nTraining Random Forest...")
     print(f"  n_estimators: {n_estimators}")
     print(f"  max_depth: {max_depth}")
     print(f"  min_samples_leaf: {min_samples_leaf}")
@@ -361,7 +357,7 @@ def train_random_forest(
         backend = "sklearn_cpu"
         from sklearn.ensemble import RandomForestClassifier
 
-        print(f"  Backend: sklearn (CPU)")
+        print("  Backend: sklearn (CPU)")
         print(f"  class_weight: {class_weight}")
 
         clf = RandomForestClassifier(
@@ -394,7 +390,6 @@ def evaluate(
     from sklearn.metrics import (
         accuracy_score,
         classification_report,
-        confusion_matrix,
         top_k_accuracy_score,
     )
 
@@ -428,7 +423,7 @@ def evaluate(
             print(f"Top-{k} Accuracy: {top_k_acc:.4f} ({top_k_acc*100:.2f}%)")
 
     # Per-class report
-    print(f"\nClassification Report:")
+    print("\nClassification Report:")
     print(classification_report(
         y, y_pred,
         target_names=class_names,
@@ -563,21 +558,21 @@ def main():
     if GPU_NAME:
         print(f"GPU detected: {GPU_NAME}")
     else:
-        print(f"GPU detected: No")
+        print("GPU detected: No")
 
     if gpu_available:
         if CUML_AVAILABLE:
-            print(f"GPU backend: cuML (RAPIDS)")
+            print("GPU backend: cuML (RAPIDS)")
         elif XGBOOST_GPU_AVAILABLE:
-            print(f"GPU backend: XGBoost")
+            print("GPU backend: XGBoost")
 
         if args.cpu:
-            print(f"GPU training: Disabled (--cpu flag)")
+            print("GPU training: Disabled (--cpu flag)")
         else:
-            print(f"GPU training: Enabled")
+            print("GPU training: Enabled")
     else:
-        print(f"GPU backend: None available")
-        print(f"  Install XGBoost for GPU support: uv add xgboost")
+        print("GPU backend: None available")
+        print("  Install XGBoost for GPU support: uv add xgboost")
 
     print()
     print(f"Data directory: {args.data_dir}")
@@ -636,7 +631,7 @@ def main():
         old_to_new = {old: new for new, old in enumerate(sorted(valid_classes))}
         y = np.array([old_to_new[yi] for yi in y])
         class_names = [class_names[old] for old in sorted(valid_classes)]
-        class_to_idx = {name: idx for idx, name in enumerate(class_names)}
+        {name: idx for idx, name in enumerate(class_names)}
 
         print(f"Filtered to classes with >= {min_samples} samples:")
         print(f"  Remaining classes: {len(class_names)}")
@@ -690,18 +685,18 @@ def main():
 
     # Compute confusion matrix and detailed metrics
     from sklearn.metrics import confusion_matrix as compute_cm
-    y_val_pred = train_metrics["predictions"]  # From train split for consistency check
+    train_metrics["predictions"]  # From train split for consistency check
     y_val_pred_actual = val_metrics["predictions"]
-    cm = compute_cm(y_val, y_val_pred_actual)
+    compute_cm(y_val, y_val_pred_actual)
 
     # Import unified results system
     from src.ml.training import (
-        TrainingResult,
         DatasetInfo,
         HardwareInfo,
+        PaperFigures,
         Predictions,
         ResultsWriter,
-        PaperFigures,
+        TrainingResult,
         compute_classification_result,
     )
 
@@ -783,7 +778,7 @@ def main():
         "sklearn_cpu": "sklearn (CPU)",
     }
     print(f"\n{'='*60}")
-    print(f"TRAINING COMPLETE")
+    print("TRAINING COMPLETE")
     print(f"{'='*60}")
     print(f"  Run ID: {run_id}")
     print(f"  Backend: {backend_display.get(backend, backend)}")

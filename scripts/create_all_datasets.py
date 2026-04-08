@@ -21,7 +21,6 @@ import gzip
 import json
 import random
 import sys
-from collections import defaultdict
 from pathlib import Path
 from typing import Iterator
 
@@ -91,7 +90,9 @@ def read_fasta(path: Path) -> Iterator[tuple[str, str]]:
             yield name, ''.join(seq_parts).upper()
 
 
-def load_all_fastq(fastq_dir: Path, max_samples: int = None) -> list[tuple[str, str, np.ndarray]]:
+def load_all_fastq(
+    fastq_dir: Path, max_samples: int = None
+) -> list[tuple[str, str, np.ndarray]]:
     """Load all FASTQ files from directory."""
     samples = []
 
@@ -230,7 +231,9 @@ def generate_trimming_dataset(
 
         return start_ratio, end_ratio
 
-    def add_label_noise(start_ratio: float, end_ratio: float, noise_std: float) -> tuple[float, float]:
+    def add_label_noise(
+        start_ratio: float, end_ratio: float, noise_std: float
+    ) -> tuple[float, float]:
         """Add realistic noise to trim point labels.
 
         Simulates variability in human annotation:
@@ -429,7 +432,8 @@ def generate_heterozygote_dataset(
 
                 # More noise in signal levels
                 raw_signals[base_idx, i] = base_intensity + random.gauss(0, base_intensity * 0.15)
-                raw_signals[other_base, i] = base_intensity * ratio + random.gauss(0, base_intensity * 0.15)
+                noise = random.gauss(0, base_intensity * 0.15)
+                raw_signals[other_base, i] = base_intensity * ratio + noise
 
                 # Higher noise floor for other channels
                 for b in other_bases:
@@ -587,7 +591,7 @@ def generate_variants_dataset(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     def create_variant(seq: str, pos: int, var_type: int) -> tuple[str, str, str]:
-        """Create a variant at position. Returns (ref_context, alt_context, ref_allele, alt_allele)."""
+        """Create a variant at position. Returns (ref_context, alt_context)."""
         context_start = max(0, pos - context_size)
         context_end = min(len(seq), pos + context_size + 1)
 
@@ -614,7 +618,9 @@ def generate_variants_dataset(
 
         else:  # Complex (SNP + small indel)
             ref_allele = seq[pos:pos+2]
-            alt_allele = random.choice(NUCLEOTIDES) + ''.join(random.choices(NUCLEOTIDES, k=random.randint(1, 3)))
+            rand_len = random.randint(1, 3)
+            suffix = ''.join(random.choices(NUCLEOTIDES, k=rand_len))
+            alt_allele = random.choice(NUCLEOTIDES) + suffix
             alt_seq = seq[:pos] + alt_allele + seq[pos+2:]
 
         alt_context = alt_seq[context_start:context_start + len(ref_context)]
@@ -656,7 +662,7 @@ def generate_variants_dataset(
 
             try:
                 ref_context, alt_context = create_variant(seq, pos, var_type)
-            except:
+            except Exception:
                 source_idx += 1
                 attempts += 1
                 continue
@@ -695,7 +701,9 @@ def generate_variants_dataset(
         split_dir.mkdir(exist_ok=True)
 
     print(f"  Generating train samples ({n_train_samples})...")
-    train_samples, train_class_counts = generate_samples_from_sources(train_sources, n_train_samples, "train")
+    train_samples, train_class_counts = generate_samples_from_sources(
+        train_sources, n_train_samples, "train"
+    )
 
     print(f"  Generating val samples ({n_val_samples})...")
     val_samples, val_class_counts = generate_samples_from_sources(val_sources, n_val_samples, "val")
@@ -769,7 +777,6 @@ def generate_orf_dataset(
         for frame in range(3):
             i = frame
             in_orf = False
-            orf_start = -1
 
             while i < len(seq) - 2:
                 codon = seq[i:i+3]
@@ -777,7 +784,6 @@ def generate_orf_dataset(
                 if not in_orf:
                     if codon in START_CODONS:
                         in_orf = True
-                        orf_start = i
                         labels[i:i+3] = 1  # Start codon
                 else:
                     if codon in STOP_CODONS:
@@ -921,7 +927,9 @@ def generate_consensus_dataset(
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    def simulate_reads(seq: str, quality: np.ndarray, n_reads: int, error_rate: float) -> tuple[np.ndarray, np.ndarray]:
+    def simulate_reads(
+    seq: str, quality: np.ndarray, n_reads: int, error_rate: float
+) -> tuple[np.ndarray, np.ndarray]:
         """Simulate multiple reads with errors."""
         seq_len = len(seq)
 
@@ -1233,7 +1241,9 @@ def generate_alignment_dataset(
 # =============================================================================
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Create training datasets for all ML models")
+    parser = argparse.ArgumentParser(
+        description="Create training datasets for all ML models"
+    )
 
     parser.add_argument(
         "--fastq-dir",
@@ -1256,7 +1266,10 @@ def parse_args():
     parser.add_argument(
         "--models",
         nargs="+",
-        choices=["trimming", "heterozygote_training", "variants", "orf", "consensus", "alignment", "all"],
+        choices=[
+            "trimming", "heterozygote_training", "variants",
+            "orf", "consensus", "alignment", "all"
+        ],
         default=["all"],
         help="Models to generate datasets for",
     )
@@ -1285,7 +1298,10 @@ def main():
 
     models = args.models
     if "all" in models:
-        models = ["trimming", "heterozygote_training", "variants", "orf", "consensus", "alignment"]
+        models = [
+            "trimming", "heterozygote_training", "variants",
+            "orf", "consensus", "alignment"
+        ]
 
     print("=" * 60)
     print("Dataset Generation for ML Models")

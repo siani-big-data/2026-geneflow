@@ -197,7 +197,10 @@ def main():
 
         # Progress every 100
         if (i + 1) % 100 == 0:
-            print(f"\n--- Progress: {i+1}/{len(species_list)} ({success_count} OK, {fail_count} failed) ---\n")
+            print(
+                f"\n--- Progress: {i+1}/{len(species_list)} "
+                f"({success_count} OK, {fail_count} failed) ---\n"
+            )
 
     # Cleanup empty directories
     if not args.dry_run:

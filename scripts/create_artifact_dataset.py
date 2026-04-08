@@ -23,13 +23,14 @@ Output structure:
 
 Usage:
     uv run python scripts/create_artifact_dataset.py
-    uv run python scripts/create_artifact_dataset.py --ab1-dir datalake/ab1 --output-dir datalake/datasets/artifacts
+    uv run python scripts/create_artifact_dataset.py --ab1-dir datalake/ab1 \\
+        --output-dir datalake/datasets/artifacts
 """
 
 import argparse
 import json
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from dataclasses import dataclass, asdict
 from typing import Literal
 
 import numpy as np
@@ -386,10 +387,12 @@ def create_visualization(
     # Feature summary plot
     ax2 = axes[1]
 
+    corr_mean = features.channel_correlation_mean
+    corr_max = features.channel_correlation_max
     featuREDACTED = (
         f"Position: {features.position_relative:.1%} | "
         f"SNR: {features.signal_snr:.1f} | "
-        f"Ch.Corr: {features.channel_correlation_mean:.2f} (max: {features.channel_correlation_max:.2f}) | "
+        f"Ch.Corr: {corr_mean:.2f} (max: {corr_max:.2f}) | "
         f"Spikes: {features.spike_count} | "
         f"2nd Peak Ratio: {features.secondary_peak_ratio:.2f} | "
         f"Quality: {features.quality_mean:.0f}"

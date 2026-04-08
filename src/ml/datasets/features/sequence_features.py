@@ -7,7 +7,6 @@ useful for taxonomy classification and other sequence analysis tasks.
 import math
 from collections import Counter
 from dataclasses import dataclass
-from typing import Literal
 
 import numpy as np
 
@@ -428,5 +427,8 @@ class SequenceFeatureExtractor:
         Returns:
             Array of shape (n_sequences, n_features)
         """
-        features = [self.extract(seq).to_array(include_codons=self.compute_codons) for seq in sequences]
+        features = [
+            self.extract(seq).to_array(include_codons=self.compute_codons)
+            for seq in sequences
+        ]
         return np.stack(features)

@@ -16,7 +16,7 @@ from anthropic import AsyncAnthropic
 from src.config import Settings
 from src.models import AnalysisResult
 
-from .ai_service import GeneFlowAIService, get_ai_service, initialize_ai_service
+from .ai_service import GeneFlowAIService, initialize_ai_service
 from .tools import get_tools_for_api
 
 logger = structlog.get_logger()

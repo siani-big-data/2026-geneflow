@@ -1,23 +1,23 @@
 """Quality prediction model."""
 
+from .classifier import (
+    FocalLoss,
+    QualityClassifier,
+    QualityClassifierCNN,
+    QualityClassifierCNNConfig,
+    QualityClassifierConfig,
+)
+from .enhanced_model import (
+    EnhancedQualityConfig,
+    EnhancedQualityLoss,
+    EnhancedQualityPredictor,
+)
 from .model import (
     QualityLoss,
     QualityPredictor,
     QualityPredictorConfig,
     QualityPredictorPointwise,
     ResidualConvBlock,
-)
-from .enhanced_model import (
-    EnhancedQualityPredictor,
-    EnhancedQualityConfig,
-    EnhancedQualityLoss,
-)
-from .classifier import (
-    QualityClassifier,
-    QualityClassifierConfig,
-    QualityClassifierCNN,
-    QualityClassifierCNNConfig,
-    FocalLoss,
 )
 
 __all__ = [

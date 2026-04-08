@@ -38,7 +38,7 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.ml.datasets.downloader import ParallelDownloader, HarvestState
+from src.ml.datasets.downloader import HarvestState, ParallelDownloader
 
 # Profiles
 PROFILES = {
@@ -133,7 +133,10 @@ def print_profiles():
     print(f"{'Profile':<10} {'Species':>10} {'Sequences':>12} {'Storage':>10} {'Time':>15}")
     print("-" * 70)
     for key, p in PROFILES.items():
-        print(f"{key:<10} {p['species']:>10,} {p['estimated_sequences']:>12,} {p['estimated_storage']:>10} {p['estimated_time']:>15}")
+        print(
+            f"{key:<10} {p['species']:>10,} {p['estimated_sequences']:>12,} "
+            f"{p['estimated_storage']:>10} {p['estimated_time']:>15}"
+        )
     print("=" * 70)
 
 
@@ -243,7 +246,11 @@ def main():
     seqs_per_species = args.seqs_per_species or profile.get("seqs_per_species", 50)
 
     print(f"\nProfile: {profile['name']}")
-    print(f"Target: {total_species:,} species × {seqs_per_species} sequences = {total_species * seqs_per_species:,} total")
+    total_seqs = total_species * seqs_per_species
+    print(
+        f"Target: {total_species:,} species × {seqs_per_species} sequences = "
+        f"{total_seqs:,} total"
+    )
     print(f"Estimated storage: {profile['estimated_storage']}")
     print(f"Estimated time: {profile['estimated_time']}")
     print(f"Output: {args.output}")

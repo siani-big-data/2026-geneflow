@@ -3,7 +3,8 @@
 Evaluate quality model on real AB1 traces.
 
 Usage:
-    uv run python scripts/eval_quality_traces.py --traces datalake/traces --model checkpoints/quality_enhanced/best.pt
+    uv run python scripts/eval_quality_traces.py \\
+        --traces datalake/traces --model checkpoints/quality_enhanced/best.pt
 """
 
 import argparse
@@ -84,8 +85,14 @@ def extract_features_from_trace(record) -> tuple[np.ndarray, np.ndarray] | None:
 
 def main():
     parser = argparse.ArgumentParser(description="Evaluate quality model on AB1 traces")
-    parser.add_argument("--traces", type=str, default="datalake/traces", help="Directory with AB1 files")
-    parser.add_argument("--model", type=str, default="checkpoints/quality_enhanced/best.pt", help="Model checkpoint")
+    parser.add_argument(
+        "--traces", type=str, default="datalake/traces",
+        help="Directory with AB1 files"
+    )
+    parser.add_argument(
+        "--model", type=str, default="checkpoints/quality_enhanced/best.pt",
+        help="Model checkpoint"
+    )
     args = parser.parse_args()
 
     traces_dir = Path(args.traces)
@@ -165,7 +172,10 @@ def main():
 
             error = pred_mean_q - real_mean_q
 
-            print(f"{ab1_file.name:<30} {seq_len:>8} {real_mean_q:>8.1f} {pred_mean_q:>8.1f} {error:>+8.1f}")
+            print(
+                f"{ab1_file.name:<30} {seq_len:>8} {real_mean_q:>8.1f} "
+                f"{pred_mean_q:>8.1f} {error:>+8.1f}"
+            )
 
             results.append({
                 "file": ab1_file.name,
@@ -202,8 +212,12 @@ def main():
         print(f"Accuracy (±{tol}): {acc:.1%}")
 
     # Quality distribution comparison
-    print(f"\nReal quality range: {min(r['real_q'] for r in results):.1f} - {max(r['real_q'] for r in results):.1f}")
-    print(f"Pred quality range: {min(r['pred_q'] for r in results):.1f} - {max(r['pred_q'] for r in results):.1f}")
+    real_min = min(r['real_q'] for r in results)
+    real_max = max(r['real_q'] for r in results)
+    pred_min = min(r['pred_q'] for r in results)
+    pred_max = max(r['pred_q'] for r in results)
+    print(f"\nReal quality range: {real_min:.1f} - {real_max:.1f}")
+    print(f"Pred quality range: {pred_min:.1f} - {pred_max:.1f}")
 
     return 0
 

@@ -183,7 +183,9 @@ class SignalFeatureExtractor:
         # Compute peak shape metrics
         peak_height = np.max(all_signals, axis=0)
         peak_separation = self._compute_peak_separation(peak_locations, seq_len)
-        peak_width = self._estimate_peak_width(all_signals, peak_locations, signal_a, signal_t, signal_c, signal_g)
+        peak_width = self._estimate_peak_width(
+            all_signals, peak_locations, signal_a, signal_t, signal_c, signal_g
+        )
 
         # Compute derivative features
         signal_gradient = self._compute_gradient(all_signals)
@@ -436,7 +438,7 @@ class SignalFeatureExtractor:
             }
 
         # Estimate baseline as lower percentile
-        baseline = np.percentile(combined, 10)
+        np.percentile(combined, 10)
         noise = np.std(combined[combined < np.percentile(combined, 25)])
 
         return {

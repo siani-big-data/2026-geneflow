@@ -15,15 +15,15 @@ from datetime import datetime
 from pathlib import Path
 
 import matplotlib
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn as nn
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader, Dataset
 
 from src.ml.models.quality import QualityPredictor, QualityPredictorConfig
-
 
 # =============================================================================
 # Dataset
@@ -191,8 +191,10 @@ def generate_plots(history: dict, save_dir: Path):
 
     # Accuracy plot
     ax = axes[2]
-    ax.plot(epochs, [x * 100 for x in history["train_acc"]], label="Train", linewidth=2, color="#2196F3")
-    ax.plot(epochs, [x * 100 for x in history["val_acc"]], label="Val", linewidth=2, color="#FF5722")
+    train_acc_pct = [x * 100 for x in history["train_acc"]]
+    val_acc_pct = [x * 100 for x in history["val_acc"]]
+    ax.plot(epochs, train_acc_pct, label="Train", linewidth=2, color="#2196F3")
+    ax.plot(epochs, val_acc_pct, label="Val", linewidth=2, color="#FF5722")
     ax.set_xlabel("Epoch")
     ax.set_ylabel("Accuracy (%)")
     ax.set_title("Accuracy (within ±2 Phred)", fontweight="bold")
@@ -311,7 +313,7 @@ def main():
     )
 
     model = QualityPredictor(config).to(device)
-    print(f"\nModel: QualityPredictor CNN")
+    print("\nModel: QualityPredictor CNN")
     print(f"  Hidden channels: {args.hidden_channels}")
     print(f"  Num layers: {args.num_layers}")
     print(f"  Dropout: {args.dropout}")
@@ -345,7 +347,9 @@ def main():
 
     for epoch in range(args.epochs):
         # Train
-        train_metrics = train_epoch(model, train_loader, optimizer, criterion, device, args.tolerance)
+        train_metrics = train_epoch(
+            model, train_loader, optimizer, criterion, device, args.tolerance
+        )
 
         # Evaluate
         val_metrics = evaluate(model, val_loader, criterion, device, args.tolerance)
@@ -362,9 +366,13 @@ def main():
         history["val_acc"].append(val_metrics["accuracy"])
 
         # Print progress
-        print(f"Epoch {epoch+1:3d}/{args.epochs} | "
-              f"Train: Loss={train_metrics['loss']:.4f} MAE={train_metrics['mae']:.2f} Acc={train_metrics['accuracy']:.1%} | "
-              f"Val: Loss={val_metrics['loss']:.4f} MAE={val_metrics['mae']:.2f} Acc={val_metrics['accuracy']:.1%}")
+        print(
+            f"Epoch {epoch+1:3d}/{args.epochs} | "
+            f"Train: Loss={train_metrics['loss']:.4f} "
+            f"MAE={train_metrics['mae']:.2f} Acc={train_metrics['accuracy']:.1%} | "
+            f"Val: Loss={val_metrics['loss']:.4f} "
+            f"MAE={val_metrics['mae']:.2f} Acc={val_metrics['accuracy']:.1%}"
+        )
 
         # Save best model
         if val_metrics["loss"] < best_val_loss:
@@ -392,7 +400,7 @@ def main():
     # Generate plots
     print("\nGenerating plots...")
     plots_dir = checkpoint_dir / "plots"
-    plots = generate_plots(history, plots_dir)
+    generate_plots(history, plots_dir)
 
     # Generate scatter plot
     val_metrics = evaluate(model, val_loader, criterion, device, args.tolerance)
@@ -416,8 +424,10 @@ def main():
         model.load(checkpoint_dir / "best.pt")
         test_metrics = evaluate(model, test_loader, criterion, device, args.tolerance)
 
-        print(f"Test | Loss: {test_metrics['loss']:.4f} | MAE: {test_metrics['mae']:.2f} | "
-              f"Acc: {test_metrics['accuracy']:.1%}")
+        print(
+            f"Test | Loss: {test_metrics['loss']:.4f} | "
+            f"MAE: {test_metrics['mae']:.2f} | Acc: {test_metrics['accuracy']:.1%}"
+        )
 
         generate_scatter_plot(test_metrics["predictions"], test_metrics["targets"],
                               plots_dir / "scatter_test.png")

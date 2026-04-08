@@ -17,7 +17,8 @@ Requirements:
 
 Usage:
     uv run python scripts/create_heterozygote_dataset_tracy.py
-    uv run python scripts/create_heterozygote_dataset_tracy.py --ab1-dir datalake/ab1 --output-dir datalake/datasets/heterozygote_real
+    uv run python scripts/create_heterozygote_dataset_tracy.py --ab1-dir datalake/ab1 \\
+        --output-dir datalake/datasets/heterozygote_real
 """
 
 import argparse
@@ -127,9 +128,14 @@ def extract_ab1_signals(ab1_path: Path) -> dict | None:
         signal_sum = np.maximum(signal_sum, 1e-6)  # Avoid division by zero
         signals = signals / signal_sum
 
+        quality_arr = (
+            np.array(quality, dtype=np.int32)
+            if quality
+            else np.zeros(seq_len, dtype=np.int32)
+        )
         return {
             "sequence": sequence,
-            "quality": np.array(quality, dtype=np.int32) if quality else np.zeros(seq_len, dtype=np.int32),
+            "quality": quality_arr,
             "signals": signals,
             "ploc": ploc,
         }
@@ -186,7 +192,7 @@ def run_tracy_decompose(ab1_path: Path, reference_path: Path | None = None) -> d
             alleles = []
 
             with open(tsv_path) as f:
-                header = f.readline()  # Skip header
+                f.readline()  # Skip header
                 for line in f:
                     parts = line.strip().split("\t")
                     if len(parts) >= 4:
@@ -267,9 +273,6 @@ async def download_ab1_files(output_dir: Path, count: int = 100) -> list[Path]:
     downloaded = []
 
     # Use sample TIDs that are known to work
-    sample_tids = [
-        # Add more TIDs or use search
-    ]
 
     # For now, use the sample download which has hardcoded TIDs
     stats = await client.download_sample_traces("Homo sapiens", min(count, 10))
@@ -387,7 +390,9 @@ def process_ab1_directory(
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Create heterozygote_training dataset using Tracy")
+    parser = argparse.ArgumentParser(
+        description="Create heterozygote_training dataset using Tracy"
+    )
 
     parser.add_argument(
         "--ab1-dir",

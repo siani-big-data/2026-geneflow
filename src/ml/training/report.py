@@ -4,14 +4,14 @@ import json
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import numpy as np
 import torch
 import torch.nn as nn
 
 if TYPE_CHECKING:
-    from .trainer import Trainer
+    pass
 
 
 @dataclass
@@ -216,7 +216,8 @@ def generate_training_plots(
     epochs = [m["epoch"] for m in epoch_metrics]
 
     # Set style
-    plt.style.use("seaborn-v0_8-whitegrid") if "seaborn-v0_8-whitegrid" in plt.style.available else None
+    if "seaborn-v0_8-whitegrid" in plt.style.available:
+        plt.style.use("seaborn-v0_8-whitegrid")
 
     # 1. Loss plot
     fig, ax = plt.subplots(figsize=(10, 6))
@@ -227,7 +228,10 @@ def generate_training_plots(
         val_loss = [m.get("val_loss") for m in epoch_metrics]
         val_loss = [v for v in val_loss if v is not None]
         if val_loss:
-            ax.plot(epochs[:len(val_loss)], val_loss, label="Val Loss", linewidth=2, color="#FF5722")
+            ax.plot(
+                epochs[:len(val_loss)], val_loss,
+                label="Val Loss", linewidth=2, color="#FF5722"
+            )
 
     ax.set_xlabel("Epoch", fontsize=12)
     ax.set_ylabel("Loss", fontsize=12)
@@ -307,7 +311,8 @@ def generate_training_plots(
     # Accuracy
     ax = axes[0, 1]
     if "train_accuracy" in epoch_metrics[0]:
-        ax.plot(epochs, [m["train_accuracy"] * 100 for m in epoch_metrics], label="Train", linewidth=2)
+        train_acc = [m["train_accuracy"] * 100 for m in epoch_metrics]
+        ax.plot(epochs, train_acc, label="Train", linewidth=2)
     if "val_accuracy" in epoch_metrics[0]:
         val_acc = [m.get("val_accuracy", 0) * 100 for m in epoch_metrics]
         val_acc_filtered = [(e, v) for e, v in zip(epochs, val_acc) if v > 0]
@@ -323,7 +328,8 @@ def generate_training_plots(
     ax = axes[1, 0]
     if "train_mae" in epoch_metrics[0] or "val_mae" in epoch_metrics[0]:
         if "train_mae" in epoch_metrics[0]:
-            ax.plot(epochs, [m.get("train_mae", 0) for m in epoch_metrics], label="Train", linewidth=2)
+            train_mae = [m.get("train_mae", 0) for m in epoch_metrics]
+            ax.plot(epochs, train_mae, label="Train", linewidth=2)
         if "val_mae" in epoch_metrics[0]:
             val_mae = [m.get("val_mae") for m in epoch_metrics if m.get("val_mae") is not None]
             if val_mae:

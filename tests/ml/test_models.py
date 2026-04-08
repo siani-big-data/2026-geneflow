@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 import torch
 
-from src.ml.models.base import BaseModel, ModelConfig
+from src.ml.models.base import ModelConfig
 from src.ml.models.quality import QualityPredictor, QualityPredictorConfig
 from src.ml.models.quality.model import QualityLoss
 

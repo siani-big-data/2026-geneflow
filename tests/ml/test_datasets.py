@@ -5,7 +5,6 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-import torch
 
 from src.ml.datasets.sequence_dataset import SequenceDataset
 

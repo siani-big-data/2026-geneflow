@@ -7,9 +7,9 @@ Predicts consensus base from multiple aligned reads at each position.
 from dataclasses import dataclass
 from pathlib import Path
 
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
 
 
 @dataclass
@@ -80,7 +80,8 @@ class ConsensusPredictor(nn.Module):
         # Encode each read
         reads_flat = reads.view(batch_size * num_reads, channels, seq_len)
         encoded = self.read_encoder(reads_flat)  # (batch*num_reads, hidden, seq_len)
-        encoded = encoded.view(batch_size, num_reads, -1, seq_len)  # (batch, num_reads, hidden, seq_len)
+        # Reshape: (batch, num_reads, hidden, seq_len)
+        encoded = encoded.view(batch_size, num_reads, -1, seq_len)
 
         # Permute for attention: (batch, seq_len, num_reads, hidden)
         encoded = encoded.permute(0, 3, 1, 2)

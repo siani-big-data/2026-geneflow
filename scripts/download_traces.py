@@ -8,9 +8,10 @@ Usage:
 
 import argparse
 import asyncio
-import aiohttp
 import sys
 from pathlib import Path
+
+import aiohttp
 
 # Verified public AB1 files
 AB1_URLS = [
@@ -36,14 +37,15 @@ AB1_URLS = [
 async def download_file(session: aiohttp.ClientSession, url: str, output_path: Path) -> bool:
     """Download a single AB1 file."""
     try:
-        async with session.get(url, timeout=aiohttp.ClientTimeout(total=30), allow_redirects=True) as resp:
+        timeout = aiohttp.ClientTimeout(total=30)
+        async with session.get(url, timeout=timeout, allow_redirects=True) as resp:
             if resp.status == 200:
                 content = await resp.read()
                 if len(content) > 100 and content[:4] == b"ABIF":
                     output_path.write_bytes(content)
                     return True
             return False
-    except Exception as e:
+    except Exception:
         return False
 
 

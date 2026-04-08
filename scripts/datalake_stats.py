@@ -13,7 +13,7 @@ Usage:
 import argparse
 import json
 import sys
-from collections import Counter, defaultdict
+from collections import defaultdict
 from pathlib import Path
 
 # Add project root to path
@@ -70,8 +70,12 @@ def get_datalake_stats(data_dir: Path) -> dict:
         'total_species': total_species,
         'total_sequences': total_sequences,
         'total_length_bp': total_length,
-        'avg_seq_per_species': round(total_sequences / total_species, 1) if total_species > 0 else 0,
-        'avg_length_bp': round(total_length / total_sequences, 0) if total_sequences > 0 else 0,
+        'avg_seq_per_species': (
+            round(total_sequences / total_species, 1) if total_species > 0 else 0
+        ),
+        'avg_length_bp': (
+            round(total_length / total_sequences, 0) if total_sequences > 0 else 0
+        ),
         'kingdoms': {},
         'distribution': distribution,
     }
@@ -82,8 +86,13 @@ def get_datalake_stats(data_dir: Path) -> dict:
             result['kingdoms'][kingdom] = {
                 'species': k['species'],
                 'sequences': k['sequences'],
-                'avg_seq_per_species': round(k['sequences'] / k['species'], 1) if k['species'] > 0 else 0,
-                'percent_sequences': round(k['sequences'] / total_sequences * 100, 1) if total_sequences > 0 else 0,
+                'avg_seq_per_species': (
+                    round(k['sequences'] / k['species'], 1) if k['species'] > 0 else 0
+                ),
+                'percent_sequences': (
+                    round(k['sequences'] / total_sequences * 100, 1)
+                    if total_sequences > 0 else 0
+                ),
             }
 
     return result

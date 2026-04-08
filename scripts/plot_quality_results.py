@@ -12,14 +12,14 @@ import json
 from pathlib import Path
 
 import matplotlib
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader, Dataset
 
 from src.ml.models.quality import QualityClassifierCNN, QualityClassifierCNNConfig
-
 
 CLASS_NAMES = ["Q10", "Q20", "Q30", "Q40", "Q50+"]
 
@@ -120,9 +120,15 @@ def plot_per_class_metrics(confusion, class_names, save_path):
     x = np.arange(len(class_names))
     width = 0.25
 
-    bars1 = ax.bar(x - width, precision * 100, width, label='Precision', color='#3498db', alpha=0.8)
-    bars2 = ax.bar(x, recall * 100, width, label='Recall', color='#2ecc71', alpha=0.8)
-    bars3 = ax.bar(x + width, f1 * 100, width, label='F1', color='#9b59b6', alpha=0.8)
+    bars1 = ax.bar(
+        x - width, precision * 100, width, label='Precision', color='#3498db', alpha=0.8
+    )
+    bars2 = ax.bar(
+        x, recall * 100, width, label='Recall', color='#2ecc71', alpha=0.8
+    )
+    bars3 = ax.bar(
+        x + width, f1 * 100, width, label='F1', color='#9b59b6', alpha=0.8
+    )
 
     ax.set_xlabel('Quality Class', fontsize=14)
     ax.set_ylabel('Score (%)', fontsize=14)
@@ -160,8 +166,14 @@ def plot_prediction_distribution(targets, predictions, class_names, save_path):
     x = np.arange(len(class_names))
     width = 0.35
 
-    axes[0].bar(x - width/2, target_counts, width, label='Ground Truth', color='#3498db', alpha=0.8)
-    axes[0].bar(x + width/2, pred_counts, width, label='Predictions', color='#e74c3c', alpha=0.8)
+    axes[0].bar(
+        x - width/2, target_counts, width, label='Ground Truth',
+        color='#3498db', alpha=0.8
+    )
+    axes[0].bar(
+        x + width/2, pred_counts, width, label='Predictions',
+        color='#e74c3c', alpha=0.8
+    )
     axes[0].set_xlabel('Quality Class', fontsize=12)
     axes[0].set_ylabel('Count', fontsize=12)
     axes[0].set_title('Class Distribution: Ground Truth vs Predictions', fontsize=14)
@@ -182,7 +194,10 @@ def plot_prediction_distribution(targets, predictions, class_names, save_path):
 
     error_rate = error_by_class / (total_by_class + 1e-6) * 100
 
-    colors = ['#2ecc71' if e < 30 else '#f39c12' if e < 50 else '#e74c3c' for e in error_rate]
+    colors = [
+        '#2ecc71' if e < 30 else '#f39c12' if e < 50 else '#e74c3c'
+        for e in error_rate
+    ]
     axes[1].bar(x, error_rate, color=colors, alpha=0.8)
     axes[1].set_xlabel('True Quality Class', fontsize=12)
     axes[1].set_ylabel('Error Rate (%)', fontsize=12)
@@ -213,8 +228,14 @@ def plot_confidence_distribution(probabilities, targets, predictions, class_name
     # Histogram of confidence for correct vs incorrect
     bins = np.linspace(0, 1, 21)
 
-    axes[0].hist(confidences[correct], bins=bins, alpha=0.7, label='Correct', color='#2ecc71', density=True)
-    axes[0].hist(confidences[~correct], bins=bins, alpha=0.7, label='Incorrect', color='#e74c3c', density=True)
+    axes[0].hist(
+        confidences[correct], bins=bins, alpha=0.7, label='Correct',
+        color='#2ecc71', density=True
+    )
+    axes[0].hist(
+        confidences[~correct], bins=bins, alpha=0.7, label='Incorrect',
+        color='#e74c3c', density=True
+    )
     axes[0].set_xlabel('Confidence (max probability)', fontsize=12)
     axes[0].set_ylabel('Density', fontsize=12)
     axes[0].set_title('Confidence Distribution', fontsize=14)
@@ -271,9 +292,12 @@ Per-Class Performance:
 """
 
     for i, name in enumerate(CLASS_NAMES):
-        summary_text += f"  {name}: Prec={precision[i]*100:.1f}% Rec={recall[i]*100:.1f}% F1={f1[i]*100:.1f}%\n"
+        prec = precision[i] * 100
+        rec = recall[i] * 100
+        f1_val = f1[i] * 100
+        summary_text += f"  {name}: Prec={prec:.1f}% Rec={rec:.1f}% F1={f1_val:.1f}%\n"
 
-    summary_text += f"\nMacro Averages:\n"
+    summary_text += "\nMacro Averages:\n"
     summary_text += f"  Precision: {precision.mean()*100:.1f}%\n"
     summary_text += f"  Recall: {recall.mean()*100:.1f}%\n"
     summary_text += f"  F1: {f1.mean()*100:.1f}%"
@@ -343,13 +367,21 @@ def main():
     plot_confusion_matrix(results["confusion"], CLASS_NAMES, plots_dir / "confusion_matrix.png")
 
     print("  - Per-class metrics")
-    precision, recall, f1 = plot_per_class_metrics(results["confusion"], CLASS_NAMES, plots_dir / "per_class_metrics.png")
+    precision, recall, f1 = plot_per_class_metrics(
+        results["confusion"], CLASS_NAMES, plots_dir / "per_class_metrics.png"
+    )
 
     print("  - Prediction distribution")
-    plot_prediction_distribution(results["targets"], results["predictions"], CLASS_NAMES, plots_dir / "prediction_distribution.png")
+    plot_prediction_distribution(
+        results["targets"], results["predictions"], CLASS_NAMES,
+        plots_dir / "prediction_distribution.png"
+    )
 
     print("  - Confidence distribution")
-    plot_confidence_distribution(results["probabilities"], results["targets"], results["predictions"], CLASS_NAMES, plots_dir / "confidence_distribution.png")
+    plot_confidence_distribution(
+        results["probabilities"], results["targets"], results["predictions"],
+        CLASS_NAMES, plots_dir / "confidence_distribution.png"
+    )
 
     print("  - Summary")
     plot_summary(config, precision, recall, f1, plots_dir / "summary.png")

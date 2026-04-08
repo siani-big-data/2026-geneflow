@@ -1,11 +1,11 @@
 """Tests for training utilities."""
 
-import pytest
+import numpy as np
 import torch
 import torch.nn as nn
 
 from src.ml.models.base import BaseModel, ModelConfig
-from src.ml.training.callbacks import EarlyStopping, ModelCheckpoint
+from src.ml.training.callbacks import EarlyStopping
 from src.ml.training.metrics import (
     MetricsTracker,
     compute_classification_metrics,
@@ -101,8 +101,6 @@ class TestRegressionMetrics:
         assert metrics["r2"] == 1.0
 
     def test_with_error(self):
-        import numpy as np
-
         targets = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
         predictions = targets + 1.0  # Off by 1
 
@@ -116,8 +114,6 @@ class TestClassificationMetrics:
     """Tests for classification metrics."""
 
     def test_perfect_classification(self):
-        import numpy as np
-
         predictions = np.array([0.9, 0.9, 0.1, 0.1])
         targets = np.array([1, 1, 0, 0])
 
@@ -129,15 +125,9 @@ class TestClassificationMetrics:
         assert metrics["f1"] == 1.0
 
     def test_with_errors(self):
-        import numpy as np
-
         predictions = np.array([0.9, 0.1, 0.9, 0.1])  # 2 correct, 2 wrong
         targets = np.array([1, 1, 0, 0])
 
         metrics = compute_classification_metrics(predictions, targets)
 
         assert metrics["accuracy"] == 0.5
-
-
-# Need numpy for tests
-import numpy as np

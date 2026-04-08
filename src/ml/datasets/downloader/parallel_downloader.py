@@ -1,17 +1,16 @@
 """Parallel downloader using multiple NCBI API keys."""
 
-import logging
-import json
 import gzip
+import json
+import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from threading import Lock
-from typing import Optional
 
-from .ncbi_client import NCBIClient
 from .harvest_state import HarvestState
+from .ncbi_client import NCBIClient
 from .species_discovery import SpeciesDiscovery, SpeciesTarget
 
 logger = logging.getLogger(__name__)
@@ -153,7 +152,8 @@ class ParallelDownloader:
         # Ensure output directory
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
-        logger.info(f"Initialized with {len(self.clients)} API keys ({len(self.clients) * 10} req/s)")
+        num_keys = len(self.clients)
+        logger.info(f"Initialized with {num_keys} API keys ({num_keys * 10} req/s)")
 
     def _get_client(self, worker_id: int) -> NCBIClient:
         """Get client for worker."""
@@ -375,7 +375,9 @@ class ParallelDownloader:
         # Final save
         self.state.save(self.state_file)
 
-        logger.info(f"\n{kingdom.upper()} complete: {species_completed:,} species, {total_sequences:,} sequences")
+        msg = f"\n{kingdom.upper()} complete: "
+        msg += f"{species_completed:,} species, {total_sequences:,} sequences"
+        logger.info(msg)
 
         return {
             "kingdom": kingdom,

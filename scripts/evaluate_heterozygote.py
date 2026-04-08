@@ -20,6 +20,7 @@ import json
 from pathlib import Path
 
 import matplotlib
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
@@ -27,7 +28,6 @@ import torch
 from torch.utils.data import DataLoader
 
 from src.ml.models.heterozygote import HeterozygoteClassifier
-
 
 # =============================================================================
 # Dataset (same as training)
@@ -82,8 +82,12 @@ def plot_training_curves(history: dict, save_dir: Path):
 
     # 1. Loss curves
     ax = axes[0, 0]
-    ax.plot(epochs, history["train_loss"], label="Train", linewidth=2, color="#2196F3")
-    ax.plot(epochs, history["val_loss"], label="Validation", linewidth=2, color="#FF5722")
+    ax.plot(
+        epochs, history["train_loss"], label="Train", linewidth=2, color="#2196F3"
+    )
+    ax.plot(
+        epochs, history["val_loss"], label="Validation", linewidth=2, color="#FF5722"
+    )
     ax.set_xlabel("Epoch")
     ax.set_ylabel("Loss")
     ax.set_title("Loss Curves", fontweight="bold")
@@ -93,8 +97,10 @@ def plot_training_curves(history: dict, save_dir: Path):
 
     # 2. F1 Score
     ax = axes[0, 1]
-    ax.plot(epochs, [x * 100 for x in history["train_f1"]], label="Train", linewidth=2, color="#2196F3")
-    ax.plot(epochs, [x * 100 for x in history["val_f1"]], label="Validation", linewidth=2, color="#4CAF50")
+    train_f1_pct = [x * 100 for x in history["train_f1"]]
+    ax.plot(epochs, train_f1_pct, label="Train", linewidth=2, color="#2196F3")
+    val_f1_pct = [x * 100 for x in history["val_f1"]]
+    ax.plot(epochs, val_f1_pct, label="Validation", linewidth=2, color="#4CAF50")
     ax.set_xlabel("Epoch")
     ax.set_ylabel("F1 Score (%)")
     ax.set_title("F1 Score", fontweight="bold")
@@ -104,8 +110,10 @@ def plot_training_curves(history: dict, save_dir: Path):
 
     # 3. Precision & Recall
     ax = axes[1, 0]
-    ax.plot(epochs, [x * 100 for x in history["val_precision"]], label="Precision", linewidth=2, color="#9C27B0")
-    ax.plot(epochs, [x * 100 for x in history["val_recall"]], label="Recall", linewidth=2, color="#FF9800")
+    val_prec_pct = [x * 100 for x in history["val_precision"]]
+    ax.plot(epochs, val_prec_pct, label="Precision", linewidth=2, color="#9C27B0")
+    val_rec_pct = [x * 100 for x in history["val_recall"]]
+    ax.plot(epochs, val_rec_pct, label="Recall", linewidth=2, color="#FF9800")
     ax.set_xlabel("Epoch")
     ax.set_ylabel("Metric (%)")
     ax.set_title("Validation Precision & Recall", fontweight="bold")
@@ -115,8 +123,10 @@ def plot_training_curves(history: dict, save_dir: Path):
 
     # 4. Accuracy
     ax = axes[1, 1]
-    ax.plot(epochs, [x * 100 for x in history["train_acc"]], label="Train", linewidth=2, color="#2196F3")
-    ax.plot(epochs, [x * 100 for x in history["val_acc"]], label="Validation", linewidth=2, color="#4CAF50")
+    train_acc_pct = [x * 100 for x in history["train_acc"]]
+    ax.plot(epochs, train_acc_pct, label="Train", linewidth=2, color="#2196F3")
+    val_acc_pct = [x * 100 for x in history["val_acc"]]
+    ax.plot(epochs, val_acc_pct, label="Validation", linewidth=2, color="#4CAF50")
     ax.set_xlabel("Epoch")
     ax.set_ylabel("Accuracy (%)")
     ax.set_title("Accuracy", fontweight="bold")
@@ -127,7 +137,7 @@ def plot_training_curves(history: dict, save_dir: Path):
     plt.tight_layout()
     fig.savefig(save_dir / "training_curves.png", dpi=150, bbox_inches="tight")
     plt.close(fig)
-    print(f"  Saved: training_curves.png")
+    print("  Saved: training_curves.png")
 
 
 def plot_precision_recall_tradeoff(history: dict, save_dir: Path):
@@ -140,12 +150,17 @@ def plot_precision_recall_tradeoff(history: dict, save_dir: Path):
 
     # Color by epoch
     colors = np.linspace(0, 1, len(precision))
-    scatter = ax.scatter(recall, precision, c=colors, cmap="viridis", s=30, alpha=0.7)
+    scatter = ax.scatter(
+        recall, precision, c=colors, cmap="viridis", s=30, alpha=0.7
+    )
 
     # Mark best F1 point
     best_idx = np.argmax(f1)
-    ax.scatter([recall[best_idx]], [precision[best_idx]],
-               color="red", s=200, marker="*", zorder=5, label=f"Best F1: {f1[best_idx]:.1f}%")
+    ax.scatter(
+        [recall[best_idx]], [precision[best_idx]],
+        color="red", s=200, marker="*", zorder=5,
+        label=f"Best F1: {f1[best_idx]:.1f}%"
+    )
 
     # Add iso-F1 curves
     for f1_val in [0.6, 0.7, 0.8, 0.9]:
@@ -156,14 +171,18 @@ def plot_precision_recall_tradeoff(history: dict, save_dir: Path):
         # Label
         idx = np.argmin(np.abs(r - 0.95))
         if valid[idx]:
-            ax.text(r[idx] * 100, p[idx] * 100, f"F1={f1_val:.1f}", fontsize=8, color='gray')
+            ax.text(
+                r[idx] * 100, p[idx] * 100, f"F1={f1_val:.1f}", fontsize=8, color='gray'
+            )
 
     cbar = plt.colorbar(scatter, ax=ax)
     cbar.set_label("Epoch (normalized)")
 
     ax.set_xlabel("Recall (%)", fontsize=12)
     ax.set_ylabel("Precision (%)", fontsize=12)
-    ax.set_title("Precision-Recall Trade-off During Training", fontsize=14, fontweight="bold")
+    ax.set_title(
+        "Precision-Recall Trade-off During Training", fontsize=14, fontweight="bold"
+    )
     ax.set_xlim(0, 105)
     ax.set_ylim(0, 105)
     ax.legend(loc="lower left")
@@ -171,7 +190,7 @@ def plot_precision_recall_tradeoff(history: dict, save_dir: Path):
 
     fig.savefig(save_dir / "precision_recall_tradeoff.png", dpi=150, bbox_inches="tight")
     plt.close(fig)
-    print(f"  Saved: precision_recall_tradeoff.png")
+    print("  Saved: precision_recall_tradeoff.png")
 
 
 def plot_loss_vs_f1(history: dict, save_dir: Path):
@@ -180,8 +199,11 @@ def plot_loss_vs_f1(history: dict, save_dir: Path):
 
     # Train
     ax = axes[0]
-    ax.scatter(history["train_loss"], [x * 100 for x in history["train_f1"]],
-               alpha=0.5, c=range(len(history["train_loss"])), cmap="viridis")
+    train_f1_vals = [x * 100 for x in history["train_f1"]]
+    ax.scatter(
+        history["train_loss"], train_f1_vals,
+        alpha=0.5, c=range(len(history["train_loss"])), cmap="viridis"
+    )
     ax.set_xlabel("Train Loss")
     ax.set_ylabel("Train F1 (%)")
     ax.set_title("Train: Loss vs F1", fontweight="bold")
@@ -189,8 +211,11 @@ def plot_loss_vs_f1(history: dict, save_dir: Path):
 
     # Validation
     ax = axes[1]
-    scatter = ax.scatter(history["val_loss"], [x * 100 for x in history["val_f1"]],
-                         alpha=0.5, c=range(len(history["val_loss"])), cmap="viridis")
+    val_f1_vals = [x * 100 for x in history["val_f1"]]
+    scatter = ax.scatter(
+        history["val_loss"], val_f1_vals,
+        alpha=0.5, c=range(len(history["val_loss"])), cmap="viridis"
+    )
     ax.set_xlabel("Validation Loss")
     ax.set_ylabel("Validation F1 (%)")
     ax.set_title("Validation: Loss vs F1", fontweight="bold")
@@ -202,7 +227,7 @@ def plot_loss_vs_f1(history: dict, save_dir: Path):
     plt.tight_layout()
     fig.savefig(save_dir / "loss_vs_f1.png", dpi=150, bbox_inches="tight")
     plt.close(fig)
-    print(f"  Saved: loss_vs_f1.png")
+    print("  Saved: loss_vs_f1.png")
 
 
 def plot_overfitting_analysis(history: dict, save_dir: Path):
@@ -216,8 +241,14 @@ def plot_overfitting_analysis(history: dict, save_dir: Path):
     val_loss = np.array(history["val_loss"])
     gap = val_loss - train_loss
 
-    ax.fill_between(epochs, 0, gap, where=(gap > 0), alpha=0.3, color="red", label="Overfitting (val > train)")
-    ax.fill_between(epochs, 0, gap, where=(gap <= 0), alpha=0.3, color="green", label="Underfitting (val <= train)")
+    ax.fill_between(
+        epochs, 0, gap, where=(gap > 0),
+        alpha=0.3, color="red", label="Overfitting (val > train)"
+    )
+    ax.fill_between(
+        epochs, 0, gap, where=(gap <= 0),
+        alpha=0.3, color="green", label="Underfitting (val <= train)"
+    )
     ax.plot(epochs, gap, color="black", linewidth=1)
     ax.axhline(y=0, color="black", linestyle="--", linewidth=0.5)
     ax.set_xlabel("Epoch")
@@ -232,8 +263,14 @@ def plot_overfitting_analysis(history: dict, save_dir: Path):
     val_f1 = np.array(history["val_f1"]) * 100
     gap_f1 = train_f1 - val_f1
 
-    ax.fill_between(epochs, 0, gap_f1, where=(gap_f1 > 0), alpha=0.3, color="red", label="Train > Val")
-    ax.fill_between(epochs, 0, gap_f1, where=(gap_f1 <= 0), alpha=0.3, color="green", label="Val >= Train")
+    ax.fill_between(
+        epochs, 0, gap_f1, where=(gap_f1 > 0),
+        alpha=0.3, color="red", label="Train > Val"
+    )
+    ax.fill_between(
+        epochs, 0, gap_f1, where=(gap_f1 <= 0),
+        alpha=0.3, color="green", label="Val >= Train"
+    )
     ax.plot(epochs, gap_f1, color="black", linewidth=1)
     ax.axhline(y=0, color="black", linestyle="--", linewidth=0.5)
     ax.set_xlabel("Epoch")
@@ -247,7 +284,9 @@ def plot_overfitting_analysis(history: dict, save_dir: Path):
     # Avoid division by zero
     gen_ratio = np.where(train_f1 > 0, val_f1 / train_f1, 1.0)
     ax.plot(epochs, gen_ratio, color="#2196F3", linewidth=2)
-    ax.axhline(y=1.0, color="green", linestyle="--", linewidth=1, label="Perfect generalization")
+    ax.axhline(
+        y=1.0, color="green", linestyle="--", linewidth=1, label="Perfect generalization"
+    )
     ax.axhline(y=0.9, color="orange", linestyle="--", linewidth=1, label="10% gap")
     ax.set_xlabel("Epoch")
     ax.set_ylabel("Val F1 / Train F1")
@@ -259,7 +298,7 @@ def plot_overfitting_analysis(history: dict, save_dir: Path):
     plt.tight_layout()
     fig.savefig(save_dir / "overfitting_analysis.png", dpi=150, bbox_inches="tight")
     plt.close(fig)
-    print(f"  Saved: overfitting_analysis.png")
+    print("  Saved: overfitting_analysis.png")
 
 
 def plot_learning_dynamics(history: dict, save_dir: Path):
@@ -306,7 +345,10 @@ def plot_learning_dynamics(history: dict, save_dir: Path):
     rolling_f1 = np.convolve(val_f1, np.ones(window)/window, mode='valid')
     rolling_epochs = epochs[window-1:]
     ax.plot(epochs, val_f1, alpha=0.3, color="#4CAF50", label="Raw")
-    ax.plot(rolling_epochs, rolling_f1, color="#4CAF50", linewidth=2, label=f"Rolling avg (w={window})")
+    ax.plot(
+        rolling_epochs, rolling_f1,
+        color="#4CAF50", linewidth=2, label=f"Rolling avg (w={window})"
+    )
     ax.set_xlabel("Epoch")
     ax.set_ylabel("Val F1 (%)")
     ax.set_title("Validation F1 (Smoothed)", fontweight="bold")
@@ -316,7 +358,7 @@ def plot_learning_dynamics(history: dict, save_dir: Path):
     plt.tight_layout()
     fig.savefig(save_dir / "learning_dynamics.png", dpi=150, bbox_inches="tight")
     plt.close(fig)
-    print(f"  Saved: learning_dynamics.png")
+    print("  Saved: learning_dynamics.png")
 
 
 def evaluate_model_on_dataset(model, dataloader, device):
@@ -378,7 +420,7 @@ def plot_confusion_matrix(preds, labels, save_dir: Path):
     plt.tight_layout()
     fig.savefig(save_dir / "confusion_matrix.png", dpi=150, bbox_inches="tight")
     plt.close(fig)
-    print(f"  Saved: confusion_matrix.png")
+    print("  Saved: confusion_matrix.png")
 
 
 def plot_probability_distribution(probs, labels, save_dir: Path):
@@ -395,7 +437,9 @@ def plot_probability_distribution(probs, labels, save_dir: Path):
             color="#2196F3", density=True)
     ax.hist(het_probs, bins=50, alpha=0.7, label=f"Heterozygous (n={len(het_probs):,})",
             color="#FF5722", density=True)
-    ax.axvline(x=0.5, color="black", linestyle="--", linewidth=1, label="Decision boundary")
+    ax.axvline(
+        x=0.5, color="black", linestyle="--", linewidth=1, label="Decision boundary"
+    )
     ax.set_xlabel("P(Heterozygous)")
     ax.set_ylabel("Density")
     ax.set_title("Prediction Probability Distribution", fontweight="bold")
@@ -416,7 +460,7 @@ def plot_probability_distribution(probs, labels, save_dir: Path):
     plt.tight_layout()
     fig.savefig(save_dir / "probability_distribution.png", dpi=150, bbox_inches="tight")
     plt.close(fig)
-    print(f"  Saved: probability_distribution.png")
+    print("  Saved: probability_distribution.png")
 
 
 def plot_threshold_analysis(probs, labels, save_dir: Path):
@@ -444,12 +488,16 @@ def plot_threshold_analysis(probs, labels, save_dir: Path):
 
     # 1. Metrics vs threshold
     ax = axes[0]
-    ax.plot(thresholds, [p * 100 for p in precisions], label="Precision", linewidth=2, color="#9C27B0")
-    ax.plot(thresholds, [r * 100 for r in recalls], label="Recall", linewidth=2, color="#FF9800")
+    prec_pct = [p * 100 for p in precisions]
+    ax.plot(thresholds, prec_pct, label="Precision", linewidth=2, color="#9C27B0")
+    rec_pct = [r * 100 for r in recalls]
+    ax.plot(thresholds, rec_pct, label="Recall", linewidth=2, color="#FF9800")
     ax.plot(thresholds, [f * 100 for f in f1s], label="F1", linewidth=2, color="#4CAF50")
 
     best_thresh = thresholds[np.argmax(f1s)]
-    ax.axvline(x=best_thresh, color="red", linestyle="--", label=f"Best F1 @ {best_thresh:.2f}")
+    ax.axvline(
+        x=best_thresh, color="red", linestyle="--", label=f"Best F1 @ {best_thresh:.2f}"
+    )
     ax.axvline(x=0.5, color="gray", linestyle=":", label="Default (0.5)")
 
     ax.set_xlabel("Threshold")
@@ -464,8 +512,11 @@ def plot_threshold_analysis(probs, labels, save_dir: Path):
     ax = axes[1]
     ax.plot([r * 100 for r in recalls], [p * 100 for p in precisions],
             linewidth=2, color="#2196F3")
-    ax.scatter([recalls[np.argmax(f1s)] * 100], [precisions[np.argmax(f1s)] * 100],
-               color="red", s=100, zorder=5, label=f"Best F1: {max(f1s)*100:.1f}%")
+    best_idx = np.argmax(f1s)
+    ax.scatter(
+        [recalls[best_idx] * 100], [precisions[best_idx] * 100],
+        color="red", s=100, zorder=5, label=f"Best F1: {max(f1s)*100:.1f}%"
+    )
     ax.set_xlabel("Recall (%)")
     ax.set_ylabel("Precision (%)")
     ax.set_title("Precision-Recall Curve", fontweight="bold")
@@ -477,7 +528,7 @@ def plot_threshold_analysis(probs, labels, save_dir: Path):
     plt.tight_layout()
     fig.savefig(save_dir / "threshold_analysis.png", dpi=150, bbox_inches="tight")
     plt.close(fig)
-    print(f"  Saved: threshold_analysis.png")
+    print("  Saved: threshold_analysis.png")
 
     return best_thresh, max(f1s)
 
@@ -498,6 +549,17 @@ def plot_summary_card(history: dict, config: dict, save_dir: Path):
     final_f1 = history["val_f1"][-1] * 100
     final_train_f1 = history["train_f1"][-1] * 100
 
+    # Extract config values
+    args = config['args']
+    h_dim = args['hidden_dim']
+    n_layers = args['num_layers']
+    dropout = args['dropout']
+    c_weight = args['class_weight']
+    b_size = args['batch_size']
+    lr = args['lr']
+    epochs_tr = config['epochs_trained']
+    gap = final_train_f1 - final_f1
+
     text = f"""
     ╔══════════════════════════════════════════════════════════════╗
     ║           HETEROZYGOTE CLASSIFIER - EVALUATION REPORT         ║
@@ -505,16 +567,16 @@ def plot_summary_card(history: dict, config: dict, save_dir: Path):
     ║                                                               ║
     ║  MODEL CONFIGURATION                                          ║
     ║  ─────────────────                                            ║
-    ║  Hidden dim:     {config['args']['hidden_dim']:>6}                                       ║
-    ║  Num layers:     {config['args']['num_layers']:>6}                                       ║
-    ║  Dropout:        {config['args']['dropout']:>6.2f}                                       ║
-    ║  Class weight:   {config['args']['class_weight']:>6.1f}                                       ║
-    ║  Batch size:     {config['args']['batch_size']:>6}                                       ║
-    ║  Learning rate:  {config['args']['lr']:>6.0e}                                       ║
+    ║  Hidden dim:     {h_dim:>6}                                       ║
+    ║  Num layers:     {n_layers:>6}                                       ║
+    ║  Dropout:        {dropout:>6.2f}                                       ║
+    ║  Class weight:   {c_weight:>6.1f}                                       ║
+    ║  Batch size:     {b_size:>6}                                       ║
+    ║  Learning rate:  {lr:>6.0e}                                       ║
     ║                                                               ║
     ║  TRAINING SUMMARY                                             ║
     ║  ─────────────────                                            ║
-    ║  Epochs trained: {config['epochs_trained']:>6}                                       ║
+    ║  Epochs trained: {epochs_tr:>6}                                       ║
     ║  Best epoch:     {best_f1_idx + 1:>6}                                       ║
     ║                                                               ║
     ║  BEST VALIDATION METRICS (Epoch {best_f1_idx + 1})                           ║
@@ -528,16 +590,19 @@ def plot_summary_card(history: dict, config: dict, save_dir: Path):
     ║  ─────────────────                                            ║
     ║  Final Train F1: {final_train_f1:>6.1f}%                                      ║
     ║  Final Val F1:   {final_f1:>6.1f}%                                      ║
-    ║  Gap:            {final_train_f1 - final_f1:>6.1f}%                                      ║
+    ║  Gap:            {gap:>6.1f}%                                      ║
     ║                                                               ║
     ╚══════════════════════════════════════════════════════════════╝
     """
 
-    ax.text(0.5, 0.5, text, transform=ax.transAxes, fontsize=11,
-            verticalalignment='center', horizontalalignment='center',
-            fontfamily='monospace', bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+    ax.text(
+        0.5, 0.5, text, transform=ax.transAxes, fontsize=11,
+        verticalalignment='center', horizontalalignment='center',
+        fontfamily='monospace',
+        bbox=dict(boxstyle='round', facecolor='white', alpha=0.8)
+    )
 
-    print(f"  Saved: summary_card.png")
+    print("  Saved: summary_card.png")
 
 
 # =============================================================================

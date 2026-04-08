@@ -180,7 +180,10 @@ def curate_datalake(
             # Build paths
             raw_json = raw_fasta.with_suffix("").with_suffix(".json")
             aug_fasta = aug_dir / rel_path
-            aug_json = aug_fasta.with_suffix("").with_suffix(".json") if aug_fasta.exists() else None
+            aug_json = (
+                aug_fasta.with_suffix("").with_suffix(".json")
+                if aug_fasta.exists() else None
+            )
             out_fasta = out_dir / rel_path
             out_json = out_fasta.with_suffix("").with_suffix(".json")
 

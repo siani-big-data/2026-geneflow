@@ -47,7 +47,7 @@ def find_duplicates(raw_dir: Path) -> list[tuple[Path, Path]]:
                 taxon_id = meta.get("taxon_id", 0)
                 if not taxon_id:
                     continue
-            except:
+            except Exception:
                 continue
 
             # Get taxonomy and build expected hierarchical path
@@ -136,7 +136,7 @@ def merge_species(flat_dir: Path, hier_dir: Path, dry_run: bool = False) -> str:
         # No new sequences, just delete flat
         if not dry_run:
             shutil.rmtree(flat_dir)
-        return f"No new sequences, deleted flat dir"
+        return "No new sequences, deleted flat dir"
 
     if dry_run:
         return f"Would merge {len(new_sequences)} new sequences"

@@ -10,8 +10,13 @@ COPY pyproject.toml uv.lock README.md ./
 COPY src/ ./src/
 
 # Create venv and install dependencies
+# Use CUDA index only for x86_64; ARM64 uses CPU-only torch from PyPI
 RUN uv venv /app/.venv && \
-    uv sync --frozen --no-dev
+    if [ "$(uname -m)" = "x86_64" ]; then \
+        uv sync --no-dev --extra-index-url https://download.pytorch.org/whl/cu124; \
+    else \
+        uv sync --no-dev; \
+    fi
 
 RUN mkdir -p /app/data
 RUN useradd --create-home --shell /bin/bash appuser && chown -R appuser:appuser /app

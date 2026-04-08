@@ -24,7 +24,6 @@ from pathlib import Path
 import numpy as np
 from Bio import SeqIO
 
-
 # IUPAC ambiguity codes for heterozygotes
 HET_CODES = set("MRWSYK")
 
@@ -92,10 +91,13 @@ def extract_ab1_signals(ab1_path: Path) -> dict | None:
             "signals": signals,
             "labels": labels,
             "sequence": sequence,
-            "quality": np.array(quality, dtype=np.int32) if quality else np.zeros(seq_len, dtype=np.int32),
+            "quality": (
+                np.array(quality, dtype=np.int32)
+                if quality else np.zeros(seq_len, dtype=np.int32)
+            ),
         }
 
-    except Exception as e:
+    except Exception:
         return None
 
 
@@ -173,7 +175,9 @@ class ChromatogramAugmenter:
         scaled = scaled / np.maximum(scaled.sum(axis=0, keepdims=True), 1e-6)
         return scaled
 
-    def simulate_quality_degradation(self, signals: np.ndarray, degradation: float = 0.1) -> np.ndarray:
+    def simulate_quality_degradation(
+        self, signals: np.ndarray, degradation: float = 0.1
+    ) -> np.ndarray:
         """Simulate quality degradation (more uniform signals)."""
         uniform = np.ones_like(signals) * 0.25
         degraded = (1 - degradation) * signals + degradation * uniform
@@ -191,7 +195,8 @@ class ChromatogramAugmenter:
             aug_signals = self.scale_channels(aug_signals)
 
         if np.random.random() < 0.3:
-            aug_signals = self.simulate_quality_degradation(aug_signals, np.random.uniform(0.05, 0.15))
+            degrade_amt = np.random.uniform(0.05, 0.15)
+            aug_signals = self.simulate_quality_degradation(aug_signals, degrade_amt)
 
         return aug_signals, labels
 
@@ -226,7 +231,8 @@ def create_enhanced_dataset(
             total_pos += len(data["labels"])
 
     print(f"Loaded {len(all_data)} valid AB1 files")
-    print(f"Original data: {total_pos} positions, {total_het} heterozygotes ({100*total_het/total_pos:.1f}%)")
+    het_pct = 100 * total_het / total_pos
+    print(f"Original data: {total_pos} positions, {total_het} heterozygotes ({het_pct:.1f}%)")
 
     # Verify feature discrimination
     print("\nVerifying feature discrimination...")
@@ -248,9 +254,12 @@ def create_enhanced_dataset(
             else:
                 hom_ratios.append(ratio)
 
-    print(f"  Het positions: second/max ratio = {np.mean(het_ratios):.3f} +/- {np.std(het_ratios):.3f}")
-    print(f"  Hom positions: second/max ratio = {np.mean(hom_ratios):.3f} +/- {np.std(hom_ratios):.3f}")
-    print(f"  Ratio difference: {np.mean(het_ratios) - np.mean(hom_ratios):.3f} (should be positive)")
+    het_mean, het_std = np.mean(het_ratios), np.std(het_ratios)
+    print(f"  Het positions: second/max ratio = {het_mean:.3f} +/- {het_std:.3f}")
+    hom_mean, hom_std = np.mean(hom_ratios), np.std(hom_ratios)
+    print(f"  Hom positions: second/max ratio = {hom_mean:.3f} +/- {hom_std:.3f}")
+    ratio_diff = het_mean - hom_mean
+    print(f"  Ratio difference: {ratio_diff:.3f} (should be positive)")
 
     # Split at FILE level
     np.random.shuffle(all_data)
@@ -300,7 +309,9 @@ def create_enhanced_dataset(
         return samples
 
     print("\nGenerating train samples (with augmentation)...")
-    train_samples = generate_samples(train_files, train_samples_per_file, train_target, augment=True)
+    train_samples = generate_samples(
+        train_files, train_samples_per_file, train_target, augment=True
+    )
 
     print("Generating val samples (no augmentation)...")
     val_samples = generate_samples(val_files, val_samples_per_file, val_target, augment=False)
@@ -366,12 +377,17 @@ def create_enhanced_dataset(
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Create enhanced heterozygote_training dataset")
+    parser = argparse.ArgumentParser(
+        description="Create enhanced heterozygote_training dataset"
+    )
 
     parser.add_argument("--ab1-dir", type=str, default="datalake/ab1",
                         help="Directory with AB1 files")
-    parser.add_argument("--output-dir", type=str, default="datalake/datasets/heterozygote_enhanced",
-                        help="Output directory")
+    parser.add_argument(
+        "--output-dir", type=str,
+        default="datalake/datasets/heterozygote_enhanced",
+        help="Output directory"
+    )
     parser.add_argument("--target-samples", type=int, default=40000,
                         help="Target number of samples")
     parser.add_argument("--window-size", type=int, default=500,

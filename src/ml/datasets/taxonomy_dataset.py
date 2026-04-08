@@ -8,7 +8,6 @@ from typing import Any
 import torch
 from torch.utils.data import Dataset
 
-
 # Nucleotide to index mapping
 NUCLEOTIDE_MAP = {
     "A": 0, "T": 1, "C": 2, "G": 3, "N": 4,

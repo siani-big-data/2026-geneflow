@@ -12,7 +12,6 @@ from typing import Any
 import torch
 from torch.utils.data import Dataset
 
-
 # Nucleotide to index mapping
 NUCLEOTIDE_MAP = {
     "A": 0, "T": 1, "C": 2, "G": 3, "N": 4,
@@ -139,7 +138,10 @@ class HierarchicalTaxonomyDataset(Dataset):
                 label for label, count in class_counts[level].items()
                 if count >= self.min_samples_per_class
             }
-            print(f"Level {level}: {len(valid_classes[level])} classes with >= {self.min_samples_per_class} samples")
+            print(
+                f"Level {level}: {len(valid_classes[level])} classes "
+                f"with >= {self.min_samples_per_class} samples"
+            )
 
         # Third pass: build final dataset with class indices
         final_class_counts: dict[str, dict[str, int]] = {level: {} for level in self.levels}

@@ -66,4 +66,4 @@ python_functions = ["test_*"]
 addopts = "-v --tb=short"
 
 [tool.uv]
-extra-index-url = ["https://download.pytorch.org/whl/cu124"]
+# CUDA index only used locally for GPU support; Dockerfile handles multi-arch

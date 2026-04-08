@@ -16,7 +16,6 @@ from torch.utils.data import Dataset
 
 from .features.sequence_features import SequenceFeatureExtractor, SequenceFeatures
 
-
 # Nucleotide encoding
 NUCLEOTIDE_MAP = {
     "A": 0, "T": 1, "C": 2, "G": 3, "N": 4,
@@ -132,7 +131,10 @@ class HierarchicalTaxonomyFeatureDataset(Dataset):
                 label for label, count in class_counts[level].items()
                 if count >= self.config.min_samples_per_class
             }
-            print(f"Level {level}: {len(valid_classes[level])} classes with >= {self.config.min_samples_per_class} samples")
+            print(
+                f"Level {level}: {len(valid_classes[level])} classes "
+                f"with >= {self.config.min_samples_per_class} samples"
+            )
 
         # Third pass: build final dataset
         for sample in all_samples:
@@ -426,7 +428,8 @@ class HierarchicalTaxonomyDatasetBuilder:
         class_counts_per_level = {level: {} for level in self.config.levels}
         for sample in samples:
             for level, label in sample["labels"].items():
-                class_counts_per_level[level][label] = class_counts_per_level[level].get(label, 0) + 1
+                current_count = class_counts_per_level[level].get(label, 0)
+                class_counts_per_level[level][label] = current_count + 1
 
         # Save metadata
         metadata = {

@@ -19,7 +19,6 @@ import sys
 from pathlib import Path
 
 import torch
-import torch.nn as nn
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import CosineAnnealingLR
 from torch.utils.data import DataLoader, random_split
@@ -28,11 +27,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.ml.datasets.fastq_dataset import FastqDataset
 from src.ml.models.quality import (
+    EnhancedQualityConfig,
+    EnhancedQualityPredictor,
+    QualityLoss,
     QualityPredictor,
     QualityPredictorConfig,
-    QualityLoss,
-    EnhancedQualityPredictor,
-    EnhancedQualityConfig,
 )
 
 
@@ -183,7 +182,7 @@ def main():
         return 1
 
     stats = dataset.compute_statistics()
-    print(f"\nDataset statistics:")
+    print("\nDataset statistics:")
     print(f"  Records: {stats['num_records']}")
     print(f"  Total bases: {stats['total_bases']:,}")
     print(f"  Mean length: {stats['mean_length']:.1f}")
@@ -236,7 +235,7 @@ def main():
         )
         model = EnhancedQualityPredictor(config)
         print("Model: EnhancedQualityPredictor")
-        print(f"Input: 4 sequence channels + 8 auxiliary")
+        print("Input: 4 sequence channels + 8 auxiliary")
     else:
         config = QualityPredictorConfig(
             input_channels=4,
@@ -246,7 +245,7 @@ def main():
         )
         model = QualityPredictor(config)
         print("Model: QualityPredictor")
-        print(f"Input: 4 sequence channels (one-hot)")
+        print("Input: 4 sequence channels (one-hot)")
 
     model = model.to(device)
     print(f"Parameters: {sum(p.numel() for p in model.parameters() if p.requires_grad):,}")

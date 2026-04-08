@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 
 import httpx
 
-from src.external.ncbi_taxonomy import ncbi_taxonomy, KNOWN_TAXONOMY
+from src.external.ncbi_taxonomy import KNOWN_TAXONOMY, ncbi_taxonomy
 from src.storage import minio_storage
 
 # Sample AB1 files from different organisms
@@ -101,10 +101,13 @@ async def download_and_store():
             # Get taxonomy (use known taxonomy for speed)
             if organism in KNOWN_TAXONOMY:
                 tax_info = KNOWN_TAXONOMY[organism]
-                print(f"  Taxonomia: {tax_info.superkingdom} > ... > {tax_info.genus} > {tax_info.species}")
+                print(
+                    f"  Taxonomia: {tax_info.superkingdom} > ... > "
+                    f"{tax_info.genus} > {tax_info.species}"
+                )
             else:
                 tax_info = await ncbi_taxonomy.get_taxonomy(organism)
-                print(f"  Taxonomia obtenida de NCBI")
+                print("  Taxonomia obtenida de NCBI")
 
             # Build taxonomic path
             tax_path = tax_info.get_path()
@@ -217,7 +220,7 @@ async def download_and_store():
     current_prefix = ""
     for obj in objects:
         parts = obj.split("/")
-        depth = len(parts) - 1
+        len(parts) - 1
 
         # Show path hierarchy
         for i, part in enumerate(parts):

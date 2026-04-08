@@ -12,8 +12,8 @@ Usage:
 import argparse
 import asyncio
 import zipfile
-from pathlib import Path
 from io import BytesIO
+from pathlib import Path
 
 import httpx
 
@@ -127,7 +127,7 @@ async def download_zenodo_record(
 
     files = await get_record_files(client, record_id)
     if not files:
-        print(f"  No files found or access restricted")
+        print("  No files found or access restricted")
         return {"downloaded": 0, "skipped": 0}
 
     downloaded = 0

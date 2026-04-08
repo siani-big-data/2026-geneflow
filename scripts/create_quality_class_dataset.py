@@ -21,7 +21,6 @@ from pathlib import Path
 import numpy as np
 from Bio import SeqIO
 
-
 # Quality class definitions
 CLASS_BINS = {
     5: [0, 10, 20, 30, 40, 100],    # Q10, Q20, Q30, Q40, Q50+
@@ -31,7 +30,9 @@ CLASS_BINS = {
 }
 
 CLASS_NAMES = {
-    5: ["Q10 (0-9)", "Q20 (10-19)", "Q30 (20-29)", "Q40 (30-39)", "Q50+ (40+)"],
+    5: [
+        "Q10 (0-9)", "Q20 (10-19)", "Q30 (20-29)", "Q40 (30-39)", "Q50+ (40+)"
+    ],
     4: ["Low (0-14)", "Medium (15-24)", "Good (25-34)", "Excellent (35+)"],
     3: ["Bad (0-19)", "OK (20-34)", "Good (35+)"],
     2: ["Bad (<20)", "Good (>=20)"],
@@ -90,7 +91,8 @@ def extract_ab1_data(ab1_path: Path) -> dict | None:
             return None
 
         p1am = np.array(p1am, dtype=np.float32)
-        p2am = np.array(p2am, dtype=np.float32) if p2am and len(p2am) == len(sequence) else np.zeros_like(p1am)
+        p2am_valid = p2am and len(p2am) == len(sequence)
+        p2am = np.array(p2am, dtype=np.float32) if p2am_valid else np.zeros_like(p1am)
 
         # Sample trace data at peak locations
         seq_len = len(sequence)
@@ -129,7 +131,7 @@ def extract_ab1_data(ab1_path: Path) -> dict | None:
             "sequence": sequence,
         }
 
-    except Exception as e:
+    except Exception:
         return None
 
 
@@ -197,11 +199,12 @@ def create_quality_class_dataset(
     all_quality = np.concatenate([d["quality"] for d in all_data])
     all_classes = phred_to_class(all_quality, num_classes)
 
-    print(f"\nOriginal class distribution:")
+    print("\nOriginal class distribution:")
     for c in range(num_classes):
         count = (all_classes == c).sum()
         pct = 100 * count / len(all_classes)
-        print(f"  {CLASS_NAMES[num_classes][c]}: {count:,} ({pct:.1f}%)")
+        class_name = CLASS_NAMES[num_classes][c]
+        print(f"  {class_name}: {count:,} ({pct:.1f}%)")
 
     # Split files into train/val
     np.random.shuffle(all_data)
@@ -267,7 +270,7 @@ def create_quality_class_dataset(
     class_weights = len(valid_classes) / (num_classes * class_counts + 1)
     class_weights = class_weights / class_weights.sum() * num_classes  # Normalize
 
-    print(f"\nClass weights for training:")
+    print("\nClass weights for training:")
     for c in range(num_classes):
         print(f"  {CLASS_NAMES[num_classes][c]}: {class_weights[c]:.3f}")
 
@@ -289,8 +292,14 @@ def create_quality_class_dataset(
     train_classes = np.concatenate([s["classes"][s["mask"] > 0] for s in train_samples])
     val_classes = np.concatenate([s["classes"][s["mask"] > 0] for s in val_samples])
 
-    train_dist = {CLASS_NAMES[num_classes][c]: int((train_classes == c).sum()) for c in range(num_classes)}
-    val_dist = {CLASS_NAMES[num_classes][c]: int((val_classes == c).sum()) for c in range(num_classes)}
+    train_dist = {
+        CLASS_NAMES[num_classes][c]: int((train_classes == c).sum())
+        for c in range(num_classes)
+    }
+    val_dist = {
+        CLASS_NAMES[num_classes][c]: int((val_classes == c).sum())
+        for c in range(num_classes)
+    }
 
     # Metadata
     stats = {
@@ -306,7 +315,10 @@ def create_quality_class_dataset(
         "val_samples": len(val_samples),
         "window_size": window_size,
         "n_features": 7,
-        "features": ["signal_A", "signal_C", "signal_G", "signal_T", "p1am_norm", "p2am_norm", "ratio_norm"],
+        "features": [
+            "signal_A", "signal_C", "signal_G", "signal_T",
+            "p1am_norm", "p2am_norm", "ratio_norm"
+        ],
         "train_class_distribution": train_dist,
         "val_class_distribution": val_dist,
         "task": "quality_classification",
@@ -336,7 +348,7 @@ def main():
     print("QUALITY CLASSIFICATION DATASET")
     print("=" * 70)
     print(f"\nTask: Classify quality into {args.num_classes} bins")
-    print(f"Classes:")
+    print("Classes:")
     for i, name in enumerate(CLASS_NAMES[args.num_classes]):
         print(f"  {i}: {name}")
     print()

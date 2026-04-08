@@ -27,13 +27,13 @@ from torch.utils.data import DataLoader, Dataset
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.ml.training import (
-    TrainingResult,
     DatasetInfo,
-    HardwareInfo,
     EpochMetrics,
+    HardwareInfo,
+    PaperFigures,
     Predictions,
     ResultsWriter,
-    PaperFigures,
+    TrainingResult,
 )
 
 
@@ -185,7 +185,10 @@ def main():
     parser.add_argument("--lr", type=float, default=1e-4)
     parser.add_argument("--hidden-dims", type=int, nargs="+", default=[128, 64])
     parser.add_argument("--dropout", type=float, default=0.5)
-    parser.add_argument("--tolerance", type=float, default=1.0, help="Tolerance for accuracy (±X quality points)")
+    parser.add_argument(
+        "--tolerance", type=float, default=1.0,
+        help="Tolerance for accuracy (±X quality points)"
+    )
     parser.add_argument("--patience", type=int, default=30)
     parser.add_argument("--seed", type=int, default=42)
     args = parser.parse_args()
@@ -213,7 +216,10 @@ def main():
 
     print(f"\nDataset: {data_dir}")
     print(f"Total samples: {metadata['total_samples']}")
-    print(f"Train: {metadata['train_samples']} | Val: {metadata['val_samples']} | Test: {metadata['test_samples']}")
+    print(
+        f"Train: {metadata['train_samples']} | Val: {metadata['val_samples']} | "
+        f"Test: {metadata['test_samples']}"
+    )
     print(f"Quality range: {metadata['quality_range']}")
     print(f"Mean quality: {metadata['mean_quality']:.2f}")
 
@@ -257,7 +263,7 @@ def main():
         dropout=args.dropout,
     ).to(device)
 
-    print(f"Model: QualityMLP")
+    print("Model: QualityMLP")
     print(f"Input: {train_dataset.num_features} features")
     print(f"Hidden layers: {args.hidden_dims}")
     print(f"Dropout: {args.dropout}")
@@ -286,7 +292,9 @@ def main():
     training_start = time.time()
 
     for epoch in range(args.epochs):
-        train_metrics = train_epoch(model, train_loader, optimizer, criterion, device, args.tolerance)
+        train_metrics = train_epoch(
+            model, train_loader, optimizer, criterion, device, args.tolerance
+        )
         val_metrics = evaluate(model, val_loader, criterion, device, args.tolerance)
         lr = optimizer.param_groups[0]["lr"]
         scheduler.step()
@@ -305,9 +313,13 @@ def main():
             }
         ))
 
-        print(f"Epoch {epoch + 1:3d}/{args.epochs} | "
-              f"Train: Loss={train_metrics['loss']:.4f} MAE={train_metrics['mae']:.2f} Acc={train_metrics['accuracy']:.1%} | "
-              f"Val: Loss={val_metrics['loss']:.4f} MAE={val_metrics['mae']:.2f} Acc={val_metrics['accuracy']:.1%}")
+        print(
+            f"Epoch {epoch + 1:3d}/{args.epochs} | "
+            f"Train: Loss={train_metrics['loss']:.4f} "
+            f"MAE={train_metrics['mae']:.2f} Acc={train_metrics['accuracy']:.1%} | "
+            f"Val: Loss={val_metrics['loss']:.4f} "
+            f"MAE={val_metrics['mae']:.2f} Acc={val_metrics['accuracy']:.1%}"
+        )
 
         if val_metrics["loss"] < best_val_loss:
             best_val_loss = val_metrics["loss"]
@@ -316,7 +328,10 @@ def main():
             best_epoch = epoch + 1
             no_improve = 0
             best_model_state = model.state_dict().copy()
-            print(f"         -> New best! Loss={best_val_loss:.4f} MAE={best_val_mae:.2f} Acc={best_val_acc:.1%}")
+            print(
+                f"         -> New best! Loss={best_val_loss:.4f} "
+                f"MAE={best_val_mae:.2f} Acc={best_val_acc:.1%}"
+            )
         else:
             no_improve += 1
 
@@ -358,7 +373,10 @@ def main():
             y_pred=test_metrics["predictions"],
         )
 
-        print(f"Test | Loss: {test_metrics['loss']:.4f} | MAE: {test_metrics['mae']:.2f} | Acc: {test_metrics['accuracy']:.1%}")
+        print(
+            f"Test | Loss: {test_metrics['loss']:.4f} | "
+            f"MAE: {test_metrics['mae']:.2f} | Acc: {test_metrics['accuracy']:.1%}"
+        )
 
         # Show some predictions
         print("\nSample predictions (first 10):")

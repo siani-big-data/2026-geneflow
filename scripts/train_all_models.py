@@ -13,9 +13,8 @@ import gzip
 import json
 import random
 import sys
-from dataclasses import dataclass
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 import numpy as np
 import torch
@@ -49,7 +48,7 @@ def read_fastq_sequences(fastq_dir: Path, max_reads: int = 50000) -> list[dict]:
                 if not header:
                     break
                 seq = f.readline().strip().upper()
-                plus = f.readline()
+                f.readline()
                 qual_str = f.readline().strip()
 
                 if len(seq) >= 100 and all(c in 'ACGT' for c in seq):
@@ -494,7 +493,7 @@ class AlignmentDataset(Dataset):
 
 def train_trimming(reads: list[dict], output_dir: Path, epochs: int = 100, patience: int = 20):
     """Train TrimmingPredictor."""
-    from src.ml.models.trimming import TrimmingPredictor, TrimmingConfig
+    from src.ml.models.trimming import TrimmingConfig, TrimmingPredictor
 
     print("\n" + "=" * 60)
     print("TRAINING: TrimmingPredictor")
@@ -756,7 +755,7 @@ def train_variant(reads: list[dict], output_dir: Path, epochs: int = 100, patien
 
 def train_orf(reads: list[dict], output_dir: Path, epochs: int = 100, patience: int = 20):
     """Train ORFPredictor."""
-    from src.ml.models.orf import ORFPredictor, ORFConfig
+    from src.ml.models.orf import ORFConfig, ORFPredictor
 
     print("\n" + "=" * 60)
     print("TRAINING: ORFPredictor")
@@ -842,7 +841,7 @@ def train_orf(reads: list[dict], output_dir: Path, epochs: int = 100, patience: 
 
 def train_alignment(reads: list[dict], output_dir: Path, epochs: int = 100, patience: int = 20):
     """Train AlignmentScorer."""
-    from src.ml.models.alignment import AlignmentScorer, AlignmentConfig
+    from src.ml.models.alignment import AlignmentConfig, AlignmentScorer
 
     print("\n" + "=" * 60)
     print("TRAINING: AlignmentScorer")

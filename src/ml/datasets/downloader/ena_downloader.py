@@ -249,7 +249,10 @@ class ENAParallelDownloader:
             "taxonomy": taxonomy,
             "sequence_count": total_count,
             "accessions": list(existing_accessions),
-            "total_length": sum(len(s[1]) for s in existing_sequences) + sum(len(s.sequence) for s in new_sequences),
+            "total_length": (
+                sum(len(s[1]) for s in existing_sequences)
+                + sum(len(s.sequence) for s in new_sequences)
+            ),
             "updated_at": datetime.now(timezone.utc).isoformat(),
             "sources": list(set(metadata.get("sources", []) + ["ENA"])),
         })
@@ -360,7 +363,10 @@ class ENAParallelDownloader:
         # Final save
         self.state.save(self.state_file)
 
-        logger.info(f"\n{kingdom.upper()} (ENA) complete: {species_completed:,} species, {total_sequences:,} sequences")
+        logger.info(
+            f"\n{kingdom.upper()} (ENA) complete: "
+            f"{species_completed:,} species, {total_sequences:,} sequences"
+        )
 
         return {
             "kingdom": kingdom,

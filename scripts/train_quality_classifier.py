@@ -15,15 +15,14 @@ from datetime import datetime
 from pathlib import Path
 
 import matplotlib
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-import torch.nn as nn
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader, Dataset
 
-from src.ml.models.quality import QualityClassifierCNN, QualityClassifierCNNConfig, FocalLoss
-
+from src.ml.models.quality import FocalLoss, QualityClassifierCNN, QualityClassifierCNNConfig
 
 CLASS_NAMES = {
     5: ["Q10", "Q20", "Q30", "Q40", "Q50+"],
@@ -130,12 +129,11 @@ def evaluate(model, loader, criterion, device, num_classes):
     n = len(loader.dataset)
     class_acc = class_correct / (class_total + 1e-6)
 
-    # Calculate precision, recall, F1 from confusion matrix
-    # Precision = TP / (TP + FP) = diagonal / column_sum
-    # Recall = TP / (TP + FN) = diagonal / row_sum
-    precision_per_class = np.diag(confusion) / (confusion.sum(axis=0) + 1e-6)
-    recall_per_class = np.diag(confusion) / (confusion.sum(axis=1) + 1e-6)
-    f1_per_class = 2 * (precision_per_class * recall_per_class) / (precision_per_class + recall_per_class + 1e-6)
+    diag = np.diag(confusion)
+    precision_per_class = diag / (confusion.sum(axis=0) + 1e-6)
+    recall_per_class = diag / (confusion.sum(axis=1) + 1e-6)
+    pr_sum = precision_per_class + recall_per_class + 1e-6
+    f1_per_class = 2 * (precision_per_class * recall_per_class) / pr_sum
 
     # Macro averages
     macro_precision = precision_per_class.mean()
@@ -175,11 +173,14 @@ def save_plots(history, confusion, class_names, save_dir):
     axes[0].grid(True, alpha=0.3)
     axes[0].set_title("Loss")
 
-    # F1, Precision, Recall
-    axes[1].plot(epochs, [x*100 for x in history["train_f1"]], label="Train F1", linewidth=2)
-    axes[1].plot(epochs, [x*100 for x in history["val_f1"]], label="Val F1", linewidth=2)
-    axes[1].plot(epochs, [x*100 for x in history["val_precision"]], '--', label="Val Precision", linewidth=1.5)
-    axes[1].plot(epochs, [x*100 for x in history["val_recall"]], '--', label="Val Recall", linewidth=1.5)
+    train_f1 = [x*100 for x in history["train_f1"]]
+    val_f1 = [x*100 for x in history["val_f1"]]
+    val_prec = [x*100 for x in history["val_precision"]]
+    val_rec = [x*100 for x in history["val_recall"]]
+    axes[1].plot(epochs, train_f1, label="Train F1", linewidth=2)
+    axes[1].plot(epochs, val_f1, label="Val F1", linewidth=2)
+    axes[1].plot(epochs, val_prec, '--', label="Val Precision", linewidth=1.5)
+    axes[1].plot(epochs, val_rec, '--', label="Val Recall", linewidth=1.5)
     axes[1].set_xlabel("Epoch")
     axes[1].set_ylabel("%")
     axes[1].legend()
@@ -193,10 +194,11 @@ def save_plots(history, confusion, class_names, save_dir):
     # Per-class metrics
     fig, axes = plt.subplots(1, 3, figsize=(15, 5))
 
-    # Get final per-class metrics from confusion matrix
-    precision_per_class = np.diag(confusion) / (confusion.sum(axis=0) + 1e-6)
-    recall_per_class = np.diag(confusion) / (confusion.sum(axis=1) + 1e-6)
-    f1_per_class = 2 * (precision_per_class * recall_per_class) / (precision_per_class + recall_per_class + 1e-6)
+    diag = np.diag(confusion)
+    precision_per_class = diag / (confusion.sum(axis=0) + 1e-6)
+    recall_per_class = diag / (confusion.sum(axis=1) + 1e-6)
+    pr_sum = precision_per_class + recall_per_class + 1e-6
+    f1_per_class = 2 * (precision_per_class * recall_per_class) / pr_sum
 
     x = np.arange(len(class_names))
     width = 0.6
@@ -228,7 +230,8 @@ def save_plots(history, confusion, class_names, save_dir):
     fig, ax = plt.subplots(figsize=(8, 6))
 
     # Normalize by row (true class)
-    confusion_norm = confusion.astype(float) / (confusion.sum(axis=1, keepdims=True) + 1e-6)
+    row_sums = confusion.sum(axis=1, keepdims=True) + 1e-6
+    confusion_norm = confusion.astype(float) / row_sums
 
     im = ax.imshow(confusion_norm, cmap="Blues", vmin=0, vmax=1)
     ax.set_xticks(range(len(class_names)))
@@ -258,8 +261,10 @@ def main():
     # Data
     parser.add_argument("--data-dir", type=str, default="datalake/datasets/quality_context")
     parser.add_argument("--checkpoint-dir", type=str, default="checkpoints/quality_classifier")
-    parser.add_argument("--select-features", type=str, default=None,
-                        help="Comma-separated list of features to use (e.g., 'ratio_norm,p2am_norm,p1am_norm')")
+    parser.add_argument(
+        "--select-features", type=str, default=None,
+        help="Comma-separated list of features (e.g., 'ratio_norm,p2am_norm')"
+    )
 
     # Architecture
     parser.add_argument("--num-classes", type=int, default=5)
@@ -305,7 +310,9 @@ def main():
     selected_features = all_features
     if args.select_features:
         selected_features = [f.strip() for f in args.select_features.split(",")]
-        featuREDACTED = [all_features.index(f) for f in selected_features if f in all_features]
+        featuREDACTED = [
+        all_features.index(f) for f in selected_features if f in all_features
+    ]
         if len(featuREDACTED) != len(selected_features):
             missing = set(selected_features) - set(all_features)
             print(f"Warning: features not found: {missing}")
@@ -325,8 +332,12 @@ def main():
         class_weights = torch.tensor(np.load(weights_path), dtype=torch.float32)
         print(f"Class weights: {class_weights.numpy()}")
 
-    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=0)
-    val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=0)
+    train_loader = DataLoader(
+        train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=0
+    )
+    val_loader = DataLoader(
+        val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=0
+    )
 
     # Model
     config = QualityClassifierCNNConfig(
@@ -381,16 +392,20 @@ def main():
             for name, acc in zip(CLASS_NAMES[num_classes], val_m["class_accuracy"])
         ])
 
-        print(f"Epoch {epoch+1:3d}/{args.epochs} | "
-              f"Train: Loss={train_m['loss']:.4f} Acc={train_m['accuracy']:.1%} | "
-              f"Val: Loss={val_m['loss']:.4f} Acc={val_m['accuracy']:.1%} F1={val_m['f1']:.1%}")
+        t_loss, t_acc = train_m['loss'], train_m['accuracy']
+        v_loss, v_acc, v_f1 = val_m['loss'], val_m['accuracy'], val_m['f1']
+        print(
+            f"Epoch {epoch+1:3d}/{args.epochs} | "
+            f"Train: Loss={t_loss:.4f} Acc={t_acc:.1%} | "
+            f"Val: Loss={v_loss:.4f} Acc={v_acc:.1%} F1={v_f1:.1%}"
+        )
         print(f"         Per-class: {class_acc_str}")
 
         # Use val_loss as criterion (lower is better)
         if val_m["loss"] < best_loss:
             best_loss = val_m["loss"]
             best_acc, best_epoch = val_m["accuracy"], epoch + 1
-            best_confusion = val_m["confusion"]
+            val_m["confusion"]
             model.save(checkpoint_dir / "best.pt")
             patience_counter = 0
             print(f"  -> New best (loss={best_loss:.4f}, acc={best_acc:.1%})")
@@ -406,7 +421,8 @@ def main():
     final = evaluate(model, val_loader, criterion, device, num_classes)
 
     # Save plots
-    save_plots(history, final["confusion"], CLASS_NAMES[num_classes], checkpoint_dir / "plots")
+    plots_dir = checkpoint_dir / "plots"
+    save_plots(history, final["confusion"], CLASS_NAMES[num_classes], plots_dir)
 
     # Save config
     with open(checkpoint_dir / "config.json", "w") as f:
@@ -430,8 +446,12 @@ def main():
         }, f, indent=2)
 
     print("\n" + "=" * 70)
-    print(f"COMPLETE - Best: epoch {best_epoch}, Loss={best_loss:.4f}, Acc={best_acc:.1%}, F1={final['f1']:.1%}")
-    print(f"\nPer-class metrics:")
+    final_f1 = final['f1']
+    print(
+        f"COMPLETE - Best: epoch {best_epoch}, "
+        f"Loss={best_loss:.4f}, Acc={best_acc:.1%}, F1={final_f1:.1%}"
+    )
+    print("\nPer-class metrics:")
     print(f"  {'Class':<12} {'Acc':>8} {'Prec':>8} {'Recall':>8} {'F1':>8} {'Samples':>12}")
     print(f"  {'-'*60}")
     for name, acc, prec, rec, f1, total in zip(

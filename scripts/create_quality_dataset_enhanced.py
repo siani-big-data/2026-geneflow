@@ -69,8 +69,10 @@ def extract_ab1_data(ab1_path: Path) -> dict | None:
             return None
 
         p1am = np.array(p1am, dtype=np.float32)
-        p2am = np.array(p2am, dtype=np.float32) if p2am and len(p2am) == len(sequence) else np.zeros_like(p1am)
-        p1wd = np.array(p1wd, dtype=np.float32) if p1wd and len(p1wd) == len(sequence) else np.ones_like(p1am) * 300
+        p2am_valid = p2am and len(p2am) == len(sequence)
+        p2am = np.array(p2am, dtype=np.float32) if p2am_valid else np.zeros_like(p1am)
+        p1wd_valid = p1wd and len(p1wd) == len(sequence)
+        p1wd = np.array(p1wd, dtype=np.float32) if p1wd_valid else np.ones_like(p1am) * 300
 
         # Sample trace data at peak locations
         seq_len = len(sequence)
@@ -91,7 +93,7 @@ def extract_ab1_data(ab1_path: Path) -> dict | None:
         # Normalize peak features
         p1am_norm = p1am / (p1am.max() + 1e-6)
         p2am_norm = p2am / (p1am.max() + 1e-6)  # Use same scale as p1am
-        p1wd_norm = p1wd / 1000.0  # Typical width is ~300-500
+        p1wd / 1000.0  # Typical width is ~300-500
 
         # Compute primary/secondary ratio (key feature!)
         ratio = p1am / (p2am + 10.0)  # Add small value to avoid div by zero
@@ -110,7 +112,7 @@ def extract_ab1_data(ab1_path: Path) -> dict | None:
             "sequence": sequence,
         }
 
-    except Exception as e:
+    except Exception:
         return None
 
 
@@ -155,10 +157,14 @@ class QualityAugmenter:
         noisy = features + noise
         return np.clip(noisy, 0, 1)
 
-    def scale_channels(self, features: np.ndarray, scale_range: tuple = (0.8, 1.2)) -> np.ndarray:
+    def scale_channels(
+        self, features: np.ndarray, scale_range: tuple = (0.8, 1.2)
+    ) -> np.ndarray:
         """Randomly scale individual channels."""
         n_channels = features.shape[0]
-        scales = np.random.uniform(scale_range[0], scale_range[1], (n_channels, 1)).astype(np.float32)
+        scales = np.random.uniform(
+            scale_range[0], scale_range[1], (n_channels, 1)
+        ).astype(np.float32)
         scaled = features * scales
         return np.clip(scaled, 0, 1)
 
@@ -232,8 +238,12 @@ def create_quality_dataset(
     print(f"Original data: {total_positions} positions")
 
     quality_values = np.array(quality_values)
-    print(f"Quality stats: min={quality_values.min():.0f}, max={quality_values.max():.0f}, "
-          f"mean={quality_values.mean():.1f}, std={quality_values.std():.1f}")
+    q_min, q_max = quality_values.min(), quality_values.max()
+    q_mean, q_std = quality_values.mean(), quality_values.std()
+    print(
+        f"Quality stats: min={q_min:.0f}, max={q_max:.0f}, "
+        f"mean={q_mean:.1f}, std={q_std:.1f}"
+    )
 
     # Stratified split at FILE level to ensure similar quality distribution
     # Sort files by average quality, then distribute alternately
@@ -263,9 +273,17 @@ def create_quality_dataset(
     # Report quality distribution per split
     train_q = np.concatenate([d["quality"] for d in train_files])
     val_q = np.concatenate([d["quality"] for d in val_files])
-    print(f"\nStratified file-level split:")
-    print(f"  Train: {len(train_files)} files, quality mean={train_q.mean():.1f}, median={np.median(train_q):.0f}")
-    print(f"  Val:   {len(val_files)} files, quality mean={val_q.mean():.1f}, median={np.median(val_q):.0f}")
+    print("\nStratified file-level split:")
+    train_mean, train_med = train_q.mean(), np.median(train_q)
+    val_mean, val_med = val_q.mean(), np.median(val_q)
+    print(
+        f"  Train: {len(train_files)} files, "
+        f"quality mean={train_mean:.1f}, median={train_med:.0f}"
+    )
+    print(
+        f"  Val:   {len(val_files)} files, "
+        f"quality mean={val_mean:.1f}, median={val_med:.0f}"
+    )
 
     # Calculate target samples per split
     augmenter = QualityAugmenter(window_size=window_size)
@@ -350,7 +368,10 @@ def create_quality_dataset(
         "val_samples": len(val_samples),
         "window_size": window_size,
         "n_features": 7,
-        "features": ["signal_A", "signal_C", "signal_G", "signal_T", "p1am_norm", "p2am_norm", "ratio_norm"],
+        "features": [
+            "signal_A", "signal_C", "signal_G", "signal_T",
+            "p1am_norm", "p2am_norm", "ratio_norm"
+        ],
         "quality_min": float(all_quality.min()),
         "quality_max": float(all_quality.max()),
         "quality_mean": float(all_quality.mean()),
@@ -382,7 +403,7 @@ def main():
     print("=" * 70)
     print("ENHANCED QUALITY PREDICTION DATASET - FROM AB1 FILES")
     print("=" * 70)
-    print(f"Task: Predict Phred quality score per position")
+    print("Task: Predict Phred quality score per position")
     print(f"Input: features (7, {args.window_size}) - 4 ACGT signals + peak features")
     print(f"Output: quality ({args.window_size},) - Phred score per position")
     print()

@@ -9,32 +9,32 @@ Available models:
 """
 
 from .base import BaseModel, ModelConfig
-from .quality import (
-    QualityLoss,
-    QualityPredictor,
-    QualityPredictorConfig,
-    EnhancedQualityPredictor,
-    EnhancedQualityConfig,
-    EnhancedQualityLoss,
-)
-from .quality.classifier import (
-    QualityClassifier,
-    QualityClassifierConfig,
-    QualityClassifierCNN,
-    QualityClassifierCNNConfig,
-)
-from .taxonomy import (
-    TaxonomyClassifier,
-    TaxonomyConfig,
-    TAXONOMY_LEVELS,
-)
 from .heterozygote import (
     HeterozygoteClassifier,
     HeterozygoteConfig,
 )
+from .quality import (
+    EnhancedQualityConfig,
+    EnhancedQualityLoss,
+    EnhancedQualityPredictor,
+    QualityLoss,
+    QualityPredictor,
+    QualityPredictorConfig,
+)
+from .quality.classifier import (
+    QualityClassifier,
+    QualityClassifierCNN,
+    QualityClassifierCNNConfig,
+    QualityClassifierConfig,
+)
+from .taxonomy import (
+    TAXONOMY_LEVELS,
+    TaxonomyClassifier,
+    TaxonomyConfig,
+)
 from .trimming import (
-    TrimmingPredictor,
     TrimmingConfig,
+    TrimmingPredictor,
 )
 
 __all__ = [

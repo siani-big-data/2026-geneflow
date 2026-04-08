@@ -24,7 +24,6 @@ from pathlib import Path
 import numpy as np
 from Bio import SeqIO
 
-
 # IUPAC ambiguity codes for heterozygotes
 HET_CODES = set("MRWSYK")
 
@@ -92,10 +91,13 @@ def extract_ab1_signals(ab1_path: Path) -> dict | None:
             "signals": signals,
             "labels": labels,
             "sequence": sequence,
-            "quality": np.array(quality, dtype=np.int32) if quality else np.zeros(seq_len, dtype=np.int32),
+            "quality": (
+                np.array(quality, dtype=np.int32)
+                if quality else np.zeros(seq_len, dtype=np.int32)
+            ),
         }
 
-    except Exception as e:
+    except Exception:
         return None
 
 
@@ -157,13 +159,17 @@ class ChromatogramAugmenter:
         wobbled = wobbled / np.maximum(wobbled.sum(axis=0, keepdims=True), 1e-6)
         return wobbled
 
-    def simulate_quality_degradation(self, signals: np.ndarray, degradation: float = 0.1) -> np.ndarray:
+    def simulate_quality_degradation(
+        self, signals: np.ndarray, degradation: float = 0.1
+    ) -> np.ndarray:
         """Simulate quality degradation (more uniform signals)."""
         uniform = np.ones_like(signals) * 0.25
         degraded = (1 - degradation) * signals + degradation * uniform
         return degraded
 
-    def perturb_heterozygote_ratio(self, signals: np.ndarray, labels: np.ndarray, perturbation: float = 0.1) -> np.ndarray:
+    def perturb_heterozygote_ratio(
+        self, signals: np.ndarray, labels: np.ndarray, perturbation: float = 0.1
+    ) -> np.ndarray:
         """Slightly vary the ratio at heterozygote_training positions."""
         perturbed = signals.copy()
         het_positions = np.where(labels == 1)[0]
@@ -199,10 +205,12 @@ class ChromatogramAugmenter:
             aug_signals = self.add_baseline_wobble(aug_signals, np.random.uniform(0.01, 0.03))
 
         if np.random.random() < 0.3:
-            aug_signals = self.simulate_quality_degradation(aug_signals, np.random.uniform(0.05, 0.15))
+            degrade_amt = np.random.uniform(0.05, 0.15)
+            aug_signals = self.simulate_quality_degradation(aug_signals, degrade_amt)
 
         if np.random.random() < 0.4:
-            aug_signals = self.perturb_heterozygote_ratio(aug_signals, labels, np.random.uniform(0.05, 0.15))
+            perturb_amt = np.random.uniform(0.05, 0.15)
+            aug_signals = self.perturb_heterozygote_ratio(aug_signals, labels, perturb_amt)
 
         return aug_signals, labels
 
@@ -241,7 +249,8 @@ def create_augmented_dataset(
             total_pos += len(data["labels"])
 
     print(f"Loaded {len(all_data)} valid AB1 files")
-    print(f"Original data: {total_pos} positions, {total_het} heterozygotes ({100*total_het/total_pos:.1f}%)")
+    het_pct = 100 * total_het / total_pos
+    print(f"Original data: {total_pos} positions, {total_het} heterozygotes ({het_pct:.1f}%)")
 
     # IMPORTANT: Split at FILE level to prevent data leakage
     np.random.shuffle(all_data)
@@ -349,12 +358,17 @@ def create_augmented_dataset(
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Create augmented heterozygote_training dataset")
+    parser = argparse.ArgumentParser(
+        description="Create augmented heterozygote_training dataset"
+    )
 
     parser.add_argument("--ab1-dir", type=str, default="datalake/ab1",
                         help="Directory with AB1 files")
-    parser.add_argument("--output-dir", type=str, default="datalake/datasets/heterozygote_augmented",
-                        help="Output directory")
+    parser.add_argument(
+        "--output-dir", type=str,
+        default="datalake/datasets/heterozygote_augmented",
+        help="Output directory"
+    )
     parser.add_argument("--target-samples", type=int, default=40000,
                         help="Target number of samples")
     parser.add_argument("--window-size", type=int, default=500,

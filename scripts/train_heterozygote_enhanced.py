@@ -15,15 +15,15 @@ from datetime import datetime
 from pathlib import Path
 
 import matplotlib
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn as nn
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader, Dataset
 
 from src.ml.models.heterozygote import HeterozygoteClassifier, HeterozygoteConfig
-
 
 # =============================================================================
 # Dataset
@@ -181,8 +181,12 @@ def generate_plots(history: dict, save_dir: Path):
 
     # Loss plot
     ax = axes[0]
-    ax.plot(epochs, history["train_loss"], label="Train", linewidth=2, color="#2196F3")
-    ax.plot(epochs, history["val_loss"], label="Val", linewidth=2, color="#FF5722")
+    ax.plot(
+        epochs, history["train_loss"], label="Train", linewidth=2, color="#2196F3"
+    )
+    ax.plot(
+        epochs, history["val_loss"], label="Val", linewidth=2, color="#FF5722"
+    )
     ax.set_xlabel("Epoch")
     ax.set_ylabel("Loss")
     ax.set_title("Loss", fontweight="bold")
@@ -191,10 +195,20 @@ def generate_plots(history: dict, save_dir: Path):
 
     # F1 / Precision / Recall plot
     ax = axes[1]
-    ax.plot(epochs, [x * 100 for x in history["train_f1"]], label="Train F1", linewidth=2, color="#2196F3")
-    ax.plot(epochs, [x * 100 for x in history["val_f1"]], label="Val F1", linewidth=2, color="#4CAF50")
-    ax.plot(epochs, [x * 100 for x in history["val_precision"]], label="Val Precision", linewidth=2, color="#9C27B0", linestyle="--")
-    ax.plot(epochs, [x * 100 for x in history["val_recall"]], label="Val Recall", linewidth=2, color="#FF9800", linestyle="--")
+    train_f1 = [x * 100 for x in history["train_f1"]]
+    ax.plot(epochs, train_f1, label="Train F1", linewidth=2, color="#2196F3")
+    val_f1 = [x * 100 for x in history["val_f1"]]
+    ax.plot(epochs, val_f1, label="Val F1", linewidth=2, color="#4CAF50")
+    val_prec = [x * 100 for x in history["val_precision"]]
+    ax.plot(
+        epochs, val_prec, label="Val Precision",
+        linewidth=2, color="#9C27B0", linestyle="--"
+    )
+    val_rec = [x * 100 for x in history["val_recall"]]
+    ax.plot(
+        epochs, val_rec, label="Val Recall",
+        linewidth=2, color="#FF9800", linestyle="--"
+    )
     ax.set_xlabel("Epoch")
     ax.set_ylabel("%%")
     ax.set_title("Heterozygote Detection (F1)", fontweight="bold")
@@ -228,7 +242,10 @@ def parse_args():
     parser.add_argument("--hidden-dim", type=int, default=32, help="Hidden dimension")
     parser.add_argument("--num-layers", type=int, default=2, help="Number of residual blocks")
     parser.add_argument("--dropout", type=float, default=0.4, help="Dropout rate")
-    parser.add_argument("--class-weight", type=float, default=15.0, help="Weight for heterozygote_training class")
+    parser.add_argument(
+        "--class-weight", type=float, default=15.0,
+        help="Weight for heterozygote class"
+    )
 
     return parser.parse_args()
 
@@ -280,7 +297,7 @@ def main():
     )
 
     model = HeterozygoteClassifier(config).to(device)
-    print(f"\nModel: HeterozygoteClassifier")
+    print("\nModel: HeterozygoteClassifier")
     print(f"  Input channels: {config.input_channels}")
     print(f"  Hidden dim: {args.hidden_dim}")
     print(f"  Num layers: {args.num_layers}")
@@ -330,10 +347,18 @@ def main():
         history["val_recall"].append(val_metrics["recall"])
 
         # Print progress
-        print(f"Epoch {epoch+1:3d}/{args.epochs} | "
-              f"Train: Loss={train_metrics['loss']:.4f} F1={train_metrics['f1']:.1%} Acc={train_metrics['accuracy']:.1%} | "
-              f"Val: Loss={val_metrics['loss']:.4f} F1={val_metrics['f1']:.1%} "
-              f"(P={val_metrics['precision']:.1%} R={val_metrics['recall']:.1%})")
+        t_loss = train_metrics['loss']
+        t_f1 = train_metrics['f1']
+        t_acc = train_metrics['accuracy']
+        v_loss = val_metrics['loss']
+        v_f1 = val_metrics['f1']
+        v_p = val_metrics['precision']
+        v_r = val_metrics['recall']
+        print(
+            f"Epoch {epoch+1:3d}/{args.epochs} | "
+            f"Train: Loss={t_loss:.4f} F1={t_f1:.1%} Acc={t_acc:.1%} | "
+            f"Val: Loss={v_loss:.4f} F1={v_f1:.1%} (P={v_p:.1%} R={v_r:.1%})"
+        )
 
         # Save best model based on validation F1
         if val_metrics["f1"] > best_val_f1:
@@ -377,8 +402,9 @@ def main():
     print("\n" + "=" * 70)
     print("TRAINING COMPLETE")
     print("=" * 70)
-    print(f"Best @ epoch {best_epoch}: F1={best_val_f1:.1%} "
-          f"(P={history['val_precision'][best_epoch-1]:.1%} R={history['val_recall'][best_epoch-1]:.1%})")
+    best_p = history['val_precision'][best_epoch-1]
+    best_r = history['val_recall'][best_epoch-1]
+    print(f"Best @ epoch {best_epoch}: F1={best_val_f1:.1%} (P={best_p:.1%} R={best_r:.1%})")
     print(f"Checkpoints saved to: {checkpoint_dir}")
 
 

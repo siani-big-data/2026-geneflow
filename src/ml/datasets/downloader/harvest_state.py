@@ -2,10 +2,9 @@
 
 import json
 import logging
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -194,7 +193,9 @@ class HarvestState:
         # Update kingdom stats
         k.total_sequences = sum(s.downloaded for s in k.species.values())
         k.species_completed = sum(1 for s in k.species.values() if s.completed)
-        k.species_partial = sum(1 for s in k.species.values() if not s.completed and s.downloaded > 0)
+        k.species_partial = sum(
+            1 for s in k.species.values() if not s.completed and s.downloaded > 0
+        )
 
     def get_downloaded_accessions(self, kingdom: str, taxon_id: int) -> set[str]:
         """Get already downloaded accessions for a species."""
@@ -233,8 +234,11 @@ class HarvestState:
         ]
 
         for k_name, kingdom in self.kingdoms.items():
+            species_count = len(kingdom.species)
+            completed = kingdom.species_completed
+            total_seqs = kingdom.total_sequences
             lines.append(
-                f"{k_name:<15} {len(kingdom.species):>10,} {kingdom.species_completed:>10,} {kingdom.total_sequences:>12,}"
+                f"{k_name:<15} {species_count:>10,} {completed:>10,} {total_seqs:>12,}"
             )
 
         lines.extend([

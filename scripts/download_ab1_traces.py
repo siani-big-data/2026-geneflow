@@ -171,7 +171,7 @@ def main():
     # List some files
     ab1_files = list(output_dir.glob("*.ab1"))
     if ab1_files:
-        print(f"\nSample files:")
+        print("\nSample files:")
         for f in ab1_files[:5]:
             print(f"  - {f.name} ({f.stat().st_size / 1024:.1f} KB)")
 

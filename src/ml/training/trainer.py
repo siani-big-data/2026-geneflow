@@ -19,7 +19,6 @@ from .report import (
     TrainingReport,
     analyze_model,
     compute_accuracy_regression,
-    compute_regression_metrics_detailed,
     generate_training_plots,
 )
 
@@ -391,9 +390,18 @@ class Trainer:
         # Get best metrics
         best_metrics = {}
         if self.epoch_history:
-            val_losses = [e["val_loss"] for e in self.epoch_history if e.get("val_loss") is not None]
-            val_accs = [e["val_accuracy"] for e in self.epoch_history if e.get("val_accuracy") is not None]
-            train_losses = [e["train_loss"] for e in self.epoch_history if e.get("train_loss") is not None]
+            val_losses = [
+                e["val_loss"] for e in self.epoch_history
+                if e.get("val_loss") is not None
+            ]
+            val_accs = [
+                e["val_accuracy"] for e in self.epoch_history
+                if e.get("val_accuracy") is not None
+            ]
+            train_losses = [
+                e["train_loss"] for e in self.epoch_history
+                if e.get("train_loss") is not None
+            ]
 
             if val_losses:
                 best_idx = int(np.argmin(val_losses))

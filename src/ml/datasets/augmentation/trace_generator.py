@@ -7,11 +7,12 @@ the QualityPredictor model without requiring real .ab1 files.
 import gzip
 import json
 import logging
-import numpy as np
-from dataclasses import dataclass, field
+import random
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterator
-import random
+
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -73,8 +74,9 @@ class SyntheticTrace:
         """Compute quality_enhanced metrics."""
         if self.quality_scores:
             self.mean_quality = np.mean(self.quality_scores)
-            self.q20_percentage = sum(1 for q in self.quality_scores if q >= 20) / len(self.quality_scores) * 100
-            self.q30_percentage = sum(1 for q in self.quality_scores if q >= 30) / len(self.quality_scores) * 100
+            q_len = len(self.quality_scores)
+            self.q20_percentage = sum(1 for q in self.quality_scores if q >= 20) / q_len * 100
+            self.q30_percentage = sum(1 for q in self.quality_scores if q >= 30) / q_len * 100
 
     def to_dict(self) -> dict:
         """Convert to dictionary for saving."""
@@ -129,7 +131,8 @@ class TraceGenerator:
             sequence: DNA sequence (A, C, G, T)
             variation_id: ID for this variation
             noise_level: Multiplier for noise (0.5 = low noise, 2.0 = high noise)
-            quality_factor: Multiplier for quality_enhanced (0.5 = low quality_enhanced, 1.5 = high quality_enhanced)
+            quality_factor: Multiplier for quality_enhanced
+                (0.5 = low quality_enhanced, 1.5 = high quality_enhanced)
 
         Returns:
             SyntheticTrace with chromatogram data
@@ -163,8 +166,11 @@ class TraceGenerator:
             edge_factor = 1.0
             edge_distance = min(i, seq_len - 1 - i)
             if edge_distance < self.config.edge_degradation_length:
-                edge_factor = self.config.edge_quality_factor + \
-                    (1 - self.config.edge_quality_factor) * (edge_distance / self.config.edge_degradation_length)
+                edge_factor = (
+                    self.config.edge_quality_factor
+                    + (1 - self.config.edge_quality_factor)
+                    * (edge_distance / self.config.edge_degradation_length)
+                )
 
             # Peak height with variation
             base_height = self.config.peak_height_mean * quality_factor * edge_factor
@@ -185,7 +191,9 @@ class TraceGenerator:
                 other_bases = [b for b in self.BASE_INDEX if b != base]
                 secondary_base = random.choice(other_bases)
                 secondary_height = height * self.config.secondary_peak_ratio
-                secondary_peak = secondary_height * np.exp(-0.5 * ((x - peak_pos) / self.config.peak_width) ** 2)
+                secondary_peak = secondary_height * np.exp(
+                -0.5 * ((x - peak_pos) / self.config.peak_width) ** 2
+            )
                 traces[self.BASE_INDEX[secondary_base]] += secondary_peak
 
             # Calculate quality_enhanced score based on peak characteristics
@@ -294,7 +302,6 @@ class TraceGenerator:
         try:
             with gzip.open(fasta_path, "rt") as f:
                 current_seq = []
-                current_header = ""
 
                 for line in f:
                     line = line.strip()
@@ -309,7 +316,7 @@ class TraceGenerator:
                                     trace.taxon_id = taxon_id
                                     yield trace
 
-                        current_header = line[1:]
+                        line[1:]
                         current_seq = []
                     else:
                         current_seq.append(line)
@@ -376,7 +383,10 @@ class TraceGenerator:
                 stats["total_species"] += 1
 
                 if (i + 1) % 100 == 0:
-                    logger.info(f"Processed {i + 1}/{len(fasta_files)} species, {stats['total_traces']} traces")
+                    logger.info(
+                        f"Processed {i + 1}/{len(fasta_files)} species, "
+                        f"{stats['total_traces']} traces"
+                    )
 
             except Exception as e:
                 logger.warning(f"Error processing {fasta_path}: {e}")
@@ -389,8 +399,12 @@ class TraceGenerator:
         logger.info(f"Saved {len(traces_data)} traces to {output_file}")
 
         # Save statistics
-        stats["mean_quality"] = float(np.mean(stats["quality_distribution"])) if stats["quality_distribution"] else 0
-        stats["quality_std"] = float(np.std(stats["quality_distribution"])) if stats["quality_distribution"] else 0
+        if stats["quality_distribution"]:
+            stats["mean_quality"] = float(np.mean(stats["quality_distribution"]))
+            stats["quality_std"] = float(np.std(stats["quality_distribution"]))
+        else:
+            stats["mean_quality"] = 0
+            stats["quality_std"] = 0
         del stats["quality_distribution"]  # Don't save full distribution
 
         stats_file = output_dir / "generation_stats.json"

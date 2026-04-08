@@ -311,7 +311,10 @@ def _format_result(result: StrategyResult) -> dict:
 ML_TOOLS = [
     {
         "name": "analyze_quality",
-        "description": "Analyze sequence quality_enhanced metrics (Q20, Q30, accuracy) from Phred scores",
+        "description": (
+            "Analyze sequence quality_enhanced metrics (Q20, Q30, accuracy) "
+            "from Phred scores"
+        ),
         "input_schema": {
             "type": "object",
             "properties": {
@@ -326,7 +329,10 @@ ML_TOOLS = [
     },
     {
         "name": "auto_trim",
-        "description": "Find optimal trim points to remove low-quality_enhanced regions from sequence ends",
+        "description": (
+            "Find optimal trim points to remove low-quality_enhanced regions "
+            "from sequence ends"
+        ),
         "input_schema": {
             "type": "object",
             "properties": {

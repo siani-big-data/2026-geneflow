@@ -1,11 +1,9 @@
 """NCBI Entrez client for downloading sequences with quality_enhanced data."""
 
-import time
 import logging
-import gzip
+import time
 from dataclasses import dataclass
 from typing import Optional
-from io import StringIO
 
 from Bio import Entrez, SeqIO
 

@@ -9,9 +9,9 @@ Uses a simple 1D CNN architecture - appropriate for the task complexity.
 from dataclasses import dataclass
 from pathlib import Path
 
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
 
 
 @dataclass

@@ -18,13 +18,13 @@ from datetime import datetime
 from pathlib import Path
 
 import matplotlib
+
 matplotlib.use('Agg')
+import joblib
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
-import joblib
-
+from sklearn.metrics import accuracy_score, confusion_matrix
 
 CLASS_NAMES = {
     5: ["Q10", "Q20", "Q30", "Q40", "Q50+"],
@@ -85,8 +85,11 @@ def save_plots(
     names = [featuREDACTED[i] for i in indices]
     values = featuREDACTED[indices]
 
-    colors = ['#2ecc71' if 'signal' in n or 'p1am' in n or 'p2am' in n or 'ratio' in n
-              else '#3498db' for n in names]
+    def get_color(n):
+        if 'signal' in n or 'p1am' in n or 'p2am' in n or 'ratio' in n:
+            return '#2ecc71'
+        return '#3498db'
+    colors = [get_color(n) for n in names]
 
     ax.barh(range(len(names)), values[::-1], color=colors[::-1])
     ax.set_yticks(range(len(names)))
@@ -154,7 +157,9 @@ def main():
 
     num_classes = metadata["num_classes"]
     class_names = CLASS_NAMES[num_classes]
-    featuREDACTED = metadata.get("featuREDACTED", [f"f{i}" for i in range(metadata["n_features"])])
+    featuREDACTED = metadata.get(
+        "featuREDACTED", [f"f{i}" for i in range(metadata["n_features"])]
+    )
 
     print(f"Classes: {class_names}")
     print(f"Features: {len(featuREDACTED)}")
@@ -176,7 +181,9 @@ def main():
                 importance = prev_result["featuREDACTED"]
                 sorted_features = sorted(importance.items(), key=lambda x: x[1], reverse=True)
                 top_features = [f[0] for f in sorted_features[:args.top_features]]
-                selected_indices = [featuREDACTED.index(f) for f in top_features if f in featuREDACTED]
+                selected_indices = [
+                    featuREDACTED.index(f) for f in top_features if f in featuREDACTED
+                ]
 
                 X_train = X_train[:, selected_indices]
                 X_val = X_val[:, selected_indices]
@@ -184,15 +191,15 @@ def main():
 
                 print(f"\nUsing top {len(selected_indices)} features: {featuREDACTED}")
         else:
-            print(f"\nWarning: --top-features requires previous run. Using all features.")
+            print("\nWarning: --top-features requires previous run. Using all features.")
 
-    print(f"\nClass distribution (train):")
+    print("\nClass distribution (train):")
     for c in range(num_classes):
         count = (y_train == c).sum()
         print(f"  {class_names[c]}: {count:,} ({100*count/len(y_train):.1f}%)")
 
     # Train
-    print(f"\nTraining Random Forest...")
+    print("\nTraining Random Forest...")
     print(f"  n_estimators: {args.n_estimators}")
     print(f"  max_depth: {args.max_depth}")
     print(f"  min_samples_leaf: {args.min_samples_leaf}")
@@ -200,7 +207,10 @@ def main():
 
     # Class weights for imbalanced data
     class_counts = np.bincount(y_train, minlength=num_classes)
-    class_weights = {c: len(y_train) / (num_classes * count) for c, count in enumerate(class_counts)}
+    class_weights = {
+        c: len(y_train) / (num_classes * count)
+        for c, count in enumerate(class_counts)
+    }
 
     clf = RandomForestClassifier(
         n_estimators=args.n_estimators,
@@ -224,12 +234,12 @@ def main():
     train_acc = accuracy_score(y_train, y_train_pred)
     val_acc = accuracy_score(y_val, y_val_pred)
 
-    print(f"\nResults:")
+    print("\nResults:")
     print(f"  Train accuracy: {train_acc:.1%}")
     print(f"  Val accuracy:   {val_acc:.1%}")
 
     # Per-class accuracy
-    print(f"\nPer-class accuracy (validation):")
+    print("\nPer-class accuracy (validation):")
     for c in range(num_classes):
         mask = y_val == c
         if mask.sum() > 0:
@@ -242,7 +252,7 @@ def main():
     # Feature importance
     featuREDACTED = clf.featuREDACTED
 
-    print(f"\nFeature Importance:")
+    print("\nFeature Importance:")
     indices = np.argsort(featuREDACTED)[::-1]
     for i in indices[:10]:
         print(f"  {featuREDACTED[i]}: {featuREDACTED[i]:.3f}")
@@ -273,7 +283,7 @@ def main():
         }, f, indent=2)
 
     print("\n" + "=" * 70)
-    print(f"COMPLETE")
+    print("COMPLETE")
     print(f"  Train: {train_acc:.1%}")
     print(f"  Val:   {val_acc:.1%}")
     print(f"  Saved to: {checkpoint_dir}")

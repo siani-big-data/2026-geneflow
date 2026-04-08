@@ -1,11 +1,11 @@
 """Taxonomy classification models."""
 
 from .model import (
+    NUCLEOTIDE_MAP,
+    TAXONOMY_LEVELS,
     TaxonomyClassifier,
     TaxonomyConfig,
-    TAXONOMY_LEVELS,
     encode_sequence,
-    NUCLEOTIDE_MAP,
 )
 
 __all__ = [

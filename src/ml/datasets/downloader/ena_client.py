@@ -8,9 +8,10 @@ ENA has the same data as NCBI (INSDC synchronization) but with:
 
 import logging
 import time
-import requests
 from dataclasses import dataclass
 from typing import Iterator
+
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -274,47 +275,65 @@ class ENAClient:
     # Known taxa mapped to their ranks (for taxonomy parsing)
     KNOWN_TAXA_RANKS = {
         # Phyla
-        "chordata": "phylum", "arthropoda": "phylum", "mollusca": "phylum",
-        "annelida": "phylum", "nematoda": "phylum", "cnidaria": "phylum",
-        "echinodermata": "phylum", "platyhelminthes": "phylum", "porifera": "phylum",
-        "streptophyta": "phylum", "chlorophyta": "phylum", "rhodophyta": "phylum",
-        "ascomycota": "phylum", "basidiomycota": "phylum", "mucoromycota": "phylum",
-        "proteobacteria": "phylum", "firmicutes": "phylum", "actinobacteria": "phylum",
-        "bacteroidetes": "phylum", "cyanobacteria": "phylum", "spirochaetes": "phylum",
-        "tenericutes": "phylum", "euryarchaeota": "phylum", "crenarchaeota": "phylum",
-        "apicomplexa": "phylum", "ciliophora": "phylum", "bacillariophyta": "phylum",
+        "chordata": "phylum", "arthropoda": "phylum",
+        "mollusca": "phylum", "annelida": "phylum",
+        "nematoda": "phylum", "cnidaria": "phylum",
+        "echinodermata": "phylum", "platyhelminthes": "phylum",
+        "porifera": "phylum", "streptophyta": "phylum",
+        "chlorophyta": "phylum", "rhodophyta": "phylum",
+        "ascomycota": "phylum", "basidiomycota": "phylum",
+        "mucoromycota": "phylum", "proteobacteria": "phylum",
+        "firmicutes": "phylum", "actinobacteria": "phylum",
+        "bacteroidetes": "phylum", "cyanobacteria": "phylum",
+        "spirochaetes": "phylum", "tenericutes": "phylum",
+        "euryarchaeota": "phylum", "crenarchaeota": "phylum",
+        "apicomplexa": "phylum", "ciliophora": "phylum",
+        "bacillariophyta": "phylum",
         # Classes
-        "mammalia": "class", "aves": "class", "reptilia": "class", "amphibia": "class",
-        "actinopteri": "class", "chondrichthyes": "class", "insecta": "class",
-        "arachnida": "class", "malacostraca": "class", "maxillopoda": "class",
-        "bivalvia": "class", "gastropoda": "class", "cephalopoda": "class",
-        "magnoliopsida": "class", "liliopsida": "class", "pinopsida": "class",
+        "mammalia": "class", "aves": "class",
+        "reptilia": "class", "amphibia": "class",
+        "actinopteri": "class", "chondrichthyes": "class",
+        "insecta": "class", "arachnida": "class",
+        "malacostraca": "class", "maxillopoda": "class",
+        "bivalvia": "class", "gastropoda": "class",
+        "cephalopoda": "class", "magnoliopsida": "class",
+        "liliopsida": "class", "pinopsida": "class",
         "polypodiopsida": "class", "bryopsida": "class",
-        "agaricomycetes": "class", "eurotiomycetes": "class", "sordariomycetes": "class",
-        "saccharomycetes": "class", "leotiomycetes": "class", "dothideomycetes": "class",
+        "agaricomycetes": "class", "eurotiomycetes": "class",
+        "sordariomycetes": "class", "saccharomycetes": "class",
+        "leotiomycetes": "class", "dothideomycetes": "class",
         "gammaproteobacteria": "class", "alphaproteobacteria": "class",
         "betaproteobacteria": "class", "deltaproteobacteria": "class",
-        "bacilli": "class", "clostridia": "class", "actinomycetia": "class",
+        "bacilli": "class", "clostridia": "class",
+        "actinomycetia": "class",
         # Orders (common ones)
-        "primates": "order", "rodentia": "order", "carnivora": "order",
-        "chiroptera": "order", "cetartiodactyla": "order", "lagomorpha": "order",
-        "passeriformes": "order", "galliformes": "order", "anseriformes": "order",
-        "squamata": "order", "testudines": "order", "crocodylia": "order",
+        "primates": "order", "rodentia": "order",
+        "carnivora": "order", "chiroptera": "order",
+        "cetartiodactyla": "order", "lagomorpha": "order",
+        "passeriformes": "order", "galliformes": "order",
+        "anseriformes": "order", "squamata": "order",
+        "testudines": "order", "crocodylia": "order",
         "anura": "order", "caudata": "order",
-        "coleoptera": "order", "lepidoptera": "order", "diptera": "order",
-        "hymenoptera": "order", "hemiptera": "order", "orthoptera": "order",
-        "fabales": "order", "brassicales": "order", "solanales": "order",
-        "poales": "order", "asterales": "order", "rosales": "order",
-        "agaricales": "order", "polyporales": "order", "eurotiales": "order",
-        "hypocreales": "order", "saccharomycetales": "order",
-        "enterobacterales": "order", "pseudomonadales": "order", "lactobacillales": "order",
+        "coleoptera": "order", "lepidoptera": "order",
+        "diptera": "order", "hymenoptera": "order",
+        "hemiptera": "order", "orthoptera": "order",
+        "fabales": "order", "brassicales": "order",
+        "solanales": "order", "poales": "order",
+        "asterales": "order", "rosales": "order",
+        "agaricales": "order", "polyporales": "order",
+        "eurotiales": "order", "hypocreales": "order",
+        "saccharomycetales": "order", "enterobacterales": "order",
+        "pseudomonadales": "order", "lactobacillales": "order",
         # Families (common ones)
-        "hominidae": "family", "muridae": "family", "felidae": "family", "canidae": "family",
-        "bovidae": "family", "cervidae": "family", "equidae": "family",
-        "fabaceae": "family", "poaceae": "family", "brassicaceae": "family",
-        "solanaceae": "family", "rosaceae": "family", "asteraceae": "family",
-        "enterobacteriaceae": "family", "pseudomonadaceae": "family",
-        "staphylococcaceae": "family", "streptococcaceae": "family",
+        "hominidae": "family", "muridae": "family",
+        "felidae": "family", "canidae": "family",
+        "bovidae": "family", "cervidae": "family",
+        "equidae": "family", "fabaceae": "family",
+        "poaceae": "family", "brassicaceae": "family",
+        "solanaceae": "family", "rosaceae": "family",
+        "asteraceae": "family", "enterobacteriaceae": "family",
+        "pseudomonadaceae": "family", "staphylococcaceae": "family",
+        "streptococcaceae": "family",
     }
 
     def get_taxonomy(self, taxon_id: int) -> dict:
@@ -379,13 +398,15 @@ class ENAClient:
 
                         # Order suffixes
                         if "order" not in taxonomy:
-                            if part_lower.endswith("ales") or part_lower.endswith("formes"):
+                            if (part_lower.endswith("ales")
+                                or part_lower.endswith("formes")):
                                 taxonomy["order"] = part
                                 continue
 
                         # Family suffixes
                         if "family" not in taxonomy:
-                            if part_lower.endswith("aceae") or part_lower.endswith("idae"):
+                            if (part_lower.endswith("aceae")
+                                or part_lower.endswith("idae")):
                                 taxonomy["family"] = part
                                 continue
 
@@ -756,7 +777,10 @@ class ENAClient:
 
                     # Handle 400 errors (offset too large) gracefully
                     if response.status_code == 400:
-                        logger.debug(f"  Subdivision {taxid}: offset {offset} hit limit, moving to next")
+                        logger.debug(
+                            f"  Subdivision {taxid}: offset {offset} hit limit, "
+                            "moving to next"
+                        )
                         break
 
                     response.raise_for_status()
@@ -812,9 +836,15 @@ class ENAClient:
                     break
 
             if subdivision_valid > 0:
-                logger.info(f"  [{i+1}/{len(subdivisions)}] Taxid {taxid}: {subdivision_valid:,} valid, {len(species_counts):,} species total")
+                logger.info(
+                    f"  [{i+1}/{len(subdivisions)}] Taxid {taxid}: "
+                    f"{subdivision_valid:,} valid, {len(species_counts):,} species total"
+                )
 
-        logger.info(f"Discovered {len(species_counts):,} species from {total_valid:,} valid samples ({total_fetched:,} fetched)")
+        logger.info(
+            f"Discovered {len(species_counts):,} species from {total_valid:,} "
+            f"valid samples ({total_fetched:,} fetched)"
+        )
         return species_counts
 
     def download_species_sequences(

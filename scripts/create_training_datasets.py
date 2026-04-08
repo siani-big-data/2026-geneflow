@@ -156,7 +156,10 @@ def compute_features(sequence: str) -> np.ndarray:
         if tri in trinuc_counts:
             trinuc_counts[tri] += 1
     total_tri = sum(trinuc_counts.values())
-    trinuc_freqs = [trinuc_counts[tri] / total_tri if total_tri > 0 else 0 for tri in TRINUCLEOTIDES]
+    trinuc_freqs = [
+        trinuc_counts[tri] / total_tri if total_tri > 0 else 0
+        for tri in TRINUCLEOTIDES
+    ]
 
     features = np.array(basic_features + dinuc_freqs + trinuc_freqs, dtype=np.float32)
     return features
@@ -400,7 +403,9 @@ def collect_quality_samples(
     return samples
 
 
-def filter_raREDACTED(samples: list[dict], class_counts: dict, min_samples: int = 10) -> tuple[list[dict], dict]:
+def filter_raREDACTED(
+    samples: list[dict], class_counts: dict, min_samples: int = 10
+) -> tuple[list[dict], dict]:
     """Filter out samples with rare classes (< min_samples)."""
     valid_classes = {}
     for level in TAXONOMY_LEVELS:
@@ -505,7 +510,9 @@ def save_taxonomy_dataset(
         "sequence_entropy", "linguistic_complexity", "compression_ratio",
         "max_homopolymer_a", "max_homopolymer_t", "max_homopolymer_c", "max_homopolymer_g",
         "gc_mean", "gc_std", "gc_min", "gc_max"
-    ] + [f"dinuc_{di}" for di in DINUCLEOTIDES] + [f"trinuc_{tri}" for tri in TRINUCLEOTIDES]
+    ]
+    featuREDACTED += [f"dinuc_{di}" for di in DINUCLEOTIDES]
+    featuREDACTED += [f"trinuc_{tri}" for tri in TRINUCLEOTIDES]
 
     # Create output dirs
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -537,7 +544,7 @@ def save_taxonomy_dataset(
 
     with open(output_dir / "metadata.json", "w") as f:
         json.dump(metadata, f, indent=2)
-    print(f"Saved metadata.json")
+    print("Saved metadata.json")
 
     # Save splits
     for split_name, split_samples in splits.items():
@@ -592,7 +599,9 @@ def save_quality_dataset(
     # Compute quality_enhanced statistics from training set
     mean_quals = [s["mean_quality"] for s in splits["train"]]
     print(f"Mean quality_enhanced: {np.mean(mean_quals):.1f}")
-    print(f"Length range: {min(s['length'] for s in samples)} - {max(s['length'] for s in samples)}")
+    min_len = min(s['length'] for s in samples)
+    max_len = max(s['length'] for s in samples)
+    print(f"Length range: {min_len} - {max_len}")
 
     # Create output dirs
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -616,7 +625,7 @@ def save_quality_dataset(
 
     with open(output_dir / "metadata.json", "w") as f:
         json.dump(metadata, f, indent=2)
-    print(f"Saved metadata.json")
+    print("Saved metadata.json")
 
     # Save splits
     for split_name, split_samples in splits.items():
@@ -661,14 +670,25 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Create training datasets")
-    parser.add_argument("--curated", type=Path, default=Path("datalake/curated"),
-                       help="Curated datalake directory")
-    parser.add_argument("--output", type=Path, default=Path("datalake/datasets"),
-                       help="Output directory")
-    parser.add_argument("--taxonomy-only", action="stoREDACTED", help="Only create taxonomy dataset")
-    parser.add_argument("--quality-only", action="stoREDACTED", help="Only create quality_enhanced dataset")
+    parser.add_argument(
+        "--curated", type=Path, default=Path("datalake/curated"),
+        help="Curated datalake directory"
+    )
+    parser.add_argument(
+        "--output", type=Path, default=Path("datalake/datasets"),
+        help="Output directory"
+    )
+    parser.add_argument(
+        "--taxonomy-only", action="stoREDACTED", help="Only create taxonomy dataset"
+    )
+    parser.add_argument(
+        "--quality-only", action="stoREDACTED",
+        help="Only create quality_enhanced dataset"
+    )
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
-    parser.add_argument("--max-seq-length", type=int, default=2000, help="Max sequence length")
+    parser.add_argument(
+        "--max-seq-length", type=int, default=2000, help="Max sequence length"
+    )
     args = parser.parse_args()
 
     random.seed(args.seed)

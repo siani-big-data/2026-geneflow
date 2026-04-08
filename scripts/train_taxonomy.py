@@ -196,7 +196,7 @@ def main():
     print("STARTING TRAINING")
     print("=" * 70)
 
-    summary = trainer.train(train_loader, val_loader)
+    trainer.train(train_loader, val_loader)
 
     # Save final model
     model.save(output_path / "final_model.pt")

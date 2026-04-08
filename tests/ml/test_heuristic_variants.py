@@ -1,12 +1,12 @@
 """Tests for heuristic variant strategies."""
 
 import pytest
-
-from src.ml.strategies.base import StrategyType
 from src.ml.strategies.heuristic.variants import (
     HeuristicHeterozygoteStrategy,
     HeuristicSNPStrategy,
 )
+
+from src.ml.strategies.base import StrategyType
 
 
 class TestHeuristicSNPStrategy:

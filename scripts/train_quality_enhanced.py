@@ -9,7 +9,8 @@ Architecture: MLP without spatial context
 
 Usage:
     uv run python scripts/train_quality_enhanced.py
-    uv run python scripts/train_quality_enhanced.py --data-dir datalake/datasets/quality_enhanced_v2 --epochs 300
+    uv run python scripts/train_quality_enhanced.py \\
+        --data-dir datalake/datasets/quality_enhanced_v2 --epochs 300
 """
 
 import argparse
@@ -18,15 +19,15 @@ from datetime import datetime
 from pathlib import Path
 
 import matplotlib
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn as nn
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader, Dataset
 
-from src.ml.models.quality import QualityPredictorPointwise, QualityPredictorConfig
-
+from src.ml.models.quality import QualityPredictorConfig, QualityPredictorPointwise
 
 # =============================================================================
 # Dataset
@@ -148,7 +149,10 @@ def save_plots(history, val_preds, val_targets, save_dir):
             t_vals, v_vals = [x*100 for x in t_vals], [x*100 for x in v_vals]
         ax.plot(epochs, t_vals, label="Train")
         ax.plot(epochs, v_vals, label="Val")
-        ax.set_xlabel("Epoch"); ax.set_ylabel(ylabel); ax.legend(); ax.grid(True, alpha=0.3)
+        ax.set_xlabel("Epoch")
+        ax.set_ylabel(ylabel)
+        ax.legend()
+        ax.grid(True, alpha=0.3)
 
     plt.tight_layout()
     fig.savefig(save_dir / "training_curves.png", dpi=150)
@@ -163,7 +167,8 @@ def save_plots(history, val_preds, val_targets, save_dir):
     r2 = 1 - ((val_targets - val_preds)**2).sum() / ((val_targets - val_targets.mean())**2).sum()
     ax.text(0.05, 0.95, f'MAE: {mae:.2f}\nR²: {r2:.3f}', transform=ax.transAxes, fontsize=12,
             verticalalignment='top', bbox=dict(facecolor='white'))
-    ax.set_xlabel('Actual'); ax.set_ylabel('Predicted')
+    ax.set_xlabel('Actual')
+    ax.set_ylabel('Predicted')
     fig.savefig(save_dir / "scatter.png", dpi=150)
     plt.close()
 
@@ -178,8 +183,10 @@ def main():
     # Data
     parser.add_argument("--data-dir", type=str, default="datalake/datasets/quality_context")
     parser.add_argument("--checkpoint-dir", type=str, default="checkpoints/quality_mlp")
-    parser.add_argument("--select-features", type=str, default=None,
-                        help="Comma-separated list of features to use (e.g., 'ratio_norm,p2am_norm,p1am_norm')")
+    parser.add_argument(
+        "--select-features", type=str, default=None,
+        help="Comma-separated list of features (e.g., 'ratio_norm,p2am_norm')"
+    )
 
     # Architecture
     parser.add_argument("--hidden-channels", type=int, default=128)
@@ -198,7 +205,10 @@ def main():
     print("=" * 70)
     print("QUALITY PREDICTOR - POINTWISE MLP")
     print("=" * 70)
-    print(f"Architecture: hidden={args.hidden_channels}, layers={args.num_layers}, dropout={args.dropout}")
+    print(
+        f"Architecture: hidden={args.hidden_channels}, "
+        f"layers={args.num_layers}, dropout={args.dropout}"
+    )
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")
@@ -231,7 +241,9 @@ def main():
     val_dataset = QualityDataset(data_dir / "val", featuREDACTED)
     print(f"Train: {len(train_dataset)} | Val: {len(val_dataset)}")
 
-    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=0)
+    train_loader = DataLoader(
+        train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=0
+    )
     val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=0)
 
     # Model (Pointwise MLP - no spatial context, generalizes better)
@@ -271,9 +283,13 @@ def main():
         history["val_mae"].append(val_m["mae"])
         history["val_acc"].append(val_m["accuracy"])
 
-        print(f"Epoch {epoch+1:3d}/{args.epochs} | "
-              f"Train: Loss={train_m['loss']:.4f} MAE={train_m['mae']:.2f} Acc={train_m['accuracy']:.1%} | "
-              f"Val: Loss={val_m['loss']:.4f} MAE={val_m['mae']:.2f} Acc={val_m['accuracy']:.1%}")
+        print(
+            f"Epoch {epoch+1:3d}/{args.epochs} | "
+            f"Train: Loss={train_m['loss']:.4f} MAE={train_m['mae']:.2f} "
+            f"Acc={train_m['accuracy']:.1%} | "
+            f"Val: Loss={val_m['loss']:.4f} MAE={val_m['mae']:.2f} "
+            f"Acc={val_m['accuracy']:.1%}"
+        )
 
         if val_m["loss"] < best_loss:
             best_loss, best_epoch = val_m["loss"], epoch + 1

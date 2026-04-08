@@ -7,6 +7,10 @@ from .callbacks import (
     ProgressLogger,
     TrainingCallback,
 )
+from .figures import (
+    PaperFigures,
+    generate_latex_table,
+)
 from .losses import (
     FocalLoss,
     HierarchicalFocalLoss,
@@ -31,10 +35,6 @@ from .results import (
     ResultsWriter,
     TrainingResult,
     compute_classification_result,
-)
-from .figures import (
-    PaperFigures,
-    generate_latex_table,
 )
 from .trainer import Trainer, TrainingConfig
 

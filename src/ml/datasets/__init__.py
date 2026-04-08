@@ -1,33 +1,33 @@
 """Dataset classes for ML training."""
 
-from .sequence_dataset import SequenceDataset
-from .taxonomy_dataset import TaxonomyDataset
-from .trace_dataset import TraceDataset, TraceSample
-from .fastq_dataset import FastqDataset, FastqRecord, FastqDatasetBuilder
-from .hierarchical_taxonomy_dataset import HierarchicalTaxonomyDataset
-
-# Enhanced datasets with feature extraction
-from .quality_featuREDACTED import (
-    QualityDatasetConfig,
-    QualityFeatureDataset,
-    QualityDatasetBuilder,
-    PrecomputedQualityDataset,
-)
-from .taxonomy_featuREDACTED import (
-    TaxonomyDatasetConfig,
-    TaxonomyFeatureDataset,
-    TaxonomyDatasetBuilder,
-    PrecomputedTaxonomyDataset,
-)
-from .hierarchical_taxonomy_featuREDACTED import (
-    HierarchicalTaxonomyDatasetConfig,
-    HierarchicalTaxonomyFeatureDataset,
-    HierarchicalTaxonomyDatasetBuilder,
-    PrecomputedHierarchicalTaxonomyDataset,
-)
+from .fastq_dataset import FastqDataset, FastqDatasetBuilder, FastqRecord
 
 # Feature extractors
 from .features import SequenceFeatureExtractor, SignalFeatureExtractor
+from .hierarchical_taxonomy_dataset import HierarchicalTaxonomyDataset
+from .hierarchical_taxonomy_featuREDACTED import (
+    HierarchicalTaxonomyDatasetBuilder,
+    HierarchicalTaxonomyDatasetConfig,
+    HierarchicalTaxonomyFeatureDataset,
+    PrecomputedHierarchicalTaxonomyDataset,
+)
+
+# Enhanced datasets with feature extraction
+from .quality_featuREDACTED import (
+    PrecomputedQualityDataset,
+    QualityDatasetBuilder,
+    QualityDatasetConfig,
+    QualityFeatureDataset,
+)
+from .sequence_dataset import SequenceDataset
+from .taxonomy_dataset import TaxonomyDataset
+from .taxonomy_featuREDACTED import (
+    PrecomputedTaxonomyDataset,
+    TaxonomyDatasetBuilder,
+    TaxonomyDatasetConfig,
+    TaxonomyFeatureDataset,
+)
+from .trace_dataset import TraceDataset, TraceSample
 
 __all__ = [
     # Base datasets

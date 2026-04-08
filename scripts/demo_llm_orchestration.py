@@ -31,11 +31,14 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.orchestration import (
+from src.orchestration import (  # noqa: E402
     ToolExecutor,
     get_tool_registry,
 )
-from src.orchestration.executor import ConversationOrchestrator, ExecutionContext
+from src.orchestration.executor import (  # noqa: E402
+    ConversationOrchestrator,
+    ExecutionContext,
+)
 
 
 async def test_tools():
@@ -48,10 +51,6 @@ async def test_tools():
 
     # Test sequence
     test_sequence = "ATGCGATCGATCGATCGATCGATCGTAGCTAGCTAG"
-    quality_scores = [30, 32, 28, 35, 29, 31, 27, 33, 30, 28,
-                      25, 22, 20, 18, 15, 12, 10, 8, 6, 5,
-                      30, 32, 35, 33, 31, 29, 28, 30, 32, 34,
-                      35, 33, 31, 29, 28, 30, 32]
 
     print(f"\nTest sequence: {test_sequence[:30]}...")
     print(f"Length: {len(test_sequence)} bp")
@@ -224,11 +223,17 @@ async def interactive_demo():
                 params = {"sequence": sequence}
 
             if not sequence:
-                print("Assistant: I didn't find a DNA sequence in your input. Please provide a sequence with A, C, G, T characters.")
+                print(
+                    "Assistant: I didn't find a DNA sequence in your input. "
+                    "Please provide a sequence with A, C, G, T characters."
+                )
                 continue
 
             if not tool_name:
-                print("Assistant: I'm not sure what analysis you want. Try asking about GC content, motifs, translation, or ORFs.")
+                print(
+                    "Assistant: I'm not sure what analysis you want. "
+                    "Try asking about GC content, motifs, translation, or ORFs."
+                )
                 continue
 
             # Execute tool
@@ -236,7 +241,7 @@ async def interactive_demo():
             result = await executor.execute(tool_name, params)
 
             if result.success:
-                print(f"\nAssistant: Here are the results:\n")
+                print("\nAssistant: Here are the results:\n")
                 print(json.dumps(result.data, indent=2))
             else:
                 print(f"\nAssistant: Analysis failed: {result.error}")
@@ -270,7 +275,6 @@ async def anthropic_demo():
 
     client = anthropic.Anthropic(api_key=api_key)
     orchestrator = ConversationOrchestrator()
-    executor = orchestrator.executor
 
     print("\nType your bioinformatics questions. Type 'quit' to exit.\n")
     print("Example: 'Analyze this sequence: ATGCGATCGATCGATCGATCG'")

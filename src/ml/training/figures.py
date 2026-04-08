@@ -9,9 +9,12 @@ Generates high-quality figures suitable for academic papers, including:
 """
 
 from pathlib import Path
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
+
+if TYPE_CHECKING:
+    from src.ml.training.results import Predictions, TrainingResult
 
 # Type alias for figure format
 FigFormat = Literal["pdf", "png", "svg", "eps"]
@@ -152,7 +155,10 @@ class PaperFigures:
 
         # Skip if too many classes
         if n_classes > self.MAX_CLASSES_CONFUSION_MATRIX:
-            print(f"  (Confusion matrix skipped: {n_classes} classes > {self.MAX_CLASSES_CONFUSION_MATRIX} limit)")
+            print(
+                f"  (Confusion matrix skipped: {n_classes} classes "
+                f"> {self.MAX_CLASSES_CONFUSION_MATRIX} limit)"
+            )
             return None
 
         plt = self.plt
@@ -174,17 +180,21 @@ class PaperFigures:
             fmt = "d"
             vmin, vmax = 0, cm.max()
 
-        im = ax.imshow(cm_display, interpolation="nearest", cmap=cmap, vmin=vmin, vmax=vmax)
+        im = ax.imshow(
+            cm_display, interpolation="nearest", cmap=cmap, vmin=vmin, vmax=vmax
+        )
 
         # Add colorbar
         cbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-        cbar.ax.set_ylabel("Proportion" if normalize else "Count", rotation=-90, va="bottom")
+        ylabel = "Proportion" if normalize else "Count"
+        cbar.ax.set_ylabel(ylabel, rotation=-90, va="bottom")
 
         # Labels
         ax.set_xticks(np.arange(n_classes))
         ax.set_yticks(np.arange(n_classes))
-        ax.set_xticklabels(class_names, rotation=45, ha="right", fontsize=max(4, 10 - n_classes // 10))
-        ax.set_yticklabels(class_names, fontsize=max(4, 10 - n_classes // 10))
+        fontsize = max(4, 10 - n_classes // 10)
+        ax.set_xticklabels(class_names, rotation=45, ha="right", fontsize=fontsize)
+        ax.set_yticklabels(class_names, fontsize=fontsize)
 
         ax.set_xlabel("Predicted Label")
         ax.set_ylabel("True Label")
@@ -229,7 +239,8 @@ class PaperFigures:
             Path to saved figure, or None if too many classes
         """
         from collections import Counter
-        from sklearn.metrics import roc_curve, auc
+
+        from sklearn.metrics import auc, roc_curve
         from sklearn.preprocessing import label_binarize
 
         n_classes = len(class_names)
@@ -239,7 +250,10 @@ class PaperFigures:
             # Select top N classes by frequency
             class_counts = Counter(y_true)
             top_classes = [cls for cls, _ in class_counts.most_common(self.MAX_CLASSES_ROC_PR)]
-            print(f"  (ROC curves: showing top {self.MAX_CLASSES_ROC_PR} of {n_classes} classes by frequency)")
+            print(
+                f"  (ROC curves: showing top {self.MAX_CLASSES_ROC_PR} "
+                f"of {n_classes} classes by frequency)"
+            )
         else:
             top_classes = list(range(n_classes))
 
@@ -251,7 +265,10 @@ class PaperFigures:
             y_true_bin = label_binarize(y_true, classes=range(n_classes))
         else:
             y_true_bin = y_true.reshape(-1, 1)
-            y_proba = y_proba[:, 1].reshape(-1, 1) if y_proba.ndim > 1 else y_proba.reshape(-1, 1)
+            if y_proba.ndim > 1:
+                y_proba = y_proba[:, 1].reshape(-1, 1)
+            else:
+                y_proba = y_proba.reshape(-1, 1)
 
         # Compute ROC for selected classes
         fpr, tpr, roc_auc = {}, {}, {}
@@ -301,7 +318,8 @@ class PaperFigures:
     ) -> Path | None:
         """Generate Precision-Recall curves."""
         from collections import Counter
-        from sklearn.metrics import precision_recall_curve, average_precision_score
+
+        from sklearn.metrics import average_precision_score, precision_recall_curve
         from sklearn.preprocessing import label_binarize
 
         n_classes = len(class_names)
@@ -310,7 +328,10 @@ class PaperFigures:
         if n_classes > self.MAX_CLASSES_ROC_PR:
             class_counts = Counter(y_true)
             top_classes = [cls for cls, _ in class_counts.most_common(self.MAX_CLASSES_ROC_PR)]
-            print(f"  (PR curves: showing top {self.MAX_CLASSES_ROC_PR} of {n_classes} classes by frequency)")
+            print(
+                f"  (PR curves: showing top {self.MAX_CLASSES_ROC_PR} "
+                f"of {n_classes} classes by frequency)"
+            )
         else:
             top_classes = list(range(n_classes))
 
@@ -322,7 +343,10 @@ class PaperFigures:
             y_true_bin = label_binarize(y_true, classes=range(n_classes))
         else:
             y_true_bin = y_true.reshape(-1, 1)
-            y_proba = y_proba[:, 1].reshape(-1, 1) if y_proba.ndim > 1 else y_proba.reshape(-1, 1)
+            if y_proba.ndim > 1:
+                y_proba = y_proba[:, 1].reshape(-1, 1)
+            else:
+                y_proba = y_proba.reshape(-1, 1)
 
         # Compute PR for selected classes
         for idx, i in enumerate(top_classes):
@@ -488,7 +512,10 @@ class PaperFigures:
         if total_classes > max_classes:
             sorted_counts = sorted_counts[:max_classes]
             title = f"{title} (Top {max_classes} of {total_classes})"
-            print(f"  (Class distribution: showing top {max_classes} of {total_classes} classes)")
+            print(
+                f"  (Class distribution: showing top {max_classes} "
+                f"of {total_classes} classes)"
+            )
 
         names, counts = zip(*sorted_counts)
 
@@ -504,7 +531,8 @@ class PaperFigures:
         bars = ax.bar(range(len(names)), counts, color=colors, edgecolor="none")
 
         ax.set_xticks(range(len(names)))
-        ax.set_xticklabels(names, rotation=45, ha="right", fontsize=max(6, 10 - len(names) // 10))
+        fontsize = max(6, 10 - len(names) // 10)
+        ax.set_xticklabels(names, rotation=45, ha="right", fontsize=fontsize)
         ax.set_xlabel("Class")
         ax.set_ylabel("Count")
         ax.set_title(title, fontweight="bold")
@@ -581,7 +609,6 @@ class PaperFigures:
         Returns:
             List of paths to generated figures
         """
-        from .results import TrainingResult, Predictions
 
         paths: list[Path] = []
 
