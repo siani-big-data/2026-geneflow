@@ -147,7 +147,11 @@ class PaymentsHandler(BaseHandler):
     ) -> None:
         """Log a payment event for audit purposes."""
         # Remove sensitive data before logging
-        safe_payload = {k: v for k, v in payload.items() if k not in ["stripe_customer_id", "stripe_payment_method_id"]}
+        safe_payload = {
+            k: v
+            for k, v in payload.items()
+            if k not in ["stripe_customer_id", "stripe_payment_method_id"]
+        }
 
         await self._connection.execute(
             """INSERT INTO payments.payment_events_log (payment_method_id, user_id, event_type, event_data)

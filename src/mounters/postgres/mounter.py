@@ -46,7 +46,15 @@ class PostgresMounter(BaseMounter):
     def __init__(self, dsn: str):
         super().__init__(
             name="postgres",
-            categories=["users", "studies", "traces", "alignments", "billing", "payments", "profiles"],
+            categories=[
+                "users",
+                "studies",
+                "traces",
+                "alignments",
+                "billing",
+                "payments",
+                "profiles",
+            ],
         )
         self._dsn = dsn
         self._connection = PostgresConnection(dsn=dsn)
