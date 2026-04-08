@@ -4,6 +4,7 @@ export * from "./trace";
 export * from "./pipeline";
 export * from "./auth";
 export * from "./profile";
+export * from "./payment";
 
 export interface PaginatedResponse<T> {
   data: T[];

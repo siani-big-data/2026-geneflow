@@ -5,7 +5,6 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/lib/navigation";
 import {
   ArrowLeft,
-  CreditCard,
   Download,
   Check,
   AlertTriangle,
@@ -27,6 +26,7 @@ import {
   DialogTitle,
   Button,
 } from "@/components/ui";
+import { PaymentMethodList } from "@/components/payment";
 
 const currentPlanData = {
   name: "Professional",
@@ -42,10 +42,6 @@ const usageData = {
   pipelines: { used: 23, total: 50 },
   collaborators: { used: 7, total: 10 },
 };
-
-const paymentMethods = [
-  { id: 1, type: "visa", last4: "4242", expiry: "12/27", isDefault: true },
-];
 
 const invoices = [
   { id: "INV-2026-004", date: "Apr 3, 2026", amount: 49.00, status: "paid" },
@@ -66,7 +62,6 @@ export default function BillingPage() {
   const tCommon = useTranslations("common");
   const [changePlanOpen, setChangePlanOpen] = useState(false);
   const [cancelSubOpen, setCancelSubOpen] = useState(false);
-  const [addPaymentOpen, setAddPaymentOpen] = useState(false);
   const [editBillingOpen, setEditBillingOpen] = useState(false);
 
   const usagePercent = (used: number, total: number) => Math.round((used / total) * 100);
@@ -262,37 +257,10 @@ export default function BillingPage() {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Payment Method */}
+            {/* Payment Methods */}
             <div className="rounded-xl border border-border bg-card p-6">
               <h3 className="mb-4 text-base font-semibold text-foreground">{t("paymentMethod.title")}</h3>
-              {paymentMethods.map((method) => (
-                <div key={method.id} className="flex items-center gap-4 rounded-lg border border-border p-4">
-                  <div className="flex h-10 w-14 items-center justify-center rounded bg-muted">
-                    <CreditCard className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-foreground">
-                      {t("paymentMethod.cardEnding", { last4: method.last4 })}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {t("paymentMethod.expires", { date: method.expiry })}
-                    </p>
-                  </div>
-                  {method.isDefault && (
-                    <span className="rounded bg-teal/10 px-2 py-0.5 text-xs font-medium text-teal">
-                      {t("paymentMethod.default")}
-                    </span>
-                  )}
-                </div>
-              ))}
-              <div className="mt-4 flex gap-2">
-                <Button variant="outline" size="sm" className="flex-1" onClick={() => setAddPaymentOpen(true)}>
-                  {t("paymentMethod.addNew")}
-                </Button>
-                <Button variant="ghost" size="sm">
-                  {t("paymentMethod.update")}
-                </Button>
-              </div>
+              <PaymentMethodList showAddButton />
             </div>
 
             {/* Billing Info */}
@@ -450,143 +418,6 @@ export default function BillingPage() {
             <Button variant="destructive" onClick={() => setCancelSubOpen(false)}>
               {t("dialogs.cancelSubscription.confirm")}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Add Payment Method Dialog */}
-      <Dialog open={addPaymentOpen} onOpenChange={setAddPaymentOpen}>
-        <DialogContent className="sm:max-w-[700px]">
-          <DialogHeader>
-            <DialogTitle>{t("dialogs.addPayment.title")}</DialogTitle>
-            <DialogDescription>{t("dialogs.addPayment.description")}</DialogDescription>
-          </DialogHeader>
-          <div className="grid grid-cols-1 gap-8 py-6 md:grid-cols-2">
-            {/* 3D Credit Card Preview */}
-            <div className="flex items-center justify-center">
-              <div
-                className="group h-[200px] w-[320px]"
-                style={{ perspective: "1000px" }}
-              >
-                <div
-                  className="relative h-full w-full transition-transform duration-700"
-                  style={{
-                    transformStyle: "preserve-3d",
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.transform = "rotateY(180deg)"}
-                  onMouseLeave={(e) => e.currentTarget.style.transform = "rotateY(0deg)"}
-                >
-                  {/* Front of Card */}
-                  <div
-                    className="absolute inset-0 rounded-2xl bg-gradient-to-br from-teal via-teal/90 to-blue-deep p-6 shadow-xl"
-                    style={{ backfaceVisibility: "hidden" }}
-                  >
-                    {/* Chip */}
-                    <div className="mb-6 flex items-center justify-between">
-                      <div className="h-10 w-14 rounded-md bg-gradient-to-br from-yellow-300 via-yellow-400 to-yellow-500 p-1">
-                        <div className="h-full w-full rounded border border-yellow-600/30 bg-gradient-to-br from-yellow-200 to-yellow-400" />
-                      </div>
-                      <div className="text-xl font-bold tracking-wider text-white/90">VISA</div>
-                    </div>
-                    {/* Card Number */}
-                    <div className="mb-4">
-                      <p className="font-mono text-xl tracking-[0.2em] text-white">
-                        1234 5678 9012 3456
-                      </p>
-                    </div>
-                    {/* Card Details */}
-                    <div className="flex items-end justify-between">
-                      <div>
-                        <p className="mb-1 text-[10px] uppercase tracking-wider text-white/60">Card Holder</p>
-                        <p className="font-mono text-sm uppercase tracking-wider text-white">SARAH MARTINEZ</p>
-                      </div>
-                      <div>
-                        <p className="mb-1 text-[10px] uppercase tracking-wider text-white/60">Expires</p>
-                        <p className="font-mono text-sm tracking-wider text-white">12/27</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Back of Card */}
-                  <div
-                    className="absolute inset-0 rounded-2xl bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 shadow-xl"
-                    style={{
-                      backfaceVisibility: "hidden",
-                      transform: "rotateY(180deg)"
-                    }}
-                  >
-                    {/* Magnetic Strip */}
-                    <div className="mt-6 h-12 w-full bg-slate-950" />
-                    {/* Signature Strip & CVV */}
-                    <div className="mt-6 px-6">
-                      <div className="flex items-center gap-4">
-                        <div className="h-10 flex-1 rounded bg-gradient-to-r from-slate-200 to-slate-300" />
-                        <div className="flex h-10 w-16 items-center justify-center rounded bg-white">
-                          <span className="font-mono text-sm font-bold text-slate-800">123</span>
-                        </div>
-                      </div>
-                      <p className="mt-2 text-right text-[10px] uppercase tracking-wider text-white/60">CVC</p>
-                    </div>
-                    {/* Info Text */}
-                    <div className="mt-6 px-6">
-                      <p className="text-[9px] leading-relaxed text-white/40">
-                        This card is property of GeneFlow Bank. If found, please return to any GeneFlow branch.
-                        Unauthorized use is prohibited.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Form */}
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">{t("dialogs.addPayment.cardNumber")}</label>
-                <input
-                  type="text"
-                  placeholder="1234 5678 9012 3456"
-                  className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">{t("dialogs.addPayment.nameOnCard")}</label>
-                <input
-                  type="text"
-                  placeholder="SARAH MARTINEZ"
-                  className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm uppercase transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">{t("dialogs.addPayment.expiry")}</label>
-                  <input
-                    type="text"
-                    placeholder="MM/YY"
-                    className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">
-                    {t("dialogs.addPayment.cvc")}
-                    <span className="ml-1 text-xs text-muted-foreground">(hover card)</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="123"
-                    className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
-                  />
-                </div>
-              </div>
-              <label className="flex items-center gap-2 pt-2">
-                <input type="checkbox" className="rounded border-border" />
-                <span className="text-sm text-muted-foreground">{t("dialogs.addPayment.setDefault")}</span>
-              </label>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setAddPaymentOpen(false)}>{tCommon("cancel")}</Button>
-            <Button onClick={() => setAddPaymentOpen(false)}>{t("dialogs.addPayment.add")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
