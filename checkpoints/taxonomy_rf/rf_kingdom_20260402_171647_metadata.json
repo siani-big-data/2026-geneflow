@@ -1,0 +1,22 @@
+{
+  "level": "kingdom",
+  "n_classes": 5,
+  "class_names": [
+    "animalia",
+    "bacteria",
+    "fungi",
+    "plantae",
+    "protista"
+  ],
+  "n_features": 101,
+  "include_kmers": true,
+  "n_estimators": 50,
+  "max_depth": null,
+  "train_samples": 65369,
+  "val_samples": 11536,
+  "train_accuracy": 0.8165950221052792,
+  "val_accuracy": 0.7977635228848821,
+  "timestamp": "20260402_171647",
+  "backend": "xgboost_gpu",
+  "gpu_name": "NVIDIA GeForce RTX 4080 SUPER"
+}
