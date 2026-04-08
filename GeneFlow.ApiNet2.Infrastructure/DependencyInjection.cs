@@ -1,17 +1,23 @@
 using GeneFlow.ApiNet2.Application.Identity.Interfaces;
 using GeneFlow.ApiNet2.Application.Identity.Services;
 using GeneFlow.ApiNet2.Domain.Identity;
+using GeneFlow.ApiNet2.Domain.Plans;
 using GeneFlow.ApiNet2.Domain.Profiles;
+using GeneFlow.ApiNet2.Domain.Subscriptions;
 using GeneFlow.ApiNet2.Infrastructure.Events;
 using GeneFlow.ApiNet2.Infrastructure.Identity.Configuration;
 using GeneFlow.ApiNet2.Infrastructure.Identity.Persistence.Context;
 using GeneFlow.ApiNet2.Infrastructure.Identity.Persistence.Repositories;
 using GeneFlow.ApiNet2.Infrastructure.Identity.Services;
 using GeneFlow.ApiNet2.Infrastructure.Identity.Services.OAuth;
+using GeneFlow.ApiNet2.Infrastructure.Plans.Persistence.Context;
+using GeneFlow.ApiNet2.Infrastructure.Plans.Persistence.Repositories;
 using GeneFlow.ApiNet2.Infrastructure.Profiles.Persistence.Context;
 using GeneFlow.ApiNet2.Infrastructure.Profiles.Persistence.Repositories;
 using GeneFlow.ApiNet2.Infrastructure.Redis;
 using GeneFlow.ApiNet2.Infrastructure.Redis.Configuration;
+using GeneFlow.ApiNet2.Infrastructure.Subscriptions.Persistence.Context;
+using GeneFlow.ApiNet2.Infrastructure.Subscriptions.Persistence.Repositories;
 using GeneFlow.ApiNet2.SharedKernel.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -82,6 +88,36 @@ public static class DependencyInjection
         // Profiles Repositories
         services.AddScoped<IProfileRepository, ProfileRepository>();
         services.AddScoped<IProfileUnitOfWork, ProfileUnitOfWork>();
+
+        // Plans DbContext
+        services.AddDbContext<PlanContext>(options =>
+            options.UseNpgsql(connectionString, npgsqlOptions =>
+            {
+                npgsqlOptions.MigrationsAssembly(typeof(PlanContext).Assembly.FullName);
+                npgsqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: 3,
+                    maxRetryDelay: TimeSpan.FromSeconds(5),
+                    errorCodesToAdd: null);
+            }));
+
+        // Plans Repositories
+        services.AddScoped<IPlanRepository, PlanRepository>();
+        services.AddScoped<IPlanUnitOfWork, PlanUnitOfWork>();
+
+        // Subscriptions DbContext
+        services.AddDbContext<SubscriptionContext>(options =>
+            options.UseNpgsql(connectionString, npgsqlOptions =>
+            {
+                npgsqlOptions.MigrationsAssembly(typeof(SubscriptionContext).Assembly.FullName);
+                npgsqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: 3,
+                    maxRetryDelay: TimeSpan.FromSeconds(5),
+                    errorCodesToAdd: null);
+            }));
+
+        // Subscriptions Repositories
+        services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
+        services.AddScoped<ISubscriptionUnitOfWork, SubscriptionUnitOfWork>();
 
         return services;
     }
