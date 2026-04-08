@@ -163,9 +163,7 @@ class StorageMounter(BaseMounter):
             "uploaded_at": datetime.utcnow().isoformat() + "Z",
         }
         metadata_key = f"profiles/{profile_id}/photo_metadata.json"
-        await self._connection.put_object(
-            self._bucket, metadata_key, json.dumps(metadata).encode()
-        )
+        await self._connection.put_object(self._bucket, metadata_key, json.dumps(metadata).encode())
 
         logger.info(
             "storage_profile_photo_uploaded",
