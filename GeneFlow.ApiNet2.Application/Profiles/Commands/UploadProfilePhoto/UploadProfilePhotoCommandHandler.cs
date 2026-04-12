@@ -6,7 +6,7 @@ using GeneFlow.ApiNet2.Domain.Profiles.Events;
 using GeneFlow.ApiNet2.Domain.Profiles.ValueObjects;
 using GeneFlow.ApiNet2.SharedKernel.Application.CQRS;
 using GeneFlow.ApiNet2.SharedKernel.Domain.Results;
-using GeneFlow.ApiNet2.SharedKernel.Infrastructure;
+using MediatR;
 using Microsoft.Extensions.Logging;
 
 namespace GeneFlow.ApiNet2.Application.Profiles.Commands.UploadProfilePhoto;
@@ -20,7 +20,7 @@ public sealed class UploadProfilePhotoCommandHandler
 {
     private readonly IProfileRepository _profileRepository;
     private readonly IProfileUnitOfWork _unitOfWork;
-    private readonly IEventBusPublisher _eventBusPublisher;
+    private readonly IPublisher _mediatorPublisher;
     private readonly ILogger<UploadProfilePhotoCommandHandler> _logger;
 
     private const long MaxPhotoSize = 10 * 1024 * 1024; // 10 MB
@@ -48,12 +48,12 @@ public sealed class UploadProfilePhotoCommandHandler
     public UploadProfilePhotoCommandHandler(
         IProfileRepository profileRepository,
         IProfileUnitOfWork unitOfWork,
-        IEventBusPublisher eventBusPublisher,
+        IPublisher mediatorPublisher,
         ILogger<UploadProfilePhotoCommandHandler> logger)
     {
         _profileRepository = profileRepository;
         _unitOfWork = unitOfWork;
-        _eventBusPublisher = eventBusPublisher;
+        _mediatorPublisher = mediatorPublisher;
         _logger = logger;
     }
 
@@ -118,7 +118,7 @@ public sealed class UploadProfilePhotoCommandHandler
         _profileRepository.Update(profile);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // Publish event to datalake for binary storage
+        // Publish event via MediatR to trigger file storage handler
         var uploadEvent = new ProfilePhotoUploadedEvent(
             profile.Id,
             request.PhotoDataBase64,
@@ -126,7 +126,7 @@ public sealed class UploadProfilePhotoCommandHandler
             request.ContentType,
             request.SizeBytes);
 
-        await _eventBusPublisher.PublishAsync(uploadEvent, "profiles", cancellationToken);
+        await _mediatorPublisher.Publish(uploadEvent, cancellationToken);
 
         _logger.LogInformation(
             "Profile photo uploaded for profile {ProfileId}, size: {Size} bytes",

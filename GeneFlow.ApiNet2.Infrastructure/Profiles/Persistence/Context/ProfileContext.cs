@@ -31,6 +31,9 @@ public sealed class ProfileContext : DbContext
         // Ignore smart enumerations - they are stored as string, not separate entities
         modelBuilder.Ignore<ResearchField>();
 
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(ProfileContext).Assembly);
+        // Only apply configurations from the Profiles namespace
+        modelBuilder.ApplyConfigurationsFromAssembly(
+            typeof(ProfileContext).Assembly,
+            type => type.Namespace?.Contains("Profiles") == true);
     }
 }

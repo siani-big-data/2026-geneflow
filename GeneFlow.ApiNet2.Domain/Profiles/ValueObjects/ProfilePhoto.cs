@@ -15,7 +15,8 @@ public sealed partial class ProfilePhoto : ValueObject
     /// <summary>Maximum photo size in bytes (10 MB).</summary>
     public const long MaxSizeBytes = 10 * 1024 * 1024;
 
-    private static readonly Regex UrlRegex = GeneratedUrlRegex();
+    private static readonly Regex AbsoluteUrlRegex = GeneratedAbsoluteUrlRegex();
+    private static readonly Regex RelativeUrlRegex = GeneratedRelativeUrlRegex();
 
     /// <summary>Gets the photo URL.</summary>
     public string? Url { get; }
@@ -52,7 +53,7 @@ public sealed partial class ProfilePhoto : ValueObject
         if (trimmedUrl.Length > UrlMaxLength)
             return Result.Failure<ProfilePhoto>(ProfileErrors.PhotoUrlTooLong(UrlMaxLength));
 
-        if (!UrlRegex.IsMatch(trimmedUrl))
+        if (!IsValidUrl(trimmedUrl))
             return Result.Failure<ProfilePhoto>(ProfileErrors.PhotoUrlInvalidFormat);
 
         // Validate thumbnail URL
@@ -61,7 +62,7 @@ public sealed partial class ProfilePhoto : ValueObject
             if (trimmedThumbnail.Length > UrlMaxLength)
                 return Result.Failure<ProfilePhoto>(ProfileErrors.PhotoUrlTooLong(UrlMaxLength));
 
-            if (!UrlRegex.IsMatch(trimmedThumbnail))
+            if (!IsValidUrl(trimmedThumbnail))
                 return Result.Failure<ProfilePhoto>(ProfileErrors.PhotoUrlInvalidFormat);
         }
 
@@ -88,7 +89,19 @@ public sealed partial class ProfilePhoto : ValueObject
     /// <inheritdoc />
     public override string ToString() => Url ?? string.Empty;
 
-    // Basic URL validation
+    /// <summary>
+    /// Validates if a URL is valid (absolute or relative storage path).
+    /// </summary>
+    private static bool IsValidUrl(string url)
+    {
+        return AbsoluteUrlRegex.IsMatch(url) || RelativeUrlRegex.IsMatch(url);
+    }
+
+    // Absolute URL validation (https://...)
     [GeneratedRegex(@"^https?://[\w\-]+(\.[\w\-]+)+(/[\w\-._~:/?#\[\]@!$&'()*+,;=%]*)?$", RegexOptions.Compiled | RegexOptions.IgnoreCase)]
-    private static partial Regex GeneratedUrlRegex();
+    private static partial Regex GeneratedAbsoluteUrlRegex();
+
+    // Relative storage path validation (/storage/...)
+    [GeneratedRegex(@"^/storage/[\w\-._~:/?#\[\]@!$&'()*+,;=%]+$", RegexOptions.Compiled | RegexOptions.IgnoreCase)]
+    private static partial Regex GeneratedRelativeUrlRegex();
 }

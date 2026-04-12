@@ -2,6 +2,7 @@ using GeneFlow.ApiNet2.Application.Profiles.Commands.CreateProfile;
 using GeneFlow.ApiNet2.Domain.Identity;
 using GeneFlow.ApiNet2.Domain.Profiles;
 using GeneFlow.ApiNet2.SharedKernel.Infrastructure;
+using Microsoft.Extensions.Logging;
 
 namespace GeneFlow.ApiNet2.Tests.Application.Profiles.Commands;
 
@@ -13,6 +14,7 @@ public class CreateProfileCommandHandlerTests
     private readonly IProfileRepository _profileRepository = Substitute.For<IProfileRepository>();
     private readonly IProfileUnitOfWork _unitOfWork = Substitute.For<IProfileUnitOfWork>();
     private readonly ISequenceGenerator _sequenceGenerator = Substitute.For<ISequenceGenerator>();
+    private readonly ILogger<CreateProfileCommandHandler> _logger = Substitute.For<ILogger<CreateProfileCommandHandler>>();
     private readonly CreateProfileCommandHandler _handler;
 
     public CreateProfileCommandHandlerTests()
@@ -20,7 +22,8 @@ public class CreateProfileCommandHandlerTests
         _handler = new CreateProfileCommandHandler(
             _profileRepository,
             _unitOfWork,
-            _sequenceGenerator);
+            _sequenceGenerator,
+            _logger);
     }
 
     #region Success Cases

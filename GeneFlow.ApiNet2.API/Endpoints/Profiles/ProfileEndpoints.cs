@@ -3,6 +3,7 @@ using GeneFlow.ApiNet2.API.Contracts.Profiles.Responses;
 using GeneFlow.ApiNet2.API.Extensions;
 using GeneFlow.ApiNet2.API.Routes;
 using GeneFlow.ApiNet2.Application.Identity.Interfaces;
+using GeneFlow.ApiNet2.Application.Profiles.Commands.CreateProfile;
 using GeneFlow.ApiNet2.Application.Profiles.Commands.DeleteProfilePhoto;
 using GeneFlow.ApiNet2.Application.Profiles.Commands.UpdateProfile;
 using GeneFlow.ApiNet2.Application.Profiles.Commands.UpdateProfilePhoto;
@@ -29,6 +30,17 @@ public sealed class ProfileEndpoints : IEndpoint
             .WithTags("Profiles")
             .WithOpenApi();
 
+        // Create profile endpoint
+        group.MapPost("/", CreateProfile)
+            .WithName("Profiles_Create")
+            .WithSummary("Create profile for current user")
+            .WithDescription("Creates a new profile for the currently authenticated user. Required after registration.")
+            .RequireAuthorization()
+            .Produces<ProfileResponse>(StatusCodes.Status201Created)
+            .ProducesValidationProblem()
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status409Conflict);
+
         // Current user profile endpoints
         group.MapGet("/me", GetCurrentUserProfile)
             .WithName("Profiles_GetCurrent")
@@ -36,7 +48,8 @@ public sealed class ProfileEndpoints : IEndpoint
             .WithDescription("Returns the profile of the currently authenticated user.")
             .RequireAuthorization()
             .Produces<ProfileResponse>(StatusCodes.Status200OK)
-            .Produces(StatusCodes.Status401Unauthorized);
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status404NotFound);
 
         group.MapGet("/me/stats", GetCurrentUserStats)
             .WithName("Profiles_GetCurrentStats")
@@ -108,6 +121,39 @@ public sealed class ProfileEndpoints : IEndpoint
             .ProducesValidationProblem();
     }
 
+    private static async Task<IResult> CreateProfile(
+        [FromBody] CreateProfileRequest request,
+        [FromServices] ISender sender,
+        [FromServices] ICurrentUserService currentUser,
+        CancellationToken cancellationToken)
+    {
+        if (currentUser.UserId is null)
+            return Results.Unauthorized();
+
+        // UserId.ToString() returns the prefixed format like "U00000001"
+        var userIdString = currentUser.UserId.ToString()!;
+
+        var command = new CreateProfileCommand(
+            userIdString,
+            request.FirstName,
+            request.LastName,
+            request.Bio,
+            request.Location,
+            request.ProfessionalRole,
+            request.InstitutionName,
+            request.InstitutionDepartment,
+            request.ResearchField,
+            request.OrcidId,
+            request.Website);
+
+        var result = await sender.Send(command, cancellationToken);
+
+        if (result.IsFailure)
+            return result.ToHttpResult();
+
+        return Results.Created($"/api/v1/profiles/me", result.Value.ToResponse());
+    }
+
     private static async Task<IResult> GetCurrentUserProfile(
         [FromServices] ISender sender,
         CancellationToken cancellationToken)
@@ -129,7 +175,7 @@ public sealed class ProfileEndpoints : IEndpoint
         if (currentUser.UserId is null)
             return Results.Unauthorized();
 
-        var query = new GetProfileStatsQuery(currentUser.UserId.Value.ToString());
+        var query = new GetProfileStatsQuery(currentUser.UserId.ToString()!);
         var result = await sender.Send(query, cancellationToken);
 
         if (result.IsFailure)
@@ -148,7 +194,7 @@ public sealed class ProfileEndpoints : IEndpoint
             return Results.Unauthorized();
 
         var command = new UpdateProfileCommand(
-            currentUser.UserId.Value.ToString(),
+            currentUser.UserId.ToString()!,
             request.FirstName,
             request.LastName,
             request.Bio,
@@ -176,7 +222,7 @@ public sealed class ProfileEndpoints : IEndpoint
             return Results.Unauthorized();
 
         var command = new UpdateResearchIdentifiersCommand(
-            currentUser.UserId.Value.ToString(),
+            currentUser.UserId.ToString()!,
             request.OrcidId,
             request.Website);
 
@@ -198,7 +244,7 @@ public sealed class ProfileEndpoints : IEndpoint
             return Results.Unauthorized();
 
         var command = new UpdateProfilePhotoCommand(
-            currentUser.UserId.Value.ToString(),
+            currentUser.UserId.ToString()!,
             request.PhotoUrl,
             request.ThumbnailUrl,
             request.SizeBytes);
@@ -219,7 +265,7 @@ public sealed class ProfileEndpoints : IEndpoint
         if (currentUser.UserId is null)
             return Results.Unauthorized();
 
-        var command = new DeleteProfilePhotoCommand(currentUser.UserId.Value.ToString());
+        var command = new DeleteProfilePhotoCommand(currentUser.UserId.ToString()!);
         var result = await sender.Send(command, cancellationToken);
 
         if (result.IsFailure)
@@ -246,7 +292,7 @@ public sealed class ProfileEndpoints : IEndpoint
         var photoDataBase64 = Convert.ToBase64String(memoryStream.ToArray());
 
         var command = new UploadProfilePhotoCommand(
-            currentUser.UserId.Value.ToString(),
+            currentUser.UserId.ToString()!,
             photoDataBase64,
             file.FileName,
             file.ContentType,

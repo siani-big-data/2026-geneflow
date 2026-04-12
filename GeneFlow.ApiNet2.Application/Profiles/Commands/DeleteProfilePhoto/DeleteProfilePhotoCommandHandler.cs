@@ -3,7 +3,7 @@ using GeneFlow.ApiNet2.Domain.Profiles;
 using GeneFlow.ApiNet2.Domain.Profiles.Events;
 using GeneFlow.ApiNet2.SharedKernel.Application.CQRS;
 using GeneFlow.ApiNet2.SharedKernel.Domain.Results;
-using GeneFlow.ApiNet2.SharedKernel.Infrastructure;
+using MediatR;
 using Microsoft.Extensions.Logging;
 
 namespace GeneFlow.ApiNet2.Application.Profiles.Commands.DeleteProfilePhoto;
@@ -16,7 +16,7 @@ public sealed class DeleteProfilePhotoCommandHandler
 {
     private readonly IProfileRepository _profileRepository;
     private readonly IProfileUnitOfWork _unitOfWork;
-    private readonly IEventBusPublisher _eventBusPublisher;
+    private readonly IPublisher _mediatorPublisher;
     private readonly ILogger<DeleteProfilePhotoCommandHandler> _logger;
 
     /// <summary>
@@ -25,12 +25,12 @@ public sealed class DeleteProfilePhotoCommandHandler
     public DeleteProfilePhotoCommandHandler(
         IProfileRepository profileRepository,
         IProfileUnitOfWork unitOfWork,
-        IEventBusPublisher eventBusPublisher,
+        IPublisher mediatorPublisher,
         ILogger<DeleteProfilePhotoCommandHandler> logger)
     {
         _profileRepository = profileRepository;
         _unitOfWork = unitOfWork;
-        _eventBusPublisher = eventBusPublisher;
+        _mediatorPublisher = mediatorPublisher;
         _logger = logger;
     }
 
@@ -57,9 +57,9 @@ public sealed class DeleteProfilePhotoCommandHandler
         _profileRepository.Update(profile);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // Publish event to datalake for storage cleanup
+        // Publish event via MediatR to trigger storage cleanup handler
         var deleteEvent = new ProfilePhotoDeletedEvent(profile.Id);
-        await _eventBusPublisher.PublishAsync(deleteEvent, "profiles", cancellationToken);
+        await _mediatorPublisher.Publish(deleteEvent, cancellationToken);
 
         _logger.LogInformation("Profile photo deleted for profile {ProfileId}", profile.Id.Value);
 
