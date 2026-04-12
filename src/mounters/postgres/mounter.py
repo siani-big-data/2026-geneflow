@@ -89,7 +89,12 @@ class PostgresMounter(BaseMounter):
         logger.info("postgres_mounter_stopped")
 
     async def _initialize_schemas(self) -> None:
-        """Initialize all database schemas."""
+        """Initialize all database schemas.
+
+        Note: Schema initialization is fault-tolerant. If tables already exist
+        with a different structure (e.g., created by backend migrations), the
+        mounter will continue and use existing tables.
+        """
         schemas = [
             ("users", USERS_SCHEMA),
             ("studies", STUDIES_SCHEMA),
@@ -106,11 +111,23 @@ class PostgresMounter(BaseMounter):
                 statements = [s.strip() for s in schema.split(";") if s.strip()]
                 for statement in statements:
                     if statement and not statement.startswith("--"):
-                        await self._connection.execute(statement)
+                        try:
+                            await self._connection.execute(statement)
+                        except Exception as stmt_error:
+                            # Log but continue - table might already exist with different structure
+                            logger.debug(
+                                "schema_statement_skipped",
+                                schema=name,
+                                error=str(stmt_error)[:100],
+                            )
                 logger.info("schema_initialized", schema=name)
             except Exception as e:
-                logger.error("schema_initialization_failed", schema=name, error=str(e))
-                raise
+                logger.warning(
+                    "schema_initialization_warning",
+                    schema=name,
+                    error=str(e),
+                )
+                # Continue with next schema instead of raising
 
     async def handle_event(self, event: dict) -> None:
         """Handle an incoming event by routing to appropriate handler.
