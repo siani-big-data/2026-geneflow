@@ -10,7 +10,7 @@
 
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { authService } from "@/services";
+import { authService, profileService } from "@/services";
 import { tokenStorage } from "@/lib/api-client";
 import type {
   AuthUser,
@@ -19,6 +19,7 @@ import type {
   LoginRequest,
   RegisterRequest,
   TwoFactorVerifyRequest,
+  Profile,
 } from "@/types";
 
 // =============================================================================
@@ -28,6 +29,10 @@ import type {
 interface AuthStore extends AuthState {
   // Computed
   status: AuthStatus;
+
+  // Profile state
+  profile: Profile | null;
+  profileChecked: boolean;
 
   // Actions
   login: (data: LoginRequest) => Promise<void>;
@@ -39,6 +44,11 @@ interface AuthStore extends AuthState {
   initialize: () => Promise<void>;
   clearError: () => void;
   setError: (error: string) => void;
+
+  // Profile actions
+  setProfile: (profile: Profile | null) => void;
+  checkProfile: () => Promise<boolean>;
+  clearProfile: () => void;
 }
 
 // =============================================================================
@@ -65,6 +75,8 @@ export const useAuthStore = create<AuthStore>()(
   persist(
     (set, get) => ({
       ...initialState,
+      profile: null,
+      profileChecked: false,
 
       // Computed status
       get status(): AuthStatus {
@@ -243,6 +255,8 @@ export const useAuthStore = create<AuthStore>()(
           set({
             ...initialState,
             isLoading: false,
+            profile: null,
+            profileChecked: false,
           });
         }
       },
@@ -323,6 +337,49 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       // ===========================================================================
+      // PROFILE MANAGEMENT
+      // ===========================================================================
+
+      setProfile: (profile: Profile | null) => {
+        set({ profile, profileChecked: true });
+      },
+
+      checkProfile: async () => {
+        const state = get();
+
+        // If already checked and has profile, return true
+        if (state.profileChecked && state.profile !== null) {
+          return true;
+        }
+
+        // If not authenticated, can't check profile
+        if (!state.isAuthenticated) {
+          set({ profile: null, profileChecked: false });
+          return false;
+        }
+
+        try {
+          const profile = await profileService.checkProfileExists();
+          set({ profile, profileChecked: true });
+          return profile !== null;
+        } catch (error) {
+          // On error, don't assume no profile - keep previous state
+          // Only set profileChecked if we haven't checked before
+          if (!state.profileChecked) {
+            set({ profileChecked: true });
+          }
+          console.error("Failed to check profile:", error);
+          // Return true to avoid redirect loop on API errors
+          // User will see error on profile page if there's really a problem
+          return state.profile !== null;
+        }
+      },
+
+      clearProfile: () => {
+        set({ profile: null, profileChecked: false });
+      },
+
+      // ===========================================================================
       // UTILITIES
       // ===========================================================================
 
@@ -337,6 +394,9 @@ export const useAuthStore = create<AuthStore>()(
         // Only persist user info, not tokens (they're in tokenStorage)
         user: state.user,
         isAuthenticated: state.isAuthenticated,
+        // Persist profile state to avoid repeated API calls
+        profile: state.profile,
+        profileChecked: state.profileChecked,
       }),
     }
   )
@@ -351,6 +411,8 @@ export const selectIsAuthenticated = (state: AuthStore) => state.isAuthenticated
 export const selectIsLoading = (state: AuthStore) => state.isLoading;
 export const selectAuthStatus = (state: AuthStore) => state.status;
 export const selectAuthError = (state: AuthStore) => state.error;
+export const selectProfile = (state: AuthStore) => state.profile;
+export const selectHasProfile = (state: AuthStore) => state.profile !== null;
 
 // =============================================================================
 // LOGOUT EVENT LISTENER

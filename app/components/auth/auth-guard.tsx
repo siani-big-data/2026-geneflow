@@ -14,17 +14,40 @@ interface AuthGuardProps {
  *
  * - Shows loading spinner while checking auth state
  * - Redirects to login if not authenticated
- * - Renders children if authenticated
+ * - Redirects to /complete-profile if user doesn't have a profile
+ * - Renders children if authenticated and has profile
  */
 export function AuthGuard({ children }: AuthGuardProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { isAuthenticated, isLoading, initialize } = useAuthStore();
+  const {
+    isAuthenticated,
+    isLoading,
+    initialize,
+    profile,
+    profileChecked,
+    checkProfile,
+  } = useAuthStore();
 
   // Initialize auth state on mount
   useEffect(() => {
     initialize();
   }, [initialize]);
+
+  // Check if user has a profile after authentication
+  useEffect(() => {
+    const doCheckProfile = async () => {
+      if (!isLoading && isAuthenticated && !profileChecked) {
+        // Skip API call if on complete-profile page (user is creating profile)
+        if (pathname === "/complete-profile") {
+          return;
+        }
+        await checkProfile();
+      }
+    };
+
+    doCheckProfile();
+  }, [isLoading, isAuthenticated, profileChecked, pathname, checkProfile]);
 
   // Redirect to login if not authenticated (after loading completes)
   useEffect(() => {
@@ -34,6 +57,18 @@ export function AuthGuard({ children }: AuthGuardProps) {
       router.push(`/login?returnUrl=${returnUrl}`);
     }
   }, [isLoading, isAuthenticated, pathname, router]);
+
+  // Redirect to complete-profile if no profile (only after profile check is done)
+  useEffect(() => {
+    if (
+      isAuthenticated &&
+      profileChecked &&
+      profile === null &&
+      pathname !== "/complete-profile"
+    ) {
+      router.push("/complete-profile");
+    }
+  }, [isAuthenticated, profileChecked, profile, pathname, router]);
 
   // Show loading state while checking authentication
   if (isLoading) {
@@ -47,6 +82,18 @@ export function AuthGuard({ children }: AuthGuardProps) {
     );
   }
 
+  // Show loading while checking profile (only if not already checked)
+  if (isAuthenticated && !profileChecked && pathname !== "/complete-profile") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-teal" />
+          <p className="text-sm text-muted-foreground">Checking profile...</p>
+        </div>
+      </div>
+    );
+  }
+
   // Don't render children if not authenticated (redirect will happen)
   if (!isAuthenticated) {
     return (
@@ -54,6 +101,18 @@ export function AuthGuard({ children }: AuthGuardProps) {
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-teal" />
           <p className="text-sm text-muted-foreground">Redirecting to login...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render children if no profile and not on complete-profile page
+  if (profile === null && profileChecked && pathname !== "/complete-profile") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-teal" />
+          <p className="text-sm text-muted-foreground">Completing setup...</p>
         </div>
       </div>
     );
