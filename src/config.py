@@ -59,6 +59,10 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     log_requests: bool = True
 
+    # PostgreSQL (Datamarts)
+    postgres_dsn: str = ""
+    postgres_enabled: bool = False
+
     # Qdrant
     qdrant_url: str = "http://localhost:6333"
     qdrant_api_key: str = ""
