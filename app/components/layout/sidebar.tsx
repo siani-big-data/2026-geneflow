@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/stores/ui-store";
 import { useAuthStore } from "@/stores/auth-store";
+import { profileService } from "@/services/profile.service";
 import { mainNavigation, bottomNavigation } from "./navigation";
 import { Link, useRouter } from "@/lib/navigation";
 import {
@@ -19,9 +20,14 @@ export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { sidebarCollapsed, toggleSidebar } = useUIStore();
-  const { user, logout } = useAuthStore();
+  const { user, profile, logout } = useAuthStore();
   const t = useTranslations("navigation");
   const tCommon = useTranslations("common");
+
+  // Get display name and photo from profile if available
+  const displayName = profile?.fullName || user?.username || "User";
+  const initials = profile?.initials || displayName.charAt(0).toUpperCase();
+  const photoUrl = profileService.resolveStorageUrl(profile?.photoThumbnailUrl || profile?.photoUrl);
 
   const handleLogout = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -186,9 +192,17 @@ export function Sidebar() {
               )}
             >
               <Link href="/profile" className="flex items-center gap-3 flex-1 min-w-0">
-                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-deep to-teal">
-                  <User className="h-4 w-4 text-white" />
-                </div>
+                {photoUrl ? (
+                  <img
+                    src={photoUrl}
+                    alt={displayName}
+                    className="h-8 w-8 flex-shrink-0 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-deep to-teal text-xs font-medium text-white">
+                    {initials}
+                  </div>
+                )}
                 <div
                   className={cn(
                     "min-w-0 flex-1 overflow-hidden whitespace-nowrap transition-all duration-300 ease-out",
@@ -196,7 +210,7 @@ export function Sidebar() {
                   )}
                 >
                   <p className="truncate text-sm font-medium text-foreground">
-                    {user?.username || "User"}
+                    {displayName}
                   </p>
                   <p className="truncate text-xs text-muted-foreground">
                     {user?.email || ""}
@@ -217,7 +231,7 @@ export function Sidebar() {
             </div>
           </TooltipTrigger>
           {sidebarCollapsed && (
-            <TooltipContent side="right">{user?.username || "User"}</TooltipContent>
+            <TooltipContent side="right">{displayName}</TooltipContent>
           )}
         </Tooltip>
       </div>

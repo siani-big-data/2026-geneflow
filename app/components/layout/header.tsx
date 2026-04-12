@@ -8,12 +8,18 @@ import { useTheme } from "@/providers";
 import { Button } from "@/components/ui";
 import { LocaleSwitcher } from "@/components/shared";
 import { useAuthStore } from "@/stores/auth-store";
+import { profileService } from "@/services/profile.service";
 
 export function Header() {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const t = useTranslations("header");
   const router = useRouter();
-  const { user, logout, isLoading } = useAuthStore();
+  const { user, profile, logout, isLoading } = useAuthStore();
+
+  // Get display name and photo from profile if available
+  const displayName = profile?.fullName || user?.username || "User";
+  const initials = profile?.initials || displayName.charAt(0).toUpperCase();
+  const photoUrl = profileService.resolveStorageUrl(profile?.photoThumbnailUrl || profile?.photoUrl);
 
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -107,11 +113,19 @@ export function Header() {
             aria-expanded={userMenuOpen}
             aria-haspopup="true"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-teal/10 text-teal">
-              <User className="h-4 w-4" />
-            </div>
+            {photoUrl ? (
+              <img
+                src={photoUrl}
+                alt={displayName}
+                className="h-8 w-8 rounded-full object-cover"
+              />
+            ) : (
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-teal/10 text-xs font-medium text-teal">
+                {initials}
+              </div>
+            )}
             <span className="hidden md:block font-medium text-foreground">
-              {user?.username || "User"}
+              {displayName}
             </span>
             <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${userMenuOpen ? "rotate-180" : ""}`} />
           </button>
@@ -121,7 +135,7 @@ export function Header() {
             <div className="absolute right-0 top-full z-50 mt-2 w-56 origin-top-right rounded-lg border border-border bg-card py-1 shadow-lg ring-1 ring-black/5 focus:outline-none">
               {/* User Info */}
               <div className="border-b border-border px-4 py-3">
-                <p className="text-sm font-medium text-foreground">{user?.username}</p>
+                <p className="text-sm font-medium text-foreground">{displayName}</p>
                 <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
               </div>
 

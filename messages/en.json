@@ -33,10 +33,12 @@
     "showing": "Showing",
     "of": "of",
     "items": "items",
+    "retry": "Retry",
     "status": {
       "draft": "Draft",
       "active": "Active",
       "completed": "Completed",
+      "published": "Published",
       "archived": "Archived",
       "pending": "Pending",
       "processing": "Processing",
@@ -48,7 +50,10 @@
       "review": "Review",
       "processed": "Processed",
       "uploaded": "Uploaded",
-      "validating": "Validating"
+      "validating": "Validating",
+      "expired": "Expired",
+      "accepted": "Accepted",
+      "declined": "Declined"
     }
   },
   "navigation": {
@@ -250,10 +255,79 @@
     "status": {
       "active": "Active",
       "completed": "Completed",
+      "published": "Published",
       "draft": "Draft",
       "onHold": "On Hold",
       "processing": "Processing",
-      "pending": "Pending"
+      "pending": "Pending",
+      "archived": "Archived"
+    },
+    "roles": {
+      "owner": "Owner",
+      "admin": "Admin",
+      "editor": "Editor",
+      "viewer": "Viewer"
+    },
+    "researchFields": {
+      "genomics": "Genomics",
+      "proteomics": "Proteomics",
+      "transcriptomics": "Transcriptomics",
+      "metabolomics": "Metabolomics",
+      "epigenomics": "Epigenomics",
+      "metagenomics": "Metagenomics",
+      "pharmacogenomics": "Pharmacogenomics",
+      "clinicalGenetics": "Clinical Genetics",
+      "other": "Other"
+    },
+    "papers": {
+      "title": "Scientific Papers",
+      "description": "Papers associated with this study",
+      "addPaper": "Add Paper",
+      "noPapers": "No papers added yet",
+      "paperTitle": "Title",
+      "authors": "Authors",
+      "doi": "DOI",
+      "journal": "Journal",
+      "year": "Year",
+      "abstract": "Abstract",
+      "download": "Download PDF",
+      "remove": "Remove Paper"
+    },
+    "stars": {
+      "star": "Star",
+      "unstar": "Unstar",
+      "starred": "Starred",
+      "starCount": "{count} stars",
+      "viewCount": "{count} views"
+    },
+    "invitations": {
+      "title": "Invitations",
+      "pending": "Pending Invitations",
+      "sendInvitation": "Send Invitation",
+      "cancelInvitation": "Cancel Invitation",
+      "resendInvitation": "Resend Invitation",
+      "acceptInvitation": "Accept",
+      "declineInvitation": "Decline",
+      "invitedBy": "Invited by",
+      "expiresAt": "Expires",
+      "message": "Message",
+      "status": {
+        "pending": "Pending",
+        "accepted": "Accepted",
+        "declined": "Declined",
+        "expired": "Expired",
+        "cancelled": "Cancelled"
+      },
+      "noInvitations": "No pending invitations",
+      "invitationSent": "Invitation sent successfully",
+      "invitationAccepted": "Invitation accepted",
+      "invitationDeclined": "Invitation declined"
+    },
+    "featured": {
+      "badge": "Featured",
+      "featuredStudies": "Featured Studies",
+      "feature": "Feature Study",
+      "unfeature": "Remove from Featured"
     },
     "pagination": {
       "showing": "Showing",
@@ -720,7 +794,10 @@
       "currentPlan": "Current Plan",
       "nextBilling": "Next Billing",
       "paymentMethod": "Payment Method",
-      "active": "Active"
+      "active": "Active",
+      "noSubscription": "No subscription",
+      "free": "Free",
+      "noPaymentMethod": "No payment method"
     },
     "collaboration": {
       "settings": "Collaboration Settings",
@@ -841,10 +918,22 @@
     "card": {
       "traces": "Traces",
       "samples": "Samples",
+      "papers": "Papers",
+      "members": "Members",
       "public": "Public",
       "collaborators": "Collaborators",
       "views": "Views",
-      "citations": "Citations"
+      "citations": "Citations",
+      "stars": "Stars",
+      "noInstitution": "Independent Research"
+    },
+    "error": {
+      "loadFailed": "Failed to load studies. Please try again."
+    },
+    "time": {
+      "justNow": "Just now",
+      "hoursAgo": "{count} hours ago",
+      "daysAgo": "{count} days ago"
     },
     "count": {
       "study": "study",
@@ -868,6 +957,7 @@
     "editProfile": "Edit Profile",
     "settings": "Settings",
     "activityOverview": "Activity Overview",
+    "noRole": "No role specified",
     "stats": {
       "activeStudies": "Active Studies",
       "totalSamples": "Total Samples",
@@ -877,6 +967,7 @@
     "about": {
       "title": "About",
       "edit": "Edit",
+      "noBio": "No bio yet. Click edit to add one.",
       "orcid": "ORCID",
       "website": "Website",
       "labWebsite": "Lab Website",
@@ -886,6 +977,7 @@
       "title": "My Studies",
       "description": "Studies you're leading or contributing to",
       "samples": "samples",
+      "noStudies": "No studies yet",
       "roles": {
         "principalInvestigator": "Principal Investigator",
         "coInvestigator": "Co-Investigator",
@@ -894,7 +986,8 @@
     },
     "recentActivity": {
       "title": "Recent Activity",
-      "viewAll": "View All Activity"
+      "viewAll": "View All Activity",
+      "noActivity": "No recent activity"
     },
     "quickActions": {
       "title": "Quick Actions",
@@ -932,6 +1025,51 @@
         "title": "Activity History",
         "description": "Your recent activity across all studies."
       }
+    }
+  },
+  "completeProfile": {
+    "title": "Complete Your Profile",
+    "subtitle": "Tell us a bit about yourself to get started",
+    "submit": "Create Profile",
+    "skipHint": "You can always update this information later in your profile settings.",
+    "steps": {
+      "basicInfo": {
+        "title": "Basic Information",
+        "description": "Your name and location"
+      },
+      "professionalInfo": {
+        "title": "Professional Information",
+        "description": "Your role and institution"
+      },
+      "researchIds": {
+        "title": "Research Identifiers",
+        "description": "Optional: ORCID and website"
+      }
+    },
+    "fields": {
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "location": "Location",
+      "bio": "Short Bio",
+      "role": "Professional Role",
+      "institution": "Institution",
+      "department": "Department",
+      "researchField": "Research Field",
+      "orcid": "ORCID iD",
+      "website": "Website"
+    },
+    "placeholders": {
+      "firstName": "John",
+      "lastName": "Doe",
+      "location": "Cambridge, MA",
+      "bio": "Brief description of your research interests...",
+      "role": "e.g., Research Scientist, PhD Student",
+      "institution": "e.g., MIT, Stanford University",
+      "department": "e.g., Department of Biology",
+      "researchField": "Select a field..."
+    },
+    "hints": {
+      "orcid": "Your 16-digit ORCID identifier (e.g., 0000-0002-1825-0097)"
     }
   },
   "help": {
@@ -1148,9 +1286,14 @@
       "status": "Active",
       "price": "$49",
       "perMonth": "/month",
+      "perYear": "/year",
       "renewsOn": "Renews on {date}",
+      "expiresOn": "Expires on {date}",
+      "trialEnds": "Trial ends {date}",
       "changePlan": "Change Plan",
-      "cancelSubscription": "Cancel Subscription"
+      "selectPlan": "Select a Plan",
+      "cancelSubscription": "Cancel Subscription",
+      "noSubscription": "You don't have an active subscription"
     },
     "usage": {
       "title": "Current Period Usage",
@@ -1171,7 +1314,23 @@
       "collaborators": {
         "title": "Team Collaborators",
         "used": "{used} of {total} seats"
+      },
+      "studies": {
+        "title": "Studies"
+      },
+      "traces": {
+        "title": "Traces per Month"
+      },
+      "members": {
+        "title": "Members per Study"
+      },
+      "daysRemaining": {
+        "title": "Days Remaining",
+        "days": "days"
       }
+    },
+    "planFeatures": {
+      "title": "Plan Features"
     },
     "paymentMethod": {
       "title": "Payment Method",
@@ -1248,7 +1407,14 @@
         "title": "Change Plan",
         "description": "Select a new plan for your subscription.",
         "confirm": "Confirm Change",
-        "prorate": "You will be charged or credited prorated for the remainder of your billing period."
+        "prorate": "You will be charged or credited prorated for the remainder of your billing period.",
+        "monthly": "Monthly",
+        "yearly": "Yearly",
+        "free": "Free",
+        "current": "Current",
+        "studies": "studies",
+        "tracesPerMonth": "traces/month",
+        "membersPerStudy": "members/study"
       },
       "cancelSubscription": {
         "title": "Cancel Subscription",
@@ -1261,7 +1427,9 @@
           "support": "Priority support"
         },
         "confirm": "Yes, Cancel Subscription",
-        "keepPlan": "Keep My Plan"
+        "keepPlan": "Keep My Plan",
+        "reasonLabel": "Reason for cancellation (optional)",
+        "reasonPlaceholder": "Tell us why you're cancelling..."
       },
       "addPayment": {
         "title": "Add Payment Method",

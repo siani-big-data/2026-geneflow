@@ -33,10 +33,12 @@
     "showing": "Mostrando",
     "of": "de",
     "items": "elementos",
+    "retry": "Reintentar",
     "status": {
       "draft": "Borrador",
       "active": "Activo",
       "completed": "Completado",
+      "published": "Publicado",
       "archived": "Archivado",
       "pending": "Pendiente",
       "processing": "Procesando",
@@ -48,7 +50,10 @@
       "review": "Revisión",
       "processed": "Procesada",
       "uploaded": "Subida",
-      "validating": "Validando"
+      "validating": "Validando",
+      "expired": "Expirado",
+      "accepted": "Aceptado",
+      "declined": "Rechazado"
     }
   },
   "navigation": {
@@ -250,10 +255,79 @@
     "status": {
       "active": "Activo",
       "completed": "Completado",
+      "published": "Publicado",
       "draft": "Borrador",
       "onHold": "En Espera",
       "processing": "Procesando",
-      "pending": "Pendiente"
+      "pending": "Pendiente",
+      "archived": "Archivado"
+    },
+    "roles": {
+      "owner": "Propietario",
+      "admin": "Administrador",
+      "editor": "Editor",
+      "viewer": "Observador"
+    },
+    "researchFields": {
+      "genomics": "Genómica",
+      "proteomics": "Proteómica",
+      "transcriptomics": "Transcriptómica",
+      "metabolomics": "Metabolómica",
+      "epigenomics": "Epigenómica",
+      "metagenomics": "Metagenómica",
+      "pharmacogenomics": "Farmacogenómica",
+      "clinicalGenetics": "Genética Clínica",
+      "other": "Otro"
+    },
+    "papers": {
+      "title": "Artículos Científicos",
+      "description": "Artículos asociados a este estudio",
+      "addPaper": "Agregar Artículo",
+      "noPapers": "No hay artículos agregados",
+      "paperTitle": "Título",
+      "authors": "Autores",
+      "doi": "DOI",
+      "journal": "Revista",
+      "year": "Año",
+      "abstract": "Resumen",
+      "download": "Descargar PDF",
+      "remove": "Eliminar Artículo"
+    },
+    "stars": {
+      "star": "Favorito",
+      "unstar": "Quitar favorito",
+      "starred": "Marcado como favorito",
+      "starCount": "{count} favoritos",
+      "viewCount": "{count} vistas"
+    },
+    "invitations": {
+      "title": "Invitaciones",
+      "pending": "Invitaciones Pendientes",
+      "sendInvitation": "Enviar Invitación",
+      "cancelInvitation": "Cancelar Invitación",
+      "resendInvitation": "Reenviar Invitación",
+      "acceptInvitation": "Aceptar",
+      "declineInvitation": "Rechazar",
+      "invitedBy": "Invitado por",
+      "expiresAt": "Expira",
+      "message": "Mensaje",
+      "status": {
+        "pending": "Pendiente",
+        "accepted": "Aceptada",
+        "declined": "Rechazada",
+        "expired": "Expirada",
+        "cancelled": "Cancelada"
+      },
+      "noInvitations": "No hay invitaciones pendientes",
+      "invitationSent": "Invitación enviada exitosamente",
+      "invitationAccepted": "Invitación aceptada",
+      "invitationDeclined": "Invitación rechazada"
+    },
+    "featured": {
+      "badge": "Destacado",
+      "featuredStudies": "Estudios Destacados",
+      "feature": "Destacar Estudio",
+      "unfeature": "Quitar de Destacados"
     },
     "pagination": {
       "showing": "Mostrando",
@@ -720,7 +794,10 @@
       "currentPlan": "Plan Actual",
       "nextBilling": "Próxima Facturación",
       "paymentMethod": "Método de Pago",
-      "active": "Activo"
+      "active": "Activo",
+      "noSubscription": "Sin suscripción",
+      "free": "Gratis",
+      "noPaymentMethod": "Sin método de pago"
     },
     "collaboration": {
       "settings": "Configuración de Colaboración",
@@ -841,10 +918,22 @@
     "card": {
       "traces": "Trazas",
       "samples": "Muestras",
+      "papers": "Artículos",
+      "members": "Miembros",
       "public": "Público",
       "collaborators": "Colaboradores",
       "views": "Vistas",
-      "citations": "Citas"
+      "citations": "Citas",
+      "stars": "Estrellas",
+      "noInstitution": "Investigación Independiente"
+    },
+    "error": {
+      "loadFailed": "Error al cargar estudios. Por favor, inténtalo de nuevo."
+    },
+    "time": {
+      "justNow": "Ahora mismo",
+      "hoursAgo": "hace {count} horas",
+      "daysAgo": "hace {count} días"
     },
     "count": {
       "study": "estudio",
@@ -868,6 +957,7 @@
     "editProfile": "Editar Perfil",
     "settings": "Configuración",
     "activityOverview": "Resumen de Actividad",
+    "noRole": "Sin rol especificado",
     "stats": {
       "activeStudies": "Estudios Activos",
       "totalSamples": "Total de Muestras",
@@ -877,6 +967,7 @@
     "about": {
       "title": "Acerca de",
       "edit": "Editar",
+      "noBio": "Sin biografía aún. Haz clic en editar para añadir una.",
       "orcid": "ORCID",
       "website": "Sitio Web",
       "labWebsite": "Sitio del Laboratorio",
@@ -886,6 +977,7 @@
       "title": "Mis Estudios",
       "description": "Estudios que lideras o en los que contribuyes",
       "samples": "muestras",
+      "noStudies": "Sin estudios aún",
       "roles": {
         "principalInvestigator": "Investigador Principal",
         "coInvestigator": "Co-Investigador",
@@ -894,7 +986,8 @@
     },
     "recentActivity": {
       "title": "Actividad Reciente",
-      "viewAll": "Ver Toda la Actividad"
+      "viewAll": "Ver Toda la Actividad",
+      "noActivity": "Sin actividad reciente"
     },
     "quickActions": {
       "title": "Acciones Rápidas",
@@ -932,6 +1025,51 @@
         "title": "Historial de Actividad",
         "description": "Tu actividad reciente en todos los estudios."
       }
+    }
+  },
+  "completeProfile": {
+    "title": "Completa Tu Perfil",
+    "subtitle": "Cuéntanos un poco sobre ti para comenzar",
+    "submit": "Crear Perfil",
+    "skipHint": "Siempre puedes actualizar esta información más tarde en la configuración de tu perfil.",
+    "steps": {
+      "basicInfo": {
+        "title": "Información Básica",
+        "description": "Tu nombre y ubicación"
+      },
+      "professionalInfo": {
+        "title": "Información Profesional",
+        "description": "Tu rol e institución"
+      },
+      "researchIds": {
+        "title": "Identificadores de Investigación",
+        "description": "Opcional: ORCID y sitio web"
+      }
+    },
+    "fields": {
+      "firstName": "Nombre",
+      "lastName": "Apellido",
+      "location": "Ubicación",
+      "bio": "Biografía Breve",
+      "role": "Rol Profesional",
+      "institution": "Institución",
+      "department": "Departamento",
+      "researchField": "Campo de Investigación",
+      "orcid": "ORCID iD",
+      "website": "Sitio Web"
+    },
+    "placeholders": {
+      "firstName": "Juan",
+      "lastName": "García",
+      "location": "Madrid, España",
+      "bio": "Breve descripción de tus intereses de investigación...",
+      "role": "ej., Científico Investigador, Estudiante de Doctorado",
+      "institution": "ej., Universidad Complutense, CSIC",
+      "department": "ej., Departamento de Biología",
+      "researchField": "Selecciona un campo..."
+    },
+    "hints": {
+      "orcid": "Tu identificador ORCID de 16 dígitos (ej., 0000-0002-1825-0097)"
     }
   },
   "help": {
@@ -1148,9 +1286,14 @@
       "status": "Activo",
       "price": "$49",
       "perMonth": "/mes",
+      "perYear": "/año",
       "renewsOn": "Renueva el {date}",
+      "expiresOn": "Expira el {date}",
+      "trialEnds": "Prueba termina el {date}",
       "changePlan": "Cambiar Plan",
-      "cancelSubscription": "Cancelar Suscripción"
+      "selectPlan": "Seleccionar un Plan",
+      "cancelSubscription": "Cancelar Suscripción",
+      "noSubscription": "No tienes una suscripción activa"
     },
     "usage": {
       "title": "Uso del Período Actual",
@@ -1171,7 +1314,23 @@
       "collaborators": {
         "title": "Colaboradores del Equipo",
         "used": "{used} de {total} asientos"
+      },
+      "studies": {
+        "title": "Estudios"
+      },
+      "traces": {
+        "title": "Trazas por Mes"
+      },
+      "members": {
+        "title": "Miembros por Estudio"
+      },
+      "daysRemaining": {
+        "title": "Días Restantes",
+        "days": "días"
       }
+    },
+    "planFeatures": {
+      "title": "Características del Plan"
     },
     "paymentMethod": {
       "title": "Método de Pago",
@@ -1248,7 +1407,14 @@
         "title": "Cambiar Plan",
         "description": "Selecciona un nuevo plan para tu suscripción.",
         "confirm": "Confirmar Cambio",
-        "prorate": "Se te cobrará o acreditará prorrateado por el resto del período de facturación."
+        "prorate": "Se te cobrará o acreditará prorrateado por el resto del período de facturación.",
+        "monthly": "Mensual",
+        "yearly": "Anual",
+        "free": "Gratis",
+        "current": "Actual",
+        "studies": "estudios",
+        "tracesPerMonth": "trazas/mes",
+        "membersPerStudy": "miembros/estudio"
       },
       "cancelSubscription": {
         "title": "Cancelar Suscripción",
@@ -1261,7 +1427,9 @@
           "support": "Soporte prioritario"
         },
         "confirm": "Sí, Cancelar Suscripción",
-        "keepPlan": "Mantener Mi Plan"
+        "keepPlan": "Mantener Mi Plan",
+        "reasonLabel": "Motivo de cancelación (opcional)",
+        "reasonPlaceholder": "Cuéntanos por qué cancelas..."
       },
       "addPayment": {
         "title": "Agregar Método de Pago",
