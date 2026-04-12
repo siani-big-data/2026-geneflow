@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using GeneFlow.ApiNet2.Application.Identity.Interfaces;
 using GeneFlow.ApiNet2.Domain.Identity;
@@ -25,8 +26,11 @@ public sealed class CurrentUserService : ICurrentUserService
     {
         get
         {
+            // Try "sub" claim first (JWT standard), then fall back to NameIdentifier
             var userIdClaim = _httpContextAccessor.HttpContext?.User
-                .FindFirstValue(ClaimTypes.NameIdentifier);
+                .FindFirstValue(JwtRegisteredClaimNames.Sub)
+                ?? _httpContextAccessor.HttpContext?.User
+                    .FindFirstValue(ClaimTypes.NameIdentifier);
 
             if (string.IsNullOrEmpty(userIdClaim))
                 return null;

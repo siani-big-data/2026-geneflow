@@ -176,8 +176,18 @@ public sealed class UserRepository : IUserRepository
     /// <inheritdoc />
     public async Task<User?> GetByRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default)
     {
-        return await _context.Users
-            .FirstOrDefaultAsync(u => u.RefreshTokens.Any(t => t.Token == refreshToken), cancellationToken);
+        // Query using raw SQL since RefreshTokens is an owned collection mapped via backing field
+        var userIdString = await _context.Database
+            .SqlQuery<string>($"SELECT \"UserId\" FROM identity.refresh_tokens WHERE token = {refreshToken} LIMIT 1")
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (string.IsNullOrEmpty(userIdString))
+            return null;
+
+        if (!UserId.TryParse(userIdString, out var userId) || userId is null)
+            return null;
+
+        return await GetByIdAsync(userId, cancellationToken);
     }
 
     /// <inheritdoc />

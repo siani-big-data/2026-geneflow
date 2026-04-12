@@ -3,6 +3,7 @@ using GeneFlow.ApiNet2.Application.Identity.Services;
 using GeneFlow.ApiNet2.Domain.Identity;
 using GeneFlow.ApiNet2.Domain.Plans;
 using GeneFlow.ApiNet2.Domain.Profiles;
+using GeneFlow.ApiNet2.Domain.Studies;
 using GeneFlow.ApiNet2.Domain.Subscriptions;
 using GeneFlow.ApiNet2.Infrastructure.Events;
 using GeneFlow.ApiNet2.Infrastructure.Identity.Configuration;
@@ -16,8 +17,15 @@ using GeneFlow.ApiNet2.Infrastructure.Profiles.Persistence.Context;
 using GeneFlow.ApiNet2.Infrastructure.Profiles.Persistence.Repositories;
 using GeneFlow.ApiNet2.Infrastructure.Redis;
 using GeneFlow.ApiNet2.Infrastructure.Redis.Configuration;
+using GeneFlow.ApiNet2.Infrastructure.Storage.Configuration;
+using GeneFlow.ApiNet2.Infrastructure.Storage.Services;
+using GeneFlow.ApiNet2.Infrastructure.Studies.Persistence.Context;
+using GeneFlow.ApiNet2.Infrastructure.Studies.Persistence.Repositories;
 using GeneFlow.ApiNet2.Infrastructure.Subscriptions.Persistence.Context;
 using GeneFlow.ApiNet2.Infrastructure.Subscriptions.Persistence.Repositories;
+using GeneFlow.ApiNet2.Infrastructure.Usage.Repositories;
+using GeneFlow.ApiNet2.Infrastructure.Usage.Services;
+using GeneFlow.ApiNet2.Domain.Usage;
 using GeneFlow.ApiNet2.SharedKernel.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -45,6 +53,7 @@ public static class DependencyInjection
         services.AddRedis(configuration);
         services.AddIdentityServices(configuration);
         services.AddEventDispatching();
+        services.AddStorageServices(configuration);
 
         return services;
     }
@@ -119,6 +128,22 @@ public static class DependencyInjection
         services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
         services.AddScoped<ISubscriptionUnitOfWork, SubscriptionUnitOfWork>();
 
+        // Studies DbContext
+        services.AddDbContext<StudyContext>(options =>
+            options.UseNpgsql(connectionString, npgsqlOptions =>
+            {
+                npgsqlOptions.MigrationsAssembly(typeof(StudyContext).Assembly.FullName);
+                npgsqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: 3,
+                    maxRetryDelay: TimeSpan.FromSeconds(5),
+                    errorCodesToAdd: null);
+            }));
+
+        // Studies Repositories
+        services.AddScoped<IStudyRepository, StudyRepository>();
+        services.AddScoped<IStudyInvitationRepository, StudyInvitationRepository>();
+        services.AddScoped<IStudyUnitOfWork, StudyUnitOfWork>();
+
         return services;
     }
 
@@ -145,6 +170,9 @@ public static class DependencyInjection
             ConnectionMultiplexer.Connect(configurationOptions));
 
         services.AddSingleton<ISequenceGenerator, RedisSequenceGenerator>();
+
+        // Usage statistics repository (Redis-based datamart)
+        services.AddScoped<IUsageStatsRepository, RedisUsageStatsRepository>();
 
         return services;
     }
@@ -192,7 +220,27 @@ public static class DependencyInjection
     {
         services.AddSingleton<IEventCategoryResolver, EventCategoryResolver>();
         services.AddSingleton<IEventBusPublisher, RedisEventBusPublisher>();
+        services.AddSingleton<IEventBusSubscriber, RedisEventBusSubscriber>();
         services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
+
+        // Usage stats event processor (background service)
+        services.AddHostedService<UsageStatsEventProcessor>();
+
+        return services;
+    }
+
+    /// <summary>
+    /// Adds storage services for the Datalake.
+    /// </summary>
+    private static IServiceCollection AddStorageServices(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        services.Configure<StorageSettings>(
+            configuration.GetSection(StorageSettings.SectionName));
+
+        services.AddSingleton<IFileStorageService, LocalFileStorageService>();
+        services.AddSingleton<IImageProcessingService, ImageProcessingService>();
 
         return services;
     }

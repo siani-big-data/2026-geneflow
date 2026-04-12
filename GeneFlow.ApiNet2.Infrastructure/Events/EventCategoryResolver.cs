@@ -18,7 +18,8 @@ public sealed class EventCategoryResolver : IEventCategoryResolver
         { "Subscriptions", "subscriptions" },
         { "Plans", "plans" },
         { "Pipelines", "pipelines" },
-        { "Profiles", "profiles" }
+        { "Profiles", "profiles" },
+        { "Usage", "usage" }
     };
 
     /// <inheritdoc />
