@@ -6,13 +6,15 @@ using Microsoft.Extensions.Logging;
 namespace GeneFlow.ApiNet2.Application.Profiles.EventHandlers;
 
 /// <summary>
-/// Handles the ProfilePhotoUploadedEvent by storing the photo in the datalake storage.
+/// Handles the ProfilePhotoUploadedEvent by storing the photo locally
+/// and publishing to Redis for datalake storage (MinIO).
 /// </summary>
 public sealed class ProfilePhotoUploadedEventHandler
     : INotificationHandler<ProfilePhotoUploadedEvent>
 {
     private readonly IFileStorageService _fileStorageService;
     private readonly IImageProcessingService _imageProcessingService;
+    private readonly IEventBusPublisher _eventBusPublisher;
     private readonly ILogger<ProfilePhotoUploadedEventHandler> _logger;
 
     /// <summary>
@@ -21,10 +23,12 @@ public sealed class ProfilePhotoUploadedEventHandler
     public ProfilePhotoUploadedEventHandler(
         IFileStorageService fileStorageService,
         IImageProcessingService imageProcessingService,
+        IEventBusPublisher eventBusPublisher,
         ILogger<ProfilePhotoUploadedEventHandler> logger)
     {
         _fileStorageService = fileStorageService;
         _imageProcessingService = imageProcessingService;
+        _eventBusPublisher = eventBusPublisher;
         _logger = logger;
     }
 
@@ -65,6 +69,12 @@ public sealed class ProfilePhotoUploadedEventHandler
                 "Stored profile thumbnail at {Path}, size: {Size} bytes",
                 thumbnailPath,
                 thumbnailData.Length);
+
+            // Publish to Redis for datalake storage (MinIO)
+            await _eventBusPublisher.PublishAsync(notification, "profiles", cancellationToken);
+            _logger.LogInformation(
+                "Published ProfilePhotoUploadedEvent to datalake for profile {ProfileId}",
+                notification.ProfileId.Value);
         }
         catch (FormatException ex)
         {
