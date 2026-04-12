@@ -15,6 +15,7 @@ import uvicorn
 from src.api import DatalakeAPI
 from src.config import Settings
 from src.consumer import DatalakeConsumer
+from src.mounters.setup import setup_mounters
 from src.storage import get_storage_provider
 
 # Configure structured logging
@@ -72,8 +73,16 @@ async def main() -> None:
         minio_secure=settings.minio_secure,
     )
 
-    # Create consumer
-    consumer = DatalakeConsumer(settings=settings, storage=storage)
+    # Setup mounters (PostgreSQL, Qdrant, etc.)
+    mounter_engine = setup_mounters(settings, datalake_path=settings.local_storage_path)
+    await mounter_engine.start()
+
+    # Create consumer with mounter engine
+    consumer = DatalakeConsumer(
+        settings=settings,
+        storage=storage,
+        mounter_engine=mounter_engine,
+    )
 
     # Create API
     api = DatalakeAPI(
@@ -134,6 +143,7 @@ async def main() -> None:
     # Graceful shutdown
     logger.info("graceful_shutdown_starting")
     await consumer.stop()
+    await mounter_engine.stop()
 
     # Cancel remaining tasks
     consumer_task.cancel()

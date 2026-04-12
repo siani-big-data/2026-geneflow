@@ -10,6 +10,7 @@ from src.buffer import EventBuffer
 from src.config import Settings
 from src.deduplication import EventDeduplicator
 from src.models import DatalakeEvent, EventBusMessage, EventCategory
+from src.mounters.engine import MounterEngine
 from src.retry import RetryHandler
 from src.storage import StorageProvider
 
@@ -27,9 +28,15 @@ class DatalakeConsumer:
     - XACK only after confirmed persistence
     """
 
-    def __init__(self, settings: Settings, storage: StorageProvider):
+    def __init__(
+        self,
+        settings: Settings,
+        storage: StorageProvider,
+        mounter_engine: Optional[MounterEngine] = None,
+    ):
         self.settings = settings
         self.storage = storage
+        self.mounter_engine = mounter_engine
         self.redis: Optional[redis.Redis] = None
         self._running = False
 
@@ -262,9 +269,24 @@ class DatalakeConsumer:
     ) -> None:
         """Callback when buffer flushes."""
         try:
-            # Persist events
+            # Persist events to storage (JSONL files)
             await self.storage.append_events_batch(category, date, event_lines)
             self._events_persisted += len(event_lines)
+
+            # Dispatch to mounters (PostgreSQL, etc.)
+            if self.mounter_engine:
+                for event_line in event_lines:
+                    try:
+                        event = json.loads(event_line)
+                        # Add category to event for mounter routing
+                        event["category"] = category
+                        await self.mounter_engine._dispatch_event(event)
+                    except Exception as e:
+                        logger.warning(
+                            "mounter_dispatch_failed",
+                            category=category,
+                            error=str(e),
+                        )
 
             # XACK only after persisting
             for stream_name, msg_id in pending_acks:
