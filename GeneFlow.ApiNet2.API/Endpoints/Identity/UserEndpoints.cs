@@ -190,7 +190,7 @@ public sealed class UserEndpoints : IEndpoint
         if (currentUser.UserId is null)
             return Results.Unauthorized();
 
-        var command = new EnableTwoFactorCommand(currentUser.UserId.Value.ToString());
+        var command = new EnableTwoFactorCommand(currentUser.UserId.ToString()!);
         var result = await sender.Send(command, cancellationToken);
 
         if (result.IsFailure)
@@ -207,7 +207,7 @@ public sealed class UserEndpoints : IEndpoint
         if (currentUser.UserId is null)
             return Results.Unauthorized();
 
-        var command = new DisableTwoFactorCommand(currentUser.UserId.Value.ToString());
+        var command = new DisableTwoFactorCommand(currentUser.UserId.ToString()!);
         var result = await sender.Send(command, cancellationToken);
 
         if (result.IsFailure)
@@ -224,7 +224,7 @@ public sealed class UserEndpoints : IEndpoint
         if (currentUser.UserId is null)
             return Results.Unauthorized();
 
-        var command = new SetupTwoFactorCommand(currentUser.UserId.Value.ToString());
+        var command = new SetupTwoFactorCommand(currentUser.UserId.ToString()!);
         var result = await sender.Send(command, cancellationToken);
 
         if (result.IsFailure)
@@ -243,7 +243,7 @@ public sealed class UserEndpoints : IEndpoint
             return Results.Unauthorized();
 
         var command = new ConfirmTwoFactorSetupCommand(
-            currentUser.UserId.Value.ToString(),
+            currentUser.UserId.ToString()!,
             request.Secret,
             request.Code);
         var result = await sender.Send(command, cancellationToken);
@@ -262,7 +262,7 @@ public sealed class UserEndpoints : IEndpoint
         if (currentUser.UserId is null)
             return Results.Unauthorized();
 
-        var query = new GetUserExternalLoginsQuery(currentUser.UserId.Value.ToString());
+        var query = new GetUserExternalLoginsQuery(currentUser.UserId.ToString()!);
         var result = await sender.Send(query, cancellationToken);
 
         if (result.IsFailure)
@@ -288,7 +288,7 @@ public sealed class UserEndpoints : IEndpoint
             return Results.Unauthorized();
 
         var command = new LinkExternalLoginCommand(
-            currentUser.UserId.Value.ToString(),
+            currentUser.UserId.ToString()!,
             request.Provider,
             request.Token);
         var result = await sender.Send(command, cancellationToken);
@@ -309,7 +309,7 @@ public sealed class UserEndpoints : IEndpoint
             return Results.Unauthorized();
 
         var command = new UnlinkExternalLoginCommand(
-            currentUser.UserId.Value.ToString(),
+            currentUser.UserId.ToString()!,
             provider);
         var result = await sender.Send(command, cancellationToken);
 

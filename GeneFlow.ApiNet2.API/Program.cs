@@ -1,6 +1,7 @@
 using GeneFlow.ApiNet2.API.Endpoints;
 using GeneFlow.ApiNet2.API.Extensions;
 using GeneFlow.ApiNet2.API.Middleware;
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +22,9 @@ builder.Services.AddApiServices(builder.Configuration);
 
 var app = builder.Build();
 
+// Initialize database (apply migrations and seed data)
+await app.InitializeDatabaseAsync();
+
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
@@ -35,6 +39,20 @@ app.UseCorrelationId();
 app.UseExceptionHandler();
 app.UseHttpsRedirection();
 app.UseCors();
+
+// Serve static files from storage folder (profile photos, etc.)
+var storagePath = builder.Configuration.GetValue<string>("Storage:BasePath") ?? "./uploads";
+var storageFullPath = Path.GetFullPath(storagePath);
+if (!Directory.Exists(storageFullPath))
+{
+    Directory.CreateDirectory(storageFullPath);
+}
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(storageFullPath),
+    RequestPath = "/storage"
+});
+
 app.UseAuthentication();
 app.UseAuthorization();
 
