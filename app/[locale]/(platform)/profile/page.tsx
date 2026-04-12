@@ -40,9 +40,9 @@ import { RESEARCH_FIELDS, getResearchFieldLabel } from "@/types/profile";
 export default function ProfilePage() {
   const t = useTranslations("profile");
   const tCommon = useTranslations("common");
-  const { user } = useAuthStore();
+  const { user, setProfile: setStoreProfile } = useAuthStore();
 
-  // Profile data state
+  // Profile data state (local for this page)
   const [profile, setProfile] = useState<Profile | null>(null);
   const [stats, setStats] = useState<ProfileStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -83,12 +83,26 @@ export default function ProfilePage() {
       setIsLoading(true);
       setError(null);
 
-      const [profileData, statsData] = await Promise.all([
-        profileService.getCurrentProfile(),
-        profileService.getCurrentProfileStats(),
-      ]);
-
+      // Fetch profile (required)
+      const profileData = await profileService.getCurrentProfile();
       setProfile(profileData);
+
+      // Fetch stats with fallback to defaults if endpoint fails
+      let statsData: ProfileStats;
+      try {
+        statsData = await profileService.getCurrentProfileStats();
+      } catch {
+        // Fallback stats when endpoint is not available
+        statsData = {
+          totalStudies: 0,
+          ownedStudies: 0,
+          totalTraces: 0,
+          totalAlignments: 0,
+          completedAlignments: 0,
+          lastActivityAt: null,
+          memberSince: profileData.createdAt,
+        };
+      }
       setStats(statsData);
 
       // Initialize form data
@@ -126,6 +140,7 @@ export default function ProfilePage() {
       setIsSaving(true);
       const updatedProfile = await profileService.updateProfile(formData);
       setProfile(updatedProfile);
+      setStoreProfile(updatedProfile); // Update store for sidebar/header
       setEditProfileOpen(false);
     } catch (err) {
       console.error("Failed to update profile:", err);
@@ -142,7 +157,7 @@ export default function ProfilePage() {
       setIsSaving(true);
 
       // Update basic info (including bio)
-      const profileUpdate = await profileService.updateProfile({
+      await profileService.updateProfile({
         ...formData,
         bio: identifiersData.orcidId !== profile.orcidId || identifiersData.website !== profile.website
           ? formData.bio
@@ -153,6 +168,7 @@ export default function ProfilePage() {
       const updatedProfile = await profileService.updateResearchIdentifiers(identifiersData);
 
       setProfile(updatedProfile);
+      setStoreProfile(updatedProfile); // Update store for sidebar/header
       setEditBioOpen(false);
     } catch (err) {
       console.error("Failed to update bio:", err);
@@ -165,17 +181,33 @@ export default function ProfilePage() {
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        setError("File size must be less than 10MB");
+        return;
+      }
       setSelectedPhoto(file);
+      setError(null);
     }
   };
 
   const handleUploadPhoto = async () => {
-    if (selectedPhoto) {
-      // TODO: Implement actual photo upload to storage
-      // For now, just close the dialog
-      console.log("Uploading photo:", selectedPhoto.name);
+    if (!selectedPhoto) return;
+
+    try {
+      setIsSaving(true);
+      setError(null);
+      const updatedProfile = await profileService.uploadProfilePhoto(selectedPhoto);
+      setProfile(updatedProfile);
+      // Also update the auth store so sidebar/header update immediately
+      setStoreProfile(updatedProfile);
       setUploadPhotoOpen(false);
       setSelectedPhoto(null);
+    } catch (err) {
+      console.error("Failed to upload photo:", err);
+      setError(err instanceof Error ? err.message : "Failed to upload photo");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -217,7 +249,7 @@ export default function ProfilePage() {
             <div className="group relative">
               {profile.photoUrl ? (
                 <img
-                  src={profile.photoThumbnailUrl || profile.photoUrl}
+                  src={profileService.resolveStorageUrl(profile.photoThumbnailUrl) || profileService.resolveStorageUrl(profile.photoUrl) || undefined}
                   alt={profile.fullName}
                   className="h-28 w-28 rounded-2xl object-cover shadow-lg"
                 />
@@ -605,7 +637,12 @@ export default function ProfilePage() {
       </Dialog>
 
       {/* Upload Photo Dialog */}
-      <Dialog open={uploadPhotoOpen} onOpenChange={setUploadPhotoOpen}>
+      <Dialog open={uploadPhotoOpen} onOpenChange={(open) => {
+        if (!isSaving) {
+          setUploadPhotoOpen(open);
+          if (!open) setSelectedPhoto(null);
+        }
+      }}>
         <DialogContent className="sm:max-w-[420px]">
           <DialogHeader>
             <DialogTitle>{t("dialogs.uploadPhoto.title")}</DialogTitle>
@@ -614,27 +651,44 @@ export default function ProfilePage() {
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
+            {error && (
+              <div className="mb-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+                {error}
+              </div>
+            )}
             <div
               className={cn(
                 "group cursor-pointer rounded-lg border-2 border-dashed p-8 text-center transition-all",
                 selectedPhoto
                   ? "border-teal bg-teal/5"
-                  : "border-border hover:border-teal/50"
+                  : "border-border hover:border-teal/50",
+                isSaving && "pointer-events-none opacity-50"
               )}
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => !isSaving && fileInputRef.current?.click()}
             >
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/jpeg,image/png"
+                accept="image/jpeg,image/png,image/gif,image/webp"
                 onChange={handlePhotoSelect}
                 className="hidden"
+                disabled={isSaving}
               />
               <Upload className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
               {selectedPhoto ? (
-                <p className="text-sm font-medium text-foreground">{selectedPhoto.name}</p>
+                <div>
+                  <p className="text-sm font-medium text-foreground">{selectedPhoto.name}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {(selectedPhoto.size / 1024 / 1024).toFixed(2)} MB
+                  </p>
+                </div>
               ) : (
-                <p className="text-sm text-muted-foreground">{t("dialogs.uploadPhoto.clickToSelect")}</p>
+                <div>
+                  <p className="text-sm text-muted-foreground">{t("dialogs.uploadPhoto.clickToSelect")}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    JPEG, PNG, GIF, WebP (max 10MB)
+                  </p>
+                </div>
               )}
             </div>
           </div>
@@ -644,11 +698,14 @@ export default function ProfilePage() {
               onClick={() => {
                 setSelectedPhoto(null);
                 setUploadPhotoOpen(false);
+                setError(null);
               }}
+              disabled={isSaving}
             >
               {tCommon("cancel")}
             </Button>
-            <Button onClick={handleUploadPhoto} disabled={!selectedPhoto}>
+            <Button onClick={handleUploadPhoto} disabled={!selectedPhoto || isSaving}>
+              {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {t("dialogs.uploadPhoto.upload")}
             </Button>
           </DialogFooter>

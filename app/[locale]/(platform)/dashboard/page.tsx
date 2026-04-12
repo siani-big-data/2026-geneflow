@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui";
 import { StatusBadge } from "@/components/shared";
@@ -13,6 +14,7 @@ import {
   Activity,
   ArrowUpRight,
   Zap,
+  Loader2,
 } from "lucide-react";
 import {
   AreaChart,
@@ -23,6 +25,8 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { usageService } from "@/services";
+import type { DashboardStats } from "@/types";
 
 const activityData = [
   { time: "00:00", traces: 234, quality: 96 },
@@ -163,43 +167,77 @@ const recentActivityData: Array<{
 
 export default function DashboardPage() {
   const t = useTranslations("dashboard");
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
+
+  // Fetch dashboard statistics
+  useEffect(() => {
+    async function fetchStats() {
+      setIsLoadingStats(true);
+      try {
+        const data = await usageService.getDashboardStats();
+        setStats(data);
+      } catch (err) {
+        console.error("Failed to fetch dashboard stats:", err);
+        // Use default values if fetch fails
+        setStats({
+          activeStudies: 0,
+          processedTraces: 0,
+          pendingTraces: 0,
+          teamActivity: 0,
+          alignmentsCompleted: 0,
+        });
+      } finally {
+        setIsLoadingStats(false);
+      }
+    }
+
+    fetchStats();
+  }, []);
+
+  // Format large numbers with commas
+  const formatNumber = (num: number) => num.toLocaleString();
 
   const metrics = [
     {
       label: t("metrics.activeStudies"),
-      value: "18",
-      change: t("metrics.thisWeek", { count: 3 }),
+      value: isLoadingStats ? "-" : formatNumber(stats?.activeStudies ?? 0),
+      change: t("metrics.thisWeek", { count: 0 }),
       trend: "up",
       icon: FileText,
       color: "#0d9488",
       bgColor: "bg-teal/10",
+      isLoading: isLoadingStats,
     },
     {
       label: t("metrics.processedTraces"),
-      value: "12,847",
-      change: t("metrics.today", { count: "1,234" }),
+      value: isLoadingStats ? "-" : formatNumber(stats?.processedTraces ?? 0),
+      change: t("metrics.today", { count: "0" }),
       trend: "up",
       icon: CheckCircle2,
       color: "#10b981",
       bgColor: "bg-emerald-500/10",
+      isLoading: isLoadingStats,
     },
     {
       label: t("metrics.pendingTraces"),
-      value: "2,341",
+      value: isLoadingStats ? "-" : formatNumber(stats?.pendingTraces ?? 0),
       change: t("metrics.processing"),
       trend: "neutral",
       icon: Clock,
       color: "#f59e0b",
       bgColor: "bg-amber-500/10",
+      isLoading: isLoadingStats,
     },
     {
       label: t("metrics.teamActivity"),
-      value: "24",
+      value: isLoadingStats ? "-" : formatNumber(stats?.teamActivity ?? 0),
       change: t("metrics.activeNow"),
       trend: "up",
       icon: Users,
       color: "#1e40af",
       bgColor: "bg-blue-deep/10",
+      isLoading: isLoadingStats,
     },
   ];
 
@@ -226,7 +264,7 @@ export default function DashboardPage() {
                   <div className={`rounded-lg p-3 ${metric.bgColor}`}>
                     <Icon className="h-5 w-5" style={{ color: metric.color }} />
                   </div>
-                  {metric.trend === "up" && (
+                  {metric.trend === "up" && !metric.isLoading && (
                     <div className="flex items-center gap-1 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1">
                       <TrendingUp className="h-3 w-3 text-emerald-500" />
                     </div>
@@ -236,9 +274,15 @@ export default function DashboardPage() {
                   <p className="text-sm font-medium text-muted-foreground">
                     {metric.label}
                   </p>
-                  <p className="text-3xl font-semibold tracking-tight text-foreground">
-                    {metric.value}
-                  </p>
+                  {metric.isLoading ? (
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : (
+                    <p className="text-3xl font-semibold tracking-tight text-foreground">
+                      {metric.value}
+                    </p>
+                  )}
                   <p className="text-xs text-muted-foreground">{metric.change}</p>
                 </div>
               </CardContent>

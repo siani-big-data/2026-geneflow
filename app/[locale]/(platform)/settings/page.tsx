@@ -42,8 +42,9 @@ import {
 import { cn } from "@/lib/utils";
 import { TwoFactorSetup, ExternalLogins } from "@/components/auth";
 import { profileService } from "@/services/profile.service";
+import { subscriptionService, planService, paymentService } from "@/services";
 import { useAuthStore } from "@/stores/auth-store";
-import type { Profile, UpdateProfileRequest, UpdateResearchIdentifiersRequest } from "@/types";
+import type { Profile, UpdateProfileRequest, UpdateResearchIdentifiersRequest, Subscription, Plan, PaymentMethod } from "@/types";
 import { RESEARCH_FIELDS } from "@/types/profile";
 
 type SettingsSection = "account" | "security" | "notifications" | "preferences" | "billing" | "collaboration";
@@ -74,6 +75,11 @@ export default function SettingsPage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Subscription state
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [currentPlan, setCurrentPlan] = useState<Plan | null>(null);
+  const [defaultPaymentMethod, setDefaultPaymentMethod] = useState<PaymentMethod | null>(null);
 
   // Form data
   const [formData, setFormData] = useState<UpdateProfileRequest>({
@@ -146,9 +152,31 @@ export default function SettingsPage() {
     }
   }, []);
 
+  // Fetch billing data
+  const fetchBillingData = useCallback(async () => {
+    try {
+      const [subscriptionData, plansData, paymentMethodData] = await Promise.all([
+        subscriptionService.getCurrent(),
+        planService.getAll(),
+        paymentService.getDefault(),
+      ]);
+
+      setSubscription(subscriptionData);
+      setDefaultPaymentMethod(paymentMethodData);
+
+      if (subscriptionData) {
+        const plan = plansData.find((p) => p.id === subscriptionData.planId);
+        setCurrentPlan(plan || null);
+      }
+    } catch (err) {
+      console.error("Failed to load billing data:", err);
+    }
+  }, []);
+
   useEffect(() => {
     fetchProfile();
-  }, [fetchProfile]);
+    fetchBillingData();
+  }, [fetchProfile, fetchBillingData]);
 
   const handleSaveChanges = async () => {
     try {
@@ -797,18 +825,49 @@ export default function SettingsPage() {
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <div className="rounded-xl border border-border bg-card p-5">
                   <p className="mb-2 text-xs text-muted-foreground">{t("billing.currentPlan")}</p>
-                  <p className="mb-1 text-lg font-semibold text-foreground">Professional</p>
-                  <p className="text-xs text-emerald-500">{t("billing.active")}</p>
+                  <p className="mb-1 text-lg font-semibold text-foreground">
+                    {subscription?.planName || currentPlan?.name || "-"}
+                  </p>
+                  <p className={cn(
+                    "text-xs",
+                    subscription?.status === "Active" && "text-emerald-500",
+                    subscription?.status === "Trial" && "text-blue-500",
+                    subscription?.status === "Cancelled" && "text-yellow-500",
+                    subscription?.status === "Expired" && "text-destructive",
+                    !subscription && "text-muted-foreground"
+                  )}>
+                    {subscription?.status || t("billing.noSubscription")}
+                  </p>
                 </div>
                 <div className="rounded-xl border border-border bg-card p-5">
                   <p className="mb-2 text-xs text-muted-foreground">{t("billing.nextBilling")}</p>
-                  <p className="mb-1 text-lg font-semibold text-foreground">April 15, 2026</p>
-                  <p className="text-xs text-muted-foreground">$149/month</p>
+                  <p className="mb-1 text-lg font-semibold text-foreground">
+                    {subscription?.currentPeriod.endDate
+                      ? new Date(subscription.currentPeriod.endDate).toLocaleDateString()
+                      : "-"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {currentPlan && !currentPlan.isFree
+                      ? `$${subscription?.billingCycle === "Monthly"
+                          ? currentPlan.pricing.monthlyPrice
+                          : currentPlan.pricing.annualPrice}/${subscription?.billingCycle === "Monthly" ? "month" : "year"}`
+                      : currentPlan?.isFree
+                        ? t("billing.free")
+                        : "-"}
+                  </p>
                 </div>
                 <div className="rounded-xl border border-border bg-card p-5">
                   <p className="mb-2 text-xs text-muted-foreground">{t("billing.paymentMethod")}</p>
-                  <p className="mb-1 text-lg font-semibold text-foreground">Visa **** 4242</p>
-                  <p className="text-xs text-muted-foreground">Expires 12/2027</p>
+                  <p className="mb-1 text-lg font-semibold text-foreground">
+                    {defaultPaymentMethod
+                      ? `${defaultPaymentMethod.card.brand.charAt(0).toUpperCase() + defaultPaymentMethod.card.brand.slice(1)} **** ${defaultPaymentMethod.card.last4}`
+                      : t("billing.noPaymentMethod")}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {defaultPaymentMethod
+                      ? `Expires ${defaultPaymentMethod.card.formattedExpiration}`
+                      : "-"}
+                  </p>
                 </div>
               </div>
             </>

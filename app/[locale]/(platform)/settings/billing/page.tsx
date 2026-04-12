@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/lib/navigation";
 import {
@@ -15,6 +15,8 @@ import {
   Building2,
   ExternalLink,
   ChevronRight,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -27,44 +29,191 @@ import {
   Button,
 } from "@/components/ui";
 import { PaymentMethodList } from "@/components/payment";
-
-const currentPlanData = {
-  name: "Professional",
-  price: 49,
-  nextBillingDate: "2026-05-03",
-  status: "active",
-};
-
-const usageData = {
-  billingPeriod: { start: "Apr 3, 2026", end: "May 3, 2026" },
-  samples: { used: 2847, total: 5000 },
-  storage: { used: 45.2, total: 100 },
-  pipelines: { used: 23, total: 50 },
-  collaborators: { used: 7, total: 10 },
-};
-
-const invoices = [
-  { id: "INV-2026-004", date: "Apr 3, 2026", amount: 49.00, status: "paid" },
-  { id: "INV-2026-003", date: "Mar 3, 2026", amount: 49.00, status: "paid" },
-  { id: "INV-2026-002", date: "Feb 3, 2026", amount: 49.00, status: "paid" },
-  { id: "INV-2026-001", date: "Jan 3, 2026", amount: 49.00, status: "paid" },
-];
-
-const billingInfo = {
-  name: "Dr. Sarah Martinez",
-  email: "billing@stanford.edu",
-  address: "450 Serra Mall, Stanford, CA 94305",
-  taxId: "US-123456789",
-};
+import { planService, subscriptionService, usageService } from "@/services";
+import type { Plan, Subscription, BillingCycle, BillingUsage } from "@/types";
+import { useAuthStore } from "@/stores/auth-store";
 
 export default function BillingPage() {
   const t = useTranslations("billingPage");
   const tCommon = useTranslations("common");
+  const { profile, user } = useAuthStore();
+
+  // Data state
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [currentPlan, setCurrentPlan] = useState<Plan | null>(null);
+  const [billingUsage, setBillingUsage] = useState<BillingUsage | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Dialog state
   const [changePlanOpen, setChangePlanOpen] = useState(false);
   const [cancelSubOpen, setCancelSubOpen] = useState(false);
   const [editBillingOpen, setEditBillingOpen] = useState(false);
 
-  const usagePercent = (used: number, total: number) => Math.round((used / total) * 100);
+  // Action state
+  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
+  const [selectedBillingCycle, setSelectedBillingCycle] = useState<BillingCycle>("Monthly");
+  const [isChangingPlan, setIsChangingPlan] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [cancellationReason, setCancellationReason] = useState("");
+
+  // Fetch subscription, plans, and usage data
+  useEffect(() => {
+    async function fetchData() {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const [subscriptionData, plansData] = await Promise.all([
+          subscriptionService.getCurrent(),
+          planService.getAll(),
+        ]);
+
+        setSubscription(subscriptionData);
+        setPlans(plansData.sort((a, b) => a.displayOrder - b.displayOrder));
+
+        // Find current plan
+        if (subscriptionData) {
+          const plan = plansData.find((p) => p.id === subscriptionData.planId);
+          setCurrentPlan(plan || null);
+
+          // Fetch usage data if there's an active subscription
+          try {
+            const usageData = await usageService.getBillingUsage();
+            setBillingUsage(usageData);
+          } catch (usageErr) {
+            console.error("Failed to fetch usage data:", usageErr);
+            // Don't fail the whole page for usage errors - show subscription without usage
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch billing data:", err);
+        setError(err instanceof Error ? err.message : "Failed to load billing data");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchData();
+  }, []);
+
+  // Calculate usage percentages
+  const usagePercent = (used: number, total: number) =>
+    total > 0 ? Math.min(Math.round((used / total) * 100), 100) : 0;
+
+  // Get price for display
+  const getPrice = (plan: Plan, cycle: BillingCycle = "Monthly") => {
+    return cycle === "Monthly" ? plan.pricing.monthlyPrice : plan.pricing.annualPrice;
+  };
+
+  // Format date
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return "-";
+    return new Date(dateString).toLocaleDateString();
+  };
+
+  // Handle plan change
+  const handleChangePlan = async () => {
+    if (!selectedPlanId) return;
+
+    setIsChangingPlan(true);
+    try {
+      const newSubscription = await subscriptionService.changePlan({
+        newPlanId: selectedPlanId,
+        billingCycleId: selectedBillingCycle,
+      });
+      setSubscription(newSubscription);
+
+      // Update current plan
+      const plan = plans.find((p) => p.id === newSubscription.planId);
+      setCurrentPlan(plan || null);
+
+      setChangePlanOpen(false);
+      setSelectedPlanId(null);
+    } catch (err) {
+      console.error("Failed to change plan:", err);
+      setError(err instanceof Error ? err.message : "Failed to change plan");
+    } finally {
+      setIsChangingPlan(false);
+    }
+  };
+
+  // Handle subscription cancellation
+  const handleCancelSubscription = async () => {
+    setIsCancelling(true);
+    try {
+      await subscriptionService.cancel({
+        reason: cancellationReason || undefined,
+      });
+
+      // Refresh subscription data
+      const updatedSubscription = await subscriptionService.getCurrent();
+      setSubscription(updatedSubscription);
+
+      setCancelSubOpen(false);
+      setCancellationReason("");
+    } catch (err) {
+      console.error("Failed to cancel subscription:", err);
+      setError(err instanceof Error ? err.message : "Failed to cancel subscription");
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="-mx-16 -mt-10 flex min-h-[400px] items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-teal" />
+          <p className="text-sm text-muted-foreground">{tCommon("loading")}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error && !subscription && plans.length === 0) {
+    return (
+      <div className="-mx-16 -mt-10 flex min-h-[400px] items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3 text-center">
+          <AlertCircle className="h-8 w-8 text-destructive" />
+          <p className="text-sm text-destructive">{error}</p>
+          <Button variant="outline" onClick={() => window.location.reload()}>
+            {tCommon("retry")}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Use billing usage data from API, fallback to subscription period if no usage data
+  const usageData = currentPlan && billingUsage
+    ? {
+        billingPeriod: {
+          start: formatDate(billingUsage.period.startDate),
+          end: formatDate(billingUsage.period.endDate),
+        },
+        studies: billingUsage.studies,
+        traces: billingUsage.traces,
+        members: billingUsage.members,
+        daysRemaining: billingUsage.period.daysRemaining,
+        totalDays: billingUsage.period.totalDays,
+      }
+    : currentPlan && subscription
+    ? {
+        billingPeriod: {
+          start: formatDate(subscription.currentPeriod.startDate),
+          end: formatDate(subscription.currentPeriod.endDate),
+        },
+        studies: { used: 0, total: currentPlan.limits.maxStudies, percentage: 0 },
+        traces: { used: 0, total: currentPlan.limits.maxTracesPerMonth, percentage: 0 },
+        members: { used: 0, total: currentPlan.limits.maxMembersPerStudy, percentage: 0 },
+        daysRemaining: subscription.currentPeriod.daysRemaining,
+        totalDays: 30,
+      }
+    : null;
 
   return (
     <div className="-mx-16 -mt-10 min-h-full bg-background">
@@ -83,6 +232,16 @@ export default function BillingPage() {
         </div>
       </div>
 
+      {/* Error banner */}
+      {error && (
+        <div className="mx-auto max-w-[1200px] px-8 pt-4">
+          <div className="flex items-center gap-2 rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            <AlertCircle className="h-4 w-4" />
+            {error}
+          </div>
+        </div>
+      )}
+
       <div className="mx-auto max-w-[1200px] px-8 py-8">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           {/* Main Content - 2 columns */}
@@ -92,167 +251,184 @@ export default function BillingPage() {
               <div className="mb-6 flex items-start justify-between">
                 <div>
                   <h2 className="text-lg font-semibold text-foreground">{t("currentPlan.title")}</h2>
-                  <div className="mt-2 flex items-baseline gap-2">
-                    <span className="text-3xl font-bold text-foreground">{t("currentPlan.price")}</span>
-                    <span className="text-muted-foreground">{t("currentPlan.perMonth")}</span>
-                  </div>
+                  {subscription && currentPlan ? (
+                    <>
+                      <div className="mt-2 flex items-baseline gap-2">
+                        <span className="text-3xl font-bold text-foreground">
+                          ${getPrice(currentPlan, subscription.billingCycle)}
+                        </span>
+                        <span className="text-muted-foreground">
+                          /{subscription.billingCycle === "Monthly" ? t("currentPlan.perMonth") : t("currentPlan.perYear")}
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="mt-2 text-sm text-muted-foreground">{t("currentPlan.noSubscription")}</p>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="rounded-full bg-teal/10 px-3 py-1 text-sm font-medium text-teal">
-                    {t("currentPlan.plan")}
-                  </span>
-                  <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-sm font-medium text-emerald-500">
-                    {t("currentPlan.status")}
-                  </span>
+                  {subscription && (
+                    <>
+                      <span className="rounded-full bg-teal/10 px-3 py-1 text-sm font-medium text-teal">
+                        {subscription.planName}
+                      </span>
+                      <span
+                        className={cn(
+                          "rounded-full px-3 py-1 text-sm font-medium",
+                          subscription.status === "Active" && "bg-emerald-500/10 text-emerald-500",
+                          subscription.status === "Trial" && "bg-blue-500/10 text-blue-500",
+                          subscription.status === "Cancelled" && "bg-yellow-500/10 text-yellow-500",
+                          subscription.status === "Expired" && "bg-destructive/10 text-destructive"
+                        )}
+                      >
+                        {subscription.status}
+                      </span>
+                    </>
+                  )}
                 </div>
               </div>
-              <p className="mb-4 text-sm text-muted-foreground">
-                {t("currentPlan.renewsOn", { date: new Date(currentPlanData.nextBillingDate).toLocaleDateString() })}
-              </p>
-              <div className="flex gap-3">
-                <Button variant="outline" onClick={() => setChangePlanOpen(true)}>
-                  {t("currentPlan.changePlan")}
+
+              {subscription && (
+                <>
+                  <p className="mb-4 text-sm text-muted-foreground">
+                    {subscription.status === "Cancelled"
+                      ? t("currentPlan.expiresOn", { date: formatDate(subscription.currentPeriod.endDate) })
+                      : t("currentPlan.renewsOn", { date: formatDate(subscription.currentPeriod.endDate) })}
+                    {subscription.isInTrial && subscription.trialEndDate && (
+                      <span className="ml-2 text-blue-500">
+                        ({t("currentPlan.trialEnds", { date: formatDate(subscription.trialEndDate) })})
+                      </span>
+                    )}
+                  </p>
+                  <div className="flex gap-3">
+                    <Button variant="outline" onClick={() => setChangePlanOpen(true)}>
+                      {t("currentPlan.changePlan")}
+                    </Button>
+                    {subscription.status !== "Cancelled" && !subscription.isFree && (
+                      <Button
+                        variant="ghost"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => setCancelSubOpen(true)}
+                      >
+                        {t("currentPlan.cancelSubscription")}
+                      </Button>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {!subscription && (
+                <Button onClick={() => setChangePlanOpen(true)}>
+                  {t("currentPlan.selectPlan")}
                 </Button>
-                <Button
-                  variant="ghost"
-                  className="text-destructive hover:text-destructive"
-                  onClick={() => setCancelSubOpen(true)}
-                >
-                  {t("currentPlan.cancelSubscription")}
-                </Button>
-              </div>
+              )}
             </div>
 
             {/* Usage */}
-            <div className="rounded-xl border border-border bg-card p-6">
-              <div className="mb-6 flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-foreground">{t("usage.title")}</h2>
-                <span className="text-sm text-muted-foreground">
-                  {t("usage.period")}: {usageData.billingPeriod.start} - {usageData.billingPeriod.end}
-                </span>
-              </div>
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                {/* Samples */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Zap className="h-4 w-4 text-teal" />
-                      <span className="text-sm font-medium text-foreground">{t("usage.samples.title")}</span>
-                    </div>
-                    <span className="text-sm text-muted-foreground">
-                      {t("usage.samples.used", { used: usageData.samples.used.toLocaleString(), total: usageData.samples.total.toLocaleString() })}
-                    </span>
-                  </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-muted">
-                    <div
-                      className="h-full rounded-full bg-teal transition-all"
-                      style={{ width: `${usagePercent(usageData.samples.used, usageData.samples.total)}%` }}
-                    />
-                  </div>
+            {usageData && (
+              <div className="rounded-xl border border-border bg-card p-6">
+                <div className="mb-6 flex items-center justify-between">
+                  <h2 className="text-lg font-semibold text-foreground">{t("usage.title")}</h2>
+                  <span className="text-sm text-muted-foreground">
+                    {t("usage.period")}: {usageData.billingPeriod.start} - {usageData.billingPeriod.end}
+                  </span>
                 </div>
-
-                {/* Storage */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <HardDrive className="h-4 w-4 text-blue-deep" />
-                      <span className="text-sm font-medium text-foreground">{t("usage.storage.title")}</span>
-                    </div>
-                    <span className="text-sm text-muted-foreground">
-                      {t("usage.storage.used", { used: usageData.storage.used, total: usageData.storage.total })}
-                    </span>
-                  </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-muted">
-                    <div
-                      className="h-full rounded-full bg-blue-deep transition-all"
-                      style={{ width: `${usagePercent(usageData.storage.used, usageData.storage.total)}%` }}
-                    />
-                  </div>
-                </div>
-
-                {/* Pipelines */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <BarChart3 className="h-4 w-4 text-teal" />
-                      <span className="text-sm font-medium text-foreground">{t("usage.pipelines.title")}</span>
-                    </div>
-                    <span className="text-sm text-muted-foreground">
-                      {t("usage.pipelines.used", { used: usageData.pipelines.used, total: usageData.pipelines.total })}
-                    </span>
-                  </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-muted">
-                    <div
-                      className="h-full rounded-full bg-teal transition-all"
-                      style={{ width: `${usagePercent(usageData.pipelines.used, usageData.pipelines.total)}%` }}
-                    />
-                  </div>
-                </div>
-
-                {/* Collaborators */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-blue-deep" />
-                      <span className="text-sm font-medium text-foreground">{t("usage.collaborators.title")}</span>
-                    </div>
-                    <span className="text-sm text-muted-foreground">
-                      {t("usage.collaborators.used", { used: usageData.collaborators.used, total: usageData.collaborators.total })}
-                    </span>
-                  </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-muted">
-                    <div
-                      className="h-full rounded-full bg-blue-deep transition-all"
-                      style={{ width: `${usagePercent(usageData.collaborators.used, usageData.collaborators.total)}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Billing History */}
-            <div className="overflow-hidden rounded-xl border border-border bg-card">
-              <div className="flex items-center justify-between border-b border-border p-6">
-                <h2 className="text-lg font-semibold text-foreground">{t("billingHistory.title")}</h2>
-                <Button variant="ghost" size="sm">
-                  <Download className="mr-2 h-4 w-4" />
-                  {t("billingHistory.downloadAll")}
-                </Button>
-              </div>
-              <div className="divide-y divide-border">
-                <div className="grid grid-cols-4 gap-4 bg-muted/30 px-6 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  <span>{t("billingHistory.invoice")}</span>
-                  <span>{t("billingHistory.date")}</span>
-                  <span>{t("billingHistory.amount")}</span>
-                  <span>{t("billingHistory.status")}</span>
-                </div>
-                {invoices.map((invoice) => (
-                  <div key={invoice.id} className="grid grid-cols-4 items-center gap-4 px-6 py-4">
-                    <span className="text-sm font-medium text-foreground">{invoice.id}</span>
-                    <span className="text-sm text-muted-foreground">{invoice.date}</span>
-                    <span className="text-sm text-foreground">${invoice.amount.toFixed(2)}</span>
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                  {/* Studies */}
+                  <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className={cn(
-                        "rounded-full px-2.5 py-0.5 text-xs font-medium",
-                        invoice.status === "paid" && "bg-emerald-500/10 text-emerald-500",
-                        invoice.status === "pending" && "bg-yellow-500/10 text-yellow-500",
-                        invoice.status === "failed" && "bg-destructive/10 text-destructive"
-                      )}>
-                        {t(`billingHistory.${invoice.status}`)}
+                      <div className="flex items-center gap-2">
+                        <Zap className="h-4 w-4 text-teal" />
+                        <span className="text-sm font-medium text-foreground">{t("usage.studies.title")}</span>
+                      </div>
+                      <span className="text-sm text-muted-foreground">
+                        {usageData.studies.used} / {usageData.studies.total}
                       </span>
-                      <button className="text-sm text-teal hover:text-teal/80">
-                        <Download className="h-4 w-4" />
-                      </button>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full rounded-full bg-teal transition-all"
+                        style={{ width: `${usageData.studies.percentage}%` }}
+                      />
                     </div>
                   </div>
-                ))}
+
+                  {/* Traces */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <HardDrive className="h-4 w-4 text-blue-deep" />
+                        <span className="text-sm font-medium text-foreground">{t("usage.traces.title")}</span>
+                      </div>
+                      <span className="text-sm text-muted-foreground">
+                        {usageData.traces.used} / {usageData.traces.total}
+                      </span>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full rounded-full bg-blue-deep transition-all"
+                        style={{ width: `${usageData.traces.percentage}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Members per Study */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4 text-teal" />
+                        <span className="text-sm font-medium text-foreground">{t("usage.members.title")}</span>
+                      </div>
+                      <span className="text-sm text-muted-foreground">
+                        {usageData.members.used} / {usageData.members.total}
+                      </span>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full rounded-full bg-teal transition-all"
+                        style={{ width: `${usageData.members.percentage}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Days Remaining */}
+                  {usageData && (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <BarChart3 className="h-4 w-4 text-blue-deep" />
+                          <span className="text-sm font-medium text-foreground">{t("usage.daysRemaining.title")}</span>
+                        </div>
+                        <span className="text-sm text-muted-foreground">
+                          {usageData.daysRemaining} {t("usage.daysRemaining.days")}
+                        </span>
+                      </div>
+                      <div className="h-2 overflow-hidden rounded-full bg-muted">
+                        <div
+                          className="h-full rounded-full bg-blue-deep transition-all"
+                          style={{ width: `${usagePercent(usageData.totalDays - usageData.daysRemaining, usageData.totalDays)}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="border-t border-border p-4 text-center">
-                <button className="text-sm font-medium text-teal hover:text-teal/80">
-                  {t("billingHistory.viewAll")}
-                </button>
+            )}
+
+            {/* Plan Features */}
+            {currentPlan && currentPlan.features.length > 0 && (
+              <div className="rounded-xl border border-border bg-card p-6">
+                <h2 className="mb-4 text-lg font-semibold text-foreground">{t("planFeatures.title")}</h2>
+                <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  {currentPlan.features.map((feature, index) => (
+                    <li key={index} className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Check className="h-4 w-4 text-teal" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Sidebar */}
@@ -277,105 +453,130 @@ export default function BillingPage() {
               <div className="space-y-4 text-sm">
                 <div>
                   <p className="mb-1 text-xs text-muted-foreground">{t("billingInfo.name")}</p>
-                  <p className="text-foreground">{billingInfo.name}</p>
+                  <p className="text-foreground">{profile?.fullName || "-"}</p>
                 </div>
                 <div>
                   <p className="mb-1 text-xs text-muted-foreground">{t("billingInfo.email")}</p>
-                  <p className="text-foreground">{billingInfo.email}</p>
-                </div>
-                <div>
-                  <p className="mb-1 text-xs text-muted-foreground">{t("billingInfo.address")}</p>
-                  <p className="text-foreground">{billingInfo.address}</p>
-                </div>
-                <div>
-                  <p className="mb-1 text-xs text-muted-foreground">{t("billingInfo.taxId")}</p>
-                  <p className="text-foreground">{billingInfo.taxId}</p>
+                  <p className="text-foreground">{user?.email || "-"}</p>
                 </div>
               </div>
             </div>
 
             {/* Upgrade CTA */}
-            <div className="rounded-xl border border-teal/30 bg-gradient-to-br from-teal/5 to-blue-deep/5 p-6">
-              <div className="mb-3 flex items-center gap-2">
-                <Building2 className="h-5 w-5 text-teal" />
-                <h3 className="font-semibold text-foreground">{t("plans.enterprise.name")}</h3>
+            {currentPlan && !plans.some((p) => p.displayOrder > currentPlan.displayOrder && !p.isFree) ? null : (
+              <div className="rounded-xl border border-teal/30 bg-gradient-to-br from-teal/5 to-blue-deep/5 p-6">
+                <div className="mb-3 flex items-center gap-2">
+                  <Building2 className="h-5 w-5 text-teal" />
+                  <h3 className="font-semibold text-foreground">{t("plans.enterprise.name")}</h3>
+                </div>
+                <p className="mb-4 text-sm text-muted-foreground">{t("plans.enterprise.description")}</p>
+                <Button className="w-full">
+                  {t("plans.enterprise.contact")}
+                  <ExternalLink className="ml-2 h-4 w-4" />
+                </Button>
               </div>
-              <p className="mb-4 text-sm text-muted-foreground">{t("plans.enterprise.description")}</p>
-              <Button className="w-full">
-                {t("plans.enterprise.contact")}
-                <ExternalLink className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* Change Plan Dialog */}
       <Dialog open={changePlanOpen} onOpenChange={setChangePlanOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[700px]">
           <DialogHeader>
             <DialogTitle>{t("dialogs.changePlan.title")}</DialogTitle>
             <DialogDescription>{t("dialogs.changePlan.description")}</DialogDescription>
           </DialogHeader>
-          <div className="grid grid-cols-3 gap-4 py-4">
-            {/* Starter */}
-            <div className="rounded-lg border border-border p-4">
-              <h4 className="font-semibold text-foreground">{t("plans.starter.name")}</h4>
-              <p className="mb-2 text-2xl font-bold text-foreground">{t("plans.starter.price")}</p>
-              <p className="mb-4 text-xs text-muted-foreground">{t("plans.starter.description")}</p>
-              <ul className="space-y-2 text-xs text-muted-foreground">
-                <li className="flex items-center gap-1.5">
-                  <Check className="h-3 w-3 text-teal" />
-                  {t("plans.starter.features.samples")}
-                </li>
-                <li className="flex items-center gap-1.5">
-                  <Check className="h-3 w-3 text-teal" />
-                  {t("plans.starter.features.storage")}
-                </li>
-              </ul>
-            </div>
 
-            {/* Professional (Current) */}
-            <div className="rounded-lg border-2 border-teal bg-teal/5 p-4">
-              <div className="mb-2 flex items-center justify-between">
-                <h4 className="font-semibold text-foreground">{t("plans.professional.name")}</h4>
-                <span className="rounded bg-teal px-1.5 py-0.5 text-xs text-white">{t("plans.professional.current")}</span>
-              </div>
-              <p className="mb-2 text-2xl font-bold text-foreground">{t("plans.professional.price")}<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
-              <p className="mb-4 text-xs text-muted-foreground">{t("plans.professional.description")}</p>
-              <ul className="space-y-2 text-xs text-muted-foreground">
-                <li className="flex items-center gap-1.5">
-                  <Check className="h-3 w-3 text-teal" />
-                  {t("plans.professional.features.samples")}
-                </li>
-                <li className="flex items-center gap-1.5">
-                  <Check className="h-3 w-3 text-teal" />
-                  {t("plans.professional.features.storage")}
-                </li>
-              </ul>
-            </div>
-
-            {/* Enterprise */}
-            <div className="rounded-lg border border-border p-4">
-              <h4 className="font-semibold text-foreground">{t("plans.enterprise.name")}</h4>
-              <p className="mb-2 text-2xl font-bold text-foreground">{t("plans.enterprise.price")}</p>
-              <p className="mb-4 text-xs text-muted-foreground">{t("plans.enterprise.description")}</p>
-              <ul className="space-y-2 text-xs text-muted-foreground">
-                <li className="flex items-center gap-1.5">
-                  <Check className="h-3 w-3 text-teal" />
-                  {t("plans.enterprise.features.samples")}
-                </li>
-                <li className="flex items-center gap-1.5">
-                  <Check className="h-3 w-3 text-teal" />
-                  {t("plans.enterprise.features.sla")}
-                </li>
-              </ul>
-            </div>
+          {/* Billing Cycle Toggle */}
+          <div className="flex justify-center gap-2 py-2">
+            <Button
+              variant={selectedBillingCycle === "Monthly" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedBillingCycle("Monthly")}
+            >
+              {t("dialogs.changePlan.monthly")}
+            </Button>
+            <Button
+              variant={selectedBillingCycle === "Yearly" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedBillingCycle("Yearly")}
+            >
+              {t("dialogs.changePlan.yearly")}
+              <span className="ml-1 text-xs text-emerald-500">-20%</span>
+            </Button>
           </div>
+
+          <div className="grid grid-cols-1 gap-4 py-4 sm:grid-cols-2 lg:grid-cols-3">
+            {plans.map((plan) => {
+              const isCurrentPlan = subscription?.planId === plan.id;
+              const isSelected = selectedPlanId === plan.id;
+              const price = getPrice(plan, selectedBillingCycle);
+
+              return (
+                <div
+                  key={plan.id}
+                  onClick={() => !isCurrentPlan && setSelectedPlanId(plan.id)}
+                  className={cn(
+                    "cursor-pointer rounded-lg border p-4 transition-all",
+                    isCurrentPlan && "border-2 border-teal bg-teal/5",
+                    isSelected && !isCurrentPlan && "border-2 border-blue-deep bg-blue-deep/5",
+                    !isCurrentPlan && !isSelected && "border-border hover:border-muted-foreground/50"
+                  )}
+                >
+                  <div className="mb-2 flex items-center justify-between">
+                    <h4 className="font-semibold text-foreground">{plan.name}</h4>
+                    {isCurrentPlan && (
+                      <span className="rounded bg-teal px-1.5 py-0.5 text-xs text-white">
+                        {t("dialogs.changePlan.current")}
+                      </span>
+                    )}
+                  </div>
+                  <p className="mb-2 text-2xl font-bold text-foreground">
+                    {plan.isFree ? (
+                      t("dialogs.changePlan.free")
+                    ) : (
+                      <>
+                        ${price}
+                        <span className="text-sm font-normal text-muted-foreground">
+                          /{selectedBillingCycle === "Monthly" ? "mo" : "yr"}
+                        </span>
+                      </>
+                    )}
+                  </p>
+                  <p className="mb-4 text-xs text-muted-foreground">{plan.description}</p>
+                  <ul className="space-y-2 text-xs text-muted-foreground">
+                    <li className="flex items-center gap-1.5">
+                      <Check className="h-3 w-3 text-teal" />
+                      {plan.limits.maxStudies} {t("dialogs.changePlan.studies")}
+                    </li>
+                    <li className="flex items-center gap-1.5">
+                      <Check className="h-3 w-3 text-teal" />
+                      {plan.limits.maxTracesPerMonth} {t("dialogs.changePlan.tracesPerMonth")}
+                    </li>
+                    <li className="flex items-center gap-1.5">
+                      <Check className="h-3 w-3 text-teal" />
+                      {plan.limits.maxMembersPerStudy} {t("dialogs.changePlan.membersPerStudy")}
+                    </li>
+                  </ul>
+                </div>
+              );
+            })}
+          </div>
+
           <p className="text-xs text-muted-foreground">{t("dialogs.changePlan.prorate")}</p>
+
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setChangePlanOpen(false)}>{tCommon("cancel")}</Button>
-            <Button onClick={() => setChangePlanOpen(false)}>{t("dialogs.changePlan.confirm")}</Button>
+            <Button variant="ghost" onClick={() => setChangePlanOpen(false)}>
+              {tCommon("cancel")}
+            </Button>
+            <Button
+              onClick={handleChangePlan}
+              disabled={!selectedPlanId || selectedPlanId === subscription?.planId || isChangingPlan}
+            >
+              {isChangingPlan && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {t("dialogs.changePlan.confirm")}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -392,7 +593,7 @@ export default function BillingPage() {
           </DialogHeader>
           <div className="py-4">
             <p className="mb-3 text-sm text-foreground">{t("dialogs.cancelSubscription.warning")}</p>
-            <ul className="space-y-2 text-sm text-muted-foreground">
+            <ul className="mb-4 space-y-2 text-sm text-muted-foreground">
               <li className="flex items-center gap-2">
                 <ChevronRight className="h-4 w-4 text-destructive" />
                 {t("dialogs.cancelSubscription.loseAccess.storage")}
@@ -410,12 +611,26 @@ export default function BillingPage() {
                 {t("dialogs.cancelSubscription.loseAccess.support")}
               </li>
             </ul>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">
+                {t("dialogs.cancelSubscription.reasonLabel")}
+              </label>
+              <textarea
+                rows={3}
+                value={cancellationReason}
+                onChange={(e) => setCancellationReason(e.target.value)}
+                placeholder={t("dialogs.cancelSubscription.reasonPlaceholder")}
+                className="w-full resize-none rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm"
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCancelSubOpen(false)}>
               {t("dialogs.cancelSubscription.keepPlan")}
             </Button>
-            <Button variant="destructive" onClick={() => setCancelSubOpen(false)}>
+            <Button variant="destructive" onClick={handleCancelSubscription} disabled={isCancelling}>
+              {isCancelling && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {t("dialogs.cancelSubscription.confirm")}
             </Button>
           </DialogFooter>
@@ -434,7 +649,7 @@ export default function BillingPage() {
               <label className="text-sm font-medium text-foreground">{t("billingInfo.name")}</label>
               <input
                 type="text"
-                defaultValue={billingInfo.name}
+                defaultValue={profile?.fullName || ""}
                 className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm"
               />
             </div>
@@ -442,29 +657,15 @@ export default function BillingPage() {
               <label className="text-sm font-medium text-foreground">{t("billingInfo.email")}</label>
               <input
                 type="email"
-                defaultValue={billingInfo.email}
-                className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">{t("billingInfo.address")}</label>
-              <textarea
-                rows={2}
-                defaultValue={billingInfo.address}
-                className="w-full resize-none rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">{t("billingInfo.taxId")}</label>
-              <input
-                type="text"
-                defaultValue={billingInfo.taxId}
+                defaultValue={user?.email || ""}
                 className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm"
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setEditBillingOpen(false)}>{tCommon("cancel")}</Button>
+            <Button variant="ghost" onClick={() => setEditBillingOpen(false)}>
+              {tCommon("cancel")}
+            </Button>
             <Button onClick={() => setEditBillingOpen(false)}>{t("dialogs.editBillingInfo.save")}</Button>
           </DialogFooter>
         </DialogContent>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/lib/navigation";
 import {
@@ -10,215 +10,79 @@ import {
   Users,
   FileText,
   Award,
-  BookOpen,
+  Star,
   Eye,
   ChevronDown,
   Grid3X3,
   List,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const researchFieldKeys = [
-  "allFields",
-  "cancerResearch",
-  "cardiovascularDisease",
-  "diabetesResearch",
-  "rareDisease",
-  "microbiome",
-  "pharmacogenomics",
-  "populationGenetics",
-  "infectiousDisease",
-] as const;
-
-// Map translation keys to study field values for filtering
-const fieldKeyToValue: Record<string, string> = {
-  allFields: "All Fields",
-  cancerResearch: "Cancer Research",
-  cardiovascularDisease: "Cardiovascular Disease",
-  diabetesResearch: "Diabetes Research",
-  rareDisease: "Rare Disease",
-  microbiome: "Microbiome",
-  pharmacogenomics: "Pharmacogenomics",
-  populationGenetics: "Population Genetics",
-  infectiousDisease: "Infectious Disease",
-};
-
-const publicStudies = [
-  {
-    id: "GF-2026-089",
-    title: "Genome-Wide Association Study - Type 2 Diabetes Cohort",
-    institution: "Stanford Medical Center",
-    pi: "Dr. Sarah Martinez",
-    field: "Diabetes Research",
-    description:
-      "Comprehensive GWAS investigating genetic variants associated with Type 2 Diabetes in a diverse population cohort of 1,247 participants.",
-    traces: 8934,
-    samples: 1247,
-    collaborators: 5,
-    visibility: "Public",
-    featured: true,
-    views: 2847,
-    citations: 12,
-    lastUpdated: "2 hours ago",
-    tags: ["GWAS", "Type 2 Diabetes", "Population Study"],
-  },
-  {
-    id: "GF-2026-085",
-    title: "RNA-Seq Analysis - Cancer Biomarkers Discovery",
-    institution: "Johns Hopkins University",
-    pi: "Dr. Emily Chen",
-    field: "Cancer Research",
-    description:
-      "Identification and validation of novel RNA biomarkers for early detection of pancreatic cancer using transcriptome sequencing.",
-    traces: 6123,
-    samples: 856,
-    collaborators: 8,
-    visibility: "Public",
-    featured: true,
-    views: 3452,
-    citations: 24,
-    lastUpdated: "5 hours ago",
-    tags: ["RNA-Seq", "Biomarkers", "Pancreatic Cancer"],
-  },
-  {
-    id: "GF-2026-078",
-    title: "Whole Genome Sequencing - Cardiovascular Risk Assessment",
-    institution: "Mayo Clinic",
-    pi: "Dr. Lisa Anderson",
-    field: "Cardiovascular Disease",
-    description:
-      "Large-scale WGS study examining genetic predisposition to cardiovascular disease across diverse ethnic populations.",
-    traces: 15234,
-    samples: 2341,
-    collaborators: 12,
-    visibility: "Public",
-    featured: false,
-    views: 1923,
-    citations: 8,
-    lastUpdated: "1 day ago",
-    tags: ["WGS", "Cardiovascular", "Risk Assessment"],
-  },
-  {
-    id: "GF-2026-075",
-    title: "Microbiome Analysis - IBD Cohort Study",
-    institution: "University of California San Francisco",
-    pi: "Dr. Robert Kim",
-    field: "Microbiome",
-    description:
-      "Metagenomic sequencing study of gut microbiome composition in inflammatory bowel disease patients.",
-    traces: 4521,
-    samples: 567,
-    collaborators: 6,
-    visibility: "Public",
-    featured: false,
-    views: 1547,
-    citations: 15,
-    lastUpdated: "2 days ago",
-    tags: ["Metagenomics", "IBD", "Gut Microbiome"],
-  },
-  {
-    id: "GF-2026-071",
-    title: "Pharmacogenomics - Personalized Drug Response",
-    institution: "Harvard Medical School",
-    pi: "Dr. Maria Garcia",
-    field: "Pharmacogenomics",
-    description:
-      "Investigation of genetic variants affecting drug metabolism and response in cardiovascular medications.",
-    traces: 5832,
-    samples: 893,
-    collaborators: 4,
-    visibility: "Public",
-    featured: false,
-    views: 2134,
-    citations: 19,
-    lastUpdated: "3 days ago",
-    tags: ["PGx", "Drug Response", "Precision Medicine"],
-  },
-  {
-    id: "GF-2026-068",
-    title: "Single Cell RNA-Seq - Tumor Heterogeneity",
-    institution: "Memorial Sloan Kettering",
-    pi: "Dr. David Lee",
-    field: "Cancer Research",
-    description:
-      "Single-cell transcriptomics revealing intratumoral heterogeneity in triple-negative breast cancer.",
-    traces: 3421,
-    samples: 214,
-    collaborators: 7,
-    visibility: "Public",
-    featured: true,
-    views: 4123,
-    citations: 31,
-    lastUpdated: "4 days ago",
-    tags: ["scRNA-Seq", "TNBC", "Heterogeneity"],
-  },
-  {
-    id: "GF-2026-063",
-    title: "Rare Disease Panel - Mendelian Disorders",
-    institution: "Baylor College of Medicine",
-    pi: "Dr. Michael Torres",
-    field: "Rare Disease",
-    description:
-      "Targeted sequencing panel for diagnosis of rare Mendelian disorders in pediatric patients.",
-    traces: 2156,
-    samples: 342,
-    collaborators: 5,
-    visibility: "Public",
-    featured: false,
-    views: 1876,
-    citations: 9,
-    lastUpdated: "5 days ago",
-    tags: ["Rare Disease", "Mendelian", "Pediatric"],
-  },
-  {
-    id: "GF-2026-058",
-    title: "Population Genetics - Human Migration Patterns",
-    institution: "Stanford University",
-    pi: "Dr. Jennifer Park",
-    field: "Population Genetics",
-    description:
-      "Genomic analysis of ancient DNA to trace human migration patterns across continents.",
-    traces: 7845,
-    samples: 1523,
-    collaborators: 15,
-    visibility: "Public",
-    featured: false,
-    views: 3256,
-    citations: 42,
-    lastUpdated: "1 week ago",
-    tags: ["Population Genetics", "Ancient DNA", "Migration"],
-  },
-];
+import {
+  usePublicStudies,
+  useFeaturedStudies,
+  useResearchFields,
+} from "@/hooks";
+import type { StudySummary, ResearchField } from "@/types";
 
 export default function DiscoverPage() {
   const t = useTranslations("discover");
-  const tCommon = useTranslations("common");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [selectedFieldKey, setSelectedFieldKey] = useState("allFields");
+  const [selectedFieldId, setSelectedFieldId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
-  const filteredStudies = publicStudies.filter((study) => {
-    const selectedFieldValue = fieldKeyToValue[selectedFieldKey];
-    const matchesField =
-      selectedFieldKey === "allFields" || study.field === selectedFieldValue;
-    const matchesSearch =
-      searchQuery === "" ||
-      study.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      study.institution.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      study.pi.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesField && matchesSearch;
-  });
+  // Fetch research fields for filter dropdown
+  const { data: researchFieldsData } = useResearchFields();
+  const researchFields: ResearchField[] = researchFieldsData ?? [];
 
-  const totalPages = Math.ceil(filteredStudies.length / itemsPerPage);
-  const paginatedStudies = filteredStudies.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  // Build filters for API
+  const filters = useMemo(() => {
+    const f: { researchFieldId?: number; search?: string } = {};
+    if (selectedFieldId) f.researchFieldId = selectedFieldId;
+    if (searchQuery.trim()) f.search = searchQuery.trim();
+    return f;
+  }, [selectedFieldId, searchQuery]);
 
-  const featuredStudies = publicStudies.filter((study) => study.featured);
+  // Fetch public studies with filters and pagination
+  const {
+    data: publicStudiesData,
+    isLoading: isLoadingPublic,
+    error: publicError,
+  } = usePublicStudies(filters, currentPage, itemsPerPage);
+
+  // Fetch featured studies (only on first page with no filters)
+  const showFeatured =
+    currentPage === 1 && !selectedFieldId && !searchQuery.trim();
+  const { data: featuredStudiesData, isLoading: isLoadingFeatured } =
+    useFeaturedStudies(1, 3);
+
+  const publicStudies: StudySummary[] = publicStudiesData?.items ?? [];
+  const totalCount = publicStudiesData?.totalCount ?? 0;
+  const totalPages = Math.ceil(totalCount / itemsPerPage);
+
+  const featuredStudies: StudySummary[] = showFeatured
+    ? (featuredStudiesData?.items ?? [])
+    : [];
+
+  const isLoading = isLoadingPublic || (showFeatured && isLoadingFeatured);
+
+  // Format relative time
+  const formatRelativeTime = (dateString: string): string => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffHours < 1) return t("time.justNow");
+    if (diffHours < 24) return t("time.hoursAgo", { count: diffHours });
+    if (diffDays < 7) return t("time.daysAgo", { count: diffDays });
+    return date.toLocaleDateString();
+  };
 
   return (
     <div className="space-y-8">
@@ -254,61 +118,58 @@ export default function DiscoverPage() {
       </div>
 
       {/* Featured Studies */}
-      {featuredStudies.length > 0 &&
-        searchQuery === "" &&
-        selectedFieldKey === "allFields" &&
-        currentPage === 1 && (
-          <div>
-            <div className="mb-4 flex items-center gap-2">
-              <Award className="h-5 w-5 text-amber-500" />
-              <h2 className="text-lg font-semibold text-foreground">
-                {t("featuredStudies")}
-              </h2>
-            </div>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {featuredStudies.slice(0, 3).map((study) => (
-                <Link
-                  key={study.id}
-                  href={`/studies/${study.id}`}
-                  className="group rounded-xl border border-teal/20 bg-gradient-to-br from-teal/5 via-card to-blue-deep/5 p-6 transition-all duration-300 hover:-translate-y-1 hover:border-teal/40 hover:shadow-xl hover:shadow-teal/5"
-                >
-                  <div className="mb-4 flex items-start justify-between">
-                    <span className="text-sm font-semibold tracking-tight text-blue-deep">
-                      {study.id}
-                    </span>
-                    <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-2">
-                      <Award className="h-4 w-4 text-amber-500 transition-transform duration-200 group-hover:rotate-12 group-hover:scale-110" />
-                    </div>
-                  </div>
-                  <h3 className="mb-2 line-clamp-2 font-semibold text-foreground transition-colors duration-200 group-hover:text-teal">
-                    {study.title}
-                  </h3>
-                  <p className="mb-4 text-sm font-medium text-muted-foreground">
-                    {study.institution}
-                  </p>
-                  <div className="flex items-center gap-5 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1.5">
-                      <FileText className="h-3.5 w-3.5" strokeWidth={2} />
-                      <span className="font-medium">
-                        {study.traces.toLocaleString()}
-                      </span>
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <Eye className="h-3.5 w-3.5" strokeWidth={2} />
-                      <span className="font-medium">
-                        {study.views.toLocaleString()}
-                      </span>
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <BookOpen className="h-3.5 w-3.5" strokeWidth={2} />
-                      <span className="font-medium">{study.citations}</span>
-                    </span>
-                  </div>
-                </Link>
-              ))}
-            </div>
+      {showFeatured && featuredStudies.length > 0 && (
+        <div>
+          <div className="mb-4 flex items-center gap-2">
+            <Award className="h-5 w-5 text-amber-500" />
+            <h2 className="text-lg font-semibold text-foreground">
+              {t("featuredStudies")}
+            </h2>
           </div>
-        )}
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {featuredStudies.map((study) => (
+              <Link
+                key={study.id}
+                href={`/studies/${study.id}`}
+                className="group rounded-xl border border-teal/20 bg-gradient-to-br from-teal/5 via-card to-blue-deep/5 p-6 transition-all duration-300 hover:-translate-y-1 hover:border-teal/40 hover:shadow-xl hover:shadow-teal/5"
+              >
+                <div className="mb-4 flex items-start justify-between">
+                  <span className="text-sm font-semibold tracking-tight text-blue-deep">
+                    {study.id}
+                  </span>
+                  <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-2">
+                    <Award className="h-4 w-4 text-amber-500 transition-transform duration-200 group-hover:rotate-12 group-hover:scale-110" />
+                  </div>
+                </div>
+                <h3 className="mb-2 line-clamp-2 font-semibold text-foreground transition-colors duration-200 group-hover:text-teal">
+                  {study.title}
+                </h3>
+                <p className="mb-4 text-sm font-medium text-muted-foreground">
+                  {study.institution || t("card.noInstitution")}
+                </p>
+                <div className="flex items-center gap-5 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1.5">
+                    <FileText className="h-3.5 w-3.5" strokeWidth={2} />
+                    <span className="font-medium">
+                      {study.paperCount.toLocaleString()}
+                    </span>
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <Eye className="h-3.5 w-3.5" strokeWidth={2} />
+                    <span className="font-medium">
+                      {study.viewsCount.toLocaleString()}
+                    </span>
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <Star className="h-3.5 w-3.5" strokeWidth={2} />
+                    <span className="font-medium">{study.starsCount}</span>
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Filters and View Controls */}
       <div className="flex flex-col items-start justify-between gap-4 lg:flex-row lg:items-center">
@@ -335,26 +196,28 @@ export default function DiscoverPage() {
           {/* Research Field Filter */}
           <div className="relative">
             <select
-              value={selectedFieldKey}
+              value={selectedFieldId ?? ""}
               onChange={(e) => {
-                setSelectedFieldKey(e.target.value);
+                const val = e.target.value;
+                setSelectedFieldId(val ? parseInt(val, 10) : null);
                 setCurrentPage(1);
               }}
               className="cursor-pointer appearance-none rounded-lg border border-border bg-card py-2 pl-4 pr-10 text-sm font-medium text-foreground transition-all hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-teal/20"
             >
-              {researchFieldKeys.map((fieldKey) => (
-                <option key={fieldKey} value={fieldKey}>
-                  {t(`fields.${fieldKey}`)}
+              <option value="">{t("fields.allFields")}</option>
+              {researchFields.map((field) => (
+                <option key={field.id} value={field.id}>
+                  {field.name}
                 </option>
               ))}
             </select>
             <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           </div>
 
-          {selectedFieldKey !== "allFields" && (
+          {selectedFieldId && (
             <button
               onClick={() => {
-                setSelectedFieldKey("allFields");
+                setSelectedFieldId(null);
                 setCurrentPage(1);
               }}
               className="text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -366,8 +229,7 @@ export default function DiscoverPage() {
 
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">
-            {filteredStudies.length}{" "}
-            {filteredStudies.length === 1 ? t("count.study") : t("count.studies")}
+            {totalCount} {totalCount === 1 ? t("count.study") : t("count.studies")}
           </span>
           <div className="h-4 w-px bg-border" />
           <div className="flex items-center gap-1 rounded-lg bg-muted/30 p-1">
@@ -494,10 +356,27 @@ export default function DiscoverPage() {
         </div>
       )}
 
+      {/* Loading State */}
+      {isLoading && (
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="h-8 w-8 animate-spin text-teal" />
+        </div>
+      )}
+
+      {/* Error State */}
+      {publicError && !isLoading && (
+        <div className="rounded-xl border border-destructive/50 bg-destructive/10 p-6 text-center">
+          <AlertCircle className="mx-auto mb-2 h-8 w-8 text-destructive" />
+          <p className="text-sm text-destructive">
+            {t("error.loadFailed")}
+          </p>
+        </div>
+      )}
+
       {/* Studies Grid */}
-      {viewMode === "grid" ? (
+      {!isLoading && !publicError && viewMode === "grid" && (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {paginatedStudies.map((study) => (
+          {publicStudies.map((study) => (
             <Link
               key={study.id}
               href={`/studies/${study.id}`}
@@ -522,18 +401,24 @@ export default function DiscoverPage() {
 
                 <div className="mb-4 space-y-1">
                   <p className="text-sm text-muted-foreground">
-                    {study.institution}
+                    {study.institution || t("card.noInstitution")}
                   </p>
-                  <p className="text-sm text-muted-foreground">{study.pi}</p>
+                  {study.principalInvestigator && (
+                    <p className="text-sm text-muted-foreground">
+                      {study.principalInvestigator}
+                    </p>
+                  )}
                 </div>
 
-                <p className="mb-4 line-clamp-2 text-sm text-muted-foreground">
-                  {study.description}
-                </p>
+                {study.description && (
+                  <p className="mb-4 line-clamp-2 text-sm text-muted-foreground">
+                    {study.description}
+                  </p>
+                )}
 
                 <div className="mb-4 flex flex-wrap items-center gap-1.5">
                   <span className="rounded-md bg-teal/10 px-2.5 py-1 text-xs font-medium text-teal">
-                    {study.field}
+                    {study.researchFieldName}
                   </span>
                   {study.tags.slice(0, 2).map((tag) => (
                     <span
@@ -547,15 +432,15 @@ export default function DiscoverPage() {
 
                 <div className="mb-4 grid grid-cols-2 gap-3">
                   <div className="rounded-lg bg-muted/30 p-3">
-                    <p className="mb-1 text-xs text-muted-foreground">{t("card.traces")}</p>
+                    <p className="mb-1 text-xs text-muted-foreground">{t("card.papers")}</p>
                     <p className="text-sm font-semibold text-foreground">
-                      {study.traces.toLocaleString()}
+                      {study.paperCount.toLocaleString()}
                     </p>
                   </div>
                   <div className="rounded-lg bg-muted/30 p-3">
-                    <p className="mb-1 text-xs text-muted-foreground">{t("card.samples")}</p>
+                    <p className="mb-1 text-xs text-muted-foreground">{t("card.members")}</p>
                     <p className="text-sm font-semibold text-foreground">
-                      {study.samples.toLocaleString()}
+                      {study.memberCount.toLocaleString()}
                     </p>
                   </div>
                 </div>
@@ -563,16 +448,16 @@ export default function DiscoverPage() {
                 <div className="flex items-center justify-between border-t border-border pt-4">
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     <Users className="h-3.5 w-3.5" />
-                    <span>{study.collaborators}</span>
+                    <span>{study.memberCount}</span>
                   </div>
                   <div className="flex items-center gap-3 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <Eye className="h-3.5 w-3.5" />
-                      {study.views.toLocaleString()}
+                      {study.viewsCount.toLocaleString()}
                     </span>
                     <span className="flex items-center gap-1">
-                      <BookOpen className="h-3.5 w-3.5" />
-                      {study.citations}
+                      <Star className="h-3.5 w-3.5" />
+                      {study.starsCount}
                     </span>
                   </div>
                 </div>
@@ -580,9 +465,12 @@ export default function DiscoverPage() {
             </Link>
           ))}
         </div>
-      ) : (
+      )}
+
+      {/* Studies List */}
+      {!isLoading && !publicError && viewMode === "list" && (
         <div className="space-y-4">
-          {paginatedStudies.map((study) => (
+          {publicStudies.map((study) => (
             <Link
               key={study.id}
               href={`/studies/${study.id}`}
@@ -601,7 +489,7 @@ export default function DiscoverPage() {
                       </span>
                     </div>
                     <span className="rounded-md bg-teal/10 px-2.5 py-1 text-xs font-medium text-teal">
-                      {study.field}
+                      {study.researchFieldName}
                     </span>
                   </div>
                 </div>
@@ -611,39 +499,45 @@ export default function DiscoverPage() {
                 </h3>
 
                 <div className="mb-3 flex items-center gap-4 text-sm text-muted-foreground">
-                  <span>{study.institution}</span>
-                  <span>•</span>
-                  <span>{study.pi}</span>
+                  <span>{study.institution || t("card.noInstitution")}</span>
+                  {study.principalInvestigator && (
+                    <>
+                      <span>-</span>
+                      <span>{study.principalInvestigator}</span>
+                    </>
+                  )}
                 </div>
 
-                <p className="mb-4 line-clamp-2 text-sm text-muted-foreground">
-                  {study.description}
-                </p>
+                {study.description && (
+                  <p className="mb-4 line-clamp-2 text-sm text-muted-foreground">
+                    {study.description}
+                  </p>
+                )}
 
                 <div className="flex items-center gap-4 text-sm">
                   <span className="text-muted-foreground">
                     <span className="font-medium text-foreground">
-                      {study.traces.toLocaleString()}
+                      {study.paperCount.toLocaleString()}
                     </span>{" "}
-                    {t("card.traces").toLowerCase()}
+                    {t("card.papers").toLowerCase()}
                   </span>
                   <span className="text-muted-foreground">
                     <span className="font-medium text-foreground">
-                      {study.samples.toLocaleString()}
+                      {study.memberCount.toLocaleString()}
                     </span>{" "}
-                    {t("card.samples").toLowerCase()}
+                    {t("card.members").toLowerCase()}
                   </span>
                   <span className="flex items-center gap-1 text-muted-foreground">
                     <Users className="h-4 w-4" />
-                    {study.collaborators}
+                    {study.memberCount}
                   </span>
                   <span className="flex items-center gap-1 text-muted-foreground">
                     <Eye className="h-4 w-4" />
-                    {study.views.toLocaleString()}
+                    {study.viewsCount.toLocaleString()}
                   </span>
                   <span className="flex items-center gap-1 text-muted-foreground">
-                    <BookOpen className="h-4 w-4" />
-                    {study.citations}
+                    <Star className="h-4 w-4" />
+                    {study.starsCount}
                   </span>
                 </div>
               </div>
@@ -653,18 +547,16 @@ export default function DiscoverPage() {
       )}
 
       {/* Pagination */}
-      {filteredStudies.length > 0 && totalPages > 1 && (
+      {!isLoading && !publicError && totalCount > 0 && totalPages > 1 && (
         <div className="flex items-center justify-between rounded-xl border border-border bg-card px-6 py-4 shadow-sm">
           <p className="text-sm text-muted-foreground">
             {t("pagination.showing")}{" "}
             <span className="font-medium text-foreground">
               {(currentPage - 1) * itemsPerPage + 1}-
-              {Math.min(currentPage * itemsPerPage, filteredStudies.length)}
+              {Math.min(currentPage * itemsPerPage, totalCount)}
             </span>{" "}
             {t("pagination.of")}{" "}
-            <span className="font-medium text-foreground">
-              {filteredStudies.length}
-            </span>{" "}
+            <span className="font-medium text-foreground">{totalCount}</span>{" "}
             {t("pagination.studies")}
           </p>
           <div className="flex gap-2">
@@ -680,20 +572,33 @@ export default function DiscoverPage() {
             >
               {t("pagination.previous")}
             </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <button
-                key={page}
-                onClick={() => setCurrentPage(page)}
-                className={cn(
-                  "rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 active:scale-95",
-                  currentPage === page
-                    ? "bg-teal text-white shadow-sm"
-                    : "border border-border text-foreground hover:bg-muted/50"
-                )}
-              >
-                {page}
-              </button>
-            ))}
+            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+              // Show pages around current page
+              let page: number;
+              if (totalPages <= 5) {
+                page = i + 1;
+              } else if (currentPage <= 3) {
+                page = i + 1;
+              } else if (currentPage >= totalPages - 2) {
+                page = totalPages - 4 + i;
+              } else {
+                page = currentPage - 2 + i;
+              }
+              return (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={cn(
+                    "rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 active:scale-95",
+                    currentPage === page
+                      ? "bg-teal text-white shadow-sm"
+                      : "border border-border text-foreground hover:bg-muted/50"
+                  )}
+                >
+                  {page}
+                </button>
+              );
+            })}
             <button
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
@@ -711,7 +616,7 @@ export default function DiscoverPage() {
       )}
 
       {/* Empty State */}
-      {filteredStudies.length === 0 && (
+      {!isLoading && !publicError && publicStudies.length === 0 && (
         <div className="py-16 text-center">
           <div className="mb-4 inline-flex items-center justify-center rounded-full bg-muted/50 p-4">
             <Search className="h-8 w-8 text-muted-foreground" />
@@ -725,7 +630,7 @@ export default function DiscoverPage() {
           <button
             onClick={() => {
               setSearchQuery("");
-              setSelectedFieldKey("allFields");
+              setSelectedFieldId(null);
               setCurrentPage(1);
             }}
             className="rounded-lg bg-teal px-4 py-2 text-white transition-all hover:bg-teal/90"

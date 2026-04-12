@@ -20,6 +20,8 @@ import {
   Copy,
   Archive,
   Share2,
+  Loader2,
+  Star,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui";
@@ -39,172 +41,137 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { StatusBadge, EmptyState } from "@/components/shared";
-
-const studyTypes = [
-  "All Types",
-  "GWAS",
-  "WES",
-  "WGS",
-  "RNA-Seq",
-  "Targeted",
-  "Metagenomics",
-  "PGx",
-  "scRNA-Seq",
-];
+import {
+  useMyStudies,
+  useCreateStudy,
+  useDeleteStudy,
+  useResearchFields,
+} from "@/hooks";
+import type { StudySummary, CreateStudyInput } from "@/types";
 
 const statusOptions = [
-  { value: "All Status", key: "allStatus" },
+  { value: "all", key: "allStatus" },
+  { value: "draft", key: "draft" },
   { value: "active", key: "active" },
   { value: "completed", key: "completed" },
-  { value: "on-hold", key: "onHold" },
-  { value: "draft", key: "draft" },
-];
-
-const studies = [
-  {
-    id: "GF-2026-089",
-    name: "Genome-Wide Association Study - Type 2 Diabetes",
-    type: "GWAS",
-    samples: 1247,
-    traces: 8934,
-    created: "2026-03-10",
-    pi: "Dr. Sarah Martinez",
-    status: "active" as const,
-    tags: ["Diabetes", "GWAS", "Population Study"],
-    progress: 78,
-  },
-  {
-    id: "GF-2026-087",
-    name: "Whole Exome Sequencing - Rare Disease Panel",
-    type: "WES",
-    samples: 342,
-    traces: 2156,
-    created: "2026-03-08",
-    pi: "Dr. James Wong",
-    status: "active" as const,
-    tags: ["Rare Disease", "Clinical", "Exome"],
-    progress: 45,
-  },
-  {
-    id: "GF-2026-085",
-    name: "RNA-Seq Analysis - Cancer Biomarkers",
-    type: "RNA-Seq",
-    samples: 856,
-    traces: 6123,
-    created: "2026-03-05",
-    pi: "Dr. Emily Chen",
-    status: "completed" as const,
-    tags: ["Cancer", "Biomarkers", "Transcriptomics"],
-    progress: 100,
-  },
-  {
-    id: "GF-2026-082",
-    name: "Targeted Sequencing - BRCA1/2 Variants",
-    type: "Targeted",
-    samples: 125,
-    traces: 892,
-    created: "2026-03-02",
-    pi: "Dr. Michael Park",
-    status: "draft" as const,
-    tags: ["BRCA", "Hereditary Cancer", "Targeted"],
-    progress: 12,
-  },
-  {
-    id: "GF-2026-078",
-    name: "Whole Genome Sequencing - Cardiovascular Risk",
-    type: "WGS",
-    samples: 2341,
-    traces: 15234,
-    created: "2026-02-28",
-    pi: "Dr. Lisa Anderson",
-    status: "active" as const,
-    tags: ["Cardiovascular", "WGS", "Prevention"],
-    progress: 62,
-  },
-  {
-    id: "GF-2026-075",
-    name: "Microbiome Analysis - IBD Cohort",
-    type: "Metagenomics",
-    samples: 567,
-    traces: 4521,
-    created: "2026-02-25",
-    pi: "Dr. Robert Kim",
-    status: "active" as const,
-    tags: ["Microbiome", "IBD", "Metagenomics"],
-    progress: 89,
-  },
-  {
-    id: "GF-2026-071",
-    name: "Pharmacogenomics - Drug Response Study",
-    type: "PGx",
-    samples: 893,
-    traces: 5832,
-    created: "2026-02-20",
-    pi: "Dr. Maria Garcia",
-    status: "completed" as const,
-    tags: ["PGx", "Drug Response", "Precision Medicine"],
-    progress: 100,
-  },
-  {
-    id: "GF-2026-068",
-    name: "Single Cell RNA-Seq - Tumor Heterogeneity",
-    type: "scRNA-Seq",
-    samples: 214,
-    traces: 3421,
-    created: "2026-02-15",
-    pi: "Dr. David Lee",
-    status: "active" as const,
-    tags: ["Single Cell", "Cancer", "Heterogeneity"],
-    progress: 34,
-  },
+  { value: "published", key: "published" },
+  { value: "archived", key: "archived" },
 ];
 
 export default function StudiesPage() {
   const t = useTranslations("studies");
   const tCommon = useTranslations("common");
+
+  // State
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedType, setSelectedType] = useState("All Types");
+  const [selectedResearchField, setSelectedResearchField] = useState<number | null>(null);
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [newStudyOpen, setNewStudyOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [exportOpen, setExportOpen] = useState(false);
   const [deleteStudyOpen, setDeleteStudyOpen] = useState(false);
-  const [selectedStudy, setSelectedStudy] = useState<typeof studies[0] | null>(null);
+  const [selectedStudy, setSelectedStudy] = useState<StudySummary | null>(null);
 
+  // Form state for new study
+  const [newStudyForm, setNewStudyForm] = useState<CreateStudyInput>({
+    title: "",
+    description: "",
+    researchFieldId: 1,
+    institution: "",
+    principalInvestigator: "",
+    tags: [],
+  });
+  const [tagsInput, setTagsInput] = useState("");
+
+  // Queries
+  const { data: studiesData, isLoading, error } = useMyStudies(currentPage, 6);
+  const { data: researchFields } = useResearchFields();
+
+  // Mutations
+  const createStudyMutation = useCreateStudy();
+  const deleteStudyMutation = useDeleteStudy();
+
+  // Handlers
   const handleExport = (format: string) => {
-    // Simulate export
     console.log(`Exporting studies as ${format}`);
     setExportOpen(false);
   };
 
-  const handleDeleteStudy = () => {
+  const handleDeleteStudy = async () => {
     if (selectedStudy) {
-      console.log(`Deleting study ${selectedStudy.id}`);
-      setDeleteStudyOpen(false);
-      setSelectedStudy(null);
+      try {
+        await deleteStudyMutation.mutateAsync(selectedStudy.id);
+        setDeleteStudyOpen(false);
+        setSelectedStudy(null);
+      } catch (err) {
+        console.error("Failed to delete study:", err);
+      }
     }
   };
 
+  const handleCreateStudy = async () => {
+    try {
+      const input: CreateStudyInput = {
+        ...newStudyForm,
+        tags: tagsInput.split(",").map((t) => t.trim()).filter(Boolean),
+      };
+      await createStudyMutation.mutateAsync(input);
+      setNewStudyOpen(false);
+      setNewStudyForm({
+        title: "",
+        description: "",
+        researchFieldId: 1,
+        institution: "",
+        principalInvestigator: "",
+        tags: [],
+      });
+      setTagsInput("");
+    } catch (err) {
+      console.error("Failed to create study:", err);
+    }
+  };
+
+  // Filter studies client-side (for search)
+  const studies = studiesData?.items ?? [];
   const filteredStudies = studies.filter((study) => {
     const matchesSearch =
       searchQuery === "" ||
-      study.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      study.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       study.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      study.pi.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType =
-      selectedType === "All Types" || study.type === selectedType;
+      (study.principalInvestigator?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
+    const matchesField =
+      selectedResearchField === null || study.researchFieldId === selectedResearchField;
     const matchesStatus =
-      selectedStatus === "all" ||
-      study.status === selectedStatus;
-    return matchesSearch && matchesType && matchesStatus;
+      selectedStatus === "all" || study.statusName === selectedStatus;
+    return matchesSearch && matchesField && matchesStatus;
   });
 
-  const totalPages = Math.ceil(filteredStudies.length / 6);
-  const paginatedStudies = filteredStudies.slice(
-    (currentPage - 1) * 6,
-    currentPage * 6
-  );
+  const totalPages = studiesData?.totalPages ?? 1;
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-teal" />
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <EmptyState
+        icon={Beaker}
+        title="Error loading studies"
+        description="Failed to load your studies. Please try again."
+      >
+        <Button onClick={() => window.location.reload()}>
+          {tCommon("retry")}
+        </Button>
+      </EmptyState>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -212,9 +179,7 @@ export default function StudiesPage() {
       <div className="flex items-start justify-between">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold text-foreground">{t("title")}</h1>
-          <p className="text-sm text-muted-foreground">
-            {t("description")}
-          </p>
+          <p className="text-sm text-muted-foreground">{t("description")}</p>
         </div>
         <Button
           onClick={() => setNewStudyOpen(true)}
@@ -271,16 +236,23 @@ export default function StudiesPage() {
         {showFilters && (
           <div className="mt-4 flex flex-wrap items-center gap-4 border-t border-border pt-4">
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">{t("filters.type")}:</span>
+              <span className="text-sm text-muted-foreground">
+                {t("detail.overview.researchField")}:
+              </span>
               <div className="relative">
                 <select
-                  value={selectedType}
-                  onChange={(e) => setSelectedType(e.target.value)}
+                  value={selectedResearchField ?? ""}
+                  onChange={(e) =>
+                    setSelectedResearchField(
+                      e.target.value ? Number(e.target.value) : null
+                    )
+                  }
                   className="cursor-pointer appearance-none rounded-lg border border-border bg-background py-1.5 pl-3 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20"
                 >
-                  {studyTypes.map((type) => (
-                    <option key={type} value={type}>
-                      {type === "All Types" ? t("filters.allTypes") : type}
+                  <option value="">{t("filters.allTypes")}</option>
+                  {researchFields?.map((field) => (
+                    <option key={field.id} value={field.id}>
+                      {field.name}
                     </option>
                   ))}
                 </select>
@@ -288,28 +260,30 @@ export default function StudiesPage() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">{t("filters.status")}:</span>
+              <span className="text-sm text-muted-foreground">
+                {t("filters.status")}:
+              </span>
               <div className="relative">
                 <select
                   value={selectedStatus}
                   onChange={(e) => setSelectedStatus(e.target.value)}
                   className="cursor-pointer appearance-none rounded-lg border border-border bg-background py-1.5 pl-3 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20"
                 >
-                  <option value="all">{t("filters.allStatus")}</option>
-                  {statusOptions.slice(1).map((status) => (
+                  {statusOptions.map((status) => (
                     <option key={status.value} value={status.value}>
-                      {t(`status.${status.key}`)}
+                      {status.value === "all"
+                        ? t("filters.allStatus")
+                        : t(`status.${status.key}`)}
                     </option>
                   ))}
                 </select>
                 <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               </div>
             </div>
-            {(selectedType !== "All Types" ||
-              selectedStatus !== "all") && (
+            {(selectedResearchField !== null || selectedStatus !== "all") && (
               <button
                 onClick={() => {
-                  setSelectedType("All Types");
+                  setSelectedResearchField(null);
                   setSelectedStatus("all");
                 }}
                 className="text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -327,12 +301,12 @@ export default function StudiesPage() {
           icon={Beaker}
           title={t("noStudiesFound")}
           description={
-            searchQuery || selectedType !== "All Types" || selectedStatus !== "all"
+            searchQuery || selectedResearchField !== null || selectedStatus !== "all"
               ? t("noStudiesDescription")
               : t("createFirstStudy")
           }
         >
-          {!searchQuery && selectedType === "All Types" && selectedStatus === "all" && (
+          {!searchQuery && selectedResearchField === null && selectedStatus === "all" && (
             <Button onClick={() => setNewStudyOpen(true)}>
               <Plus className="h-4 w-4" />
               {t("newStudy")}
@@ -341,7 +315,7 @@ export default function StudiesPage() {
         </EmptyState>
       ) : (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {paginatedStudies.map((study) => (
+          {filteredStudies.map((study) => (
             <Link
               key={study.id}
               href={`/studies/${study.id}`}
@@ -353,10 +327,16 @@ export default function StudiesPage() {
                     <span className="text-sm font-medium text-blue-deep">
                       {study.id}
                     </span>
-                    <StatusBadge status={study.status} />
+                    <StatusBadge status={study.statusName} />
+                    {study.isFeatured && (
+                      <span className="flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                        <Star className="h-3 w-3" />
+                        {t("featured.badge")}
+                      </span>
+                    )}
                   </div>
                   <h2 className="line-clamp-2 text-base font-medium text-foreground transition-colors duration-200 group-hover:text-teal">
-                    {study.name}
+                    {study.title}
                   </h2>
                 </div>
                 <DropdownMenu>
@@ -367,14 +347,21 @@ export default function StudiesPage() {
                         e.preventDefault();
                         e.stopPropagation();
                       }}
-                      aria-label={`More options for ${study.name}`}
+                      aria-label={`More options for ${study.title}`}
                     >
                       <MoreVertical className="h-4 w-4" />
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48" onClick={(e) => e.stopPropagation()}>
+                  <DropdownMenuContent
+                    align="end"
+                    className="w-48"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <DropdownMenuItem asChild>
-                      <Link href={`/studies/${study.id}`} className="flex items-center gap-2">
+                      <Link
+                        href={`/studies/${study.id}`}
+                        className="flex items-center gap-2"
+                      >
                         <Eye className="h-4 w-4" />
                         {t("actions.viewDetails")}
                       </Link>
@@ -410,44 +397,33 @@ export default function StudiesPage() {
                 </DropdownMenu>
               </div>
 
-              {/* Progress Bar */}
-              <div className="mb-4">
-                <div className="mb-1 flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground">{t("card.progress")}</span>
-                  <span className="font-medium text-foreground">
-                    {study.progress}%
-                  </span>
-                </div>
-                <div className="h-1.5 overflow-hidden rounded-full bg-muted">
-                  <div
-                    className={cn(
-                      "h-full rounded-full transition-all",
-                      study.progress === 100
-                        ? "bg-emerald-500"
-                        : "bg-gradient-to-r from-teal to-blue-deep"
-                    )}
-                    style={{ width: `${study.progress}%` }}
-                  />
-                </div>
-              </div>
-
-              <div className="mb-4 grid grid-cols-3 gap-4">
+              {/* Stats Row */}
+              <div className="mb-4 grid grid-cols-4 gap-4">
                 <div className="space-y-1">
                   <div className="flex items-center gap-1.5 text-muted-foreground">
                     <FileText className="h-3.5 w-3.5" />
-                    <span className="text-xs">{t("card.type")}</span>
+                    <span className="text-xs">{t("detail.overview.researchField")}</span>
                   </div>
-                  <p className="text-sm font-medium text-foreground">
-                    {study.type}
+                  <p className="truncate text-sm font-medium text-foreground">
+                    {study.researchFieldName}
                   </p>
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center gap-1.5 text-muted-foreground">
                     <Users className="h-3.5 w-3.5" />
-                    <span className="text-xs">{t("card.samples")}</span>
+                    <span className="text-xs">{t("detail.stats.teamMembers")}</span>
                   </div>
                   <p className="text-sm font-medium text-foreground">
-                    {study.samples.toLocaleString()}
+                    {study.memberCount}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <Eye className="h-3.5 w-3.5" />
+                    <span className="text-xs">Views</span>
+                  </div>
+                  <p className="text-sm font-medium text-foreground">
+                    {study.viewsCount}
                   </p>
                 </div>
                 <div className="space-y-1">
@@ -456,7 +432,7 @@ export default function StudiesPage() {
                     <span className="text-xs">{t("card.created")}</span>
                   </div>
                   <p className="text-sm font-medium text-foreground">
-                    {new Date(study.created).toLocaleDateString(undefined, {
+                    {new Date(study.createdAt).toLocaleDateString(undefined, {
                       month: "short",
                       day: "numeric",
                     })}
@@ -464,49 +440,53 @@ export default function StudiesPage() {
                 </div>
               </div>
 
-              <div className="mb-4">
-                <p className="mb-1 text-xs text-muted-foreground">
-                  {t("card.pi")}
-                </p>
-                <p className="text-sm font-medium text-foreground">
-                  {study.pi}
-                </p>
-              </div>
+              {/* PI */}
+              {study.principalInvestigator && (
+                <div className="mb-4">
+                  <p className="mb-1 text-xs text-muted-foreground">{t("card.pi")}</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {study.principalInvestigator}
+                  </p>
+                </div>
+              )}
 
-              <div className="flex flex-wrap gap-1.5">
-                {study.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="rounded-md bg-muted px-2.5 py-1 text-xs text-foreground/70"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
+              {/* Tags */}
+              {study.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {study.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="rounded-md bg-muted px-2.5 py-1 text-xs text-foreground/70"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
             </Link>
           ))}
         </div>
       )}
 
       {/* Pagination */}
-      {filteredStudies.length > 0 && (
+      {studiesData && studiesData.totalCount > 0 && (
         <div className="flex items-center justify-between rounded-xl border border-border bg-card px-6 py-4 shadow-sm">
           <p className="text-sm text-muted-foreground">
             {t("pagination.showing")}{" "}
             <span className="font-medium text-foreground">
               {(currentPage - 1) * 6 + 1}-
-              {Math.min(currentPage * 6, filteredStudies.length)}
+              {Math.min(currentPage * 6, studiesData.totalCount)}
             </span>{" "}
             {t("pagination.of")}{" "}
             <span className="font-medium text-foreground">
-              {filteredStudies.length}
+              {studiesData.totalCount}
             </span>{" "}
             {t("pagination.studies")}
           </p>
           <div className="flex gap-2">
             <button
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
+              disabled={!studiesData.hasPreviousPage}
               className="rounded-lg border border-border px-3 py-2 text-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-muted/50 hover:text-foreground active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {tCommon("previous")}
@@ -527,7 +507,7 @@ export default function StudiesPage() {
             ))}
             <button
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
+              disabled={!studiesData.hasNextPage}
               className="rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground transition-all duration-200 hover:bg-muted/50 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {tCommon("next")}
@@ -541,9 +521,7 @@ export default function StudiesPage() {
         <DialogContent className="sm:max-w-[420px]">
           <DialogHeader>
             <DialogTitle>{t("export.title")}</DialogTitle>
-            <DialogDescription>
-              {t("export.description")}
-            </DialogDescription>
+            <DialogDescription>{t("export.description")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-4">
             {[
@@ -578,7 +556,7 @@ export default function StudiesPage() {
           <DialogHeader>
             <DialogTitle>{t("delete.title")}</DialogTitle>
             <DialogDescription>
-              {t("delete.description", { name: selectedStudy?.name ?? "" })}
+              {t("delete.description", { name: selectedStudy?.title ?? "" })}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="mt-4">
@@ -590,9 +568,14 @@ export default function StudiesPage() {
             </button>
             <button
               onClick={handleDeleteStudy}
-              className="rounded-lg bg-red-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-500/90"
+              disabled={deleteStudyMutation.isPending}
+              className="rounded-lg bg-red-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-500/90 disabled:opacity-50"
             >
-              {t("delete.confirm")}
+              {deleteStudyMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                t("delete.confirm")
+              )}
             </button>
           </DialogFooter>
         </DialogContent>
@@ -603,21 +586,20 @@ export default function StudiesPage() {
         <DialogContent className="sm:max-w-[540px]">
           <DialogHeader>
             <DialogTitle>{t("create.title")}</DialogTitle>
-            <DialogDescription>
-              {t("create.description")}
-            </DialogDescription>
+            <DialogDescription>{t("create.description")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-5 py-4">
             <div className="space-y-2">
-              <label
-                htmlFor="study-name"
-                className="text-sm font-medium text-foreground"
-              >
+              <label htmlFor="study-name" className="text-sm font-medium text-foreground">
                 {t("create.studyName")}
               </label>
               <input
                 id="study-name"
                 type="text"
+                value={newStudyForm.title}
+                onChange={(e) =>
+                  setNewStudyForm((f) => ({ ...f, title: e.target.value }))
+                }
                 className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground transition-all placeholder:text-muted-foreground focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/10"
                 placeholder={t("create.studyNamePlaceholder")}
               />
@@ -625,40 +607,41 @@ export default function StudiesPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label
-                  htmlFor="study-type"
-                  className="text-sm font-medium text-foreground"
-                >
-                  {t("create.studyType")}
+                <label htmlFor="research-field" className="text-sm font-medium text-foreground">
+                  {t("detail.overview.researchField")}
                 </label>
                 <select
-                  id="study-type"
+                  id="research-field"
+                  value={newStudyForm.researchFieldId}
+                  onChange={(e) =>
+                    setNewStudyForm((f) => ({
+                      ...f,
+                      researchFieldId: Number(e.target.value),
+                    }))
+                  }
                   className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/10"
                 >
-                  <option value="">{t("create.selectType")}</option>
-                  <option value="GWAS">GWAS</option>
-                  <option value="WES">Whole Exome Sequencing</option>
-                  <option value="WGS">Whole Genome Sequencing</option>
-                  <option value="RNA-Seq">RNA-Seq</option>
-                  <option value="Targeted">Targeted Sequencing</option>
-                  <option value="Metagenomics">Metagenomics</option>
-                  <option value="PGx">Pharmacogenomics</option>
-                  <option value="scRNA-Seq">Single Cell RNA-Seq</option>
+                  {researchFields?.map((field) => (
+                    <option key={field.id} value={field.id}>
+                      {field.name}
+                    </option>
+                  ))}
                 </select>
               </div>
 
               <div className="space-y-2">
-                <label
-                  htmlFor="sample-count"
-                  className="text-sm font-medium text-foreground"
-                >
-                  {t("create.expectedSamples")}
+                <label htmlFor="institution" className="text-sm font-medium text-foreground">
+                  {t("detail.overview.institution")}
                 </label>
                 <input
-                  id="sample-count"
-                  type="number"
+                  id="institution"
+                  type="text"
+                  value={newStudyForm.institution ?? ""}
+                  onChange={(e) =>
+                    setNewStudyForm((f) => ({ ...f, institution: e.target.value }))
+                  }
                   className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground transition-all placeholder:text-muted-foreground focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/10"
-                  placeholder={t("create.expectedSamplesPlaceholder")}
+                  placeholder="e.g., MIT, Stanford"
                 />
               </div>
             </div>
@@ -673,53 +656,27 @@ export default function StudiesPage() {
               <input
                 id="principal-investigator"
                 type="text"
+                value={newStudyForm.principalInvestigator ?? ""}
+                onChange={(e) =>
+                  setNewStudyForm((f) => ({
+                    ...f,
+                    principalInvestigator: e.target.value,
+                  }))
+                }
                 className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground transition-all placeholder:text-muted-foreground focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/10"
                 placeholder={t("create.piPlaceholder")}
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label
-                  htmlFor="status"
-                  className="text-sm font-medium text-foreground"
-                >
-                  {t("create.initialStatus")}
-                </label>
-                <select
-                  id="status"
-                  className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/10"
-                >
-                  <option value="draft">{t("status.draft")}</option>
-                  <option value="active">{t("status.active")}</option>
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <label
-                  htmlFor="start-date"
-                  className="text-sm font-medium text-foreground"
-                >
-                  {t("create.startDate")}
-                </label>
-                <input
-                  id="start-date"
-                  type="date"
-                  className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/10"
-                />
-              </div>
-            </div>
-
             <div className="space-y-2">
-              <label
-                htmlFor="tags"
-                className="text-sm font-medium text-foreground"
-              >
+              <label htmlFor="tags" className="text-sm font-medium text-foreground">
                 {t("create.tags")}
               </label>
               <input
                 id="tags"
                 type="text"
+                value={tagsInput}
+                onChange={(e) => setTagsInput(e.target.value)}
                 className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground transition-all placeholder:text-muted-foreground focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/10"
                 placeholder={t("create.tagsPlaceholder")}
               />
@@ -729,15 +686,16 @@ export default function StudiesPage() {
             </div>
 
             <div className="space-y-2">
-              <label
-                htmlFor="description"
-                className="text-sm font-medium text-foreground"
-              >
+              <label htmlFor="description" className="text-sm font-medium text-foreground">
                 {t("create.studyDescription")}
               </label>
               <textarea
                 id="description"
                 rows={3}
+                value={newStudyForm.description ?? ""}
+                onChange={(e) =>
+                  setNewStudyForm((f) => ({ ...f, description: e.target.value }))
+                }
                 className="w-full resize-none rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground transition-all placeholder:text-muted-foreground focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/10"
                 placeholder={t("create.descriptionPlaceholder")}
               />
@@ -753,10 +711,15 @@ export default function StudiesPage() {
             </button>
             <button
               type="submit"
-              className="rounded-lg bg-teal px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-teal/90 hover:shadow-md"
-              onClick={() => setNewStudyOpen(false)}
+              disabled={!newStudyForm.title || createStudyMutation.isPending}
+              className="rounded-lg bg-teal px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-teal/90 hover:shadow-md disabled:opacity-50"
+              onClick={handleCreateStudy}
             >
-              {t("create.submit")}
+              {createStudyMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                t("create.submit")
+              )}
             </button>
           </DialogFooter>
         </DialogContent>
