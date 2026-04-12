@@ -71,6 +71,7 @@ public sealed class Subscription : AggregateRoot<SubscriptionId>
     /// Creates a new subscription.
     /// </summary>
     public static Result<Subscription> Create(
+        SubscriptionId id,
         UserId userId,
         PlanId planId,
         string planName,
@@ -82,7 +83,7 @@ public sealed class Subscription : AggregateRoot<SubscriptionId>
 
         var subscription = new Subscription
         {
-            Id = SubscriptionId.New(),
+            Id = id,
             UserId = userId,
             PlanId = planId,
             PlanName = planName,
@@ -111,13 +112,13 @@ public sealed class Subscription : AggregateRoot<SubscriptionId>
     /// <summary>
     /// Creates a free subscription (100-year period).
     /// </summary>
-    public static Result<Subscription> CreateFree(UserId userId, PlanId planId)
+    public static Result<Subscription> CreateFree(SubscriptionId id, UserId userId, PlanId planId)
     {
         var now = DateTime.UtcNow;
 
         var subscription = new Subscription
         {
-            Id = SubscriptionId.New(),
+            Id = id,
             UserId = userId,
             PlanId = planId,
             PlanName = "Free",

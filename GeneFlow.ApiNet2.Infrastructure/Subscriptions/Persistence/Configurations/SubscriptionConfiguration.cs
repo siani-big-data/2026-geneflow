@@ -19,27 +19,30 @@ public sealed class SubscriptionConfiguration : IEntityTypeConfiguration<Subscri
 
         builder.HasKey(s => s.Id);
 
-        // Configure SubscriptionId
+        // Configure SubscriptionId (stored as string: S00000001)
         builder.Property(s => s.Id)
             .HasColumnName("id")
+            .HasMaxLength(9)
             .HasConversion(
-                id => id.Value,
-                value => SubscriptionId.From(value));
+                id => id.ToString(),
+                value => SubscriptionId.Parse(value));
 
-        // Configure UserId
+        // Configure UserId (stored as string: U00000001)
         builder.Property(s => s.UserId)
             .HasColumnName("user_id")
+            .HasMaxLength(9)
             .HasConversion(
-                id => id.Value,
-                value => new UserId(value))
+                id => id.ToString(),
+                value => UserId.Parse(value))
             .IsRequired();
 
-        // Configure PlanId
+        // Configure PlanId (stored as string: L00000001)
         builder.Property(s => s.PlanId)
             .HasColumnName("plan_id")
+            .HasMaxLength(9)
             .HasConversion(
-                id => id.Value,
-                value => PlanId.From(value))
+                id => id.ToString(),
+                value => PlanId.Parse(value))
             .IsRequired();
 
         builder.Property(s => s.PlanName)

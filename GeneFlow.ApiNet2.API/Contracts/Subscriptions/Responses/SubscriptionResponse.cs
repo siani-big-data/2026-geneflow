@@ -4,9 +4,9 @@ namespace GeneFlow.ApiNet2.API.Contracts.Subscriptions.Responses;
 /// Response for a subscription.
 /// </summary>
 public sealed record SubscriptionResponse(
-    Guid Id,
+    string Id,
     string UserId,
-    Guid PlanId,
+    string PlanId,
     string PlanName,
     string Status,
     string BillingCycle,
@@ -33,7 +33,7 @@ public sealed record SubscriptionPeriodResponse(
 /// Summary response for subscription lists.
 /// </summary>
 public sealed record SubscriptionSummaryResponse(
-    Guid Id,
+    string Id,
     string PlanName,
     string Status,
     DateTime StartDate,

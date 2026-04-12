@@ -6,6 +6,7 @@ using GeneFlow.ApiNet2.Domain.Subscriptions;
 using GeneFlow.ApiNet2.Domain.Subscriptions.Enumerations;
 using GeneFlow.ApiNet2.SharedKernel.Application.CQRS;
 using GeneFlow.ApiNet2.SharedKernel.Domain.Results;
+using GeneFlow.ApiNet2.SharedKernel.Infrastructure;
 
 namespace GeneFlow.ApiNet2.Application.Subscriptions.Commands.CreateSubscription;
 
@@ -18,6 +19,7 @@ public sealed class CreateSubscriptionCommandHandler
     private readonly ISubscriptionRepository _subscriptionRepository;
     private readonly ISubscriptionUnitOfWork _unitOfWork;
     private readonly IPlanRepository _planRepository;
+    private readonly ISequenceGenerator _sequenceGenerator;
 
     /// <summary>
     /// Initializes a new instance of the handler.
@@ -25,11 +27,13 @@ public sealed class CreateSubscriptionCommandHandler
     public CreateSubscriptionCommandHandler(
         ISubscriptionRepository subscriptionRepository,
         ISubscriptionUnitOfWork unitOfWork,
-        IPlanRepository planRepository)
+        IPlanRepository planRepository,
+        ISequenceGenerator sequenceGenerator)
     {
         _subscriptionRepository = subscriptionRepository;
         _unitOfWork = unitOfWork;
         _planRepository = planRepository;
+        _sequenceGenerator = sequenceGenerator;
     }
 
     /// <inheritdoc />
@@ -62,15 +66,20 @@ public sealed class CreateSubscriptionCommandHandler
         if (!plan.IsActive)
             return Result.Failure<SubscriptionDto>(SubscriptionErrors.PlanNotActive);
 
+        // Generate subscription ID
+        var sequenceId = await _sequenceGenerator.NextAsync(SubscriptionId.SequenceName, cancellationToken);
+        var subscriptionId = SubscriptionId.FromSequence(sequenceId);
+
         // Create subscription
         Result<Subscription> subscriptionResult;
         if (plan.IsFree)
         {
-            subscriptionResult = Subscription.CreateFree(userId, planId);
+            subscriptionResult = Subscription.CreateFree(subscriptionId, userId, planId);
         }
         else
         {
             subscriptionResult = Subscription.Create(
+                subscriptionId,
                 userId,
                 planId,
                 plan.Name.Value,

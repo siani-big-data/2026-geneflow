@@ -1,50 +1,41 @@
-using GeneFlow.ApiNet2.SharedKernel.Domain.DDD;
+using GeneFlow.ApiNet2.SharedKernel.Domain.Types;
 
 namespace GeneFlow.ApiNet2.Domain.Subscriptions;
 
 /// <summary>
 /// Strongly-typed identifier for Subscription aggregate.
+/// Format: S00000001 (S + 8 digits)
 /// </summary>
-public sealed class SubscriptionId : SingleValueObject<Guid>
+public sealed class SubscriptionId : PrefixedId<SubscriptionId>
 {
     /// <summary>
-    /// Initializes a new instance of SubscriptionId.
+    /// Sequence name for ID generation.
     /// </summary>
-    public SubscriptionId(Guid value) : base(value)
-    {
-    }
-
-    /// <summary>
-    /// Creates a new unique SubscriptionId.
-    /// </summary>
-    public static SubscriptionId New() => new(Guid.NewGuid());
-
-    /// <summary>
-    /// Creates a SubscriptionId from an existing Guid.
-    /// </summary>
-    public static SubscriptionId From(Guid value) => new(value);
-
-    /// <summary>
-    /// Parses a string representation to SubscriptionId.
-    /// </summary>
-    public static SubscriptionId Parse(string value) => new(Guid.Parse(value));
-
-    /// <summary>
-    /// Tries to parse a string to SubscriptionId.
-    /// </summary>
-    public static bool TryParse(string? value, out SubscriptionId? subscriptionId)
-    {
-        subscriptionId = null;
-        if (string.IsNullOrWhiteSpace(value))
-            return false;
-
-        if (!Guid.TryParse(value, out var guid))
-            return false;
-
-        subscriptionId = new SubscriptionId(guid);
-        return true;
-    }
+    public const string SequenceName = "subscriptions";
 
     /// <inheritdoc />
-    public override string ToString() => Value.ToString();
+    protected override char Prefix => 'S';
+
+    /// <inheritdoc />
+    protected override int NumericLength => 8;
+
+    /// <summary>
+    /// Initializes a new SubscriptionId.
+    /// </summary>
+    public SubscriptionId(long value) : base(value) { }
+
+    /// <summary>
+    /// Parses a string ID into a SubscriptionId.
+    /// </summary>
+    public static SubscriptionId Parse(string id) => Parse(id, v => new SubscriptionId(v));
+
+    /// <summary>
+    /// Tries to parse a string ID into a SubscriptionId.
+    /// </summary>
+    public static bool TryParse(string? id, out SubscriptionId? result) => TryParse(id, v => new SubscriptionId(v), out result);
+
+    /// <summary>
+    /// Creates a SubscriptionId from a sequence value.
+    /// </summary>
+    public static SubscriptionId FromSequence(long sequenceValue) => new(sequenceValue);
 }

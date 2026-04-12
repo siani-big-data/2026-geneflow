@@ -14,9 +14,9 @@ public static class SubscriptionMappings
     public static SubscriptionDto ToDto(this Subscription subscription)
     {
         return new SubscriptionDto(
-            subscription.Id.Value,
+            subscription.Id.ToString(),
             subscription.UserId.ToString(),
-            subscription.PlanId.Value,
+            subscription.PlanId.ToString(),
             subscription.PlanName,
             subscription.Status.Name,
             subscription.BillingCycle.Name,
@@ -41,7 +41,7 @@ public static class SubscriptionMappings
     public static SubscriptionSummaryDto ToSummaryDto(this Subscription subscription)
     {
         return new SubscriptionSummaryDto(
-            subscription.Id.Value,
+            subscription.Id.ToString(),
             subscription.PlanName,
             subscription.Status.Name,
             subscription.CurrentPeriod.StartDate,

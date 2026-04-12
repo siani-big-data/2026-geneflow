@@ -4,9 +4,9 @@ namespace GeneFlow.ApiNet2.Application.Subscriptions.DTOs;
 /// DTO for Subscription aggregate.
 /// </summary>
 public sealed record SubscriptionDto(
-    Guid SubscriptionId,
+    string SubscriptionId,
     string UserId,
-    Guid PlanId,
+    string PlanId,
     string PlanName,
     string Status,
     string BillingCycle,
@@ -33,7 +33,7 @@ public sealed record SubscriptionPeriodDto(
 /// Summary DTO for subscription lists.
 /// </summary>
 public sealed record SubscriptionSummaryDto(
-    Guid SubscriptionId,
+    string SubscriptionId,
     string PlanName,
     string Status,
     DateTime StartDate,

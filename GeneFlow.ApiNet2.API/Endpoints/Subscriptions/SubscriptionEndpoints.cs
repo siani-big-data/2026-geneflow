@@ -75,7 +75,7 @@ public sealed class SubscriptionEndpoints : IEndpoint
         if (currentUser.UserId is null)
             return Results.Unauthorized();
 
-        var query = new GetCurrentSubscriptionQuery(currentUser.UserId.Value.ToString());
+        var query = new GetCurrentSubscriptionQuery(currentUser.UserId.ToString()!);
         var result = await sender.Send(query, cancellationToken);
 
         if (result.IsFailure)
@@ -92,7 +92,7 @@ public sealed class SubscriptionEndpoints : IEndpoint
         if (currentUser.UserId is null)
             return Results.Unauthorized();
 
-        var query = new GetSubscriptionHistoryQuery(currentUser.UserId.Value.ToString());
+        var query = new GetSubscriptionHistoryQuery(currentUser.UserId.ToString()!);
         var result = await sender.Send(query, cancellationToken);
 
         if (result.IsFailure)
@@ -111,7 +111,7 @@ public sealed class SubscriptionEndpoints : IEndpoint
             return Results.Unauthorized();
 
         var command = new CreateSubscriptionCommand(
-            currentUser.UserId.Value.ToString(),
+            currentUser.UserId.ToString()!,
             request.PlanId.ToString(),
             request.BillingCycleId,
             request.StartWithTrial);
@@ -134,7 +134,7 @@ public sealed class SubscriptionEndpoints : IEndpoint
             return Results.Unauthorized();
 
         var command = new CancelSubscriptionCommand(
-            currentUser.UserId.Value.ToString(),
+            currentUser.UserId.ToString()!,
             request.Reason);
 
         var result = await sender.Send(command, cancellationToken);
@@ -155,7 +155,7 @@ public sealed class SubscriptionEndpoints : IEndpoint
             return Results.Unauthorized();
 
         var command = new ChangePlanCommand(
-            currentUser.UserId.Value.ToString(),
+            currentUser.UserId.ToString()!,
             request.NewPlanId.ToString(),
             request.BillingCycleId);
 
