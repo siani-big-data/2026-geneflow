@@ -14,6 +14,7 @@ class EventCategory(str, Enum):
     ALIGNMENTS = "alignments"
     SUBSCRIPTIONS = "subscriptions"
     PLANS = "plans"
+    PROFILES = "profiles"
     AI = "ai"
     BLAST = "blast"
     SYSTEM = "system"
