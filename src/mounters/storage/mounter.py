@@ -107,7 +107,13 @@ class StorageMounter(BaseMounter):
 
     async def _handle_profile_photo_uploaded(self, payload: dict) -> None:
         """Handle ProfilePhotoUploadedEvent."""
-        profile_id = payload.get("profile_id") or payload.get("ProfileId")
+        profile_id_raw = payload.get("profile_id") or payload.get("ProfileId")
+        # Handle nested value objects from C# serialization (e.g., {"value": 9})
+        if isinstance(profile_id_raw, dict):
+            profile_id = profile_id_raw.get("value") or profile_id_raw.get("Value")
+        else:
+            profile_id = profile_id_raw
+
         photo_data_b64 = payload.get("photo_data") or payload.get("PhotoData")
         extension = payload.get("extension") or payload.get("Extension") or "jpg"
         content_type = payload.get("content_type") or payload.get("ContentType") or "image/jpeg"
