@@ -48,6 +48,7 @@ public sealed class Plan : AuditableAggregateRoot<PlanId>
     /// Creates a new Plan.
     /// </summary>
     public static Result<Plan> Create(
+        PlanId id,
         PlanName name,
         string? description,
         PlanPricing pricing,
@@ -57,7 +58,7 @@ public sealed class Plan : AuditableAggregateRoot<PlanId>
     {
         var plan = new Plan
         {
-            Id = PlanId.New(),
+            Id = id,
             Name = name,
             Description = description,
             Pricing = pricing,

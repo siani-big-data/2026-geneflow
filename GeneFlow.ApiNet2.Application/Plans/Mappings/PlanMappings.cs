@@ -14,7 +14,7 @@ public static class PlanMappings
     public static PlanDto ToDto(this Plan plan)
     {
         return new PlanDto(
-            plan.Id.Value,
+            plan.Id.ToString(),
             plan.Name.Value,
             plan.Description,
             plan.Pricing.MonthlyPrice,

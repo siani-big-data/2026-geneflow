@@ -3,6 +3,7 @@ using System;
 using GeneFlow.ApiNet2.Infrastructure.Plans.Persistence.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace GeneFlow.ApiNet2.Infrastructure.Plans.Persistence.Migrations
 {
     [DbContext(typeof(PlanContext))]
-    partial class PlanContextModelSnapshot : ModelSnapshot
+    [Migration("20260411171003_ConvertPlanIdToPrefixedString")]
+    partial class ConvertPlanIdToPrefixedString
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

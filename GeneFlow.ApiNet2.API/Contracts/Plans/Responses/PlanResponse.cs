@@ -4,7 +4,7 @@ namespace GeneFlow.ApiNet2.API.Contracts.Plans.Responses;
 /// Response for a plan.
 /// </summary>
 public sealed record PlanResponse(
-    Guid Id,
+    string Id,
     string Name,
     string? Description,
     PlanPricingResponse Pricing,

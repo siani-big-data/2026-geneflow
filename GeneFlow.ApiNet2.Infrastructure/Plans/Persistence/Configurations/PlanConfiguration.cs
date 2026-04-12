@@ -18,12 +18,13 @@ public sealed class PlanConfiguration : IEntityTypeConfiguration<Plan>
 
         builder.HasKey(p => p.Id);
 
-        // Configure PlanId
+        // Configure PlanId (stored as string: L00000001)
         builder.Property(p => p.Id)
             .HasColumnName("id")
+            .HasMaxLength(9)
             .HasConversion(
-                id => id.Value,
-                value => PlanId.From(value));
+                id => id.ToString(),
+                value => PlanId.Parse(value));
 
         // PlanName (owned value object)
         builder.OwnsOne(p => p.Name, name =>

@@ -4,7 +4,7 @@ namespace GeneFlow.ApiNet2.Application.Plans.DTOs;
 /// DTO for Plan aggregate.
 /// </summary>
 public sealed record PlanDto(
-    Guid PlanId,
+    string PlanId,
     string Name,
     string? Description,
     decimal MonthlyPrice,
