@@ -9,9 +9,17 @@ const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
 
 // GitHub OAuth configuration
 const GITHUB_CLIENT_ID = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID || "";
-const GITHUB_REDIRECT_URI = typeof window !== "undefined"
-  ? `${window.location.origin}/auth/callback/github`
-  : "";
+
+// Get redirect URI with current locale
+function getGitHubRedirectUri(): string {
+  if (typeof window === "undefined") return "";
+
+  // Extract locale from current path (e.g., /es/login -> es)
+  const pathParts = window.location.pathname.split("/");
+  const locale = pathParts[1] || "en"; // Default to 'en' if no locale
+
+  return `${window.location.origin}/${locale}/auth/callback/github`;
+}
 
 /**
  * Initialize Google Identity Services and trigger sign-in.
@@ -93,11 +101,12 @@ export async function signInWithGitHub(): Promise<string> {
 
     const scope = "read:user user:email";
     const state = generateRandomState();
+    const redirectUri = getGitHubRedirectUri();
 
     // Store state for validation
     sessionStorage.setItem("github_oauth_state", state);
 
-    const authUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent(GITHUB_REDIRECT_URI)}&scope=${encodeURIComponent(scope)}&state=${state}`;
+    const authUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${state}`;
 
     const width = 500;
     const height = 600;

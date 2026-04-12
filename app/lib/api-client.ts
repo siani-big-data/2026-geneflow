@@ -280,4 +280,56 @@ export const api = {
 
   delete: <T>(endpoint: string, options?: RequestOptions) =>
     apiClient<T>(endpoint, { ...options, method: "DELETE" }),
+
+  /**
+   * Upload a file using FormData (multipart/form-data).
+   * @param endpoint - API endpoint
+   * @param file - File to upload
+   * @param fieldName - Form field name (default: "file")
+   */
+  uploadFile: async <T>(
+    endpoint: string,
+    file: File,
+    fieldName: string = "file"
+  ): Promise<T> => {
+    // Ensure valid token
+    const tokenValid = await ensureValidToken();
+    if (!tokenValid) {
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("auth:logout"));
+      }
+      throw new ApiClientError({
+        message: "Session expired. Please log in again.",
+        code: "SESSION_EXPIRED",
+        status: 401,
+      });
+    }
+
+    const formData = new FormData();
+    formData.append(fieldName, file);
+
+    const headers: HeadersInit = {};
+    const accessToken = tokenStorage.getAccessToken();
+    if (accessToken) {
+      headers["Authorization"] = `Bearer ${accessToken}`;
+    }
+    // Note: Don't set Content-Type for FormData - browser sets it with boundary
+
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method: "POST",
+      headers,
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.json().catch(() => null);
+      throw ApiClientError.fromResponse(response.status, errorBody);
+    }
+
+    if (response.status === 204) {
+      return undefined as T;
+    }
+
+    return response.json();
+  },
 };

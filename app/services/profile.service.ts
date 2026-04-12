@@ -11,16 +11,44 @@
  */
 
 import { api } from "@/lib/api-client";
+
+// API base URL for resolving storage paths
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5286";
 import type {
   Profile,
   ProfileSummary,
   ProfileStats,
+  CreateProfileRequest,
   UpdateProfileRequest,
   UpdateResearchIdentifiersRequest,
   UpdateProfilePhotoRequest,
 } from "@/types";
 
 export const profileService = {
+  // ===========================================================================
+  // CREATE PROFILE
+  // ===========================================================================
+
+  /**
+   * Create a new profile for the current user.
+   * Required after registration.
+   */
+  async createProfile(data: CreateProfileRequest): Promise<Profile> {
+    return api.post<Profile>("/api/v1/profiles", data);
+  },
+
+  /**
+   * Check if the current user has a profile.
+   * Returns the profile if exists, null if not.
+   */
+  async checkProfileExists(): Promise<Profile | null> {
+    try {
+      return await api.get<Profile>("/api/v1/profiles/me");
+    } catch {
+      return null;
+    }
+  },
+
   // ===========================================================================
   // GET PROFILE
   // ===========================================================================
@@ -82,10 +110,19 @@ export const profileService = {
   // ===========================================================================
 
   /**
-   * Update the current user's profile photo.
+   * Update the current user's profile photo with pre-existing URLs.
    */
   async updateProfilePhoto(data: UpdateProfilePhotoRequest): Promise<Profile> {
     return api.put<Profile>("/api/v1/profiles/me/photo", data);
+  },
+
+  /**
+   * Upload a new profile photo file.
+   * @param file - The image file to upload (JPEG, PNG, GIF, WebP)
+   * @returns Updated profile with new photo URLs
+   */
+  async uploadProfilePhoto(file: File): Promise<Profile> {
+    return api.uploadFile<Profile>("/api/v1/profiles/me/photo/upload", file, "file");
   },
 
   /**
@@ -145,5 +182,25 @@ export const profileService = {
     } catch {
       return false;
     }
+  },
+
+  /**
+   * Resolve a storage URL to a full URL.
+   * Handles relative paths from the backend (e.g., /storage/profiles/...)
+   * @param url - The URL to resolve (can be null/undefined, relative, or absolute)
+   * @returns The full URL or null if input is null/undefined
+   */
+  resolveStorageUrl(url: string | null | undefined): string | null {
+    if (!url) return null;
+    // If it's already an absolute URL, return as-is
+    if (url.startsWith("http://") || url.startsWith("https://")) {
+      return url;
+    }
+    // If it's a relative storage path, prepend the API base URL
+    if (url.startsWith("/storage/")) {
+      return `${API_BASE_URL}${url}`;
+    }
+    // Otherwise, return as-is
+    return url;
   },
 };
