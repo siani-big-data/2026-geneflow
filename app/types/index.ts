@@ -5,6 +5,9 @@ export * from "./pipeline";
 export * from "./auth";
 export * from "./profile";
 export * from "./payment";
+export * from "./subscription";
+export * from "./usage";
+export * from "./dashboard";
 
 export interface PaginatedResponse<T> {
   data: T[];

@@ -79,6 +79,19 @@ export interface UpdateProfileRequest {
   researchField?: string | null;
 }
 
+export interface CreateProfileRequest {
+  firstName: string;
+  lastName?: string | null;
+  bio?: string | null;
+  location?: string | null;
+  professionalRole?: string | null;
+  institutionName?: string | null;
+  institutionDepartment?: string | null;
+  researchField?: string | null;
+  orcidId?: string | null;
+  website?: string | null;
+}
+
 export interface UpdateResearchIdentifiersRequest {
   orcidId?: string | null;
   website?: string | null;
