@@ -34,15 +34,32 @@ class EventBusMessage:
 
     @classmethod
     def from_redis(cls, data: dict) -> "EventBusMessage":
+        # Backend publishes with snake_case (event_id, event_type, occurred_at)
+        # Support both snake_case and camelCase for compatibility
+        event_id = data.get("event_id") or data.get("eventId", "")
+        event_type = data.get("event_type") or data.get("type", "Unknown")
+        occurred_at = data.get("occurred_at") or data.get("timestamp", "0")
+
+        # Parse occurred_at timestamp (ISO format or unix timestamp)
+        if isinstance(occurred_at, str) and "T" in occurred_at:
+            # ISO format - convert to unix timestamp
+            try:
+                dt = datetime.fromisoformat(occurred_at.replace("Z", "+00:00"))
+                timestamp = int(dt.timestamp() * 1000)
+            except ValueError:
+                timestamp = 0
+        else:
+            timestamp = int(occurred_at) if occurred_at else 0
+
         return cls(
-            eventId=data.get("eventId", ""),
-            type=data.get("type", "Unknown"),
+            eventId=event_id,
+            type=event_type,
             category=data.get("category", "unknown"),
-            timestamp=int(data.get("timestamp", 0)),
+            timestamp=timestamp,
             data=data.get("data", "{}"),
             source=data.get("source", "unknown"),
             version=data.get("version", "1.0"),
-            correlationId=data.get("correlationId"),
+            correlationId=data.get("correlationId") or data.get("correlation_id"),
         )
 
 
