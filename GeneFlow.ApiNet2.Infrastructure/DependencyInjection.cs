@@ -5,6 +5,7 @@ using GeneFlow.ApiNet2.Domain.Plans;
 using GeneFlow.ApiNet2.Domain.Profiles;
 using GeneFlow.ApiNet2.Domain.Studies;
 using GeneFlow.ApiNet2.Domain.Subscriptions;
+using GeneFlow.ApiNet2.Domain.Traces;
 using GeneFlow.ApiNet2.Infrastructure.Events;
 using GeneFlow.ApiNet2.Infrastructure.Identity.Configuration;
 using GeneFlow.ApiNet2.Infrastructure.Identity.Persistence.Context;
@@ -23,6 +24,10 @@ using GeneFlow.ApiNet2.Infrastructure.Studies.Persistence.Context;
 using GeneFlow.ApiNet2.Infrastructure.Studies.Persistence.Repositories;
 using GeneFlow.ApiNet2.Infrastructure.Subscriptions.Persistence.Context;
 using GeneFlow.ApiNet2.Infrastructure.Subscriptions.Persistence.Repositories;
+using GeneFlow.ApiNet2.Application.Traces.Interfaces;
+using GeneFlow.ApiNet2.Infrastructure.Traces.Persistence.Context;
+using GeneFlow.ApiNet2.Infrastructure.Traces.Persistence.Repositories;
+using GeneFlow.ApiNet2.Infrastructure.Traces.Services;
 using GeneFlow.ApiNet2.Infrastructure.Usage.Repositories;
 using GeneFlow.ApiNet2.Infrastructure.Usage.Services;
 using GeneFlow.ApiNet2.Domain.Usage;
@@ -143,6 +148,24 @@ public static class DependencyInjection
         services.AddScoped<IStudyRepository, StudyRepository>();
         services.AddScoped<IStudyInvitationRepository, StudyInvitationRepository>();
         services.AddScoped<IStudyUnitOfWork, StudyUnitOfWork>();
+
+        // Traces DbContext
+        services.AddDbContext<TraceContext>(options =>
+            options.UseNpgsql(connectionString, npgsqlOptions =>
+            {
+                npgsqlOptions.MigrationsAssembly(typeof(TraceContext).Assembly.FullName);
+                npgsqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: 3,
+                    maxRetryDelay: TimeSpan.FromSeconds(5),
+                    errorCodesToAdd: null);
+            }));
+
+        // Traces Repositories
+        services.AddScoped<ITraceRepository, TraceRepository>();
+        services.AddScoped<ITraceUnitOfWork, TraceUnitOfWork>();
+
+        // Traces Services
+        services.AddScoped<ITraceAnalysisService, TraceAnalysisService>();
 
         return services;
     }
