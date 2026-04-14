@@ -1,0 +1,345 @@
+using GeneFlow.ApiNet2.API.Contracts.Traces.Requests;
+using GeneFlow.ApiNet2.API.Contracts.Traces.Responses;
+using GeneFlow.ApiNet2.API.Extensions;
+using GeneFlow.ApiNet2.Application.Identity.Interfaces;
+using GeneFlow.ApiNet2.Application.Traces.Commands.AutoTrimTrace;
+using GeneFlow.ApiNet2.Application.Traces.Commands.CreateSequenceEdit;
+using GeneFlow.ApiNet2.Application.Traces.Commands.ManualTrimTrace;
+using GeneFlow.ApiNet2.Application.Traces.Commands.UndoAllSequenceEdits;
+using GeneFlow.ApiNet2.Application.Traces.Commands.UndoSequenceEdit;
+using GeneFlow.ApiNet2.Application.Traces.Commands.UndoTrimTrace;
+using GeneFlow.ApiNet2.Application.Traces.Queries.GetEditedSequence;
+using GeneFlow.ApiNet2.Application.Traces.Queries.GetReverseComplement;
+using GeneFlow.ApiNet2.Application.Traces.Queries.GetSequenceEdits;
+using GeneFlow.ApiNet2.Application.Traces.Queries.GetTrimmedSequence;
+using GeneFlow.ApiNet2.Application.Traces.Queries.PreviewTrim;
+using MediatR;
+using Microsoft.AspNetCore.Mvc;
+
+namespace GeneFlow.ApiNet2.API.Endpoints.Traces;
+
+/// <summary>
+/// Trace editing endpoints (trim, sequence edits, reverse complement).
+/// </summary>
+public sealed class TraceEditingEndpoints : IEndpoint
+{
+    /// <inheritdoc />
+    public void MapEndpoint(IEndpointRouteBuilder app)
+    {
+        var group = app.MapGroup("/api/v1/studies/{studyId}/traces/{traceId}")
+            .WithTags("Trace Editing")
+            .WithOpenApi()
+            .RequireAuthorization();
+
+        // Trimming endpoints
+        group.MapPost("/trim/auto", AutoTrimTrace)
+            .WithName("Traces_AutoTrim")
+            .WithSummary("Auto-trim trace")
+            .WithDescription("Automatically trims a trace using quality-based algorithm.")
+            .Produces<TrimRegionResponse>(StatusCodes.Status200OK)
+            .ProducesValidationProblem()
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces<ApiError>(StatusCodes.Status404NotFound);
+
+        group.MapPost("/trim/manual", ManualTrimTrace)
+            .WithName("Traces_ManualTrim")
+            .WithSummary("Manual trim trace")
+            .WithDescription("Manually trims a trace with specified boundaries.")
+            .Produces<TrimRegionResponse>(StatusCodes.Status200OK)
+            .ProducesValidationProblem()
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces<ApiError>(StatusCodes.Status404NotFound);
+
+        group.MapPost("/trim/preview", PreviewTrim)
+            .WithName("Traces_PreviewTrim")
+            .WithSummary("Preview auto-trim")
+            .WithDescription("Previews auto-trim results without applying them.")
+            .Produces<TrimPreviewResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces<ApiError>(StatusCodes.Status404NotFound);
+
+        group.MapDelete("/trim", UndoTrim)
+            .WithName("Traces_UndoTrim")
+            .WithSummary("Undo trim")
+            .WithDescription("Removes the trim from a trace.")
+            .Produces(StatusCodes.Status204NoContent)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces<ApiError>(StatusCodes.Status404NotFound);
+
+        group.MapGet("/sequence/trimmed", GetTrimmedSequence)
+            .WithName("Traces_GetTrimmedSequence")
+            .WithSummary("Get trimmed sequence")
+            .WithDescription("Returns the trimmed sequence of a trace.")
+            .Produces<TrimmedSequenceResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces<ApiError>(StatusCodes.Status404NotFound);
+
+        // Sequence editing endpoints
+        group.MapPost("/edits", CreateSequenceEdit)
+            .WithName("Traces_CreateEdit")
+            .WithSummary("Create sequence edit")
+            .WithDescription("Creates a new sequence edit on a trace.")
+            .Produces<SequenceEditResponse>(StatusCodes.Status201Created)
+            .ProducesValidationProblem()
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces<ApiError>(StatusCodes.Status404NotFound);
+
+        group.MapGet("/edits", GetSequenceEdits)
+            .WithName("Traces_GetEdits")
+            .WithSummary("Get sequence edits")
+            .WithDescription("Returns all sequence edits for a trace.")
+            .Produces<IReadOnlyList<SequenceEditResponse>>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces<ApiError>(StatusCodes.Status404NotFound);
+
+        group.MapDelete("/edits/{editId}", UndoSequenceEdit)
+            .WithName("Traces_UndoEdit")
+            .WithSummary("Undo sequence edit")
+            .WithDescription("Undoes a specific sequence edit.")
+            .Produces(StatusCodes.Status204NoContent)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces<ApiError>(StatusCodes.Status404NotFound);
+
+        group.MapDelete("/edits", UndoAllSequenceEdits)
+            .WithName("Traces_UndoAllEdits")
+            .WithSummary("Undo all sequence edits")
+            .WithDescription("Undoes all active sequence edits on a trace.")
+            .Produces(StatusCodes.Status204NoContent)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces<ApiError>(StatusCodes.Status404NotFound);
+
+        group.MapGet("/sequence/edited", GetEditedSequence)
+            .WithName("Traces_GetEditedSequence")
+            .WithSummary("Get edited sequence")
+            .WithDescription("Returns the sequence with all edits applied.")
+            .Produces<EditedSequenceResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces<ApiError>(StatusCodes.Status404NotFound);
+
+        // Reverse complement
+        group.MapGet("/reverse-complement", GetReverseComplement)
+            .WithName("Traces_GetReverseComplement")
+            .WithSummary("Get reverse complement")
+            .WithDescription("Returns the reverse complement of the trace sequence.")
+            .Produces<ReverseComplementResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces<ApiError>(StatusCodes.Status404NotFound);
+    }
+
+    private static async Task<IResult> AutoTrimTrace(
+        [FromRoute] string studyId,
+        [FromRoute] string traceId,
+        [FromBody] AutoTrimRequest request,
+        [FromServices] ISender sender = default!,
+        [FromServices] ICurrentUserService currentUserService = default!,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = currentUserService.UserId;
+        if (string.IsNullOrEmpty(userId))
+            return Results.Unauthorized();
+
+        var command = new AutoTrimTraceCommand(
+            userId,
+            traceId,
+            request.QualityThreshold,
+            request.WindowSize,
+            request.MinimumLength);
+
+        var result = await sender.Send(command, cancellationToken);
+
+        return result.IsSuccess
+            ? Results.Ok(result.Value.ToResponse())
+            : result.Error.ToApiResult();
+    }
+
+    private static async Task<IResult> ManualTrimTrace(
+        [FromRoute] string studyId,
+        [FromRoute] string traceId,
+        [FromBody] ManualTrimRequest request,
+        [FromServices] ISender sender = default!,
+        [FromServices] ICurrentUserService currentUserService = default!,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = currentUserService.UserId;
+        if (string.IsNullOrEmpty(userId))
+            return Results.Unauthorized();
+
+        var command = new ManualTrimTraceCommand(
+            userId,
+            traceId,
+            request.Start5Prime,
+            request.End5Prime,
+            request.Start3Prime,
+            request.End3Prime);
+
+        var result = await sender.Send(command, cancellationToken);
+
+        return result.IsSuccess
+            ? Results.Ok(result.Value.ToResponse())
+            : result.Error.ToApiResult();
+    }
+
+    private static async Task<IResult> PreviewTrim(
+        [FromRoute] string studyId,
+        [FromRoute] string traceId,
+        [FromBody] AutoTrimRequest request,
+        [FromServices] ISender sender = default!,
+        CancellationToken cancellationToken = default)
+    {
+        var query = new PreviewTrimQuery(
+            traceId,
+            request.QualityThreshold,
+            request.WindowSize,
+            request.MinimumLength);
+
+        var result = await sender.Send(query, cancellationToken);
+
+        return result.IsSuccess
+            ? Results.Ok(result.Value.ToResponse())
+            : result.Error.ToApiResult();
+    }
+
+    private static async Task<IResult> UndoTrim(
+        [FromRoute] string studyId,
+        [FromRoute] string traceId,
+        [FromServices] ISender sender = default!,
+        [FromServices] ICurrentUserService currentUserService = default!,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = currentUserService.UserId;
+        if (string.IsNullOrEmpty(userId))
+            return Results.Unauthorized();
+
+        var command = new UndoTrimTraceCommand(userId, traceId);
+        var result = await sender.Send(command, cancellationToken);
+
+        return result.IsSuccess
+            ? Results.NoContent()
+            : result.Error.ToApiResult();
+    }
+
+    private static async Task<IResult> GetTrimmedSequence(
+        [FromRoute] string studyId,
+        [FromRoute] string traceId,
+        [FromServices] ISender sender = default!,
+        CancellationToken cancellationToken = default)
+    {
+        var query = new GetTrimmedSequenceQuery(traceId);
+        var result = await sender.Send(query, cancellationToken);
+
+        return result.IsSuccess
+            ? Results.Ok(result.Value.ToResponse())
+            : result.Error.ToApiResult();
+    }
+
+    private static async Task<IResult> CreateSequenceEdit(
+        [FromRoute] string studyId,
+        [FromRoute] string traceId,
+        [FromBody] CreateSequenceEditRequest request,
+        [FromServices] ISender sender = default!,
+        [FromServices] ICurrentUserService currentUserService = default!,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = currentUserService.UserId;
+        if (string.IsNullOrEmpty(userId))
+            return Results.Unauthorized();
+
+        var command = new CreateSequenceEditCommand(
+            userId,
+            traceId,
+            request.EditType,
+            request.Position,
+            request.OriginalBase,
+            request.NewBase,
+            request.Reason);
+
+        var result = await sender.Send(command, cancellationToken);
+
+        return result.IsSuccess
+            ? Results.Created($"/api/v1/studies/{studyId}/traces/{traceId}/edits/{result.Value.Id}", result.Value.ToResponse())
+            : result.Error.ToApiResult();
+    }
+
+    private static async Task<IResult> GetSequenceEdits(
+        [FromRoute] string studyId,
+        [FromRoute] string traceId,
+        [FromQuery] bool includeInactive = false,
+        [FromServices] ISender sender = default!,
+        CancellationToken cancellationToken = default)
+    {
+        var query = new GetSequenceEditsQuery(traceId, includeInactive);
+        var result = await sender.Send(query, cancellationToken);
+
+        return result.IsSuccess
+            ? Results.Ok(result.Value.ToResponses())
+            : result.Error.ToApiResult();
+    }
+
+    private static async Task<IResult> UndoSequenceEdit(
+        [FromRoute] string studyId,
+        [FromRoute] string traceId,
+        [FromRoute] string editId,
+        [FromServices] ISender sender = default!,
+        [FromServices] ICurrentUserService currentUserService = default!,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = currentUserService.UserId;
+        if (string.IsNullOrEmpty(userId))
+            return Results.Unauthorized();
+
+        var command = new UndoSequenceEditCommand(userId, traceId, editId);
+        var result = await sender.Send(command, cancellationToken);
+
+        return result.IsSuccess
+            ? Results.NoContent()
+            : result.Error.ToApiResult();
+    }
+
+    private static async Task<IResult> UndoAllSequenceEdits(
+        [FromRoute] string studyId,
+        [FromRoute] string traceId,
+        [FromServices] ISender sender = default!,
+        [FromServices] ICurrentUserService currentUserService = default!,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = currentUserService.UserId;
+        if (string.IsNullOrEmpty(userId))
+            return Results.Unauthorized();
+
+        var command = new UndoAllSequenceEditsCommand(userId, traceId);
+        var result = await sender.Send(command, cancellationToken);
+
+        return result.IsSuccess
+            ? Results.NoContent()
+            : result.Error.ToApiResult();
+    }
+
+    private static async Task<IResult> GetEditedSequence(
+        [FromRoute] string studyId,
+        [FromRoute] string traceId,
+        [FromServices] ISender sender = default!,
+        CancellationToken cancellationToken = default)
+    {
+        var query = new GetEditedSequenceQuery(traceId);
+        var result = await sender.Send(query, cancellationToken);
+
+        return result.IsSuccess
+            ? Results.Ok(result.Value.ToResponse())
+            : result.Error.ToApiResult();
+    }
+
+    private static async Task<IResult> GetReverseComplement(
+        [FromRoute] string studyId,
+        [FromRoute] string traceId,
+        [FromQuery] bool useTrimmedSequence = true,
+        [FromServices] ISender sender = default!,
+        CancellationToken cancellationToken = default)
+    {
+        var query = new GetReverseComplementQuery(traceId, useTrimmedSequence);
+        var result = await sender.Send(query, cancellationToken);
+
+        return result.IsSuccess
+            ? Results.Ok(result.Value.ToResponse())
+            : result.Error.ToApiResult();
+    }
+}
