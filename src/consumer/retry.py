@@ -1,3 +1,5 @@
+"""Retry handler with exponential backoff and DLQ."""
+
 import asyncio
 import json
 from datetime import datetime, timedelta
@@ -8,29 +10,28 @@ from uuid import uuid4
 import aiofiles
 import structlog
 
+from src.constants import RETRY_BASE_DELAY_SECONDS, RETRY_MAX_ATTEMPTS, RETRY_MAX_DELAY_SECONDS
 from src.models import RetryableEvent
 
 logger = structlog.get_logger()
 
-# Callback type for retry: (category, date, event_line) -> None
 RetryCallback = Callable[[str, datetime, str], Awaitable[None]]
 
 
 class RetryHandler:
-    """
-    Handles retries with exponential backoff and DLQ.
+    """Handles retries with exponential backoff and DLQ.
 
     - Failed events go to retry queue
     - Exponential backoff between attempts
-    - After max_retries → DLQ
+    - After max_retries -> DLQ
     - API to view and retry DLQ events
     """
 
     def __init__(
         self,
-        max_retries: int = 5,
-        base_delay: float = 1.0,
-        max_delay: float = 300.0,
+        max_retries: int = RETRY_MAX_ATTEMPTS,
+        base_delay: float = RETRY_BASE_DELAY_SECONDS,
+        max_delay: float = RETRY_MAX_DELAY_SECONDS,
         dlq_path: str = "./data/dlq",
         check_interval: float = 1.0,
     ):
@@ -46,7 +47,6 @@ class RetryHandler:
         self._retry_callback: Optional[RetryCallback] = None
         self._running = False
 
-        # Metrics
         self._retries_attempted = 0
         self._retries_succeeded = 0
         self._events_to_dlq = 0
@@ -56,14 +56,12 @@ class RetryHandler:
         self._retry_callback = retry_callback
         self._running = True
         self.dlq_path.mkdir(parents=True, exist_ok=True)
-
         self._retry_task = asyncio.create_task(self._retry_loop())
         logger.info("retry_handler_started", dlq_path=str(self.dlq_path))
 
     async def stop(self) -> None:
         """Stop the handler, move pending to DLQ."""
         self._running = False
-
         if self._retry_task:
             self._retry_task.cancel()
             try:
@@ -71,7 +69,6 @@ class RetryHandler:
             except asyncio.CancelledError:
                 pass
 
-        # Move pending events to DLQ
         async with self._lock:
             for event in self._queue:
                 await self._move_to_dlq(event, "shutdown")
@@ -100,12 +97,7 @@ class RetryHandler:
         async with self._lock:
             self._queue.append(event)
 
-        logger.warning(
-            "event_added_to_retry",
-            event_id=event.id,
-            category=category,
-            error=error,
-        )
+        logger.warning("event_added_to_retry", event_id=event.id, category=category, error=error)
 
     def _calculate_next_retry(self, retry_count: int) -> datetime:
         """Calculate next retry time with exponential backoff."""
@@ -117,7 +109,6 @@ class RetryHandler:
         while self._running:
             try:
                 await asyncio.sleep(self.check_interval)
-
                 now = datetime.utcnow()
                 to_retry = []
 
@@ -143,12 +134,7 @@ class RetryHandler:
         self._retries_attempted += 1
 
         try:
-            await self._retry_callback(
-                event.category,
-                event.date,
-                event.eventLine,
-            )
-
+            await self._retry_callback(event.category, event.date, event.eventLine)
             self._retries_succeeded += 1
             logger.info(
                 "retry_succeeded",
@@ -156,7 +142,6 @@ class RetryHandler:
                 category=event.category,
                 attempt=event.retryCount + 1,
             )
-
         except Exception as e:
             event.retryCount += 1
             event.lastError = str(e)
@@ -212,7 +197,6 @@ class RetryHandler:
             date = datetime.utcnow()
 
         dlq_file = self.dlq_path / f"{date.strftime('%Y-%m-%d')}.jsonl"
-
         if not dlq_file.exists():
             return []
 

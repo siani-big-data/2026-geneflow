@@ -1,3 +1,5 @@
+"""Redis Streams consumer for the Datalake."""
+
 import asyncio
 import json
 from datetime import datetime
@@ -6,22 +8,22 @@ from typing import Optional
 import redis.asyncio as redis
 import structlog
 
-from src.buffer import EventBuffer
 from src.config import Settings
-from src.deduplication import EventDeduplicator
+from src.consumer.buffer import EventBuffer
+from src.consumer.deduplication import EventDeduplicator
+from src.consumer.retry import RetryHandler
+from src.constants import REDIS_BATCH_SIZE, REDIS_BLOCK_MS, REDIS_RECONNECT_DELAY_SECONDS
 from src.models import DatalakeEvent, EventBusMessage, EventCategory
 from src.mounters.engine import MounterEngine
-from src.retry import RetryHandler
 from src.storage import StorageProvider
 
 logger = structlog.get_logger()
 
 
 class DatalakeConsumer:
-    """
-    Redis Streams consumer for the Datalake.
+    """Redis Streams consumer for the Datalake.
 
-    - Consumes from all streams (9 categories)
+    - Consumes from all streams (event categories)
     - Uses Consumer Groups for scalability
     - Deduplicates by eventId
     - Buffer with WAL for durability
@@ -40,7 +42,6 @@ class DatalakeConsumer:
         self.redis: Optional[redis.Redis] = None
         self._running = False
 
-        # Components
         self.buffer = EventBuffer(
             flush_callback=self._on_flush,
             max_size=settings.buffer_max_size,
@@ -60,7 +61,6 @@ class DatalakeConsumer:
             max_size=settings.dedup_max_size,
         )
 
-        # Metrics
         self._events_received = 0
         self._events_persisted = 0
         self._events_duplicates = 0
@@ -68,9 +68,10 @@ class DatalakeConsumer:
 
     @property
     def _streams(self) -> dict[str, str]:
-        """Mapping of stream_name → category."""
+        """Mapping of stream_name -> category."""
         return {
-            f"{self.settings.redis_stream_prefix}:{cat.value}": cat.value for cat in EventCategory
+            f"{self.settings.redis_stream_prefix}:{cat.value}": cat.value
+            for cat in EventCategory
         }
 
     @property
@@ -96,25 +97,16 @@ class DatalakeConsumer:
             categories=[cat.value for cat in EventCategory],
         )
 
-        # Connect to Redis
-        self.redis = redis.from_url(
-            self.settings.redis_url,
-            decode_responses=True,
-        )
+        self.redis = redis.from_url(self.settings.redis_url, decode_responses=True)
 
-        # Verify storage
         if not await self.storage.health_check():
             raise RuntimeError("Storage health check failed")
 
-        # Create consumer groups
         await self._ensuREDACTED()
-
-        # Start components
         await self.buffer.start()
         await self.retry_handler.start(self._retry_event)
         await self.deduplicator.start()
 
-        # Start consume loop
         self._running = True
         await self._consume_loop()
 
@@ -152,6 +144,8 @@ class DatalakeConsumer:
     async def _consume_loop(self) -> None:
         """Main consume loop."""
         streams_to_read = {name: ">" for name in self._streams.keys()}
+        batch_size = getattr(self.settings, "batch_size", REDIS_BATCH_SIZE)
+        block_ms = getattr(self.settings, "redis_block_ms", REDIS_BLOCK_MS)
 
         while self._running:
             try:
@@ -159,8 +153,8 @@ class DatalakeConsumer:
                     groupname=self.settings.redis_consumer_group,
                     consumername=self.settings.redis_consumer_name,
                     streams=streams_to_read,
-                    count=self.settings.batch_size,
-                    block=self.settings.redis_block_ms,
+                    count=batch_size,
+                    block=block_ms,
                 )
 
                 if not messages:
@@ -174,7 +168,7 @@ class DatalakeConsumer:
             except redis.ConnectionError as e:
                 logger.error("redis_connection_error", error=str(e))
                 self._errors += 1
-                await asyncio.sleep(5)
+                await asyncio.sleep(REDIS_RECONNECT_DELAY_SECONDS)
             except Exception as e:
                 logger.error("consume_loop_error", error=str(e))
                 self._errors += 1
@@ -190,14 +184,10 @@ class DatalakeConsumer:
         """Process a message from Redis."""
         try:
             self._events_received += 1
-
-            # Parse message
             event_msg = EventBusMessage.from_redis(data)
 
-            # Check duplicate
             if await self.deduplicator.is_duplicate(event_msg.eventId):
                 self._events_duplicates += 1
-                # Immediate ACK for duplicates
                 await self.redis.xack(
                     stream_name,
                     self.settings.redis_consumer_group,
@@ -206,13 +196,11 @@ class DatalakeConsumer:
                 logger.debug("duplicate_skipped", event_id=event_msg.eventId)
                 return
 
-            # Parse timestamp
             try:
                 timestamp = datetime.fromtimestamp(event_msg.timestamp / 1000)
             except (ValueError, TypeError):
                 timestamp = datetime.utcnow()
 
-            # Parse data
             try:
                 event_data = (
                     json.loads(event_msg.data)
@@ -222,7 +210,6 @@ class DatalakeConsumer:
             except json.JSONDecodeError:
                 event_data = {"raw": event_msg.data}
 
-            # Create normalized event
             event = DatalakeEvent(
                 eventId=event_msg.eventId,
                 type=event_msg.type,
@@ -232,7 +219,6 @@ class DatalakeConsumer:
                 data=event_data,
             )
 
-            # Add to buffer (NO XACK here)
             await self.buffer.add(
                 category=category,
                 date=timestamp,
@@ -241,7 +227,6 @@ class DatalakeConsumer:
                 msg_id=msg_id,
             )
 
-            # Mark as seen
             await self.deduplicator.mark_seen(event_msg.eventId)
 
             logger.debug(
@@ -269,16 +254,13 @@ class DatalakeConsumer:
     ) -> None:
         """Callback when buffer flushes."""
         try:
-            # Persist events to storage (JSONL files)
             await self.storage.append_events_batch(category, date, event_lines)
             self._events_persisted += len(event_lines)
 
-            # Dispatch to mounters (PostgreSQL, etc.)
             if self.mounter_engine:
                 for event_line in event_lines:
                     try:
                         event = json.loads(event_line)
-                        # Add category to event for mounter routing
                         event["category"] = category
                         await self.mounter_engine._dispatch_event(event)
                     except Exception as e:
@@ -288,7 +270,6 @@ class DatalakeConsumer:
                             error=str(e),
                         )
 
-            # XACK only after persisting
             for stream_name, msg_id in pending_acks:
                 await self.redis.xack(
                     stream_name,
@@ -305,7 +286,6 @@ class DatalakeConsumer:
 
         except Exception as e:
             self._errors += 1
-            # Add to retry
             for event_line in event_lines:
                 await self.retry_handler.add_failed_event(
                     category=category,

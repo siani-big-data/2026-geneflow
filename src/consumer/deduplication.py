@@ -1,15 +1,18 @@
+"""Event deduplication by eventId."""
+
 import asyncio
 from datetime import datetime, timedelta
 from typing import Optional
 
 import structlog
 
+from src.constants import DEDUP_CLEANUP_INTERVAL_SECONDS, DEDUP_MAX_SIZE, DEDUP_TTL_HOURS
+
 logger = structlog.get_logger()
 
 
 class EventDeduplicator:
-    """
-    Event deduplicator by eventId.
+    """Event deduplicator by eventId.
 
     Maintains an in-memory set of seen eventIds with TTL
     to avoid persisting the same event twice.
@@ -17,9 +20,9 @@ class EventDeduplicator:
 
     def __init__(
         self,
-        ttl_hours: int = 24,
-        max_size: int = 100000,
-        cleanup_interval: float = 300.0,  # 5 minutes
+        ttl_hours: int = DEDUP_TTL_HOURS,
+        max_size: int = DEDUP_MAX_SIZE,
+        cleanup_interval: float = DEDUP_CLEANUP_INTERVAL_SECONDS,
     ):
         self.ttl = timedelta(hours=ttl_hours)
         self.max_size = max_size
@@ -56,8 +59,6 @@ class EventDeduplicator:
         """Mark an event as seen."""
         async with self._lock:
             self._seen[event_id] = datetime.utcnow()
-
-            # If we exceed max_size, cleanup immediately
             if len(self._seen) > self.max_size:
                 await self._cleanup()
 
@@ -76,11 +77,11 @@ class EventDeduplicator:
     async def _cleanup(self) -> None:
         """Remove expired entries."""
         now = datetime.utcnow()
-        expired = [event_id for event_id, seen_at in self._seen.items() if now - seen_at > self.ttl]
-
+        expired = [
+            event_id for event_id, seen_at in self._seen.items() if now - seen_at > self.ttl
+        ]
         for event_id in expired:
             del self._seen[event_id]
-
         if expired:
             logger.debug("deduplicator_cleanup", removed=len(expired), remaining=len(self._seen))
 

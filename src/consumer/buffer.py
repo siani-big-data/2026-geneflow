@@ -1,3 +1,5 @@
+"""Event buffer with WAL for durability."""
+
 import asyncio
 from collections import defaultdict
 from datetime import datetime
@@ -7,9 +9,10 @@ from typing import Awaitable, Callable
 import aiofiles
 import structlog
 
+from src.constants import BUFFER_DEFAULT_MAX_SIZE, BUFFER_FLUSH_INTERVAL_SECONDS
+
 logger = structlog.get_logger()
 
-# Callback type for flush: (category, date, lines, pending_acks) -> None
 FlushCallback = Callable[
     [str, datetime, list[str], list[tuple[str, str]]],
     Awaitable[None],
@@ -17,8 +20,7 @@ FlushCallback = Callable[
 
 
 class EventBuffer:
-    """
-    Buffer that accumulates events and flushes in batches.
+    """Buffer that accumulates events and flushes in batches.
 
     Features:
     - WAL for pre-flush durability
@@ -30,8 +32,8 @@ class EventBuffer:
     def __init__(
         self,
         flush_callback: FlushCallback,
-        max_size: int = 100,
-        flush_interval: float = 5.0,
+        max_size: int = BUFFER_DEFAULT_MAX_SIZE,
+        flush_interval: float = BUFFER_FLUSH_INTERVAL_SECONDS,
         wal_path: str = "./data/wal",
     ):
         self.flush_callback = flush_callback
@@ -39,9 +41,7 @@ class EventBuffer:
         self.flush_interval = flush_interval
         self.wal_path = Path(wal_path)
 
-        # Buffer: {(category, date_str): [event_lines]}
         self._buffer: dict[tuple[str, str], list[str]] = defaultdict(list)
-        # Pending ACKs: {(category, date_str): [(stream, msg_id)]}
         self._pending_acks: dict[tuple[str, str], list[tuple[str, str]]] = defaultdict(list)
 
         self._count = 0
@@ -53,26 +53,19 @@ class EventBuffer:
         """Start the buffer."""
         self._running = True
         self.wal_path.mkdir(parents=True, exist_ok=True)
-
-        # Recover events from WAL
         await self._recover_from_wal()
-
-        # Start periodic flush loop
         self._flush_task = asyncio.create_task(self._flush_loop())
         logger.info("buffer_started", wal_path=str(self.wal_path))
 
     async def stop(self) -> None:
-        """Stop the buffer, final flush."""
+        """Stop the buffer with final flush."""
         self._running = False
-
         if self._flush_task:
             self._flush_task.cancel()
             try:
                 await self._flush_task
             except asyncio.CancelledError:
                 pass
-
-        # Final flush
         await self._flush_all()
         logger.info("buffer_stopped")
 
@@ -90,18 +83,12 @@ class EventBuffer:
         should_flush = False
 
         async with self._lock:
-            # 1. Write to WAL first (durability)
             await self._write_to_wal(category, date_str, event_line)
-
-            # 2. Add to buffer
             self._buffer[key].append(event_line)
             self._pending_acks[key].append((stream_name, msg_id))
             self._count += 1
-
-            # 3. Check if we need to flush
             should_flush = self._count >= self.max_size
 
-        # Flush outside the lock to avoid deadlock
         if should_flush:
             await self._flush_all()
 
@@ -122,14 +109,12 @@ class EventBuffer:
             if not self._buffer:
                 return
 
-            # Copy and clear buffer
             to_flush = dict(self._buffer)
             to_ack = dict(self._pending_acks)
             self._buffer = defaultdict(list)
             self._pending_acks = defaultdict(list)
             self._count = 0
 
-        # Flush each group outside the lock
         for (category, date_str), lines in to_flush.items():
             if not lines:
                 continue
@@ -137,18 +122,11 @@ class EventBuffer:
             try:
                 date = datetime.strptime(date_str, "%Y-%m-%d")
                 acks = to_ack.get((category, date_str), [])
-
-                # Call callback (persists and does ACK)
                 await self.flush_callback(category, date, lines, acks)
-
-                # Clear WAL after success
                 await self._clear_wal(category, date_str)
-
                 logger.debug("buffer_flushed", category=category, date=date_str, count=len(lines))
-
             except Exception as e:
                 logger.error("flush_failed", category=category, date=date_str, error=str(e))
-                # Return to buffer for retry
                 async with self._lock:
                     self._buffer[(category, date_str)].extend(lines)
                     self._pending_acks[(category, date_str)].extend(
@@ -177,24 +155,20 @@ class EventBuffer:
         recovered = 0
         for wal_file in self.wal_path.glob("*.wal"):
             try:
-                # Parse name: {category}_{date}.wal
                 name = wal_file.stem
                 parts = name.rsplit("_", 1)
                 if len(parts) != 2:
                     continue
 
                 category, date_str = parts
-
                 async with aiofiles.open(wal_file, mode="r", encoding="utf-8") as f:
                     content = await f.read()
 
                 lines = [line for line in content.split("\n") if line.strip()]
                 if lines:
                     self._buffer[(category, date_str)].extend(lines)
-                    # No ACKs for WAL-recovered events (that info was lost)
                     self._count += len(lines)
                     recovered += len(lines)
-
             except Exception as e:
                 logger.error("wal_recovery_failed", file=str(wal_file), error=str(e))
 
