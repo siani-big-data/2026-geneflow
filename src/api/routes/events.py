@@ -1,19 +1,17 @@
-import json
-from datetime import datetime
 from typing import Callable, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from src.api.responses import EventsResponse
-from src.constants import API_DEFAULT_PAGE_LIMIT, API_MAX_PAGE_LIMIT, DATE_FORMAT
-from src.storage import StorageProvider
+from src.api.services import EventsQueryService
+from src.constants import API_DEFAULT_PAGE_LIMIT, API_MAX_PAGE_LIMIT
 
 router = APIRouter(tags=["Events"])
 
 
 def setup_events_routes(
     router: APIRouter,
-    storage: StorageProvider,
+    events_service: EventsQueryService,
     verify_api_key: Callable,
 ) -> None:
     """Configure event routes."""
@@ -35,38 +33,23 @@ def setup_events_routes(
         _: None = Depends(verify_api_key),
     ):
         try:
-            if date:
-                target = datetime.strptime(date, DATE_FORMAT)
-                lines = await storage.read_events(category, target)
-            elif start_date and end_date:
-                start = datetime.strptime(start_date, DATE_FORMAT)
-                end = datetime.strptime(end_date, DATE_FORMAT)
-                lines = await storage.read_events_range(category, start, end)
-            else:
-                target = datetime.utcnow()
-                lines = await storage.read_events(category, target)
-                date = target.strftime(DATE_FORMAT)
-
-            events = []
-            for line in lines:
-                try:
-                    event = json.loads(line)
-                    if event_type and event.get("type") != event_type:
-                        continue
-                    events.append(event)
-                except json.JSONDecodeError:
-                    continue
-
-            total = len(events)
-            events = events[offset : offset + limit]
-
-            return EventsResponse(
+            result = await events_service.query_events(
                 category=category,
-                events=events,
-                count=total,
                 date=date,
                 start_date=start_date,
                 end_date=end_date,
+                event_type=event_type,
+                limit=limit,
+                offset=offset,
+            )
+
+            return EventsResponse(
+                category=result.category,
+                events=result.events,
+                count=result.total_count,
+                date=result.date,
+                start_date=result.start_date,
+                end_date=result.end_date,
             )
 
         except ValueError as e:

@@ -13,6 +13,7 @@ from src.api.routes.dlq import router as dlq_router, setup_dlq_routes
 from src.api.routes.events import router as events_router, setup_events_routes
 from src.api.routes.health import router as health_router, setup_health_routes
 from src.api.routes.replay import router as replay_router, setup_replay_routes
+from src.api.services import CategoryStatsService, DLQService, EventsQueryService
 from src.config import Settings
 from src.retry import RetryHandler
 from src.storage import StorageProvider
@@ -66,11 +67,15 @@ def create_app(
 
     verify_api_key = get_api_key_dependency(settings)
 
+    events_service = EventsQueryService(storage)
+    category_service = CategoryStatsService(storage)
+    dlq_service = DLQService(retry_handler)
+
     setup_health_routes(health_router, storage, get_consumer_metrics)
-    setup_categories_routes(categories_router, storage, verify_api_key)
-    setup_events_routes(events_router, storage, verify_api_key)
+    setup_categories_routes(categories_router, category_service, verify_api_key)
+    setup_events_routes(events_router, events_service, verify_api_key)
     setup_replay_routes(replay_router, storage, verify_api_key)
-    setup_dlq_routes(dlq_router, retry_handler, verify_api_key)
+    setup_dlq_routes(dlq_router, dlq_service, verify_api_key)
 
     app.include_router(health_router)
     app.include_router(categories_router)
