@@ -8,13 +8,14 @@ from typing import Optional
 import redis.asyncio as redis
 import structlog
 
+from src.buffer import EventBuffer
 from src.config import Settings
-from src.consumer.buffer import EventBuffer
-from src.consumer.deduplication import EventDeduplicator
-from src.consumer.retry import RetryHandler
 from src.constants import REDIS_BATCH_SIZE, REDIS_BLOCK_MS, REDIS_RECONNECT_DELAY_SECONDS
-from src.models import DatalakeEvent, EventBusMessage, EventCategory
+from src.consumer.deduplication import EventDeduplicator
+from src.consumer.message_parser import MessageParser
+from src.models import EventCategory
 from src.mounters.engine import MounterEngine
+from src.retry import RetryHandler
 from src.storage import StorageProvider
 
 logger = structlog.get_logger()
@@ -41,6 +42,7 @@ class DatalakeConsumer:
         self.mounter_engine = mounter_engine
         self.redis: Optional[redis.Redis] = None
         self._running = False
+        self._message_parser = MessageParser()
 
         self.buffer = EventBuffer(
             flush_callback=self._on_flush,
@@ -184,7 +186,7 @@ class DatalakeConsumer:
         """Process a message from Redis."""
         try:
             self._events_received += 1
-            event_msg = EventBusMessage.from_redis(data)
+            event_msg = self._message_parser.parse_redis_message(data)
 
             if await self.deduplicator.is_duplicate(event_msg.eventId):
                 self._events_duplicates += 1
@@ -196,32 +198,11 @@ class DatalakeConsumer:
                 logger.debug("duplicate_skipped", event_id=event_msg.eventId)
                 return
 
-            try:
-                timestamp = datetime.fromtimestamp(event_msg.timestamp / 1000)
-            except (ValueError, TypeError):
-                timestamp = datetime.utcnow()
-
-            try:
-                event_data = (
-                    json.loads(event_msg.data)
-                    if isinstance(event_msg.data, str)
-                    else event_msg.data
-                )
-            except json.JSONDecodeError:
-                event_data = {"raw": event_msg.data}
-
-            event = DatalakeEvent(
-                eventId=event_msg.eventId,
-                type=event_msg.type,
-                category=category,
-                timestamp=timestamp,
-                streamId=msg_id,
-                data=event_data,
-            )
+            event = self._message_parser.create_datalake_event(event_msg, category, msg_id)
 
             await self.buffer.add(
                 category=category,
-                date=timestamp,
+                date=event.timestamp,
                 event_line=event.to_json_line(),
                 stream_name=stream_name,
                 msg_id=msg_id,
