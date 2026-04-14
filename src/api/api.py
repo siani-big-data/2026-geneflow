@@ -2,7 +2,7 @@
 
 from src.api.app import create_app
 from src.config import Settings
-from src.retry import RetryHandler
+from src.consumer import RetryHandler
 from src.storage import StorageProvider
 
 
