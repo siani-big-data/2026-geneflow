@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from src.constants import DATE_FORMAT
-from src.consumer import RetryHandler
+from src.retry import RetryHandler
 
 
 @dataclass

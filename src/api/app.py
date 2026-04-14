@@ -15,7 +15,7 @@ from src.api.routes.health import router as health_router, setup_health_routes
 from src.api.routes.replay import router as replay_router, setup_replay_routes
 from src.api.services import CategoryStatsService, DLQService, EventsQueryService
 from src.config import Settings
-from src.consumer import RetryHandler
+from src.retry import RetryHandler
 from src.storage import StorageProvider
 
 TAGS_METADATA = [

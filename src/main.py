@@ -1,24 +1,13 @@
-"""
-GeneFlow Datalake - Entry Point
-
-Consumes ALL events from Redis and persists to JSONL storage.
-Exposes REST API for queries and replay.
-"""
+"""GeneFlow Datalake - Entry Point."""
 
 import asyncio
-import signal
 import sys
 
 import structlog
-import uvicorn
 
-from src.api import DatalakeAPI
-from src.config import Settings
-from src.consumer import DatalakeConsumer
-from src.mounters.setup import setup_mounters
-from src.storage import get_storage_provider
+from src.bootstrap import bootstrap
+from src.lifecycle import ApplicationLifecycle
 
-# Configure structured logging
 structlog.configure(
     processors=[
         structlog.stdlib.add_log_level,
@@ -37,122 +26,14 @@ structlog.configure(
 logger = structlog.get_logger()
 
 
-async def run_api(api: DatalakeAPI, host: str, port: int) -> None:
-    """Run the FastAPI server."""
-    config = uvicorn.Config(api.app, host=host, port=port, log_level="info")
-    server = uvicorn.Server(config)
-    await server.serve()
-
-
 async def main() -> None:
     """Main entry point."""
     logger.info("datalake_starting")
 
-    # Load settings
-    settings = Settings()
-    logger.info(
-        "config_loaded",
-        storage=settings.storage_provider,
-        redis=settings.redis_url,
-    )
+    components = bootstrap()
+    lifecycle = ApplicationLifecycle(components)
 
-    # Create storage provider
-    storage = get_storage_provider(
-        provider=settings.storage_provider,
-        # Local
-        local_storage_path=settings.local_storage_path,
-        # Supabase
-        supabase_url=settings.supabase_url,
-        supabase_key=settings.supabase_key,
-        supabase_bucket=settings.supabase_bucket,
-        # MinIO / S3
-        minio_endpoint=settings.minio_endpoint,
-        minio_access_key=settings.minio_access_key,
-        minio_secret_key=settings.minio_secret_key,
-        minio_bucket=settings.minio_bucket,
-        minio_secure=settings.minio_secure,
-    )
-
-    # Setup mounters (PostgreSQL, Qdrant, etc.)
-    mounter_engine = setup_mounters(settings, datalake_path=settings.local_storage_path)
-    await mounter_engine.start()
-
-    # Create consumer with mounter engine
-    consumer = DatalakeConsumer(
-        settings=settings,
-        storage=storage,
-        mounter_engine=mounter_engine,
-    )
-
-    # Create API
-    api = DatalakeAPI(
-        storage=storage,
-        settings=settings,
-        retry_handler=consumer.retry_handler,
-    )
-    api.set_consumer_metrics_callback(lambda: consumer.metrics)
-
-    # Setup shutdown
-    shutdown_event = asyncio.Event()
-
-    def signal_handler(sig):
-        logger.info("shutdown_signal_received", signal=sig)
-        shutdown_event.set()
-
-    # Register signal handlers
-    if sys.platform != "win32":
-        loop = asyncio.get_running_loop()
-        for sig in (signal.SIGTERM, signal.SIGINT):
-            loop.add_signal_handler(sig, lambda s=sig: signal_handler(s))
-    else:
-        # Windows: handle SIGINT via exception
-        signal.signal(signal.SIGINT, lambda s, f: signal_handler(s))
-
-    # Start services
-    consumer_task = asyncio.create_task(consumer.start())
-    api_task = asyncio.create_task(run_api(api, settings.api_host, settings.api_port))
-
-    logger.info(
-        "services_started",
-        api_url=f"http://{settings.api_host}:{settings.api_port}",
-    )
-
-    # Wait for shutdown signal or task completion
-    try:
-        if sys.platform == "win32":
-            # Windows: wait for tasks, Ctrl+C raises KeyboardInterrupt
-            await asyncio.gather(consumer_task, api_task)
-        else:
-            # Unix: wait for shutdown event
-            done, pending = await asyncio.wait(
-                [
-                    asyncio.create_task(shutdown_event.wait()),
-                    consumer_task,
-                    api_task,
-                ],
-                return_when=asyncio.FIRST_COMPLETED,
-            )
-
-            # Cancel pending tasks
-            for task in pending:
-                task.cancel()
-
-    except asyncio.CancelledError:
-        pass
-
-    # Graceful shutdown
-    logger.info("graceful_shutdown_starting")
-    await consumer.stop()
-    await mounter_engine.stop()
-
-    # Cancel remaining tasks
-    consumer_task.cancel()
-    api_task.cancel()
-
-    try:
-        await asyncio.gather(consumer_task, api_task, return_exceptions=True)
-    except asyncio.CancelledError:
-        pass
+    await lifecycle.run()
 
     logger.info("datalake_stopped")
 
