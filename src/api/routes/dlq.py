@@ -5,15 +5,13 @@ from fastapi import APIRouter, Depends, Query
 from src.api.responses import DLQResponse, DLQRetryAllResponse, DLQRetryResponse
 from src.api.services import DLQService
 
-router = APIRouter(prefix="/dlq", tags=["DLQ"])
 
-
-def setup_dlq_routes(
-    router: APIRouter,
+def create_dlq_router(
     dlq_service: DLQService,
     verify_api_key: Callable,
-) -> None:
-    """Configure DLQ routes."""
+) -> APIRouter:
+    """Create DLQ router with routes configured."""
+    router = APIRouter(prefix="/dlq", tags=["DLQ"])
 
     @router.get(
         "",
@@ -68,3 +66,5 @@ def setup_dlq_routes(
             failed=result.failed,
             total=result.total,
         )
+
+    return router

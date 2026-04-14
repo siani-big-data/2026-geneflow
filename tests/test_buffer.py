@@ -61,7 +61,7 @@ async def test_flush_on_interval(temp_dir: Path):
 async def test_wal_written(buffer: EventBuffer, temp_dir: Path):
     await buffer.add("users", datetime(2026, 3, 25), '{"test": 1}', "s", "1-0")
 
-    wal_file = Path(buffer.wal_path) / "users_2026-03-25.wal"
+    wal_file = buffer._wal.path / "users_2026-03-25.wal"
     assert wal_file.exists()
 
     content = wal_file.read_text()
@@ -75,7 +75,7 @@ async def test_wal_cleared_after_flush(buffer: EventBuffer, temp_dir: Path):
     await buffer.add("users", datetime(2026, 3, 25), '{"e": 2}', "s", "2-0")
     await buffer.add("users", datetime(2026, 3, 25), '{"e": 3}', "s", "3-0")
 
-    wal_file = Path(buffer.wal_path) / "users_2026-03-25.wal"
+    wal_file = buffer._wal.path / "users_2026-03-25.wal"
     assert not wal_file.exists()  # Should be deleted after flush
 
 

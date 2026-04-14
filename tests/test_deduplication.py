@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from src.deduplication import EventDeduplicator
+from src.consumer import EventDeduplicator
 
 
 @pytest.mark.asyncio

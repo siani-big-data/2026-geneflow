@@ -6,15 +6,13 @@ from src.api.responses import EventsResponse
 from src.api.services import EventsQueryService
 from src.constants import API_DEFAULT_PAGE_LIMIT, API_MAX_PAGE_LIMIT
 
-router = APIRouter(tags=["Events"])
 
-
-def setup_events_routes(
-    router: APIRouter,
+def create_events_router(
     events_service: EventsQueryService,
     verify_api_key: Callable,
-) -> None:
-    """Configure event routes."""
+) -> APIRouter:
+    """Create events router with routes configured."""
+    router = APIRouter(tags=["Events"])
 
     @router.get(
         "/events/{category}",
@@ -54,3 +52,5 @@ def setup_events_routes(
 
         except ValueError as e:
             raise HTTPException(400, f"Invalid date format: {e}")
+
+    return router

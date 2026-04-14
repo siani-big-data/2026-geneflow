@@ -30,9 +30,6 @@ def create_storage(settings: Settings):
     return get_storage_provider(
         provider=settings.storage_provider,
         local_storage_path=settings.local_storage_path,
-        supabase_url=settings.supabase_url,
-        supabase_key=settings.supabase_key,
-        supabase_bucket=settings.supabase_bucket,
         minio_endpoint=settings.minio_endpoint,
         minio_access_key=settings.minio_access_key,
         minio_secret_key=settings.minio_secret_key,

@@ -10,15 +10,13 @@ from src.api.responses import (
 )
 from src.api.services import CategoryStatsService
 
-router = APIRouter(prefix="/categories", tags=["Categories"])
 
-
-def setup_categories_routes(
-    router: APIRouter,
+def create_categories_router(
     category_service: CategoryStatsService,
     verify_api_key: Callable,
-) -> None:
-    """Configure category routes."""
+) -> APIRouter:
+    """Create categories router with routes configured."""
+    router = APIRouter(prefix="/categories", tags=["Categories"])
 
     @router.get(
         "",
@@ -69,3 +67,5 @@ def setup_categories_routes(
             dates=result.dates,
             count=result.count,
         )
+
+    return router

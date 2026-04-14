@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 from src.api import DatalakeAPI
 from src.buffer import EventBuffer
 from src.config import Settings
-from src.deduplication import EventDeduplicator
+from src.consumer import EventDeduplicator
 from src.retry import RetryHandler
 from src.storage.local import LocalStorageProvider
 

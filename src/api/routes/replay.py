@@ -8,15 +8,13 @@ from src.api.responses import ReplayResponse
 from src.constants import DATE_FORMAT
 from src.storage import StorageProvider
 
-router = APIRouter(tags=["Replay"])
 
-
-def setup_replay_routes(
-    router: APIRouter,
+def create_replay_router(
     storage: StorageProvider,
     verify_api_key: Callable,
-) -> None:
-    """Configure replay routes."""
+) -> APIRouter:
+    """Create replay router with routes configured."""
+    router = APIRouter(tags=["Replay"])
 
     @router.get(
         "/replay/{category}",
@@ -59,3 +57,5 @@ def setup_replay_routes(
             first_date=dates[0].strftime(DATE_FORMAT),
             last_date=dates[-1].strftime(DATE_FORMAT),
         )
+
+    return router

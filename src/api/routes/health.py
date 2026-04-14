@@ -5,15 +5,13 @@ from fastapi import APIRouter
 from src.api.responses import HealthResponse
 from src.storage import StorageProvider
 
-router = APIRouter(tags=["Health"])
 
-
-def setup_health_routes(
-    router: APIRouter,
+def create_health_router(
     storage: StorageProvider,
     get_consumer_metrics: Callable[[], dict | None],
-) -> None:
-    """Configure health routes."""
+) -> APIRouter:
+    """Create health router with routes configured."""
+    router = APIRouter(tags=["Health"])
 
     @router.get(
         "/health",
@@ -30,3 +28,5 @@ def setup_health_routes(
             storage_healthy=storage_healthy,
             consumer_metrics=consumer_metrics,
         )
+
+    return router
