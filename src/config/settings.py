@@ -2,72 +2,70 @@ from typing import Literal
 
 from pydantic_settings import BaseSettings
 
+from src.config.constants import (
+    BUFFER_DEFAULT_MAX_SIZE,
+    BUFFER_FLUSH_INTERVAL_SECONDS,
+    RETRY_MAX_ATTEMPTS,
+    RETRY_BASE_DELAY_SECONDS,
+    RETRY_MAX_DELAY_SECONDS,
+    DEDUP_TTL_HOURS,
+    DEDUP_MAX_SIZE,
+    REDIS_BLOCK_MS,
+    REDIS_BATCH_SIZE,
+)
+
 
 class Settings(BaseSettings):
-    # Redis config
+    """Datalake configuration loaded from environment variables with DATALAKE_ prefix."""
+
     redis_url: str = "redis://redis:6379"
     redis_consumer_group: str = "geneflow-datalake-consumers"
     redis_consumer_name: str = "geneflow-datalake-1"
-    redis_block_ms: int = 5000
+    redis_block_ms: int = REDIS_BLOCK_MS
     redis_stream_prefix: str = "geneflow-datalake:events"
-    batch_size: int = 50
+    batch_size: int = REDIS_BATCH_SIZE
 
-    # Storage
     storage_provider: Literal["local", "supabase", "minio"] = "local"
     local_storage_path: str = "./data/datalake"
 
-    # Supabase Storage
-    supabase_url: str = ""
-    supabase_key: str = ""
-    supabase_bucket: str = "geneflow-datalake"
-
-    # MinIO / S3-compatible Storage
     minio_endpoint: str = ""
     minio_access_key: str = ""
     minio_secret_key: str = ""
     minio_bucket: str = "geneflow-datalake"
     minio_secure: bool = True
 
-    # Buffer
-    buffer_max_size: int = 1000
-    buffer_flush_interval: float = 5.0
+    buffer_max_size: int = BUFFER_DEFAULT_MAX_SIZE
+    buffer_flush_interval: float = BUFFER_FLUSH_INTERVAL_SECONDS
     wal_path: str = "./data/wal"
 
-    # Retry
-    retry_max_attempts: int = 5
-    retry_base_delay: float = 1.0
-    retry_max_delay: float = 300.0
+    retry_max_attempts: int = RETRY_MAX_ATTEMPTS
+    retry_base_delay: float = RETRY_BASE_DELAY_SECONDS
+    retry_max_delay: float = RETRY_MAX_DELAY_SECONDS
     dlq_path: str = "./data/dlq"
 
-    # Deduplication
+    dedup_ttl_hours: int = DEDUP_TTL_HOURS
+    dedup_max_size: int = DEDUP_MAX_SIZE
 
-    dedup_ttl_hours: int = 24
-    dedup_max_size: int = 100000
-
-    # API
     api_host: str = "0.0.0.0"
     api_port: int = 8080
-    api_key: str = ""  # If empty, no auth required
+    api_key: str = ""
 
-    # CORS
     cors_origins: list[str] = ["*"]
     cors_allow_credentials: bool = True
     cors_allow_methods: list[str] = ["*"]
     cors_allow_headers: list[str] = ["*"]
 
-    # Logging
     log_level: str = "INFO"
     log_requests: bool = True
 
-    # PostgreSQL (Datamarts)
     postgres_dsn: str = ""
     postgres_enabled: bool = False
 
-    # Qdrant
     qdrant_url: str = "http://localhost:6333"
     qdrant_api_key: str = ""
     qdrant_enabled: bool = False
 
-    class Config:
-        env_prefix = "DATALAKE_"
-        env_file = ".env"
+    model_config = {
+        "env_prefix": "DATALAKE_",
+        "env_file": ".env",
+    }
