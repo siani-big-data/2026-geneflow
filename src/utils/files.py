@@ -2,7 +2,6 @@
 
 import json
 from pathlib import Path
-from typing import AsyncIterator
 
 import aiofiles
 

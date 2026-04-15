@@ -1,7 +1,6 @@
 """Service for category statistics and listing."""
 
 from dataclasses import dataclass
-from datetime import datetime
 
 from src.constants import DATE_FORMAT
 from src.models import EventCategory

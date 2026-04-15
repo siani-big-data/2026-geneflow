@@ -1,6 +1,5 @@
 """S3-compatible storage connection wrapper using aiobotocore."""
 
-from io import BytesIO
 from typing import Optional
 
 import structlog

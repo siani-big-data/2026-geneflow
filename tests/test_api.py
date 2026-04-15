@@ -1,13 +1,10 @@
 """Tests for API endpoints."""
 
-import asyncio
 from datetime import datetime
 from pathlib import Path
-import tempfile
 
 import pytest
-import pytest_asyncio
-from httpx import AsyncClient, ASGITransport
+from httpx import ASGITransport, AsyncClient
 
 from src.api import DatalakeAPI
 from src.config import Settings
