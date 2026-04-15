@@ -3,7 +3,8 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from src.api import app, register_workers, set_redis_health
+from src.api import create_app
+from src.api.routes.health import set_redis_health, set_workers
 from src.models import WorkerMetrics, WorkerStatus
 
 
@@ -28,7 +29,13 @@ class MockWorker:
 
 
 @pytest.fixture
-def client():
+def app():
+    """Create test app."""
+    return create_app()
+
+
+@pytest.fixture
+def client(app):
     """Create test client."""
     return TestClient(app)
 
@@ -36,10 +43,10 @@ def client():
 @pytest.fixture(autouse=True)
 def reset_state():
     """Reset global state before each test."""
-    register_workers({})
+    set_workers({})
     set_redis_health(False)
     yield
-    register_workers({})
+    set_workers({})
     set_redis_health(False)
 
 
@@ -57,7 +64,7 @@ class TestHealthEndpoint:
 
     def test_health_all_workers_running(self, client):
         """Test health with all workers running."""
-        register_workers(
+        set_workers(
             {
                 "trace": MockWorker(WorkerStatus.RUNNING),
                 "alignment": MockWorker(WorkerStatus.RUNNING),
@@ -76,7 +83,7 @@ class TestHealthEndpoint:
 
     def test_health_some_workers_stopped(self, client):
         """Test health with some workers stopped."""
-        register_workers(
+        set_workers(
             {
                 "trace": MockWorker(WorkerStatus.RUNNING),
                 "alignment": MockWorker(WorkerStatus.STOPPED),
@@ -91,7 +98,7 @@ class TestHealthEndpoint:
 
     def test_health_all_workers_stopped(self, client):
         """Test health with all workers stopped."""
-        register_workers(
+        set_workers(
             {
                 "trace": MockWorker(WorkerStatus.STOPPED),
                 "alignment": MockWorker(WorkerStatus.STOPPED),
@@ -119,7 +126,7 @@ class TestWorkerHealthEndpoint:
 
     def test_worker_health_exists(self, client):
         """Test getting health of existing worker."""
-        register_workers(
+        set_workers(
             {
                 "trace": MockWorker(WorkerStatus.RUNNING),
             }
@@ -152,7 +159,7 @@ class TestReadinessEndpoint:
 
     def test_ready_no_redis(self, client):
         """Test readiness without Redis."""
-        register_workers(
+        set_workers(
             {
                 "trace": MockWorker(WorkerStatus.RUNNING),
             }
@@ -165,7 +172,7 @@ class TestReadinessEndpoint:
 
     def test_ready_workers_stopped(self, client):
         """Test readiness with stopped workers."""
-        register_workers(
+        set_workers(
             {
                 "trace": MockWorker(WorkerStatus.STOPPED),
             }
@@ -178,7 +185,7 @@ class TestReadinessEndpoint:
 
     def test_ready_success(self, client):
         """Test successful readiness check."""
-        register_workers(
+        set_workers(
             {
                 "trace": MockWorker(WorkerStatus.RUNNING),
             }
