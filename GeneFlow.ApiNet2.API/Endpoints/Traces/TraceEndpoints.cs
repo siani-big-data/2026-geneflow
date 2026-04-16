@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using GeneFlow.ApiNet2.API.Contracts.Common;
 using GeneFlow.ApiNet2.API.Contracts.Traces.Requests;
 using GeneFlow.ApiNet2.API.Contracts.Traces.Responses;
 using GeneFlow.ApiNet2.API.Extensions;
@@ -10,7 +12,7 @@ using GeneFlow.ApiNet2.Application.Traces.Commands.UploadTrace;
 using GeneFlow.ApiNet2.Application.Traces.Queries.GetStudyTraces;
 using GeneFlow.ApiNet2.Application.Traces.Queries.GetTraceById;
 using GeneFlow.ApiNet2.Application.Traces.Queries.GetTraceCountsByStatus;
-using GeneFlow.ApiNet2.SharedKernel.Domain.Pagination;
+using GeneFlow.ApiNet2.SharedKernel.Infrastructure;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -67,7 +69,7 @@ public sealed class TraceEndpoints : IEndpoint
             .WithName("Traces_UpdateName")
             .WithSummary("Update trace name")
             .WithDescription("Updates the name of a trace.")
-            .Produces<TraceResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status200OK)
             .ProducesValidationProblem()
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces<ApiError>(StatusCodes.Status404NotFound);
@@ -76,7 +78,7 @@ public sealed class TraceEndpoints : IEndpoint
             .WithName("Traces_Archive")
             .WithSummary("Archive a trace")
             .WithDescription("Archives a trace.")
-            .Produces<TraceResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces<ApiError>(StatusCodes.Status404NotFound);
 
@@ -84,7 +86,7 @@ public sealed class TraceEndpoints : IEndpoint
             .WithName("Traces_Retry")
             .WithSummary("Retry failed trace processing")
             .WithDescription("Retries processing for a failed trace.")
-            .Produces<TraceResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces<ApiError>(StatusCodes.Status404NotFound);
 
@@ -107,9 +109,15 @@ public sealed class TraceEndpoints : IEndpoint
         [FromQuery] string? sortBy = null,
         [FromQuery] bool sortDescending = true,
         [FromServices] ISender sender = default!,
+        [FromServices] ICurrentUserService currentUserService = default!,
         CancellationToken cancellationToken = default)
     {
+        var userId = currentUserService.UserId;
+        if (string.IsNullOrEmpty(userId))
+            return Results.Unauthorized();
+
         var query = new GetStudyTracesQuery(
+            userId,
             studyId,
             pageNumber,
             pageSize,
@@ -129,9 +137,14 @@ public sealed class TraceEndpoints : IEndpoint
     private static async Task<IResult> GetTraceCountsByStatus(
         [FromRoute] string studyId,
         [FromServices] ISender sender = default!,
+        [FromServices] ICurrentUserService currentUserService = default!,
         CancellationToken cancellationToken = default)
     {
-        var query = new GetTraceCountsByStatusQuery(studyId);
+        var userId = currentUserService.UserId;
+        if (string.IsNullOrEmpty(userId))
+            return Results.Unauthorized();
+
+        var query = new GetTraceCountsByStatusQuery(userId, studyId);
         var result = await sender.Send(query, cancellationToken);
 
         return result.IsSuccess
@@ -143,9 +156,14 @@ public sealed class TraceEndpoints : IEndpoint
         [FromRoute] string studyId,
         [FromRoute] string traceId,
         [FromServices] ISender sender = default!,
+        [FromServices] ICurrentUserService currentUserService = default!,
         CancellationToken cancellationToken = default)
     {
-        var query = new GetTraceByIdQuery(traceId);
+        var userId = currentUserService.UserId;
+        if (string.IsNullOrEmpty(userId))
+            return Results.Unauthorized();
+
+        var query = new GetTraceByIdQuery(userId, traceId);
         var result = await sender.Send(query, cancellationToken);
 
         return result.IsSuccess
@@ -160,15 +178,24 @@ public sealed class TraceEndpoints : IEndpoint
         IFormFile file,
         [FromServices] ISender sender = default!,
         [FromServices] ICurrentUserService currentUserService = default!,
+        [FromServices] IFileStorageService fileStorageService = default!,
         CancellationToken cancellationToken = default)
     {
         var userId = currentUserService.UserId;
         if (string.IsNullOrEmpty(userId))
             return Results.Unauthorized();
 
+        // Read file bytes and calculate checksum
         using var stream = file.OpenReadStream();
         var fileBytes = new byte[file.Length];
         await stream.ReadExactlyAsync(fileBytes, cancellationToken);
+        var checksum = Convert.ToHexString(SHA256.HashData(fileBytes)).ToLowerInvariant();
+
+        // Store file in datalake
+        var traceId = Guid.NewGuid();
+        var extension = Path.GetExtension(file.FileName);
+        var storagePath = $"studies/{studyId}/traces/{traceId}{extension}";
+        await fileStorageService.StoreFileAsync(fileBytes, storagePath, cancellationToken);
 
         var command = new UploadTraceCommand(
             userId,
@@ -177,7 +204,9 @@ public sealed class TraceEndpoints : IEndpoint
             description,
             file.FileName,
             file.ContentType,
-            fileBytes);
+            storagePath,
+            file.Length,
+            checksum);
 
         var result = await sender.Send(command, cancellationToken);
 
@@ -201,9 +230,7 @@ public sealed class TraceEndpoints : IEndpoint
         var command = new UpdateTraceNameCommand(userId, traceId, request.Name);
         var result = await sender.Send(command, cancellationToken);
 
-        return result.IsSuccess
-            ? Results.Ok(result.Value.ToResponse())
-            : result.Error.ToApiResult();
+        return result.ToHttpResult();
     }
 
     private static async Task<IResult> ArchiveTrace(
@@ -220,9 +247,7 @@ public sealed class TraceEndpoints : IEndpoint
         var command = new ArchiveTraceCommand(userId, traceId);
         var result = await sender.Send(command, cancellationToken);
 
-        return result.IsSuccess
-            ? Results.Ok(result.Value.ToResponse())
-            : result.Error.ToApiResult();
+        return result.ToHttpResult();
     }
 
     private static async Task<IResult> RetryTraceProcessing(
@@ -239,9 +264,7 @@ public sealed class TraceEndpoints : IEndpoint
         var command = new RetryTraceProcessingCommand(userId, traceId);
         var result = await sender.Send(command, cancellationToken);
 
-        return result.IsSuccess
-            ? Results.Ok(result.Value.ToResponse())
-            : result.Error.ToApiResult();
+        return result.ToHttpResult();
     }
 
     private static async Task<IResult> DeleteTrace(
