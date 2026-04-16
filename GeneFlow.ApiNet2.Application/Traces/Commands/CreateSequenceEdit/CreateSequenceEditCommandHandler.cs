@@ -35,7 +35,7 @@ public sealed class CreateSequenceEditCommandHandler
             return Result.Failure<SequenceEditDto>(TraceErrors.NotFound);
 
         // Get edit type
-        var editType = EditType.FromValue(request.EditType);
+        var editType = EditType.FromId(request.EditType);
         if (editType is null)
             return Result.Failure<SequenceEditDto>(TraceErrors.InvalidEditType);
 

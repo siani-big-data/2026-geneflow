@@ -39,7 +39,7 @@ public sealed class UpdateAnnotationCommandHandler
             return Result.Failure<AnnotationDto>(TraceErrors.AnnotationNotFound);
 
         // Get annotation strand
-        var strand = AnnotationStrand.FromValue(request.StrandId);
+        var strand = AnnotationStrand.FromId(request.StrandId);
         if (strand is null)
             return Result.Failure<AnnotationDto>(TraceErrors.InvalidAnnotationStrand);
 

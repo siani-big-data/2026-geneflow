@@ -79,7 +79,7 @@ public sealed class GetEditedSequenceQueryHandler
 
         foreach (var edit in sortedEdits)
         {
-            switch (edit.EditType.Value)
+            switch (edit.EditType.Id)
             {
                 case 1: // Change
                     if (edit.Position >= 0 && edit.Position < sb.Length && edit.NewBase.HasValue)

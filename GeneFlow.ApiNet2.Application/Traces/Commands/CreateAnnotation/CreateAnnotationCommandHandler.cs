@@ -35,12 +35,12 @@ public sealed class CreateAnnotationCommandHandler
             return Result.Failure<AnnotationDto>(TraceErrors.NotFound);
 
         // Get annotation type
-        var annotationType = AnnotationType.FromValue(request.TypeId);
+        var annotationType = AnnotationType.FromId(request.TypeId);
         if (annotationType is null)
             return Result.Failure<AnnotationDto>(TraceErrors.InvalidAnnotationType);
 
         // Get annotation strand
-        var strand = AnnotationStrand.FromValue(request.StrandId);
+        var strand = AnnotationStrand.FromId(request.StrandId);
         if (strand is null)
             return Result.Failure<AnnotationDto>(TraceErrors.InvalidAnnotationStrand);
 
