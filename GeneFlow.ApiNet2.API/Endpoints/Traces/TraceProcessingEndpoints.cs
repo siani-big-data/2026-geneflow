@@ -59,9 +59,7 @@ public sealed class TraceProcessingEndpoints : IEndpoint
         var command = new StartTraceProcessingCommand(traceId);
         var result = await sender.Send(command, cancellationToken);
 
-        return result.IsSuccess
-            ? Results.Ok(result.Value.ToResponse())
-            : result.Error.ToApiResult();
+        return result.ToHttpResult();
     }
 
     private static async Task<IResult> CompleteProcessing(
@@ -82,9 +80,7 @@ public sealed class TraceProcessingEndpoints : IEndpoint
 
         var result = await sender.Send(command, cancellationToken);
 
-        return result.IsSuccess
-            ? Results.Ok(result.Value.ToResponse())
-            : result.Error.ToApiResult();
+        return result.ToHttpResult();
     }
 
     private static async Task<IResult> FailProcessing(
@@ -96,8 +92,6 @@ public sealed class TraceProcessingEndpoints : IEndpoint
         var command = new FailTraceProcessingCommand(traceId, request.Reason);
         var result = await sender.Send(command, cancellationToken);
 
-        return result.IsSuccess
-            ? Results.Ok(result.Value.ToResponse())
-            : result.Error.ToApiResult();
+        return result.ToHttpResult();
     }
 }
