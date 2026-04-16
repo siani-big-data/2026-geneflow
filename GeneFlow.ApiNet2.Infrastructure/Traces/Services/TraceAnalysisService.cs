@@ -88,7 +88,7 @@ public sealed class TraceAnalysisService : ITraceAnalysisService
         try
         {
             // Check if analysis file exists
-            var exists = await _fileStorageService.ExistsAsync(analysisPath, cancellationToken);
+            var exists = await _fileStorageService.FileExistsAsync(analysisPath, cancellationToken);
             if (!exists)
             {
                 _logger.LogWarning(
@@ -101,8 +101,10 @@ public sealed class TraceAnalysisService : ITraceAnalysisService
             }
 
             // Download and parse the analysis JSON
-            await using var stream = await _fileStorageService.DownloadAsync(analysisPath, cancellationToken);
-            var analysisData = await JsonSerializer.DeserializeAsync<AnalysisJson>(stream, JsonOptions, cancellationToken);
+            var fileBytes = await _fileStorageService.GetFileAsync(analysisPath, cancellationToken);
+            var analysisData = fileBytes is not null
+                ? JsonSerializer.Deserialize<AnalysisJson>(fileBytes, JsonOptions)
+                : null;
 
             if (analysisData is null)
             {
