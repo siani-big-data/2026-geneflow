@@ -1087,15 +1087,15 @@
       "guides": {
         "createStudy": {
           "title": "Create Your First Study",
-          "description": "Step-by-step guide to setting up a new research study"
+          "description": "Go to Studies > New Study. Enter a name, select a research field (Genomics, Proteomics, etc.), add a description, and click Create. Your study starts in Draft status."
         },
         "uploadTraces": {
           "title": "Upload & Manage Traces",
-          "description": "Learn how to upload and organize chromatogram data"
+          "description": "Open your study, go to the Traces tab, and click Upload. Drag and drop .ab1, .scf, .fastq, or .fasta files. Traces are automatically validated and processed for quality metrics."
         },
         "runPipeline": {
-          "title": "Run an Analysis Pipeline",
-          "description": "Execute your first genomic analysis workflow"
+          "title": "Run Sequence Alignments",
+          "description": "Select 2+ traces from your study to create an alignment. Choose Pairwise (2 traces), Multiple (3+), or Reference alignment. Results include consensus sequence and variant detection."
         }
       }
     },
@@ -1121,30 +1121,30 @@
         }
       },
       "pipelines": {
-        "title": "Pipelines",
+        "title": "Alignments",
         "topics": {
-          "runPipelines": "Running analysis pipelines",
-          "understandResults": "Understanding results",
+          "runPipelines": "Creating sequence alignments",
+          "understandResults": "Understanding alignment results",
           "qcMetrics": "Quality control metrics",
-          "exportData": "Exporting analysis data"
+          "exportData": "Exporting alignment data"
         }
       },
       "collaboration": {
         "title": "Collaboration",
         "topics": {
-          "rolesPermissions": "Team roles and permissions",
-          "inviteCollaborators": "Inviting collaborators",
-          "shareSecurely": "Sharing data securely",
-          "manageAccess": "Managing access controls"
+          "rolesPermissions": "Team roles: Owner, Admin, Editor, Viewer",
+          "inviteCollaborators": "Sending invitations to collaborators",
+          "shareSecurely": "Publishing studies publicly",
+          "manageAccess": "Transferring study ownership"
         }
       },
       "security": {
         "title": "Security & Privacy",
         "topics": {
-          "twoFactor": "Two-factor authentication",
+          "twoFactor": "Two-factor authentication (TOTP)",
           "encryption": "Data encryption",
-          "compliance": "Compliance guidelines",
-          "auditLogs": "Access logs and auditing"
+          "compliance": "OAuth login (Google, GitHub)",
+          "auditLogs": "Session management"
         }
       },
       "accountSettings": {
@@ -1152,8 +1152,8 @@
         "topics": {
           "profileCustomization": "Profile customization",
           "notificationPrefs": "Notification preferences",
-          "billing": "Billing and subscriptions",
-          "apiTokens": "API access tokens"
+          "billing": "Plans: Free, Pro, Premium, Enterprise",
+          "apiTokens": "Managing your subscription"
         }
       }
     },
@@ -1162,32 +1162,32 @@
       "description": "Step-by-step guides for key research tasks",
       "qc": {
         "title": "Quality Control Workflow",
-        "description": "Evaluate trace quality and filter low-quality samples",
+        "description": "Evaluate trace quality using automatic metrics after upload",
         "steps": {
-          "upload": "Upload traces",
-          "runQC": "Run QC pipeline",
-          "reviewMetrics": "Review metrics",
-          "filterSamples": "Filter samples"
+          "upload": "Upload .ab1/.scf/.fastq/.fasta files",
+          "runQC": "Wait for automatic processing",
+          "reviewMetrics": "Check quality scores (Q20, Q30, GC%)",
+          "filterSamples": "Filter by status: Processed/Failed"
         }
       },
       "variantCalling": {
-        "title": "Variant Calling Workflow",
-        "description": "Identify genetic variants from sequencing data",
+        "title": "Sequence Alignment Workflow",
+        "description": "Align multiple sequences and detect variants",
         "steps": {
-          "align": "Align sequences",
-          "callVariants": "Call variants",
-          "annotate": "Annotate results",
-          "exportVCF": "Export VCF"
+          "align": "Select 2+ traces from your study",
+          "callVariants": "Create Pairwise/Multiple/Reference alignment",
+          "annotate": "Review consensus sequence",
+          "exportVCF": "Export alignment results"
         }
       },
       "collaborative": {
         "title": "Collaborative Research Workflow",
         "description": "Share studies and collaborate with research teams",
         "steps": {
-          "createStudy": "Create study",
-          "inviteMembers": "Invite members",
-          "assignRoles": "Assign roles",
-          "shareResults": "Share results"
+          "createStudy": "Create study (starts as Draft)",
+          "inviteMembers": "Invite members via email",
+          "assignRoles": "Assign roles: Admin, Editor, Viewer",
+          "shareResults": "Publish study when complete"
         }
       }
     },
@@ -1196,57 +1196,41 @@
       "description": "Quick answers to common questions",
       "questions": {
         "uploadTraces": {
-          "question": "How do I upload chromatogram traces to a study?",
-          "answer": "Navigate to your study's Traces page and click the 'Upload Traces' button. You can drag and drop multiple .ab1, .scf, or .abi files, or click to browse. Each trace will be automatically associated with the study and processed for quality metrics."
+          "question": "What file formats are supported?",
+          "answer": "GeneFlow supports: AB1 (.ab1) - Applied Biosystems chromatogram files with full quality data. SCF (.scf) - Standard Chromatogram Format. FASTQ (.fastq, .fq) - Sequences with quality scores. FASTA (.fasta, .fa) - Sequence-only files. Maximum file size is 50MB per trace."
         },
         "availablePipelines": {
-          "question": "What analysis pipelines are available?",
-          "answer": "GeneFlow offers several pre-configured pipelines including Base Calling, Quality Control, Variant Calling, Sequence Alignment, and Custom Assembly. Each pipeline can be customized with specific parameters to match your research needs. Visit the Pipelines page to explore all available options."
+          "question": "What types of alignments can I create?",
+          "answer": "GeneFlow supports three alignment types: Pairwise - Compare exactly 2 sequences. Multiple - Align 3 or more sequences simultaneously. Reference - Align sequences against a reference sequence. All alignments generate consensus sequences and detect variants/SNPs."
         },
         "inviteTeam": {
-          "question": "How do I invite team members to collaborate on a study?",
-          "answer": "Open the study you want to share, click 'Share' in the top-right corner, and enter the email addresses of your collaborators. You can assign different roles (Viewer, Collaborator, Co-Investigator) with varying permission levels. Invitations will be sent via email."
+          "question": "What are the different team roles?",
+          "answer": "Owner - Full control, can transfer ownership (one per study). Admin - Manage members, change study settings and status. Editor - Create and edit traces and alignments. Viewer - Read-only access to study data. Invitations are sent by email and must be accepted to join."
         },
         "exportResults": {
-          "question": "Can I export my analysis results?",
-          "answer": "Yes, all analysis results can be exported in multiple formats. Click the 'Export' button on any analysis page and choose from CSV, JSON, or PDF formats. You can also download raw trace files and processed data for external analysis."
+          "question": "What are study statuses?",
+          "answer": "Studies progress through: Draft - Initial setup, not visible. Active - Work in progress. Completed - Research finished. Published - Publicly visible in Discover. Archived - Hidden but preserved. Only the Owner or Admin can change status."
         },
         "dataProtection": {
-          "question": "How is my genomic data protected?",
-          "answer": "All data is encrypted at rest using AES-256 encryption and in transit using TLS 1.3. We maintain SOC 2 Type II compliance and follow HIPAA guidelines. Access controls ensure only authorized team members can view sensitive data. Learn more in our Security documentation."
+          "question": "How do I secure my account?",
+          "answer": "Enable Two-Factor Authentication (2FA) using TOTP with apps like Google Authenticator or Authy. You can also sign in with Google or GitHub OAuth. Sessions expire after inactivity and can be managed in Settings > Security."
         },
         "fileFormats": {
-          "question": "What file formats are supported for trace uploads?",
-          "answer": "GeneFlow supports standard chromatogram formats including .ab1 (Applied Biosystems), .scf (Standard Chromatogram Format), and .abi files. Batch uploads of up to 1,000 files are supported, with a maximum file size of 50MB per trace."
+          "question": "How does trace processing work?",
+          "answer": "After upload, traces go through: Uploaded - File received. Validating - Format and integrity check. Processing - Quality analysis and base calling. Processed - Ready for use. Failed traces can be retried. Quality metrics include average quality score, Q20/Q30 percentages, GC content, and trimmed length."
         }
       }
     },
     "support": {
       "title": "Contact Support",
-      "description": "Can't find what you're looking for? Our support team is here to help.",
+      "description": "Can't find what you're looking for? Send us a message.",
       "emailSupport": "Email Support",
-      "emailResponse": "Response in 24 hours",
-      "liveChat": "Live Chat",
-      "liveChatHours": "Available 9am-5pm PT"
-    },
-    "resources": {
-      "title": "Resources",
-      "documentation": "Documentation",
-      "videoTutorials": "Video Tutorials",
-      "apiReference": "API Reference",
-      "sampleData": "Sample Data"
-    },
-    "systemStatus": {
-      "title": "System Status",
-      "operational": "All Systems Operational",
-      "description": "All services are running normally.",
-      "viewStatus": "View Status Page"
+      "emailResponse": "Response within 24 hours"
     },
     "stillNeedHelp": {
       "title": "Still need help?",
       "description": "Our support team is available to answer your questions and help you get the most out of GeneFlow.",
-      "contactSupport": "Contact Support",
-      "browseDocumentation": "Browse Documentation"
+      "contactSupport": "Contact Support"
     },
     "dialogs": {
       "contact": {
@@ -1266,13 +1250,6 @@
         "message": "Message",
         "messagePlaceholder": "Describe your question or issue in detail...",
         "send": "Send Message"
-      },
-      "liveChat": {
-        "title": "Live Chat Support",
-        "description": "Chat with our support team in real-time.",
-        "welcomeMessage": "Hello! How can I help you today?",
-        "autoResponse": "Thank you for your message. A support agent will respond shortly. In the meantime, you can check our FAQ section for quick answers.",
-        "placeholder": "Type your message..."
       }
     }
   },

@@ -1087,15 +1087,15 @@
       "guides": {
         "createStudy": {
           "title": "Crea Tu Primer Estudio",
-          "description": "Guía paso a paso para configurar un nuevo estudio de investigación"
+          "description": "Ve a Estudios > Nuevo Estudio. Ingresa un nombre, selecciona un campo de investigación (Genómica, Proteómica, etc.), añade una descripción y haz clic en Crear. Tu estudio comienza en estado Borrador."
         },
         "uploadTraces": {
           "title": "Subir y Gestionar Trazas",
-          "description": "Aprende a subir y organizar datos de cromatogramas"
+          "description": "Abre tu estudio, ve a la pestaña Trazas y haz clic en Subir. Arrastra archivos .ab1, .scf, .fastq o .fasta. Las trazas se validan y procesan automáticamente para métricas de calidad."
         },
         "runPipeline": {
-          "title": "Ejecutar un Pipeline de Análisis",
-          "description": "Ejecuta tu primer flujo de trabajo de análisis genómico"
+          "title": "Ejecutar Alineamientos",
+          "description": "Selecciona 2+ trazas de tu estudio para crear un alineamiento. Elige Pairwise (2 trazas), Múltiple (3+), o alineamiento con Referencia. Los resultados incluyen secuencia consenso y detección de variantes."
         }
       }
     },
@@ -1121,30 +1121,30 @@
         }
       },
       "pipelines": {
-        "title": "Pipelines",
+        "title": "Alineamientos",
         "topics": {
-          "runPipelines": "Ejecutando pipelines de análisis",
-          "understandResults": "Entendiendo resultados",
+          "runPipelines": "Creando alineamientos de secuencias",
+          "understandResults": "Entendiendo resultados de alineamiento",
           "qcMetrics": "Métricas de control de calidad",
-          "exportData": "Exportando datos de análisis"
+          "exportData": "Exportando datos de alineamiento"
         }
       },
       "collaboration": {
         "title": "Colaboración",
         "topics": {
-          "rolesPermissions": "Roles y permisos del equipo",
-          "inviteCollaborators": "Invitando colaboradores",
-          "shareSecurely": "Compartiendo datos de forma segura",
-          "manageAccess": "Gestionando controles de acceso"
+          "rolesPermissions": "Roles: Propietario, Admin, Editor, Observador",
+          "inviteCollaborators": "Enviando invitaciones a colaboradores",
+          "shareSecurely": "Publicando estudios públicamente",
+          "manageAccess": "Transfiriendo propiedad del estudio"
         }
       },
       "security": {
         "title": "Seguridad y Privacidad",
         "topics": {
-          "twoFactor": "Autenticación de dos factores",
+          "twoFactor": "Autenticación de dos factores (TOTP)",
           "encryption": "Cifrado de datos",
-          "compliance": "Guías de cumplimiento",
-          "auditLogs": "Registros de acceso y auditoría"
+          "compliance": "Login OAuth (Google, GitHub)",
+          "auditLogs": "Gestión de sesiones"
         }
       },
       "accountSettings": {
@@ -1152,8 +1152,8 @@
         "topics": {
           "profileCustomization": "Personalización del perfil",
           "notificationPrefs": "Preferencias de notificaciones",
-          "billing": "Facturación y suscripciones",
-          "apiTokens": "Tokens de acceso API"
+          "billing": "Planes: Free, Pro, Premium, Enterprise",
+          "apiTokens": "Gestionando tu suscripción"
         }
       }
     },
@@ -1162,32 +1162,32 @@
       "description": "Guías paso a paso para tareas clave de investigación",
       "qc": {
         "title": "Flujo de Control de Calidad",
-        "description": "Evalúa la calidad de las trazas y filtra muestras de baja calidad",
+        "description": "Evalúa la calidad de las trazas usando métricas automáticas después de subir",
         "steps": {
-          "upload": "Subir trazas",
-          "runQC": "Ejecutar pipeline de QC",
-          "reviewMetrics": "Revisar métricas",
-          "filterSamples": "Filtrar muestras"
+          "upload": "Subir archivos .ab1/.scf/.fastq/.fasta",
+          "runQC": "Esperar procesamiento automático",
+          "reviewMetrics": "Revisar puntuaciones de calidad (Q20, Q30, GC%)",
+          "filterSamples": "Filtrar por estado: Procesada/Fallida"
         }
       },
       "variantCalling": {
-        "title": "Flujo de Llamado de Variantes",
-        "description": "Identifica variantes genéticas de datos de secuenciación",
+        "title": "Flujo de Alineamiento de Secuencias",
+        "description": "Alinear múltiples secuencias y detectar variantes",
         "steps": {
-          "align": "Alinear secuencias",
-          "callVariants": "Llamar variantes",
-          "annotate": "Anotar resultados",
-          "exportVCF": "Exportar VCF"
+          "align": "Seleccionar 2+ trazas de tu estudio",
+          "callVariants": "Crear alineamiento Pairwise/Múltiple/Referencia",
+          "annotate": "Revisar secuencia consenso",
+          "exportVCF": "Exportar resultados de alineamiento"
         }
       },
       "collaborative": {
         "title": "Flujo de Investigación Colaborativa",
         "description": "Comparte estudios y colabora con equipos de investigación",
         "steps": {
-          "createStudy": "Crear estudio",
-          "inviteMembers": "Invitar miembros",
-          "assignRoles": "Asignar roles",
-          "shareResults": "Compartir resultados"
+          "createStudy": "Crear estudio (inicia como Borrador)",
+          "inviteMembers": "Invitar miembros por correo",
+          "assignRoles": "Asignar roles: Admin, Editor, Observador",
+          "shareResults": "Publicar estudio cuando esté completo"
         }
       }
     },
@@ -1196,57 +1196,41 @@
       "description": "Respuestas rápidas a preguntas comunes",
       "questions": {
         "uploadTraces": {
-          "question": "¿Cómo subo trazas de cromatogramas a un estudio?",
-          "answer": "Navega a la página de Trazas de tu estudio y haz clic en el botón 'Subir Trazas'. Puedes arrastrar y soltar múltiples archivos .ab1, .scf o .abi, o hacer clic para explorar. Cada traza se asociará automáticamente con el estudio y se procesará para métricas de calidad."
+          "question": "¿Qué formatos de archivo se admiten?",
+          "answer": "GeneFlow admite: AB1 (.ab1) - Archivos de cromatogramas Applied Biosystems con datos de calidad completos. SCF (.scf) - Standard Chromatogram Format. FASTQ (.fastq, .fq) - Secuencias con puntuaciones de calidad. FASTA (.fasta, .fa) - Archivos solo de secuencia. El tamaño máximo es 50MB por traza."
         },
         "availablePipelines": {
-          "question": "¿Qué pipelines de análisis están disponibles?",
-          "answer": "GeneFlow ofrece varios pipelines preconfigurados incluyendo Llamado de Bases, Control de Calidad, Llamado de Variantes, Alineamiento de Secuencias y Ensamblaje Personalizado. Cada pipeline puede personalizarse con parámetros específicos para adaptarse a tus necesidades de investigación. Visita la página de Pipelines para explorar todas las opciones disponibles."
+          "question": "¿Qué tipos de alineamientos puedo crear?",
+          "answer": "GeneFlow admite tres tipos de alineamiento: Pairwise - Comparar exactamente 2 secuencias. Múltiple - Alinear 3 o más secuencias simultáneamente. Referencia - Alinear secuencias contra una secuencia de referencia. Todos los alineamientos generan secuencias consenso y detectan variantes/SNPs."
         },
         "inviteTeam": {
-          "question": "¿Cómo invito a miembros del equipo a colaborar en un estudio?",
-          "answer": "Abre el estudio que quieres compartir, haz clic en 'Compartir' en la esquina superior derecha e ingresa las direcciones de correo de tus colaboradores. Puedes asignar diferentes roles (Observador, Colaborador, Co-Investigador) con distintos niveles de permisos. Las invitaciones se enviarán por correo electrónico."
+          "question": "¿Cuáles son los diferentes roles del equipo?",
+          "answer": "Propietario - Control total, puede transferir propiedad (uno por estudio). Admin - Gestionar miembros, cambiar configuración y estado del estudio. Editor - Crear y editar trazas y alineamientos. Observador - Acceso solo lectura a los datos del estudio. Las invitaciones se envían por correo y deben aceptarse para unirse."
         },
         "exportResults": {
-          "question": "¿Puedo exportar mis resultados de análisis?",
-          "answer": "Sí, todos los resultados de análisis pueden exportarse en múltiples formatos. Haz clic en el botón 'Exportar' en cualquier página de análisis y elige entre formatos CSV, JSON o PDF. También puedes descargar archivos de trazas sin procesar y datos procesados para análisis externo."
+          "question": "¿Cuáles son los estados de un estudio?",
+          "answer": "Los estudios progresan a través de: Borrador - Configuración inicial, no visible. Activo - Trabajo en progreso. Completado - Investigación finalizada. Publicado - Visible públicamente en Descubrir. Archivado - Oculto pero preservado. Solo el Propietario o Admin puede cambiar el estado."
         },
         "dataProtection": {
-          "question": "¿Cómo se protegen mis datos genómicos?",
-          "answer": "Todos los datos están cifrados en reposo usando cifrado AES-256 y en tránsito usando TLS 1.3. Mantenemos cumplimiento SOC 2 Tipo II y seguimos las guías HIPAA. Los controles de acceso aseguran que solo los miembros autorizados del equipo puedan ver datos sensibles. Aprende más en nuestra documentación de Seguridad."
+          "question": "¿Cómo protejo mi cuenta?",
+          "answer": "Habilita la Autenticación de Dos Factores (2FA) usando TOTP con aplicaciones como Google Authenticator o Authy. También puedes iniciar sesión con Google o GitHub OAuth. Las sesiones expiran después de inactividad y pueden gestionarse en Configuración > Seguridad."
         },
         "fileFormats": {
-          "question": "¿Qué formatos de archivo se admiten para subir trazas?",
-          "answer": "GeneFlow admite formatos estándar de cromatogramas incluyendo .ab1 (Applied Biosystems), .scf (Standard Chromatogram Format) y archivos .abi. Se admiten subidas por lotes de hasta 1,000 archivos, con un tamaño máximo de 50MB por traza."
+          "question": "¿Cómo funciona el procesamiento de trazas?",
+          "answer": "Después de subir, las trazas pasan por: Subida - Archivo recibido. Validando - Verificación de formato e integridad. Procesando - Análisis de calidad y llamado de bases. Procesada - Lista para usar. Las trazas fallidas pueden reintentarse. Las métricas de calidad incluyen puntuación promedio, porcentajes Q20/Q30, contenido GC y longitud recortada."
         }
       }
     },
     "support": {
       "title": "Contactar Soporte",
-      "description": "¿No encuentras lo que buscas? Nuestro equipo de soporte está aquí para ayudar.",
+      "description": "¿No encuentras lo que buscas? Envíanos un mensaje.",
       "emailSupport": "Soporte por Correo",
-      "emailResponse": "Respuesta en 24 horas",
-      "liveChat": "Chat en Vivo",
-      "liveChatHours": "Disponible 9am-5pm PT"
-    },
-    "resources": {
-      "title": "Recursos",
-      "documentation": "Documentación",
-      "videoTutorials": "Tutoriales en Video",
-      "apiReference": "Referencia API",
-      "sampleData": "Datos de Ejemplo"
-    },
-    "systemStatus": {
-      "title": "Estado del Sistema",
-      "operational": "Todos los Sistemas Operacionales",
-      "description": "Todos los servicios funcionan normalmente.",
-      "viewStatus": "Ver Página de Estado"
+      "emailResponse": "Respuesta en 24 horas"
     },
     "stillNeedHelp": {
       "title": "¿Aún necesitas ayuda?",
       "description": "Nuestro equipo de soporte está disponible para responder tus preguntas y ayudarte a aprovechar al máximo GeneFlow.",
-      "contactSupport": "Contactar Soporte",
-      "browseDocumentation": "Explorar Documentación"
+      "contactSupport": "Contactar Soporte"
     },
     "dialogs": {
       "contact": {
@@ -1266,13 +1250,6 @@
         "message": "Mensaje",
         "messagePlaceholder": "Describe tu pregunta o problema en detalle...",
         "send": "Enviar Mensaje"
-      },
-      "liveChat": {
-        "title": "Chat en Vivo con Soporte",
-        "description": "Chatea con nuestro equipo de soporte en tiempo real.",
-        "welcomeMessage": "¡Hola! ¿Cómo podemos ayudarte hoy?",
-        "autoResponse": "Gracias por tu mensaje. Un agente de soporte responderá en breve. Mientras tanto, puedes revisar nuestra sección de FAQ para respuestas rápidas.",
-        "placeholder": "Escribe tu mensaje..."
       }
     }
   },

@@ -4,23 +4,17 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   Search,
-  Book,
   Users,
   FileText,
   Settings,
   BarChart3,
   PlayCircle,
   Mail,
-  MessageCircle,
   FileQuestion,
   Zap,
   Shield,
-  Globe,
-  ExternalLink,
   ChevronRight,
   ChevronDown,
-  Download,
-  Send,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -138,23 +132,6 @@ export default function HelpPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
   const [contactOpen, setContactOpen] = useState(false);
-  const [liveChatOpen, setLiveChatOpen] = useState(false);
-  const [chatMessages, setChatMessages] = useState<{ sender: "user" | "support"; text: string }[]>([]);
-  const [chatInput, setChatInput] = useState("");
-
-  const handleSendMessage = () => {
-    if (chatInput.trim()) {
-      setChatMessages([...chatMessages, { sender: "user", text: chatInput }]);
-      setChatInput("");
-      // Simulate support response
-      setTimeout(() => {
-        setChatMessages(prev => [...prev, {
-          sender: "support",
-          text: t("dialogs.liveChat.autoResponse")
-        }]);
-      }, 1000);
-    }
-  };
 
   const handleTopicClick = (topic: string) => {
     console.log("Navigating to topic:", topic);
@@ -332,93 +309,7 @@ export default function HelpPage() {
                     <p className="text-xs opacity-90">{t("support.emailResponse")}</p>
                   </div>
                 </button>
-                <button
-                  onClick={() => setLiveChatOpen(true)}
-                  className="group flex w-full items-center gap-3 rounded-lg border border-border p-3 transition-all hover:bg-muted/50"
-                >
-                  <MessageCircle className="h-4 w-4 text-foreground" />
-                  <div className="flex-1 text-left">
-                    <p className="text-sm font-medium text-foreground">{t("support.liveChat")}</p>
-                    <p className="text-xs text-muted-foreground">{t("support.liveChatHours")}</p>
-                  </div>
-                </button>
               </div>
-            </div>
-
-            {/* Resources */}
-            <div className="rounded-xl border border-border bg-card p-6">
-              <h3 className="mb-4 text-base font-semibold text-foreground">{t("resources.title")}</h3>
-              <div className="space-y-3">
-                <a
-                  href="https://docs.geneflow.io"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group flex items-center justify-between rounded-lg p-3 transition-all hover:bg-muted/50"
-                >
-                  <div className="flex items-center gap-3">
-                    <Book className="h-4 w-4 text-teal" />
-                    <span className="text-sm font-medium text-foreground">{t("resources.documentation")}</span>
-                  </div>
-                  <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
-                </a>
-                <a
-                  href="https://youtube.com/@geneflow"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group flex items-center justify-between rounded-lg p-3 transition-all hover:bg-muted/50"
-                >
-                  <div className="flex items-center gap-3">
-                    <PlayCircle className="h-4 w-4 text-blue-deep" />
-                    <span className="text-sm font-medium text-foreground">{t("resources.videoTutorials")}</span>
-                  </div>
-                  <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
-                </a>
-                <a
-                  href="https://api.geneflow.io/docs"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group flex items-center justify-between rounded-lg p-3 transition-all hover:bg-muted/50"
-                >
-                  <div className="flex items-center gap-3">
-                    <Globe className="h-4 w-4 text-teal" />
-                    <span className="text-sm font-medium text-foreground">{t("resources.apiReference")}</span>
-                  </div>
-                  <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
-                </a>
-                <a
-                  href="https://geneflow.io/sample-data"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group flex items-center justify-between rounded-lg p-3 transition-all hover:bg-muted/50"
-                >
-                  <div className="flex items-center gap-3">
-                    <Download className="h-4 w-4 text-blue-deep" />
-                    <span className="text-sm font-medium text-foreground">{t("resources.sampleData")}</span>
-                  </div>
-                  <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
-                </a>
-              </div>
-            </div>
-
-            {/* Status */}
-            <div className="rounded-xl border border-border bg-card p-6">
-              <div className="mb-3 flex items-center justify-between">
-                <h3 className="text-base font-semibold text-foreground">{t("systemStatus.title")}</h3>
-                <span className="flex items-center gap-2 text-xs font-medium text-emerald-500">
-                  <div className="h-2 w-2 rounded-full bg-emerald-500" />
-                  {t("systemStatus.operational")}
-                </span>
-              </div>
-              <p className="mb-3 text-sm text-muted-foreground">{t("systemStatus.description")}</p>
-              <a
-                href="https://status.geneflow.io"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 text-sm font-medium text-teal hover:text-teal/80"
-              >
-                {t("systemStatus.viewStatus")}
-                <ExternalLink className="h-3 w-3" />
-              </a>
             </div>
           </div>
         </div>
@@ -430,24 +321,13 @@ export default function HelpPage() {
           <p className="mx-auto mb-6 max-w-[600px] text-sm text-muted-foreground">
             {t("stillNeedHelp.description")}
           </p>
-          <div className="flex items-center justify-center gap-3">
-            <button
-              onClick={() => setContactOpen(true)}
-              className="flex items-center gap-2 rounded-lg bg-teal px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-teal/90 hover:shadow-md"
-            >
-              <Mail className="h-4 w-4" />
-              {t("stillNeedHelp.contactSupport")}
-            </button>
-            <a
-              href="https://docs.geneflow.io"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 rounded-lg border border-border px-5 py-2.5 text-sm font-medium text-foreground transition-all hover:bg-muted/50"
-            >
-              <Book className="h-4 w-4" />
-              {t("stillNeedHelp.browseDocumentation")}
-            </a>
-          </div>
+          <button
+            onClick={() => setContactOpen(true)}
+            className="flex items-center gap-2 mx-auto rounded-lg bg-teal px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-teal/90 hover:shadow-md"
+          >
+            <Mail className="h-4 w-4" />
+            {t("stillNeedHelp.contactSupport")}
+          </button>
         </div>
       </div>
 
@@ -506,66 +386,6 @@ export default function HelpPage() {
               {t("dialogs.contact.send")}
             </button>
           </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Live Chat Dialog */}
-      <Dialog open={liveChatOpen} onOpenChange={setLiveChatOpen}>
-        <DialogContent className="sm:max-w-[440px]">
-          <DialogHeader>
-            <DialogTitle>{t("dialogs.liveChat.title")}</DialogTitle>
-            <DialogDescription>
-              {t("dialogs.liveChat.description")}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <div className="h-[300px] overflow-y-auto rounded-lg border border-border bg-muted/20 p-4">
-              <div className="space-y-4">
-                {/* Welcome message */}
-                <div className="flex justify-start">
-                  <div className="max-w-[80%] rounded-lg border border-border bg-card px-4 py-2 text-sm text-foreground">
-                    {t("dialogs.liveChat.welcomeMessage")}
-                  </div>
-                </div>
-                {chatMessages.map((message, idx) => (
-                  <div
-                    key={idx}
-                    className={cn(
-                      "flex",
-                      message.sender === "user" ? "justify-end" : "justify-start"
-                    )}
-                  >
-                    <div
-                      className={cn(
-                        "max-w-[80%] rounded-lg px-4 py-2 text-sm",
-                        message.sender === "user"
-                          ? "bg-teal text-white"
-                          : "bg-card border border-border text-foreground"
-                      )}
-                    >
-                      {message.text}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="mt-4 flex gap-2">
-              <input
-                type="text"
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                className="flex-1 rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm"
-                placeholder={t("dialogs.liveChat.placeholder")}
-              />
-              <button
-                onClick={handleSendMessage}
-                className="rounded-lg bg-teal p-2.5 text-white hover:bg-teal/90"
-              >
-                <Send className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
         </DialogContent>
       </Dialog>
     </div>
