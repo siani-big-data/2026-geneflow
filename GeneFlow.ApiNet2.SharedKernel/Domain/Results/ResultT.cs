@@ -41,12 +41,12 @@ public sealed class Result<TValue> : Result
     /// <summary>
     /// Creates a failed result.
     /// </summary>
-    public new static Result<TValue> Failure(Error error) => new(error);
+    public static new Result<TValue> Failure(Error error) => new(error);
 
     /// <summary>
     /// Creates a failed result with multiple errors.
     /// </summary>
-    public new static Result<TValue> Failure(params Error[] errors) => new(errors);
+    public static new Result<TValue> Failure(params Error[] errors) => new(errors);
 
     /// <summary>
     /// Gets the value or a default value if the result is a failure.

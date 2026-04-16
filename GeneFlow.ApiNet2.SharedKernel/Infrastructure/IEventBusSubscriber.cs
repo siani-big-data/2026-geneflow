@@ -1,5 +1,3 @@
-using GeneFlow.ApiNet2.SharedKernel.Application.EventNotifications;
-
 namespace GeneFlow.ApiNet2.SharedKernel.Infrastructure;
 
 /// <summary>

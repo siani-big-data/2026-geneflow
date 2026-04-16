@@ -1,5 +1,3 @@
-using System;
-
 namespace GeneFlow.ApiNet2.SharedKernel.Domain.Auditing;
 
 /// <summary>
