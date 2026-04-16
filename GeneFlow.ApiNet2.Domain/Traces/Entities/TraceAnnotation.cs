@@ -88,7 +88,7 @@ public sealed partial class TraceAnnotation : AuditableEntity<Guid>
         IsShared = isShared;
         Metadata = metadata;
 
-        InitializeCreatedAt(createdBy.Value.ToString());
+        SetCreationAudit(DateTime.UtcNow, createdBy.Value.ToString());
     }
 
     internal static Result<TraceAnnotation> Create(
@@ -199,7 +199,7 @@ public sealed partial class TraceAnnotation : AuditableEntity<Guid>
         Metadata?.Dispose();
         Metadata = metadata;
 
-        SetModified(updatedBy.Value.ToString());
+        SetModificationAudit(DateTime.UtcNow, updatedBy.Value.ToString());
 
         return Result.Success();
     }
