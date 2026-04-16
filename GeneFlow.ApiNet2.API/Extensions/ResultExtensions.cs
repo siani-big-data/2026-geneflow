@@ -29,6 +29,11 @@ public static class ResultExtensions
         return ToErrorResult(result.Error);
     }
 
+    /// <summary>
+    /// Converts an Error to an appropriate HTTP result.
+    /// </summary>
+    public static IResult ToApiResult(this Error error) => ToErrorResult(error);
+
     private static IResult ToErrorResult(Error error)
     {
         var apiError = new ApiError(error.Code, error.Message);
