@@ -1,7 +1,7 @@
 using GeneFlow.ApiNet2.Domain.Identity;
 using GeneFlow.ApiNet2.Domain.Studies;
 using GeneFlow.ApiNet2.Domain.Traces.Enumerations;
-using GeneFlow.ApiNet2.SharedKernel.Domain.Events;
+using GeneFlow.ApiNet2.SharedKernel.Application.EventNotifications;
 
 namespace GeneFlow.ApiNet2.Domain.Traces.Events;
 
@@ -13,4 +13,4 @@ public sealed record TraceUploadedEvent(
     StudyId StudyId,
     string FileName,
     TraceFormat Format,
-    UserId UploadedBy) : IDomainEvent;
+    UserId UploadedBy) : DomainEvent;

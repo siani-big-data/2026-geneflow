@@ -1,5 +1,5 @@
 using GeneFlow.ApiNet2.Domain.Identity;
-using GeneFlow.ApiNet2.SharedKernel.Domain.Events;
+using GeneFlow.ApiNet2.SharedKernel.Application.EventNotifications;
 
 namespace GeneFlow.ApiNet2.Domain.Traces.Events;
 
@@ -8,4 +8,4 @@ namespace GeneFlow.ApiNet2.Domain.Traces.Events;
 /// </summary>
 public sealed record TraceArchivedEvent(
     TraceId TraceId,
-    UserId ArchivedBy) : IDomainEvent;
+    UserId ArchivedBy) : DomainEvent;
