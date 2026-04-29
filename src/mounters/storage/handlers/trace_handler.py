@@ -31,9 +31,61 @@ class TraceHandler:
 
         logger.info("storage_trace_uploaded", trace_id=trace_id)
 
+    async def handle_processed(self, payload: dict) -> None:
+        """
+        Handle TraceProcessed event from Analysis worker.
+
+        The payload contains parsedData with pre-chunked manifest and chunks
+        from the Python analysis worker, ready to be stored directly.
+        """
+        trace_id = payload.get("traceId")
+        parsed_data = payload.get("parsedData")
+
+        if not trace_id or not parsed_data:
+            logger.warning(
+                "storage_trace_processed_missing_data",
+                trace_id=trace_id,
+                has_parsed_data=parsed_data is not None,
+            )
+            return
+
+        manifest_data = parsed_data.get("manifest", {})
+        chunks = parsed_data.get("chunks", [])
+
+        if not chunks:
+            logger.warning("storage_trace_processed_no_chunks", trace_id=trace_id)
+            return
+
+        # Store each chunk
+        for chunk in chunks:
+            chunk_index = chunk.get("index", 0)
+            chunk_filename = f"chunk_{chunk_index:04d}.json"
+            chunk_key = f"traces/{trace_id}/chunks/{chunk_filename}"
+
+            await self._connection.put_object(
+                self._bucket,
+                chunk_key,
+                json.dumps(chunk).encode(),
+            )
+
+        # Store the manifest
+        manifest_key = f"traces/{trace_id}/manifest.json"
+        await self._connection.put_object(
+            self._bucket,
+            manifest_key,
+            json.dumps(manifest_data).encode(),
+        )
+
+        logger.info(
+            "storage_trace_processed",
+            trace_id=trace_id,
+            chunk_count=len(chunks),
+            total_bases=manifest_data.get("total_bases", 0),
+        )
+
     async def handle_deleted(self, payload: dict) -> None:
         """Handle TraceDeleted event."""
-        trace_id = payload.get("id")
+        trace_id = payload.get("id") or payload.get("traceId")
         prefix = f"traces/{trace_id}/"
 
         objects = await self._connection.list_objects(self._bucket, prefix)
@@ -129,3 +181,65 @@ class TraceHandler:
         extension = key.split(".")[-1]
         data = await self._connection.get_object(self._bucket, key)
         return data, extension
+
+    async def handle_analysis_result(self, payload: dict) -> None:
+        """
+        Handle AnalysisResultStored event.
+
+        Stores analysis results (trimming, heterozygote, motif, etc.)
+        in the datalake alongside the trace chunks.
+        """
+        trace_id = payload.get("traceId")
+        analysis_type = payload.get("analysisType")
+        result_data = payload.get("resultData", {})
+
+        if not trace_id or not analysis_type:
+            logger.warning(
+                "storage_analysis_result_missing_data",
+                trace_id=trace_id,
+                analysis_type=analysis_type,
+            )
+            return
+
+        # Store analysis result as JSON
+        result_key = f"traces/{trace_id}/analysis/{analysis_type}.json"
+
+        # Add metadata to result
+        result_with_meta = {
+            "trace_id": trace_id,
+            "analysis_type": analysis_type,
+            "stored_at": datetime.utcnow().isoformat() + "Z",
+            **result_data,
+        }
+
+        await self._connection.put_object(
+            self._bucket,
+            result_key,
+            json.dumps(result_with_meta, indent=2).encode(),
+        )
+
+        logger.info(
+            "storage_analysis_stored",
+            trace_id=trace_id,
+            analysis_type=analysis_type,
+        )
+
+    async def get_analysis_result(self, trace_id: str, analysis_type: str) -> dict | None:
+        """Get analysis result for a trace."""
+        result_key = f"traces/{trace_id}/analysis/{analysis_type}.json"
+
+        if not await self._connection.object_exists(self._bucket, result_key):
+            return None
+
+        data = await self._connection.get_object(self._bucket, result_key)
+        return json.loads(data.decode())
+
+    async def list_analysis_results(self, trace_id: str) -> list[str]:
+        """List available analysis results for a trace."""
+        prefix = f"traces/{trace_id}/analysis/"
+        objects = await self._connection.list_objects(self._bucket, prefix)
+        return [
+            obj["key"].split("/")[-1].replace(".json", "")
+            for obj in objects
+            if obj["key"].endswith(".json")
+        ]

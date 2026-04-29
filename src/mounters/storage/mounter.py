@@ -55,8 +55,14 @@ class StorageMounter(BaseMounter):
 
         if event_type == "TraceUploaded":
             await self._trace_handler.handle_uploaded(payload)
+        elif event_type == "TraceProcessed":
+            # TraceProcessed from Analysis worker contains parsed/chunked data
+            await self._trace_handler.handle_processed(payload)
         elif event_type == "TraceDeleted":
             await self._trace_handler.handle_deleted(payload)
+        elif event_type == "AnalysisResultStored":
+            # Analysis results (trimming, heterozygote, etc.) from Analysis worker
+            await self._trace_handler.handle_analysis_result(payload)
         elif event_type == "ProfilePhotoUploadedEvent":
             await self._photo_handler.handle_uploaded(payload)
         elif event_type == "ProfilePhotoDeletedEvent":
@@ -75,6 +81,14 @@ class StorageMounter(BaseMounter):
     async def get_original(self, trace_id: str):
         """Get the original file for a trace."""
         return await self._trace_handler.get_original(trace_id)
+
+    async def get_analysis_result(self, trace_id: str, analysis_type: str):
+        """Get analysis result for a trace."""
+        return await self._trace_handler.get_analysis_result(trace_id, analysis_type)
+
+    async def list_analysis_results(self, trace_id: str):
+        """List available analysis results for a trace."""
+        return await self._trace_handler.list_analysis_results(trace_id)
 
     async def get_profile_photo(self, profile_id: str):
         """Get the profile photo for a profile."""
