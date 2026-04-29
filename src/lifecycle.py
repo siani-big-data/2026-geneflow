@@ -103,6 +103,7 @@ class ApplicationLifecycle:
 
     def _setup_signal_handlers(self) -> None:
         """Setup signal handlers for graceful shutdown."""
+
         def signal_handler(sig):
             logger.info("shutdown_signal_received", signal=sig)
             self._shutdown_event.set()

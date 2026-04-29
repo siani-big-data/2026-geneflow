@@ -159,7 +159,9 @@ class TestCategoriesEndpoints:
 
         transport = ASGITransport(app=api.app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
-            response = await client.get("/categories/users/stats", headers={"X-API-Key": "test-key"})
+            response = await client.get(
+                "/categories/users/stats", headers={"X-API-Key": "test-key"}
+            )
 
         assert response.status_code == 200
         data = response.json()
@@ -176,7 +178,9 @@ class TestCategoriesEndpoints:
 
         transport = ASGITransport(app=api.app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
-            response = await client.get("/categories/users/dates", headers={"X-API-Key": "test-key"})
+            response = await client.get(
+                "/categories/users/dates", headers={"X-API-Key": "test-key"}
+            )
 
         assert response.status_code == 200
         data = response.json()

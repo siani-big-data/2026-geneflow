@@ -146,7 +146,7 @@ class TestRetryableEvent:
             id="abc-123",
             category="users",
             date=datetime(2026, 3, 25),
-            eventLine='{}',
+            eventLine="{}",
             retryCount=0,
             lastError="",
         )
@@ -159,7 +159,7 @@ class TestRetryableEvent:
             id="abc-123",
             category="users",
             date=datetime(2026, 3, 25),
-            eventLine='{}',
+            eventLine="{}",
             retryCount=0,
             lastError="",
             nextRetryAt=datetime(2026, 3, 25, 12, 0, 0),

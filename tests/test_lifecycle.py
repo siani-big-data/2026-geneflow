@@ -122,12 +122,8 @@ class TestApplicationLifecycle:
         lifecycle = ApplicationLifecycle(mock_components)
 
         with patch.object(lifecycle, "startup", new_callable=AsyncMock) as mock_startup:
-            with patch.object(
-                lifecycle, "shutdown", new_callable=AsyncMock
-            ) as mock_shutdown:
-                with patch.object(
-                    lifecycle, "_wait_for_shutdown", new_callable=AsyncMock
-                ):
+            with patch.object(lifecycle, "shutdown", new_callable=AsyncMock) as mock_shutdown:
+                with patch.object(lifecycle, "_wait_for_shutdown", new_callable=AsyncMock):
                     with patch.object(lifecycle, "_setup_signal_handlers"):
                         await lifecycle.run()
 
@@ -142,12 +138,8 @@ class TestApplicationLifecycle:
             raise asyncio.CancelledError()
 
         with patch.object(lifecycle, "startup", new_callable=AsyncMock):
-            with patch.object(
-                lifecycle, "shutdown", new_callable=AsyncMock
-            ) as mock_shutdown:
-                with patch.object(
-                    lifecycle, "_wait_for_shutdown", side_effect=raise_cancelled
-                ):
+            with patch.object(lifecycle, "shutdown", new_callable=AsyncMock) as mock_shutdown:
+                with patch.object(lifecycle, "_wait_for_shutdown", side_effect=raise_cancelled):
                     with patch.object(lifecycle, "_setup_signal_handlers"):
                         await lifecycle.run()
 

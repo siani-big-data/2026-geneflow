@@ -110,7 +110,9 @@ async def test_get_dlq_events(temp_dir: Path):
 
     today = datetime.utcnow().strftime("%Y-%m-%d")
     dlq_file = dlq_path / f"{today}.jsonl"
-    dlq_file.write_text('{"eventId": "test-1", "category": "users", "eventLine": "{}", "date": "2026-03-25"}\n')
+    dlq_file.write_text(
+        '{"eventId": "test-1", "category": "users", "eventLine": "{}", "date": "2026-03-25"}\n'
+    )
 
     events = await handler.get_dlq_events()
 
@@ -135,8 +137,12 @@ async def test_get_all_dlq_events(temp_dir: Path):
     dlq_path = temp_dir / "dlq"
     dlq_path.mkdir(parents=True, exist_ok=True)
 
-    (dlq_path / "2026-03-24.jsonl").write_text('{"eventId": "old-1", "category": "users", "eventLine": "{}", "date": "2026-03-24"}\n')
-    (dlq_path / "2026-03-25.jsonl").write_text('{"eventId": "new-1", "category": "users", "eventLine": "{}", "date": "2026-03-25"}\n')
+    (dlq_path / "2026-03-24.jsonl").write_text(
+        '{"eventId": "old-1", "category": "users", "eventLine": "{}", "date": "2026-03-24"}\n'
+    )
+    (dlq_path / "2026-03-25.jsonl").write_text(
+        '{"eventId": "new-1", "category": "users", "eventLine": "{}", "date": "2026-03-25"}\n'
+    )
 
     events = await handler.get_all_dlq_events()
 

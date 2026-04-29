@@ -5,9 +5,15 @@ from src.mounters.postgres.repositories import UserRepository
 from src.mounters.postgres.transformers import PayloadTransformer
 
 ROLE_MAP = {
-    "User": 1, "user": 1, 1: 1,
-    "Admin": 2, "admin": 2, 2: 2,
-    "SuperAdmin": 3, "superadmin": 3, 3: 3,
+    "User": 1,
+    "user": 1,
+    1: 1,
+    "Admin": 2,
+    "admin": 2,
+    2: 2,
+    "SuperAdmin": 3,
+    "superadmin": 3,
+    3: 3,
 }
 
 

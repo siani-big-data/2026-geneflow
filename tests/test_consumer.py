@@ -139,9 +139,7 @@ class TestProcessMessage:
         assert consumer.buffer.size == 1
 
     @pytest.mark.asyncio
-    async def test_process_message_increments_received(
-        self, consumer_with_buffer_started
-    ):
+    async def test_process_message_increments_received(self, consumer_with_buffer_started):
         consumer = consumer_with_buffer_started
         data = {"eventId": "event-1", "type": "Test", "timestamp": "1711357800000", "data": "{}"}
 
@@ -170,9 +168,7 @@ class TestOnFlush:
         return consumer
 
     @pytest.mark.asyncio
-    async def test_on_flush_persists_events(
-        self, consumer_with_mocked_redis, mock_storage
-    ):
+    async def test_on_flush_persists_events(self, consumer_with_mocked_redis, mock_storage):
         consumer = consumer_with_mocked_redis
         event_lines = ['{"eventId": "1"}', '{"eventId": "2"}']
         pending_acks = [("stream:users", "1-0"), ("stream:users", "2-0")]
@@ -183,13 +179,11 @@ class TestOnFlush:
         assert consumer._events_persisted == 2
 
     @pytest.mark.asyncio
-    async def test_on_flush_acks_messages(
-        self, consumer_with_mocked_redis
-    ):
+    async def test_on_flush_acks_messages(self, consumer_with_mocked_redis):
         consumer = consumer_with_mocked_redis
         pending_acks = [("stream:users", "1-0"), ("stream:users", "2-0")]
 
-        await consumer._on_flush("users", datetime.utcnow(), ['{}', '{}'], pending_acks)
+        await consumer._on_flush("users", datetime.utcnow(), ["{}", "{}"], pending_acks)
 
         assert consumer.redis.xack.call_count == 2
 
@@ -205,9 +199,7 @@ class TestOnFlush:
         mock_mounter_engine._dispatch_event.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_on_flush_error_adds_to_retry(
-        self, consumer_with_mocked_redis, mock_storage
-    ):
+    async def test_on_flush_error_adds_to_retry(self, consumer_with_mocked_redis, mock_storage):
         consumer = consumer_with_mocked_redis
         mock_storage.append_events_batch.side_effect = Exception("Storage error")
         event_lines = ['{"eventId": "1"}']
@@ -283,9 +275,7 @@ class TestEnsureConsumerGroups:
         import redis.asyncio as aioredis
 
         consumer.redis = MagicMock()
-        consumer.redis.xgroup_create = AsyncMock(
-            side_effect=aioredis.ResponseError("BUSYGROUP")
-        )
+        consumer.redis.xgroup_create = AsyncMock(side_effect=aioredis.ResponseError("BUSYGROUP"))
 
         await consumer._ensuREDACTED()
 

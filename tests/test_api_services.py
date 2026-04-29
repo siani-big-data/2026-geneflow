@@ -46,22 +46,16 @@ class TestEventsQueryService:
             '{"eventId": "3", "type": "UserRegistered"}',
         ]
 
-        result = await service.query_events(
-            "users", date="2026-03-25", event_type="UserRegistered"
-        )
+        result = await service.query_events("users", date="2026-03-25", event_type="UserRegistered")
 
         assert result.total_count == 2
         assert all(e["type"] == "UserRegistered" for e in result.events)
 
     @pytest.mark.asyncio
     async def test_query_events_pagination(self, service, mock_storage):
-        mock_storage.read_events.return_value = [
-            f'{{"eventId": "{i}"}}' for i in range(10)
-        ]
+        mock_storage.read_events.return_value = [f'{{"eventId": "{i}"}}' for i in range(10)]
 
-        result = await service.query_events(
-            "users", date="2026-03-25", limit=3, offset=2
-        )
+        result = await service.query_events("users", date="2026-03-25", limit=3, offset=2)
 
         assert result.total_count == 10
         assert len(result.events) == 3
@@ -74,9 +68,7 @@ class TestEventsQueryService:
             '{"eventId": "2"}',
         ]
 
-        result = await service.query_events(
-            "users", start_date="2026-03-24", end_date="2026-03-26"
-        )
+        result = await service.query_events("users", start_date="2026-03-24", end_date="2026-03-26")
 
         mock_storage.read_events_range.assert_called_once()
         assert result.total_count == 2

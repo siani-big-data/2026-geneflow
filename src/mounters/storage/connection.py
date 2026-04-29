@@ -123,12 +123,14 @@ class StorageConnection:
 
         async for page in paginator.paginate(Bucket=bucket, Prefix=prefix):
             for obj in page.get("Contents", []):
-                objects.append({
-                    "key": obj["Key"],
-                    "size": obj["Size"],
-                    "last_modified": obj["LastModified"].isoformat(),
-                    "etag": obj["ETag"].strip('"'),
-                })
+                objects.append(
+                    {
+                        "key": obj["Key"],
+                        "size": obj["Size"],
+                        "last_modified": obj["LastModified"].isoformat(),
+                        "etag": obj["ETag"].strip('"'),
+                    }
+                )
 
         return objects
 

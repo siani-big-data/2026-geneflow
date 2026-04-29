@@ -121,9 +121,7 @@ class TestApiKeyIntegration:
     def test_protected_endpoint_with_valid_key(self, protected_app):
         client = TestClient(protected_app)
 
-        response = client.get(
-            "/protected", headers={"X-API-Key": "integration-test-key"}
-        )
+        response = client.get("/protected", headers={"X-API-Key": "integration-test-key"})
 
         assert response.status_code == 200
         assert response.json() == {"message": "secret"}
@@ -152,9 +150,7 @@ class TestApiKeyIntegration:
     def test_case_sensitive_header(self, protected_app):
         client = TestClient(protected_app)
 
-        response = client.get(
-            "/protected", headers={"x-api-key": "integration-test-key"}
-        )
+        response = client.get("/protected", headers={"x-api-key": "integration-test-key"})
 
         assert response.status_code == 200
 

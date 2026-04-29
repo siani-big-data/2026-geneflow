@@ -63,4 +63,5 @@ def log_execution(operation: str) -> Callable:
 def asyncio_iscoroutinefunction(func: Callable) -> bool:
     """Check if function is async."""
     import asyncio
+
     return asyncio.iscoroutinefunction(func)

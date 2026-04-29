@@ -72,8 +72,7 @@ class DatalakeConsumer:
     def _streams(self) -> dict[str, str]:
         """Mapping of stream_name -> category."""
         return {
-            f"{self.settings.redis_stream_prefix}:{cat.value}": cat.value
-            for cat in EventCategory
+            f"{self.settings.redis_stream_prefix}:{cat.value}": cat.value for cat in EventCategory
         }
 
     @property

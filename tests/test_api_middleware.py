@@ -145,11 +145,7 @@ class TestRequestLoggingMiddleware:
             response = client.get("/health")
 
             assert response.status_code == 200
-            calls = [
-                call
-                for call in mock_logger.info.call_args_list
-                if "/health" in str(call)
-            ]
+            calls = [call for call in mock_logger.info.call_args_list if "/health" in str(call)]
             assert len(calls) == 0
 
     def test_logs_error_on_exception(self, app_with_logging_middleware):

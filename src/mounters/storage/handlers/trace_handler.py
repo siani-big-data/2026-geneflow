@@ -120,13 +120,15 @@ class TraceHandler:
                 json.dumps(chunk_content).encode(),
             )
 
-            chunk_metas.append({
-                "index": i,
-                "start_position": start,
-                "end_position": end,
-                "base_count": len(chunk_seq),
-                "filename": chunk_filename,
-            })
+            chunk_metas.append(
+                {
+                    "index": i,
+                    "start_position": start,
+                    "end_position": end,
+                    "base_count": len(chunk_seq),
+                    "filename": chunk_filename,
+                }
+            )
 
         manifest = TraceManifest(
             trace_id=trace_id,
