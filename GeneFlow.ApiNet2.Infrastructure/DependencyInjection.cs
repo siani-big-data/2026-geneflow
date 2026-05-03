@@ -59,6 +59,17 @@ namespace GeneFlow.ApiNet2.Infrastructure;
 public static class DependencyInjection
 {
     /// <summary>
+    /// Maximum number of times Npgsql will retry a failed command before
+    /// surfacing the exception to the caller.
+    /// </summary>
+    private const int DbMaxRetryCount = 3;
+
+    /// <summary>
+    /// Upper bound on the back-off delay between Npgsql retry attempts.
+    /// </summary>
+    private static readonly TimeSpan DbMaxRetryDelay = TimeSpan.FromSeconds(5);
+
+    /// <summary>
     /// Adds all Infrastructure layer services to the service collection.
     /// </summary>
     /// <param name="services">The service collection.</param>
@@ -93,8 +104,8 @@ public static class DependencyInjection
             {
                 npgsqlOptions.MigrationsAssembly(typeof(UserContext).Assembly.FullName);
                 npgsqlOptions.EnableRetryOnFailure(
-                    maxRetryCount: 3,
-                    maxRetryDelay: TimeSpan.FromSeconds(5),
+                    maxRetryCount: DbMaxRetryCount,
+                    maxRetryDelay: DbMaxRetryDelay,
                     errorCodesToAdd: null);
             }));
 
@@ -108,8 +119,8 @@ public static class DependencyInjection
             {
                 npgsqlOptions.MigrationsAssembly(typeof(ProfileContext).Assembly.FullName);
                 npgsqlOptions.EnableRetryOnFailure(
-                    maxRetryCount: 3,
-                    maxRetryDelay: TimeSpan.FromSeconds(5),
+                    maxRetryCount: DbMaxRetryCount,
+                    maxRetryDelay: DbMaxRetryDelay,
                     errorCodesToAdd: null);
             }));
 
@@ -123,8 +134,8 @@ public static class DependencyInjection
             {
                 npgsqlOptions.MigrationsAssembly(typeof(PlanContext).Assembly.FullName);
                 npgsqlOptions.EnableRetryOnFailure(
-                    maxRetryCount: 3,
-                    maxRetryDelay: TimeSpan.FromSeconds(5),
+                    maxRetryCount: DbMaxRetryCount,
+                    maxRetryDelay: DbMaxRetryDelay,
                     errorCodesToAdd: null);
             }));
 
@@ -138,8 +149,8 @@ public static class DependencyInjection
             {
                 npgsqlOptions.MigrationsAssembly(typeof(SubscriptionContext).Assembly.FullName);
                 npgsqlOptions.EnableRetryOnFailure(
-                    maxRetryCount: 3,
-                    maxRetryDelay: TimeSpan.FromSeconds(5),
+                    maxRetryCount: DbMaxRetryCount,
+                    maxRetryDelay: DbMaxRetryDelay,
                     errorCodesToAdd: null);
             }));
 
@@ -153,8 +164,8 @@ public static class DependencyInjection
             {
                 npgsqlOptions.MigrationsAssembly(typeof(StudyContext).Assembly.FullName);
                 npgsqlOptions.EnableRetryOnFailure(
-                    maxRetryCount: 3,
-                    maxRetryDelay: TimeSpan.FromSeconds(5),
+                    maxRetryCount: DbMaxRetryCount,
+                    maxRetryDelay: DbMaxRetryDelay,
                     errorCodesToAdd: null);
             }));
 
@@ -169,8 +180,8 @@ public static class DependencyInjection
             {
                 npgsqlOptions.MigrationsAssembly(typeof(TraceContext).Assembly.FullName);
                 npgsqlOptions.EnableRetryOnFailure(
-                    maxRetryCount: 3,
-                    maxRetryDelay: TimeSpan.FromSeconds(5),
+                    maxRetryCount: DbMaxRetryCount,
+                    maxRetryDelay: DbMaxRetryDelay,
                     errorCodesToAdd: null);
             }));
 
@@ -187,8 +198,8 @@ public static class DependencyInjection
             {
                 npgsqlOptions.MigrationsAssembly(typeof(PipelineContext).Assembly.FullName);
                 npgsqlOptions.EnableRetryOnFailure(
-                    maxRetryCount: 3,
-                    maxRetryDelay: TimeSpan.FromSeconds(5),
+                    maxRetryCount: DbMaxRetryCount,
+                    maxRetryDelay: DbMaxRetryDelay,
                     errorCodesToAdd: null);
             }));
 
@@ -203,8 +214,8 @@ public static class DependencyInjection
             {
                 npgsqlOptions.MigrationsAssembly(typeof(PaymentMethodContext).Assembly.FullName);
                 npgsqlOptions.EnableRetryOnFailure(
-                    maxRetryCount: 3,
-                    maxRetryDelay: TimeSpan.FromSeconds(5),
+                    maxRetryCount: DbMaxRetryCount,
+                    maxRetryDelay: DbMaxRetryDelay,
                     errorCodesToAdd: null);
             }));
 
