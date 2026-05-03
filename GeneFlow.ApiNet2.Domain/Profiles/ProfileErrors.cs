@@ -3,9 +3,13 @@ using GeneFlow.ApiNet2.SharedKernel.Domain.Results;
 namespace GeneFlow.ApiNet2.Domain.Profiles;
 
 /// <summary>
-/// Domain errors for Profile aggregate.
+/// Domain errors for the Profile aggregate. Errors are split across partials by
+/// subdomain to keep each file focused and within the project size guideline.
+/// This file groups existence and personal-name errors. Other partials:
+/// <see cref="ProfileErrors"/> in <c>ProfileErrors.Affiliation.cs</c>,
+/// <c>ProfileErrors.Identifiers.cs</c> and <c>ProfileErrors.Photo.cs</c>.
 /// </summary>
-public static class ProfileErrors
+public static partial class ProfileErrors
 {
     /// <summary>Profile was not found.</summary>
     public static Error NotFound => Error.NotFound(
@@ -52,103 +56,8 @@ public static class ProfileErrors
         "Profile.LastNameInvalidFormat",
         "Last name can only contain letters, spaces, hyphens, and apostrophes.");
 
-    /// <summary>Bio is too short.</summary>
-    public static Error BioTooShort(int minLength) => Error.Validation(
-        "Profile.BioTooShort",
-        $"Bio must be at least {minLength} characters if provided.");
-
-    /// <summary>Bio is too long.</summary>
-    public static Error BioTooLong(int maxLength) => Error.Validation(
-        "Profile.BioTooLong",
-        $"Bio cannot exceed {maxLength} characters.");
-
-    /// <summary>Location is too short.</summary>
-    public static Error LocationTooShort(int minLength) => Error.Validation(
-        "Profile.LocationTooShort",
-        $"Location must be at least {minLength} characters if provided.");
-
-    /// <summary>Location is too long.</summary>
-    public static Error LocationTooLong(int maxLength) => Error.Validation(
-        "Profile.LocationTooLong",
-        $"Location cannot exceed {maxLength} characters.");
-
-    /// <summary>Professional role is too short.</summary>
-    public static Error ProfessionalRoleTooShort(int minLength) => Error.Validation(
-        "Profile.ProfessionalRoleTooShort",
-        $"Professional role must be at least {minLength} characters if provided.");
-
-    /// <summary>Professional role is too long.</summary>
-    public static Error ProfessionalRoleTooLong(int maxLength) => Error.Validation(
-        "Profile.ProfessionalRoleTooLong",
-        $"Professional role cannot exceed {maxLength} characters.");
-
-    /// <summary>Institution name is too short.</summary>
-    public static Error InstitutionNameTooShort(int minLength) => Error.Validation(
-        "Profile.InstitutionNameTooShort",
-        $"Institution name must be at least {minLength} characters if provided.");
-
-    /// <summary>Institution name is too long.</summary>
-    public static Error InstitutionNameTooLong(int maxLength) => Error.Validation(
-        "Profile.InstitutionNameTooLong",
-        $"Institution name cannot exceed {maxLength} characters.");
-
-    /// <summary>Institution department is too short.</summary>
-    public static Error InstitutionDepartmentTooShort(int minLength) => Error.Validation(
-        "Profile.InstitutionDepartmentTooShort",
-        $"Institution department must be at least {minLength} characters if provided.");
-
-    /// <summary>Institution department is too long.</summary>
-    public static Error InstitutionDepartmentTooLong(int maxLength) => Error.Validation(
-        "Profile.InstitutionDepartmentTooLong",
-        $"Institution department cannot exceed {maxLength} characters.");
-
-    /// <summary>ORCID ID has invalid format.</summary>
-    public static Error OrcidIdInvalidFormat => Error.Validation(
-        "Profile.OrcidIdInvalidFormat",
-        "ORCID ID must be in the format 0000-0000-0000-0000 or 0000-0000-0000-000X.");
-
-    /// <summary>Website URL is invalid.</summary>
-    public static Error WebsiteInvalidFormat => Error.Validation(
-        "Profile.WebsiteInvalidFormat",
-        "Website must be a valid URL.");
-
-    /// <summary>Website URL is too long.</summary>
-    public static Error WebsiteTooLong(int maxLength) => Error.Validation(
-        "Profile.WebsiteTooLong",
-        $"Website URL cannot exceed {maxLength} characters.");
-
-    /// <summary>Photo URL is invalid.</summary>
-    public static Error PhotoUrlInvalidFormat => Error.Validation(
-        "Profile.PhotoUrlInvalidFormat",
-        "Photo URL must be a valid URL.");
-
-    /// <summary>Photo URL is too long.</summary>
-    public static Error PhotoUrlTooLong(int maxLength) => Error.Validation(
-        "Profile.PhotoUrlTooLong",
-        $"Photo URL cannot exceed {maxLength} characters.");
-
-    /// <summary>Photo size exceeds the maximum allowed.</summary>
-    public static Error PhotoSizeExceedsLimit(long maxSizeBytes) => Error.Validation(
-        "Profile.PhotoSizeExceedsLimit",
-        $"Photo size cannot exceed {maxSizeBytes / 1024 / 1024} MB.");
-
     /// <summary>Invalid research field.</summary>
     public static Error InvalidResearchField => Error.Validation(
         "Profile.InvalidResearchField",
         "The specified research field is not valid.");
-
-    /// <summary>Photo format is not supported.</summary>
-    public static Error InvalidPhotoFormat => Error.Validation(
-        "Profile.InvalidPhotoFormat",
-        "Photo format is not supported. Allowed formats: JPEG, PNG, GIF, WebP.");
-
-    /// <summary>Photo is too large.</summary>
-    public static Error PhotoTooLarge => Error.Validation(
-        "Profile.PhotoTooLarge",
-        "Photo size cannot exceed 10 MB.");
-
-    /// <summary>Photo data is invalid or empty.</summary>
-    public static Error InvalidPhotoData => Error.Validation(
-        "Profile.InvalidPhotoData",
-        "Photo data is invalid or empty.");
 }
