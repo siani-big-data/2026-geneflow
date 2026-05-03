@@ -1,3 +1,4 @@
+using System.Net.Sockets;
 using GeneFlow.ApiNet2.Application.Identity.Interfaces;
 using GeneFlow.ApiNet2.Infrastructure.Identity.Configuration;
 using MailKit.Net.Smtp;
@@ -142,9 +143,29 @@ public sealed class EmailService : IEmailService
 
             _logger.LogInformation("Email sent successfully to {Email}", toEmail);
         }
-        catch (Exception ex)
+        catch (SmtpCommandException ex)
         {
-            _logger.LogError(ex, "Failed to send email to {Email}", toEmail);
+            _logger.LogError(ex, "SMTP command error sending email to {Email}", toEmail);
+            throw;
+        }
+        catch (SmtpProtocolException ex)
+        {
+            _logger.LogError(ex, "SMTP protocol error sending email to {Email}", toEmail);
+            throw;
+        }
+        catch (AuthenticationException ex)
+        {
+            _logger.LogError(ex, "SMTP authentication failed sending email to {Email}", toEmail);
+            throw;
+        }
+        catch (SocketException ex)
+        {
+            _logger.LogError(ex, "Network error sending email to {Email}", toEmail);
+            throw;
+        }
+        catch (IOException ex)
+        {
+            _logger.LogError(ex, "I/O error sending email to {Email}", toEmail);
             throw;
         }
     }

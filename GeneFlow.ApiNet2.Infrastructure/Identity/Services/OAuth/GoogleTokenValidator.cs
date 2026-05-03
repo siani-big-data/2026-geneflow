@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using GeneFlow.ApiNet2.Application.Identity.Interfaces;
 using GeneFlow.ApiNet2.Domain.Identity;
@@ -35,7 +36,6 @@ internal sealed class GoogleTokenValidator : IOAuthProviderValidator
     {
         try
         {
-            // Try to validate as ID token first
             var tokenInfoResponse = await _httpClient.GetAsync(
                 $"{TokenInfoUrl}{Uri.EscapeDataString(token)}",
                 cancellationToken);
@@ -47,7 +47,6 @@ internal sealed class GoogleTokenValidator : IOAuthProviderValidator
                 if (tokenInfo is null)
                     return Result.Failure<OAuthUserInfo>(OAuthErrors.InvalidToken);
 
-                // Verify the audience matches our client ID
                 if (!string.IsNullOrEmpty(_settings.Google.ClientId) &&
                     tokenInfo.Aud != _settings.Google.ClientId)
                 {
@@ -61,11 +60,10 @@ internal sealed class GoogleTokenValidator : IOAuthProviderValidator
                     ProviderKey = tokenInfo.Sub,
                     Email = tokenInfo.Email,
                     DisplayName = tokenInfo.Name,
-                    AvatarUrl = tokenInfo.Picture
+                    AvatarUrl = tokenInfo.Picture,
                 };
             }
 
-            // Fall back to treating it as an access token
             using var request = new HttpRequestMessage(HttpMethod.Get, UserInfoUrl);
             request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
@@ -88,13 +86,23 @@ internal sealed class GoogleTokenValidator : IOAuthProviderValidator
                 ProviderKey = userInfo.Sub,
                 Email = userInfo.Email,
                 DisplayName = userInfo.Name,
-                AvatarUrl = userInfo.Picture
+                AvatarUrl = userInfo.Picture,
             };
         }
-        catch (Exception ex)
+        catch (HttpRequestException ex)
         {
-            _logger.LogError(ex, "Error validating Google token");
-            return Result.Failure<OAuthUserInfo>(OAuthErrors.ValidationFailed(ex.Message));
+            _logger.LogError(ex, "HTTP error validating Google token");
+            return Result.Failure<OAuthUserInfo>(OAuthErrors.ValidationFailed("Google provider unavailable."));
+        }
+        catch (TaskCanceledException ex) when (!cancellationToken.IsCancellationRequested)
+        {
+            _logger.LogError(ex, "Timeout validating Google token");
+            return Result.Failure<OAuthUserInfo>(OAuthErrors.ValidationFailed("Google provider timed out."));
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogError(ex, "Invalid JSON response from Google");
+            return Result.Failure<OAuthUserInfo>(OAuthErrors.ValidationFailed("Invalid response from Google provider."));
         }
     }
 

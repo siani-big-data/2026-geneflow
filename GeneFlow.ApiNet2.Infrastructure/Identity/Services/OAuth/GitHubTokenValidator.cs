@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using GeneFlow.ApiNet2.Application.Identity.Interfaces;
 using GeneFlow.ApiNet2.Domain.Identity;
@@ -30,7 +31,6 @@ internal sealed class GitHubTokenValidator : IOAuthProviderValidator
     {
         try
         {
-            // Get user info
             using var userRequest = new HttpRequestMessage(HttpMethod.Get, UserApiUrl);
             userRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
             userRequest.Headers.UserAgent.ParseAdd("GeneFlow-API");
@@ -49,7 +49,6 @@ internal sealed class GitHubTokenValidator : IOAuthProviderValidator
             if (userInfo is null || userInfo.Id == 0)
                 return Result.Failure<OAuthUserInfo>(OAuthErrors.InvalidToken);
 
-            // If email is not public, fetch from emails endpoint
             var email = userInfo.Email;
             if (string.IsNullOrEmpty(email))
             {
@@ -67,13 +66,23 @@ internal sealed class GitHubTokenValidator : IOAuthProviderValidator
                 ProviderKey = userInfo.Id.ToString(),
                 Email = email,
                 DisplayName = userInfo.Name ?? userInfo.Login,
-                AvatarUrl = userInfo.AvatarUrl
+                AvatarUrl = userInfo.AvatarUrl,
             };
         }
-        catch (Exception ex)
+        catch (HttpRequestException ex)
         {
-            _logger.LogError(ex, "Error validating GitHub token");
-            return Result.Failure<OAuthUserInfo>(OAuthErrors.ValidationFailed(ex.Message));
+            _logger.LogError(ex, "HTTP error validating GitHub token");
+            return Result.Failure<OAuthUserInfo>(OAuthErrors.ValidationFailed("GitHub provider unavailable."));
+        }
+        catch (TaskCanceledException ex) when (!cancellationToken.IsCancellationRequested)
+        {
+            _logger.LogError(ex, "Timeout validating GitHub token");
+            return Result.Failure<OAuthUserInfo>(OAuthErrors.ValidationFailed("GitHub provider timed out."));
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogError(ex, "Invalid JSON response from GitHub");
+            return Result.Failure<OAuthUserInfo>(OAuthErrors.ValidationFailed("Invalid response from GitHub provider."));
         }
     }
 
@@ -92,16 +101,25 @@ internal sealed class GitHubTokenValidator : IOAuthProviderValidator
 
             var emails = await emailResponse.Content.ReadFromJsonAsync<List<GitHubEmail>>(cancellationToken);
 
-            // Return primary verified email, or first verified email
             return emails?
                 .Where(e => e.Verified)
                 .OrderByDescending(e => e.Primary)
                 .Select(e => e.Email)
                 .FirstOrDefault();
         }
-        catch (Exception ex)
+        catch (HttpRequestException ex)
         {
-            _logger.LogWarning(ex, "Failed to fetch GitHub emails");
+            _logger.LogWarning(ex, "HTTP error fetching GitHub emails");
+            return null;
+        }
+        catch (TaskCanceledException ex) when (!cancellationToken.IsCancellationRequested)
+        {
+            _logger.LogWarning(ex, "Timeout fetching GitHub emails");
+            return null;
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogWarning(ex, "Invalid JSON response fetching GitHub emails");
             return null;
         }
     }

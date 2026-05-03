@@ -21,11 +21,17 @@ public static class DatabaseExtensions
         using var scope = app.Services.CreateScope();
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
 
+        var env = app.Environment;
+        if (env.EnvironmentName == "Testing")
+        {
+            logger.LogInformation("Testing environment detected, skipping migrations");
+            return;
+        }
+
         try
         {
             logger.LogInformation("Applying database migrations...");
 
-            // Apply migrations for all contexts
             var userContext = scope.ServiceProvider.GetRequiredService<UserContext>();
             await userContext.Database.MigrateAsync();
             logger.LogInformation("UserContext migrations applied");
@@ -42,7 +48,6 @@ public static class DatabaseExtensions
             await subscriptionContext.Database.MigrateAsync();
             logger.LogInformation("SubscriptionContext migrations applied");
 
-            // Seed plans
             var planSeeder = new PlanSeeder(
                 planContext,
                 scope.ServiceProvider.GetRequiredService<ISequenceGenerator>(),
