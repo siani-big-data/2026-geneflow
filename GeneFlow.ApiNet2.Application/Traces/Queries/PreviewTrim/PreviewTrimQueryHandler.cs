@@ -13,6 +13,9 @@ namespace GeneFlow.ApiNet2.Application.Traces.Queries.PreviewTrim;
 public sealed class PreviewTrimQueryHandler
     : IQueryHandler<PreviewTrimQuery, Result<TrimPreviewDto>>
 {
+    /// <summary>Maximum number of bases included in the preview sequence string.</summary>
+    private const int MaxPreviewLength = 100;
+
     private readonly ITraceRepository _repository;
     private readonly ITraceAnalysisService _analysisService;
 
@@ -28,16 +31,13 @@ public sealed class PreviewTrimQueryHandler
         PreviewTrimQuery request,
         CancellationToken cancellationToken)
     {
-        // Parse trace ID
         if (!TraceId.TryParse(request.TraceId, out var traceId) || traceId is null)
             return Result.Failure<TrimPreviewDto>(TraceErrors.NotFound);
 
-        // Get trace
         var trace = await _repository.GetByIdAsync(traceId, cancellationToken);
         if (trace is null)
             return Result.Failure<TrimPreviewDto>(TraceErrors.NotFound);
 
-        // Get analysis data
         var analysisResult = await _analysisService.GetAnalysisDataAsync(trace, cancellationToken);
         if (analysisResult.IsFailure)
             return Result.Failure<TrimPreviewDto>(analysisResult.Error);
@@ -52,11 +52,9 @@ public sealed class PreviewTrimQueryHandler
         var windowSize = request.WindowSize;
         var minLength = request.MinimumLength;
 
-        // Calculate trim boundaries using sliding window algorithm (Mott's algorithm)
         var (_, end5Prime) = FindTrim5Prime(qualityScores, threshold, windowSize);
         var (start3Prime, _) = FindTrim3Prime(qualityScores, threshold, windowSize, sequenceLength);
 
-        // Ensure minimum length
         var trimmedLength = start3Prime - end5Prime;
         if (trimmedLength < minLength)
         {
@@ -65,13 +63,11 @@ public sealed class PreviewTrimQueryHandler
                 $"Trimmed sequence would be {trimmedLength} bases, which is less than the minimum of {minLength} bases."));
         }
 
-        // Get preview sequence (max 100 chars from start)
-        var previewLength = Math.Min(100, trimmedLength);
+        var previewLength = Math.Min(MaxPreviewLength, trimmedLength);
         var previewSequence = sequence.Substring(end5Prime, previewLength);
         if (trimmedLength > previewLength)
             previewSequence += "...";
 
-        // Calculate average quality in trimmed region
         var trimmedQuality = qualityScores
             .Skip(end5Prime)
             .Take(trimmedLength)
@@ -81,10 +77,10 @@ public sealed class PreviewTrimQueryHandler
 
         return Result.Success(new TrimPreviewDto(
             traceId.Value.ToString(),
-            0,               // start5Prime
-            end5Prime,       // end5Prime
-            start3Prime,     // start3Prime
-            sequenceLength,  // end3Prime
+            0,
+            end5Prime,
+            start3Prime,
+            sequenceLength,
             algorithm,
             sequenceLength,
             trimmedLength,

@@ -18,6 +18,15 @@ namespace GeneFlow.ApiNet2.Infrastructure.Events;
 /// </remarks>
 public sealed class RedisEventBusSubscriber : IEventBusSubscriber
 {
+    /// <summary>How many messages to fetch per <c>XREADGROUP</c> call.</summary>
+    private const int ReadBatchSize = 10;
+
+    /// <summary>Idle-poll delay when the stream returns no new messages.</summary>
+    private static readonly TimeSpan IdlePollDelay = TimeSpan.FromSeconds(1);
+
+    /// <summary>Back-off delay before retrying after a transient stream error.</summary>
+    private static readonly TimeSpan ErrorBackoffDelay = TimeSpan.FromSeconds(5);
+
     private readonly IConnectionMultiplexer _redis;
     private readonly RedisSettings _settings;
     private readonly ILogger<RedisEventBusSubscriber> _logger;
@@ -59,11 +68,11 @@ public sealed class RedisEventBusSubscriber : IEventBusSubscriber
                     consumerGroup,
                     _consumerName,
                     ">",
-                    count: 10);
+                    count: ReadBatchSize);
 
                 if (entries.Length == 0)
                 {
-                    await Task.Delay(1000, cancellationToken);
+                    await Task.Delay(IdlePollDelay, cancellationToken);
                     continue;
                 }
 
@@ -94,12 +103,12 @@ public sealed class RedisEventBusSubscriber : IEventBusSubscriber
             catch (RedisException ex)
             {
                 _logger.LogError(ex, "Redis error reading from stream {Stream}", streamName);
-                await Task.Delay(5000, cancellationToken);
+                await Task.Delay(ErrorBackoffDelay, cancellationToken);
             }
             catch (IOException ex)
             {
                 _logger.LogError(ex, "I/O error reading from stream {Stream}", streamName);
-                await Task.Delay(5000, cancellationToken);
+                await Task.Delay(ErrorBackoffDelay, cancellationToken);
             }
         }
 

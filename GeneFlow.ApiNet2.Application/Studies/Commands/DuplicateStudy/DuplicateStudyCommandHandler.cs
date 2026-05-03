@@ -16,6 +16,16 @@ namespace GeneFlow.ApiNet2.Application.Studies.Commands.DuplicateStudy;
 public sealed class DuplicateStudyCommandHandler
     : ICommandHandler<DuplicateStudyCommand, Result<StudyDto>>
 {
+    /// <summary>Suffix appended to the duplicated study title.</summary>
+    private const string CopyTitleSuffix = " (Copy)";
+
+    /// <summary>
+    /// Maximum length of the original title preserved when appending
+    /// <see cref="CopyTitleSuffix"/>, so the resulting title fits within
+    /// <see cref="StudyTitle"/> validation bounds.
+    /// </summary>
+    private const int MaxTitlePrefixLength = 90;
+
     private readonly IStudyRepository _studyRepository;
     private readonly IStudyUnitOfWork _unitOfWork;
     private readonly ISequenceGenerator _sequenceGenerator;
@@ -34,37 +44,31 @@ public sealed class DuplicateStudyCommandHandler
         DuplicateStudyCommand request,
         CancellationToken cancellationToken)
     {
-        // Parse user ID
         if (!UserId.TryParse(request.UserId, out var userId) || userId is null)
             return Result.Failure<StudyDto>(StudyErrors.InvalidUserId);
 
-        // Parse study ID
         if (!StudyId.TryParse(request.StudyId, out var studyId) || studyId is null)
             return Result.Failure<StudyDto>(StudyErrors.NotFound);
 
-        // Get original study
         var originalStudy = await _studyRepository.GetByIdAsync(studyId, cancellationToken);
         if (originalStudy is null)
             return Result.Failure<StudyDto>(StudyErrors.NotFound);
 
-        // Check if user has access (must be a member)
         if (!originalStudy.IsMember(userId))
             return Result.Failure<StudyDto>(StudyErrors.NotFound);
 
-        // Create new title with "(Copy)" suffix
-        var newTitleValue = originalStudy.Title.Value.Length > 90
-            ? originalStudy.Title.Value[..90] + " (Copy)"
-            : originalStudy.Title.Value + " (Copy)";
+        var originalTitle = originalStudy.Title.Value;
+        var newTitleValue = originalTitle.Length > MaxTitlePrefixLength
+            ? originalTitle[..MaxTitlePrefixLength] + CopyTitleSuffix
+            : originalTitle + CopyTitleSuffix;
 
         var titleResult = StudyTitle.Create(newTitleValue);
         if (titleResult.IsFailure)
             return Result.Failure<StudyDto>(titleResult.Error);
 
-        // Generate new study ID
         var sequenceId = await _sequenceGenerator.NextAsync(StudyId.SequenceName, cancellationToken);
         var newStudyId = StudyId.FromSequence(sequenceId);
 
-        // Create new study (starts as Draft, user becomes owner)
         var studyResult = Study.Create(
             newStudyId,
             userId,
@@ -77,7 +81,6 @@ public sealed class DuplicateStudyCommandHandler
 
         var newStudy = studyResult.Value;
 
-        // Copy optional fields
         if (!string.IsNullOrWhiteSpace(originalStudy.Institution))
         {
             newStudy.UpdateInstitution(originalStudy.Institution, userId);
@@ -88,20 +91,17 @@ public sealed class DuplicateStudyCommandHandler
             newStudy.UpdatePrincipalInvestigator(originalStudy.PrincipalInvestigator, userId);
         }
 
-        // Copy tags
         foreach (var tag in originalStudy.Tags)
         {
             newStudy.AddTag(tag, userId);
         }
 
-        // Copy settings
         var newSettings = StudySettings.Create(
             originalStudy.Settings.AllowPublicComments,
             originalStudy.Settings.AllowDataDownload,
             originalStudy.Settings.RequireApprovalToJoin);
         newStudy.UpdateSettings(newSettings, userId);
 
-        // Persist
         await _studyRepository.AddAsync(newStudy, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 

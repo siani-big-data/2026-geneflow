@@ -12,6 +12,12 @@ namespace GeneFlow.ApiNet2.Application.Profiles.EventHandlers;
 public sealed class ProfilePhotoUploadedEventHandler
     : INotificationHandler<ProfilePhotoUploadedEvent>
 {
+    /// <summary>Width in pixels of the generated profile thumbnail.</summary>
+    private const int ThumbnailWidth = 150;
+
+    /// <summary>Height in pixels of the generated profile thumbnail.</summary>
+    private const int ThumbnailHeight = 150;
+
     private readonly IFileStorageService _fileStorageService;
     private readonly IImageProcessingService _imageProcessingService;
     private readonly IEventBusPublisher _eventBusPublisher;
@@ -55,8 +61,8 @@ public sealed class ProfilePhotoUploadedEventHandler
 
             var thumbnailData = await _imageProcessingService.CreateThumbnailAsync(
                 photoData,
-                width: 150,
-                height: 150,
+                width: ThumbnailWidth,
+                height: ThumbnailHeight,
                 cancellationToken);
 
             var thumbnailPath = $"profiles/{notification.ProfileId.Value}/thumbnail.{notification.Extension}";
