@@ -7,9 +7,9 @@ using IDomainEventDispatcher = GeneFlow.ApiNet2.SharedKernel.Infrastructure.IDom
 namespace GeneFlow.ApiNet2.Infrastructure.Events;
 
 /// <summary>
-/// Domain event dispatcher that:
-/// 1. Dispatches events via MediatR to internal handlers
-/// 2. Publishes events to Redis Streams for external consumers (Datalake, Workers)
+/// Domain event dispatcher that first invokes in-process MediatR handlers and
+/// then publishes the event to Redis Streams for external consumers
+/// (Datalake, Workers, integrations).
 /// </summary>
 public sealed class DomainEventDispatcher : IDomainEventDispatcher
 {
@@ -47,10 +47,8 @@ public sealed class DomainEventDispatcher : IDomainEventDispatcher
 
         try
         {
-            // 1. Dispatch via MediatR to internal handlers
             await _publisher.Publish(domainEvent, cancellationToken);
 
-            // 2. Publish to Redis Streams for external consumers
             await _eventBusPublisher.PublishAsync(domainEvent, category, cancellationToken);
 
             _logger.LogDebug(

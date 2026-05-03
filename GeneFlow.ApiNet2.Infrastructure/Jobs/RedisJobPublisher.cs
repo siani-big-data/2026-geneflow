@@ -70,13 +70,21 @@ public sealed class RedisJobPublisher : IJobPublisher
                 streamName,
                 messageId);
         }
-        catch (Exception ex)
+        catch (RedisException ex)
         {
             _logger.LogError(
                 ex,
-                "Failed to publish trace processing job for {TraceId} to stream {Stream}",
+                "Redis error publishing trace processing job for {TraceId} to stream {Stream}",
                 job.TraceId,
                 streamName);
+            throw;
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to serialize trace processing job for {TraceId}",
+                job.TraceId);
             throw;
         }
     }
@@ -120,13 +128,21 @@ public sealed class RedisJobPublisher : IJobPublisher
                 streamName,
                 messageId);
         }
-        catch (Exception ex)
+        catch (RedisException ex)
         {
             _logger.LogError(
                 ex,
-                "Failed to publish alignment job {AlignmentId} to stream {Stream}",
+                "Redis error publishing alignment job {AlignmentId} to stream {Stream}",
                 job.AlignmentId,
                 streamName);
+            throw;
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to serialize alignment job {AlignmentId}",
+                job.AlignmentId);
             throw;
         }
     }
@@ -163,14 +179,23 @@ public sealed class RedisJobPublisher : IJobPublisher
                 streamName,
                 messageId);
         }
-        catch (Exception ex)
+        catch (RedisException ex)
         {
             _logger.LogError(
                 ex,
-                "Failed to publish analysis job ({AnalysisType}) for trace {TraceId} to stream {Stream}",
+                "Redis error publishing analysis job ({AnalysisType}) for trace {TraceId} to stream {Stream}",
                 job.AnalysisType,
                 job.TraceId,
                 streamName);
+            throw;
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to serialize analysis job ({AnalysisType}) for trace {TraceId}",
+                job.AnalysisType,
+                job.TraceId);
             throw;
         }
     }
@@ -213,13 +238,21 @@ public sealed class RedisJobPublisher : IJobPublisher
                 streamName,
                 messageId);
         }
-        catch (Exception ex)
+        catch (RedisException ex)
         {
             _logger.LogError(
                 ex,
-                "Failed to publish pipeline job for execution {ExecutionId} to stream {Stream}",
+                "Redis error publishing pipeline job for execution {ExecutionId} to stream {Stream}",
                 job.ExecutionId,
                 streamName);
+            throw;
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to serialize pipeline job for execution {ExecutionId}",
+                job.ExecutionId);
             throw;
         }
     }

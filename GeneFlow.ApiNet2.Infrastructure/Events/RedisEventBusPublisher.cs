@@ -76,11 +76,20 @@ public sealed class RedisEventBusPublisher : IEventBusPublisher
                 streamName,
                 messageId);
         }
-        catch (Exception ex)
+        catch (RedisException ex)
         {
             _logger.LogError(
                 ex,
-                "Failed to publish event {EventType} to stream {Stream}",
+                "Redis error publishing event {EventType} to stream {Stream}",
+                eventType,
+                streamName);
+            throw;
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to serialize event {EventType} for stream {Stream}",
                 eventType,
                 streamName);
             throw;
