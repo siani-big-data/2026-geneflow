@@ -51,10 +51,6 @@ public sealed class LoginCommandHandler
         if (user is null)
             return Result.Failure<LoginResultDto>(UserErrors.InvalidCredentials);
 
-        var canAuthResult = _authValidator.ValidateCanAuthenticate(user);
-        if (canAuthResult.IsFailure)
-            return Result.Failure<LoginResultDto>(canAuthResult.Error);
-
         var passwordResult = _authValidator.ValidatePassword(user, request.Password);
         if (passwordResult.IsFailure)
         {
@@ -62,6 +58,10 @@ public sealed class LoginCommandHandler
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             return Result.Failure<LoginResultDto>(UserErrors.InvalidCredentials);
         }
+
+        var canAuthResult = _authValidator.ValidateCanAuthenticate(user);
+        if (canAuthResult.IsFailure)
+            return Result.Failure<LoginResultDto>(canAuthResult.Error);
 
         if (user.TwoFactorEnabled)
         {
@@ -71,17 +71,15 @@ public sealed class LoginCommandHandler
                 {
                     User = user.ToDto(),
                     Tokens = null!,
-                    RequiresTwoFactor = true
+                    RequiresTwoFactor = true,
                 });
             }
 
-            // Try TOTP validation first if configured
             if (user.IsTotpConfigured)
             {
                 var decryptedSecret = _twoFactorAuthenticator.DecryptSecret(user.TotpSecret!);
                 if (!_twoFactorAuthenticator.ValidateCode(decryptedSecret, request.TwoFactorCode))
                 {
-                    // Record failed 2FA attempt (counts towards lockout)
                     user.RecordFailedLogin();
                     await _unitOfWork.SaveChangesAsync(cancellationToken);
                     return Result.Failure<LoginResultDto>(UserErrors.InvalidTwoFactorCode);
@@ -89,11 +87,9 @@ public sealed class LoginCommandHandler
             }
             else
             {
-                // Fall back to email-based code validation
                 var twoFactorResult = user.ValidateTwoFactorCode(request.TwoFactorCode);
                 if (twoFactorResult.IsFailure)
                 {
-                    // Record failed 2FA attempt (counts towards lockout)
                     user.RecordFailedLogin();
                     await _unitOfWork.SaveChangesAsync(cancellationToken);
                     return Result.Failure<LoginResultDto>(twoFactorResult.Error);

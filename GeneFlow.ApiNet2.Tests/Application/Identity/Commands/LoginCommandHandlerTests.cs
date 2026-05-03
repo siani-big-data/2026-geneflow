@@ -142,6 +142,7 @@ public class LoginCommandHandlerTests
         var command = new LoginCommand("test@example.com", "Password123!", null);
 
         _userRepository.GetByEmailOrUsernameAsync(command.EmailOrUsername, Arg.Any<CancellationToken>()).Returns(user);
+        _authValidator.ValidatePassword(Arg.Any<User>(), command.Password).Returns(Result.Success());
         _authValidator.ValidateCanAuthenticate(Arg.Any<User>()).Returns(Result.Failure(UserErrors.UserDeactivated));
 
         // Act
@@ -149,6 +150,7 @@ public class LoginCommandHandlerTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(UserErrors.UserDeactivated);
     }
 
     [Fact]
