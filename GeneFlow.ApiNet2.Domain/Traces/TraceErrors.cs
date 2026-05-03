@@ -11,6 +11,7 @@ public static class TraceErrors
     // General errors
     public static readonly Error NotFound = Error.NotFound("Trace.NotFound", "Trace was not found.");
     public static Error TraceNotFoundById(string id) => Error.NotFound("Trace.NotFoundById", $"Trace with ID '{id}' was not found.");
+    public static readonly Error InvalidTraceId = Error.Validation("Trace.InvalidTraceId", "Invalid trace ID.");
     public static readonly Error InvalidUserId = Error.Validation("Trace.InvalidUserId", "Invalid user ID.");
     public static readonly Error InvalidStudyId = Error.Validation("Trace.InvalidStudyId", "Invalid study ID.");
 
@@ -54,13 +55,17 @@ public static class TraceErrors
 
     // Trim errors
     public static Error InvalidTrimPosition(string position) => Error.Validation("Trace.InvalidTrimPosition", $"Invalid trim position: {position}.");
+    public static readonly Error InvalidTrimPositions = Error.Validation("Trace.InvalidTrimPositions", "Trim positions are invalid. End position must be greater than start position.");
     public static readonly Error TrimExceedsSequenceLength = Error.Validation("Trace.TrimExceedsSequenceLength", "Trim positions exceed sequence length.");
     public static readonly Error TrimAlgorithmRequired = Error.Validation("Trace.TrimAlgorithmRequired", "Trim algorithm is required.");
     public static Error TrimAlgorithmTooLong(int max) => Error.Validation("Trace.TrimAlgorithmTooLong", $"Trim algorithm must not exceed {max} characters.");
+    public static Error TrimReasonTooLong(int max) => Error.Validation("Trace.TrimReasonTooLong", $"Trim reason must not exceed {max} characters.");
     public static readonly Error TrimmedByRequired = Error.Validation("Trace.TrimmedByRequired", "Trimmed by user is required.");
-    public static readonly Error NotTrimmed = Error.NotFound("Trace.NotTrimmed", "Trace has not been trimmed.");
-    public static readonly Error AlreadyTrimmed = Error.Conflict("Trace.AlreadyTrimmed", "Trace has already been trimmed. Undo the current trim first.");
+    public static readonly Error TrimNotFound = Error.NotFound("Trace.TrimNotFound", "Trim not found or already undone.");
+    public static readonly Error NoActiveTrims = Error.NotFound("Trace.NoActiveTrims", "There are no active trims to undo.");
     public static readonly Error InvalidTrimBoundaries = Error.Validation("Trace.InvalidTrimBoundaries", "Trim boundaries are outside sequence range.");
+    public static readonly Error InvalidTrimEnd = Error.Validation("Trace.InvalidTrimEnd", "Invalid trim end. Must be 'FivePrime' or 'ThreePrime'.");
+    public static readonly Error InvalidTrimType = Error.Validation("Trace.InvalidTrimType", "Invalid trim type.");
 
     // Sequence edit errors
     public static readonly Error EditNotFound = Error.NotFound("Trace.EditNotFound", "Sequence edit was not found.");
@@ -90,4 +95,12 @@ public static class TraceErrors
     public static readonly Error NotProcessing = Error.Validation("Trace.NotProcessing", "Trace is not currently being processed.");
     public static readonly Error FailureReasonRequired = Error.Validation("Trace.FailureReasonRequired", "Failure reason is required.");
     public static Error FailureReasonTooLong(int max) => Error.Validation("Trace.FailureReasonTooLong", $"Failure reason must not exceed {max} characters.");
+
+    // Datalake / pagination errors
+    public static readonly Error InvalidPageNumber = Error.Validation("Trace.InvalidPageNumber", "Page number must be 1 or greater.");
+    public static readonly Error InvalidPageSize = Error.Validation("Trace.InvalidPageSize", "Page size must be between 100 and 50,000 bases.");
+    public static readonly Error PageOutOfRange = Error.Validation("Trace.PageOutOfRange", "Requested page is beyond the available sequence data.");
+    public static readonly Error ChunkedDataNotAvailable = Error.NotFound("Trace.ChunkedDataNotAvailable", "Chunked sequence data is not available for this trace.");
+    public static readonly Error AnalysisResultNotFound = Error.NotFound("Trace.AnalysisResultNotFound", "Analysis result was not found.");
+    public static Error AnalysisTypeNotFound(string type) => Error.NotFound("Trace.AnalysisTypeNotFound", $"Analysis result of type '{type}' was not found.");
 }

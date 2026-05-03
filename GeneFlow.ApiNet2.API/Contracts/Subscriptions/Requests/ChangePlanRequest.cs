@@ -4,5 +4,5 @@ namespace GeneFlow.ApiNet2.API.Contracts.Subscriptions.Requests;
 /// Request to change subscription plan.
 /// </summary>
 public sealed record ChangePlanRequest(
-    Guid NewPlanId,
+    string NewPlanId,
     int BillingCycleId);

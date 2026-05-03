@@ -18,6 +18,7 @@ public static class UserMappingExtensions
         dto.IsActive,
         dto.EmailVerified,
         dto.TwoFactorEnabled,
+        dto.HasPassword,
         dto.Roles,
         dto.CreatedAt,
         dto.ModifiedAt);

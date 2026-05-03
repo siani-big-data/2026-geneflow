@@ -28,7 +28,8 @@ public static class TraceMappings
             Status = trace.Status.Name,
             StatusId = trace.Status.Id,
             QualityMetrics = trace.QualityMetrics?.ToDto(),
-            TrimRegion = trace.TrimRegion?.ToDto(),
+            Trims = trace.Trims.ToDtos(),
+            ActiveTrimCount = trace.ActiveTrimCount,
             HasChromatogramData = trace.HasChromatogramData,
             FailureReason = trace.FailureReason,
             ProcessedAt = trace.ProcessedAt,
@@ -82,18 +83,29 @@ public static class TraceMappings
         };
     }
 
-    public static TrimRegionDto ToDto(this TrimRegion region)
+    public static TraceTrimDto ToDto(this TraceTrim trim)
     {
-        return new TrimRegionDto
+        return new TraceTrimDto
         {
-            Start5Prime = region.Start5Prime,
-            End5Prime = region.End5Prime,
-            Start3Prime = region.Start3Prime,
-            End3Prime = region.End3Prime,
-            Algorithm = region.Algorithm,
-            TrimmedBy = region.TrimmedBy,
-            TrimmedAt = region.TrimmedAt
+            Id = trim.Id.ToString(),
+            TrimType = trim.TrimType.Name,
+            TrimTypeId = trim.TrimType.Id,
+            TrimEnd = trim.TrimEnd.Name,
+            TrimEndId = trim.TrimEnd.Id,
+            StartPosition = trim.StartPosition,
+            EndPosition = trim.EndPosition,
+            Length = trim.Length,
+            Algorithm = trim.Algorithm,
+            Reason = trim.Reason,
+            AppliedBy = trim.AppliedBy.ToString(),
+            AppliedAt = trim.AppliedAt,
+            IsActive = trim.IsActive
         };
+    }
+
+    public static IReadOnlyList<TraceTrimDto> ToDtos(this IEnumerable<TraceTrim> trims)
+    {
+        return trims.Select(t => t.ToDto()).ToList();
     }
 
     public static SequenceEditDto ToDto(this SequenceEdit edit, string? traceId = null)

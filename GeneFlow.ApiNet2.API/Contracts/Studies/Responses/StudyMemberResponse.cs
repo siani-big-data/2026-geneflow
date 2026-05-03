@@ -8,4 +8,7 @@ public sealed record StudyMemberResponse(
     int RoleId,
     string RoleName,
     DateTime JoinedAt,
-    string? InvitedBy);
+    string? InvitedBy,
+    string? UserName,
+    string? UserEmail,
+    string? UserAvatarUrl);

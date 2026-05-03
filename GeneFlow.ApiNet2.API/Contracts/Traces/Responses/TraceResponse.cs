@@ -18,7 +18,8 @@ public sealed class TraceResponse
     public string Status { get; init; } = null!;
     public int StatusId { get; init; }
     public QualityMetricsResponse? QualityMetrics { get; init; }
-    public TrimRegionResponse? TrimRegion { get; init; }
+    public IReadOnlyList<TraceTrimResponse> Trims { get; init; } = [];
+    public int ActiveTrimCount { get; init; }
     public bool HasChromatogramData { get; init; }
     public string? FailureReason { get; init; }
     public DateTime? ProcessedAt { get; init; }

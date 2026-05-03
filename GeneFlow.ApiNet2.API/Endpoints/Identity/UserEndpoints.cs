@@ -9,6 +9,8 @@ using GeneFlow.ApiNet2.Application.Identity.Commands.LinkExternalLogin;
 using GeneFlow.ApiNet2.Application.Identity.Commands.SetupTwoFactor;
 using GeneFlow.ApiNet2.Application.Identity.Commands.UnlinkExternalLogin;
 using GeneFlow.ApiNet2.Application.Identity.Commands.VerifyEmail;
+using GeneFlow.ApiNet2.Application.Identity.Commands.DeactivateAccount;
+using GeneFlow.ApiNet2.Application.Identity.Commands.DeleteAccount;
 using GeneFlow.ApiNet2.Application.Identity.Interfaces;
 using GeneFlow.ApiNet2.Application.Identity.Queries.GetCurrentUser;
 using GeneFlow.ApiNet2.Application.Identity.Queries.GetUserById;
@@ -122,6 +124,24 @@ public sealed class UserEndpoints : IEndpoint
             .Produces(StatusCodes.Status204NoContent)
             .Produces<ApiError>(StatusCodes.Status400BadRequest)
             .Produces<ApiError>(StatusCodes.Status404NotFound);
+
+        // Account Management
+        group.MapPost("/me/deactivate", DeactivateAccount)
+            .WithName("Users_DeactivateAccount")
+            .WithSummary("Deactivate current user account")
+            .WithDescription("Temporarily deactivates the user account. Can be reactivated by logging in.")
+            .RequireAuthorization()
+            .Produces(StatusCodes.Status204NoContent)
+            .Produces(StatusCodes.Status401Unauthorized);
+
+        group.MapDelete("/me", DeleteAccount)
+            .WithName("Users_DeleteAccount")
+            .WithSummary("Permanently delete current user account")
+            .WithDescription("Permanently deletes the user account and all associated data. Requires typing DELETE to confirm.")
+            .RequireAuthorization()
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesValidationProblem()
+            .Produces(StatusCodes.Status401Unauthorized);
     }
 
     private static async Task<IResult> GetCurrentUser(
@@ -242,9 +262,9 @@ public sealed class UserEndpoints : IEndpoint
         if (currentUser.UserId is null)
             return Results.Unauthorized();
 
+        // Secret is retrieved from server-side cache (not from client)
         var command = new ConfirmTwoFactorSetupCommand(
             currentUser.UserId.ToString()!,
-            request.Secret,
             request.Code);
         var result = await sender.Send(command, cancellationToken);
 
@@ -311,6 +331,41 @@ public sealed class UserEndpoints : IEndpoint
         var command = new UnlinkExternalLoginCommand(
             currentUser.UserId.ToString()!,
             provider);
+        var result = await sender.Send(command, cancellationToken);
+
+        if (result.IsFailure)
+            return result.ToHttpResult();
+
+        return Results.NoContent();
+    }
+
+    private static async Task<IResult> DeactivateAccount(
+        [FromServices] ISender sender,
+        [FromServices] ICurrentUserService currentUser,
+        CancellationToken cancellationToken)
+    {
+        if (currentUser.UserId is null)
+            return Results.Unauthorized();
+
+        var command = new DeactivateAccountCommand(currentUser.UserId);
+        var result = await sender.Send(command, cancellationToken);
+
+        if (result.IsFailure)
+            return result.ToHttpResult();
+
+        return Results.NoContent();
+    }
+
+    private static async Task<IResult> DeleteAccount(
+        [FromBody] DeleteAccountRequest request,
+        [FromServices] ISender sender,
+        [FromServices] ICurrentUserService currentUser,
+        CancellationToken cancellationToken)
+    {
+        if (currentUser.UserId is null)
+            return Results.Unauthorized();
+
+        var command = new DeleteAccountCommand(currentUser.UserId, request.ConfirmationText);
         var result = await sender.Send(command, cancellationToken);
 
         if (result.IsFailure)

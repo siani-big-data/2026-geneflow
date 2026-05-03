@@ -81,6 +81,9 @@ public sealed class LoginCommandHandler
                 var decryptedSecret = _twoFactorAuthenticator.DecryptSecret(user.TotpSecret!);
                 if (!_twoFactorAuthenticator.ValidateCode(decryptedSecret, request.TwoFactorCode))
                 {
+                    // Record failed 2FA attempt (counts towards lockout)
+                    user.RecordFailedLogin();
+                    await _unitOfWork.SaveChangesAsync(cancellationToken);
                     return Result.Failure<LoginResultDto>(UserErrors.InvalidTwoFactorCode);
                 }
             }
@@ -90,6 +93,9 @@ public sealed class LoginCommandHandler
                 var twoFactorResult = user.ValidateTwoFactorCode(request.TwoFactorCode);
                 if (twoFactorResult.IsFailure)
                 {
+                    // Record failed 2FA attempt (counts towards lockout)
+                    user.RecordFailedLogin();
+                    await _unitOfWork.SaveChangesAsync(cancellationToken);
                     return Result.Failure<LoginResultDto>(twoFactorResult.Error);
                 }
             }

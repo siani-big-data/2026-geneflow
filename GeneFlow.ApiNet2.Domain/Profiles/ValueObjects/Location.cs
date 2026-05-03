@@ -8,6 +8,9 @@ namespace GeneFlow.ApiNet2.Domain.Profiles.ValueObjects;
 /// </summary>
 public sealed class Location : ValueObject
 {
+    /// <summary>Minimum length of location (if provided).</summary>
+    public const int MinLength = 2;
+
     /// <summary>Maximum length of location.</summary>
     public const int MaxLength = 200;
 
@@ -25,6 +28,9 @@ public sealed class Location : ValueObject
             return new Location(null);
 
         var trimmed = value.Trim();
+
+        if (trimmed.Length < MinLength)
+            return Result.Failure<Location>(ProfileErrors.LocationTooShort(MinLength));
 
         if (trimmed.Length > MaxLength)
             return Result.Failure<Location>(ProfileErrors.LocationTooLong(MaxLength));

@@ -28,8 +28,8 @@ public sealed class GetTraceAnnotationsQueryHandler
         if (!TraceId.TryParse(request.TraceId, out var traceId) || traceId is null)
             return Result.Failure<IReadOnlyList<AnnotationDto>>(TraceErrors.NotFound);
 
-        // Get trace with annotations
-        var trace = await _repository.GetByIdAsync(traceId, cancellationToken);
+        // Get trace with annotations loaded
+        var trace = await _repository.GetByIdWithAnnotationsAsync(traceId, cancellationToken);
         if (trace is null)
             return Result.Failure<IReadOnlyList<AnnotationDto>>(TraceErrors.NotFound);
 

@@ -1,23 +1,36 @@
+using Minio;
+using GeneFlow.ApiNet2.Application.Behaviors;
 using GeneFlow.ApiNet2.Application.Identity.Interfaces;
 using GeneFlow.ApiNet2.Application.Identity.Services;
+using GeneFlow.ApiNet2.Application.PaymentMethods.Interfaces;
 using GeneFlow.ApiNet2.Domain.Identity;
+using GeneFlow.ApiNet2.Domain.PaymentMethods;
 using GeneFlow.ApiNet2.Domain.Plans;
 using GeneFlow.ApiNet2.Domain.Profiles;
 using GeneFlow.ApiNet2.Domain.Studies;
 using GeneFlow.ApiNet2.Domain.Subscriptions;
+using GeneFlow.ApiNet2.Domain.Pipelines;
 using GeneFlow.ApiNet2.Domain.Traces;
+using GeneFlow.ApiNet2.Infrastructure.Analysis;
 using GeneFlow.ApiNet2.Infrastructure.Events;
+using GeneFlow.ApiNet2.Infrastructure.Jobs;
 using GeneFlow.ApiNet2.Infrastructure.Identity.Configuration;
 using GeneFlow.ApiNet2.Infrastructure.Identity.Persistence.Context;
 using GeneFlow.ApiNet2.Infrastructure.Identity.Persistence.Repositories;
 using GeneFlow.ApiNet2.Infrastructure.Identity.Services;
 using GeneFlow.ApiNet2.Infrastructure.Identity.Services.OAuth;
+using GeneFlow.ApiNet2.Infrastructure.PaymentMethods.Persistence.Context;
+using GeneFlow.ApiNet2.Infrastructure.Pipelines.Persistence.Context;
+using GeneFlow.ApiNet2.Infrastructure.Pipelines.Persistence.Repositories;
+using GeneFlow.ApiNet2.Infrastructure.PaymentMethods.Persistence.Repositories;
+using GeneFlow.ApiNet2.Infrastructure.PaymentMethods.Services;
 using GeneFlow.ApiNet2.Infrastructure.Plans.Persistence.Context;
 using GeneFlow.ApiNet2.Infrastructure.Plans.Persistence.Repositories;
 using GeneFlow.ApiNet2.Infrastructure.Profiles.Persistence.Context;
 using GeneFlow.ApiNet2.Infrastructure.Profiles.Persistence.Repositories;
 using GeneFlow.ApiNet2.Infrastructure.Redis;
 using GeneFlow.ApiNet2.Infrastructure.Redis.Configuration;
+using GeneFlow.ApiNet2.Infrastructure.Storage;
 using GeneFlow.ApiNet2.Infrastructure.Storage.Configuration;
 using GeneFlow.ApiNet2.Infrastructure.Storage.Services;
 using GeneFlow.ApiNet2.Infrastructure.Studies.Persistence.Context;
@@ -30,6 +43,7 @@ using GeneFlow.ApiNet2.Infrastructure.Traces.Persistence.Repositories;
 using GeneFlow.ApiNet2.Infrastructure.Traces.Services;
 using GeneFlow.ApiNet2.Infrastructure.Usage.Repositories;
 using GeneFlow.ApiNet2.Infrastructure.Usage.Services;
+using GeneFlow.ApiNet2.Infrastructure.Services;
 using GeneFlow.ApiNet2.Domain.Usage;
 using GeneFlow.ApiNet2.SharedKernel.Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -167,6 +181,39 @@ public static class DependencyInjection
         // Traces Services
         services.AddScoped<ITraceAnalysisService, TraceAnalysisService>();
 
+        // Pipelines DbContext
+        services.AddDbContext<PipelineContext>(options =>
+            options.UseNpgsql(connectionString, npgsqlOptions =>
+            {
+                npgsqlOptions.MigrationsAssembly(typeof(PipelineContext).Assembly.FullName);
+                npgsqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: 3,
+                    maxRetryDelay: TimeSpan.FromSeconds(5),
+                    errorCodesToAdd: null);
+            }));
+
+        // Pipelines Repositories
+        services.AddScoped<IPipelineRepository, PipelineRepository>();
+        services.AddScoped<IPipelineExecutionRepository, PipelineExecutionRepository>();
+        services.AddScoped<IPipelineUnitOfWork, PipelineUnitOfWork>();
+
+        // PaymentMethods DbContext
+        services.AddDbContext<PaymentMethodContext>(options =>
+            options.UseNpgsql(connectionString, npgsqlOptions =>
+            {
+                npgsqlOptions.MigrationsAssembly(typeof(PaymentMethodContext).Assembly.FullName);
+                npgsqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: 3,
+                    maxRetryDelay: TimeSpan.FromSeconds(5),
+                    errorCodesToAdd: null);
+            }));
+
+        // PaymentMethods Repositories
+        services.AddScoped<IPaymentMethodRepository, PaymentMethodRepository>();
+
+        // Stripe Service
+        services.AddSingleton<IStripeService, StripeService>();
+
         return services;
     }
 
@@ -193,6 +240,9 @@ public static class DependencyInjection
             ConnectionMultiplexer.Connect(configurationOptions));
 
         services.AddSingleton<ISequenceGenerator, RedisSequenceGenerator>();
+
+        // Cache service (Redis-based)
+        services.AddSingleton<ICacheService, RedisCacheService>();
 
         // Usage statistics repository (Redis-based datamart)
         services.AddScoped<IUsageStatsRepository, RedisUsageStatsRepository>();
@@ -231,6 +281,9 @@ public static class DependencyInjection
         services.AddHttpClient<GitHubTokenValidator>();
         services.AddScoped<IOAuthTokenValidator, OAuthTokenValidator>();
 
+        // Worker API key validation (for background processing services)
+        services.AddScoped<IWorkerApiKeyValidator, WorkerApiKeyValidator>();
+
         services.AddHttpContextAccessor();
 
         return services;
@@ -246,8 +299,14 @@ public static class DependencyInjection
         services.AddSingleton<IEventBusSubscriber, RedisEventBusSubscriber>();
         services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
 
+        // Job publisher for Analysis worker
+        services.AddSingleton<IJobPublisher, RedisJobPublisher>();
+
         // Usage stats event processor (background service)
         services.AddHostedService<UsageStatsEventProcessor>();
+
+        // Analysis event processor (consumes events from Python Analysis worker)
+        services.AddHostedService<AnalysisEventProcessor>();
 
         return services;
     }
@@ -259,11 +318,33 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.Configure<StorageSettings>(
-            configuration.GetSection(StorageSettings.SectionName));
-
-        services.AddSingleton<IFileStorageService, LocalFileStorageService>();
+        // Image processing service
         services.AddSingleton<IImageProcessingService, ImageProcessingService>();
+
+        // Datalake Storage (MinIO/S3) for trace files and chunked data
+        services.Configure<DatalakeStorageSettings>(
+            configuration.GetSection(DatalakeStorageSettings.SectionName));
+
+        var datalakeSettings = configuration
+            .GetSection(DatalakeStorageSettings.SectionName)
+            .Get<DatalakeStorageSettings>() ?? new DatalakeStorageSettings();
+
+        // MinIO client configuration
+        services.AddSingleton<IMinioClient>(sp =>
+        {
+            var client = new MinioClient()
+                .WithEndpoint(datalakeSettings.EndpointUrl.Replace("http://", "").Replace("https://", ""))
+                .WithCredentials(datalakeSettings.AccessKey, datalakeSettings.SecretKey)
+                .WithSSL(datalakeSettings.UseSSL)
+                .WithTimeout((int)TimeSpan.FromSeconds(datalakeSettings.TimeoutSeconds).TotalMilliseconds)
+                .Build();
+
+            return client;
+        });
+
+        // File storage uses MinIO for trace uploads
+        services.AddSingleton<IFileStorageService, MinIOFileStorageService>();
+        services.AddScoped<IDatalakeStorageClient, MinIODatalakeStorageClient>();
 
         return services;
     }

@@ -58,6 +58,16 @@ public sealed class TraceRepository : ITraceRepository
         return await _context.Traces
             .Include(t => t.Edits)
             .Include(t => t.Annotations)
+            .Include(t => t.Trims)
+            .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<Trace?> GetByIdWithTrimsAsync(TraceId id, CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("Getting trace by ID with trims: {TraceId}", id);
+        return await _context.Traces
+            .Include(t => t.Trims)
             .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
     }
 
@@ -200,5 +210,86 @@ public sealed class TraceRepository : ITraceRepository
             .Include(t => t.Annotations)
             .Where(t => t.StudyId == studyId)
             .ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<(int processed, int pending)> CountByUserStudiesAsync(
+        IEnumerable<string> studyIds,
+        CancellationToken cancellationToken = default)
+    {
+        var idList = studyIds.ToList();
+        if (idList.Count == 0)
+            return (0, 0);
+
+        _logger.LogDebug("Counting traces for user's studies, count: {Count}", idList.Count);
+
+        var parsedIds = idList.Select(StudyId.Parse).ToList();
+
+        var counts = await _context.Traces
+            .Where(t => parsedIds.Contains(t.StudyId))
+            .GroupBy(t => t.Status)
+            .Select(g => new { Status = g.Key, Count = g.Count() })
+            .ToListAsync(cancellationToken);
+
+        var processed = counts
+            .Where(c => c.Status == TraceStatus.Processed)
+            .Sum(c => c.Count);
+
+        var pending = counts
+            .Where(c => c.Status == TraceStatus.Uploaded ||
+                        c.Status == TraceStatus.Validating ||
+                        c.Status == TraceStatus.Processing)
+            .Sum(c => c.Count);
+
+        return (processed, pending);
+    }
+
+    /// <inheritdoc />
+    public async Task<int> CountByStudyInCurrentMonthAsync(
+        StudyId studyId,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("Counting traces for study {StudyId} in current month", studyId);
+
+        var startOfMonth = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+
+        return await _context.Traces
+            .Where(t => t.StudyId == studyId && t.CreatedAt >= startOfMonth)
+            .CountAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<StudyId?> GetStudyIdAsync(TraceId traceId, CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("Getting study ID for trace: {TraceId}", traceId);
+
+        return await _context.Traces
+            .Where(t => t.Id == traceId)
+            .Select(t => t.StudyId)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task DeleteAnnotationAsync(TraceId traceId, Guid annotationId, CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("Deleting annotation {AnnotationId} from trace {TraceId}", annotationId, traceId);
+
+        // Use raw SQL to delete the annotation directly
+        // This avoids EF Core owned entity tracking issues
+        await _context.Database.ExecuteSqlInterpolatedAsync(
+            $"DELETE FROM traces.trace_annotations WHERE id = {annotationId} AND trace_id = {traceId.Value}",
+            cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task DeleteTrimAsync(TraceId traceId, Guid trimId, CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("Deleting trim {TrimId} from trace {TraceId}", trimId, traceId);
+
+        // Use raw SQL to delete the trim directly
+        // This avoids EF Core owned entity tracking issues
+        await _context.Database.ExecuteSqlInterpolatedAsync(
+            $"DELETE FROM traces.trace_trims WHERE id = {trimId} AND trace_id = {traceId.Value}",
+            cancellationToken);
     }
 }

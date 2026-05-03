@@ -54,7 +54,11 @@ public sealed class RegisterUserCommandHandler
         if (await _userRepository.ExistsWithUsernameAsync(usernameResult.Value, cancellationToken))
             return Result.Failure<UserDto>(UserErrors.UsernameAlreadyExists);
 
-        var hashedPassword = _passwordHasher.Hash(request.Password);
+        var passwordResult = Password.Create(request.Password);
+        if (passwordResult.IsFailure)
+            return Result.Failure<UserDto>(passwordResult.Error);
+
+        var hashedPassword = _passwordHasher.Hash(passwordResult.Value);
         var passwordHashResult = PasswordHash.Create(hashedPassword);
         if (passwordHashResult.IsFailure)
             return Result.Failure<UserDto>(passwordHashResult.Error);

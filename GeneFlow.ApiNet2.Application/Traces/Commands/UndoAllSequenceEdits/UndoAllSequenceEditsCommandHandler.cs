@@ -31,8 +31,8 @@ public sealed class UndoAllSequenceEditsCommandHandler
         if (!TraceId.TryParse(request.TraceId, out var traceId) || traceId is null)
             return Result.Failure(TraceErrors.NotFound);
 
-        // Get trace
-        var trace = await _unitOfWork.Traces.GetByIdAsync(traceId, cancellationToken);
+        // Get trace with edits collection loaded for proper change tracking
+        var trace = await _unitOfWork.Traces.GetByIdWithEditsAsync(traceId, cancellationToken);
         if (trace is null)
             return Result.Failure(TraceErrors.NotFound);
 
@@ -41,8 +41,7 @@ public sealed class UndoAllSequenceEditsCommandHandler
         if (undoResult.IsFailure)
             return undoResult;
 
-        // Persist
-        _unitOfWork.Traces.Update(trace);
+        // Persist - no need to call Update() since trace is already tracked
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Success();

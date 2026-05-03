@@ -4,6 +4,7 @@ using GeneFlow.ApiNet2.Domain.Studies;
 using GeneFlow.ApiNet2.Domain.Studies.Enumerations;
 using GeneFlow.ApiNet2.Domain.Studies.ValueObjects;
 using GeneFlow.ApiNet2.SharedKernel.Domain.Pagination;
+using Microsoft.Extensions.Logging;
 
 namespace GeneFlow.ApiNet2.Tests.Application.Studies.Queries;
 
@@ -13,11 +14,12 @@ namespace GeneFlow.ApiNet2.Tests.Application.Studies.Queries;
 public class GetUserStudiesQueryHandlerTests
 {
     private readonly IStudyRepository _studyRepository = Substitute.For<IStudyRepository>();
+    private readonly ILogger<GetUserStudiesQueryHandler> _logger = Substitute.For<ILogger<GetUserStudiesQueryHandler>>();
     private readonly GetUserStudiesQueryHandler _handler;
 
     public GetUserStudiesQueryHandlerTests()
     {
-        _handler = new GetUserStudiesQueryHandler(_studyRepository);
+        _handler = new GetUserStudiesQueryHandler(_studyRepository, _logger);
     }
 
     #region Helper Methods

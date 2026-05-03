@@ -176,11 +176,28 @@ public sealed class UserRepository : IUserRepository
     /// <inheritdoc />
     public async Task<User?> GetByRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default)
     {
-        // Query using raw SQL since RefreshTokens is an owned collection mapped via backing field
-        var userIdString = await _context.Database
-            .SqlQuery<string>($"SELECT \"UserId\" FROM identity.refresh_tokens WHERE token = {refreshToken} LIMIT 1")
-            .FirstOrDefaultAsync(cancellationToken);
+        // Query using raw ADO.NET since RefreshTokens is an owned collection mapped via backing field
+        // EF Core's SqlQuery<T> wraps primitive types and generates incorrect SQL
+        var connection = _context.Database.GetDbConnection();
+        if (connection.State != System.Data.ConnectionState.Open)
+            await connection.OpenAsync(cancellationToken);
 
+        await using var command = connection.CreateCommand();
+        command.CommandText = @"
+            SELECT ""UserId"" FROM identity.refresh_tokens
+            WHERE token = @token
+            LIMIT 1";
+
+        var param = command.CreateParameter();
+        param.ParameterName = "@token";
+        param.Value = refreshToken;
+        command.Parameters.Add(param);
+
+        var result = await command.ExecuteScalarAsync(cancellationToken);
+        if (result == null || result == DBNull.Value)
+            return null;
+
+        var userIdString = result.ToString();
         if (string.IsNullOrEmpty(userIdString))
             return null;
 

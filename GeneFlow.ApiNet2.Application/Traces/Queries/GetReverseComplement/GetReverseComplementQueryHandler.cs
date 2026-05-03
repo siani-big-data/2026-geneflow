@@ -1,6 +1,7 @@
 using GeneFlow.ApiNet2.Application.Traces.DTOs;
 using GeneFlow.ApiNet2.Application.Traces.Interfaces;
 using GeneFlow.ApiNet2.Domain.Traces;
+using GeneFlow.ApiNet2.Domain.Traces.Entities;
 using GeneFlow.ApiNet2.SharedKernel.Application.CQRS;
 using GeneFlow.ApiNet2.SharedKernel.Domain.Results;
 using System.Text;
@@ -52,8 +53,11 @@ public sealed class GetReverseComplementQueryHandler
         if (!TraceId.TryParse(request.TraceId, out var traceId) || traceId is null)
             return Result.Failure<ReverseComplementDto>(TraceErrors.NotFound);
 
-        // Get trace
-        var trace = await _repository.GetByIdAsync(traceId, cancellationToken);
+        // Get trace with trims if needed
+        var trace = request.UseTrimmedSequence
+            ? await _repository.GetByIdWithTrimsAsync(traceId, cancellationToken)
+            : await _repository.GetByIdAsync(traceId, cancellationToken);
+
         if (trace is null)
             return Result.Failure<ReverseComplementDto>(TraceErrors.NotFound);
 
@@ -64,12 +68,10 @@ public sealed class GetReverseComplementQueryHandler
 
         var originalSequence = sequenceResult.Value;
 
-        // Apply trim if requested and available
-        if (request.UseTrimmedSequence && trace.TrimRegion is not null)
+        // Apply trims if requested and available
+        if (request.UseTrimmedSequence && trace.ActiveTrimCount > 0)
         {
-            var start = trace.TrimRegion.End5Prime;
-            var length = trace.TrimRegion.Start3Prime - start;
-            originalSequence = originalSequence.Substring(start, length);
+            originalSequence = ApplyTrims(originalSequence, trace.GetActiveTrims());
         }
 
         // Compute reverse complement
@@ -80,6 +82,37 @@ public sealed class GetReverseComplementQueryHandler
             originalSequence,
             reverseComplement,
             reverseComplement.Length));
+    }
+
+    /// <summary>
+    /// Applies all trim operations to a sequence.
+    /// Trims are applied from the end of the sequence towards the beginning
+    /// to maintain correct positions.
+    /// </summary>
+    private static string ApplyTrims(string sequence, IReadOnlyList<TraceTrim> trims)
+    {
+        if (trims.Count == 0) return sequence;
+
+        // Sort trims by position descending to apply from end to start
+        var sortedTrims = trims
+            .Where(t => t.IsActive)
+            .OrderByDescending(t => t.StartPosition)
+            .ToList();
+
+        var sb = new StringBuilder(sequence);
+
+        foreach (var trim in sortedTrims)
+        {
+            var start = Math.Max(0, trim.StartPosition);
+            var length = Math.Min(sb.Length - start, trim.EndPosition - trim.StartPosition);
+
+            if (start < sb.Length && length > 0)
+            {
+                sb.Remove(start, length);
+            }
+        }
+
+        return sb.ToString();
     }
 
     private static string ComputeReverseComplement(string sequence)

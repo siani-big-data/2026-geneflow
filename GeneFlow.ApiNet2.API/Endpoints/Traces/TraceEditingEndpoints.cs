@@ -11,6 +11,7 @@ using GeneFlow.ApiNet2.Application.Traces.Commands.UndoTrimTrace;
 using GeneFlow.ApiNet2.Application.Traces.Queries.GetEditedSequence;
 using GeneFlow.ApiNet2.Application.Traces.Queries.GetReverseComplement;
 using GeneFlow.ApiNet2.Application.Traces.Queries.GetSequenceEdits;
+using GeneFlow.ApiNet2.Application.Traces.Queries.GetTraceTrims;
 using GeneFlow.ApiNet2.Application.Traces.Queries.GetTrimmedSequence;
 using GeneFlow.ApiNet2.Application.Traces.Queries.PreviewTrim;
 using MediatR;
@@ -31,26 +32,34 @@ public sealed class TraceEditingEndpoints : IEndpoint
             .WithOpenApi()
             .RequireAuthorization();
 
-        // Trimming endpoints
-        group.MapPost("/trim/auto", AutoTrimTrace)
+        // Trimming endpoints (multiple trims per trace)
+        group.MapGet("/trims", GetTrims)
+            .WithName("Traces_GetTrims")
+            .WithSummary("Get all trims")
+            .WithDescription("Returns all trim operations for a trace.")
+            .Produces<IReadOnlyList<TraceTrimResponse>>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces<ApiError>(StatusCodes.Status404NotFound);
+
+        group.MapPost("/trims", AddTrim)
+            .WithName("Traces_AddTrim")
+            .WithSummary("Add trim")
+            .WithDescription("Adds a new trim operation to a trace. Multiple trims can be added.")
+            .Produces<TraceTrimResponse>(StatusCodes.Status201Created)
+            .ProducesValidationProblem()
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces<ApiError>(StatusCodes.Status404NotFound);
+
+        group.MapPost("/trims/auto", AutoTrimTrace)
             .WithName("Traces_AutoTrim")
             .WithSummary("Auto-trim trace")
-            .WithDescription("Automatically trims a trace using quality-based algorithm.")
-            .Produces<TrimRegionResponse>(StatusCodes.Status200OK)
+            .WithDescription("Automatically trims a trace using quality-based algorithm. Creates separate trim operations for 5' and 3' ends.")
+            .Produces<IReadOnlyList<TraceTrimResponse>>(StatusCodes.Status200OK)
             .ProducesValidationProblem()
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces<ApiError>(StatusCodes.Status404NotFound);
 
-        group.MapPost("/trim/manual", ManualTrimTrace)
-            .WithName("Traces_ManualTrim")
-            .WithSummary("Manual trim trace")
-            .WithDescription("Manually trims a trace with specified boundaries.")
-            .Produces<TrimRegionResponse>(StatusCodes.Status200OK)
-            .ProducesValidationProblem()
-            .Produces(StatusCodes.Status401Unauthorized)
-            .Produces<ApiError>(StatusCodes.Status404NotFound);
-
-        group.MapPost("/trim/preview", PreviewTrim)
+        group.MapPost("/trims/preview", PreviewTrim)
             .WithName("Traces_PreviewTrim")
             .WithSummary("Preview auto-trim")
             .WithDescription("Previews auto-trim results without applying them.")
@@ -58,10 +67,18 @@ public sealed class TraceEditingEndpoints : IEndpoint
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces<ApiError>(StatusCodes.Status404NotFound);
 
-        group.MapDelete("/trim", UndoTrim)
+        group.MapDelete("/trims/{trimId}", UndoTrim)
             .WithName("Traces_UndoTrim")
-            .WithSummary("Undo trim")
-            .WithDescription("Removes the trim from a trace.")
+            .WithSummary("Undo specific trim")
+            .WithDescription("Undoes a specific trim operation.")
+            .Produces(StatusCodes.Status204NoContent)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces<ApiError>(StatusCodes.Status404NotFound);
+
+        group.MapDelete("/trims", UndoAllTrims)
+            .WithName("Traces_UndoAllTrims")
+            .WithSummary("Undo all trims")
+            .WithDescription("Undoes all active trim operations on a trace.")
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces<ApiError>(StatusCodes.Status404NotFound);
@@ -69,7 +86,7 @@ public sealed class TraceEditingEndpoints : IEndpoint
         group.MapGet("/sequence/trimmed", GetTrimmedSequence)
             .WithName("Traces_GetTrimmedSequence")
             .WithSummary("Get trimmed sequence")
-            .WithDescription("Returns the trimmed sequence of a trace.")
+            .WithDescription("Returns the sequence with all active trims applied.")
             .Produces<TrimmedSequenceResponse>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces<ApiError>(StatusCodes.Status404NotFound);
@@ -126,6 +143,53 @@ public sealed class TraceEditingEndpoints : IEndpoint
             .Produces<ApiError>(StatusCodes.Status404NotFound);
     }
 
+    private static async Task<IResult> GetTrims(
+        [FromRoute] string studyId,
+        [FromRoute] string traceId,
+        [FromQuery] bool activeOnly = true,
+        [FromServices] ISender sender = default!,
+        [FromServices] ICurrentUserService currentUserService = default!,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = currentUserService.UserId;
+        if (string.IsNullOrEmpty(userId))
+            return Results.Unauthorized();
+
+        var query = new GetTraceTrimsQuery(userId, traceId, activeOnly);
+        var result = await sender.Send(query, cancellationToken);
+
+        return result.IsSuccess
+            ? Results.Ok(result.Value.ToResponses())
+            : result.Error.ToApiResult();
+    }
+
+    private static async Task<IResult> AddTrim(
+        [FromRoute] string studyId,
+        [FromRoute] string traceId,
+        [FromBody] AddTrimRequest request,
+        [FromServices] ISender sender = default!,
+        [FromServices] ICurrentUserService currentUserService = default!,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = currentUserService.UserId;
+        if (string.IsNullOrEmpty(userId))
+            return Results.Unauthorized();
+
+        var command = new ManualTrimTraceCommand(
+            userId,
+            traceId,
+            request.StartPosition,
+            request.EndPosition,
+            request.TrimEnd,
+            request.Reason);
+
+        var result = await sender.Send(command, cancellationToken);
+
+        return result.IsSuccess
+            ? Results.Created($"/api/v1/studies/{studyId}/traces/{traceId}/trims/{result.Value.Id}", result.Value.ToResponse())
+            : result.Error.ToApiResult();
+    }
+
     private static async Task<IResult> AutoTrimTrace(
         [FromRoute] string studyId,
         [FromRoute] string traceId,
@@ -148,34 +212,7 @@ public sealed class TraceEditingEndpoints : IEndpoint
         var result = await sender.Send(command, cancellationToken);
 
         return result.IsSuccess
-            ? Results.Ok(result.Value.ToResponse())
-            : result.Error.ToApiResult();
-    }
-
-    private static async Task<IResult> ManualTrimTrace(
-        [FromRoute] string studyId,
-        [FromRoute] string traceId,
-        [FromBody] ManualTrimRequest request,
-        [FromServices] ISender sender = default!,
-        [FromServices] ICurrentUserService currentUserService = default!,
-        CancellationToken cancellationToken = default)
-    {
-        var userId = currentUserService.UserId;
-        if (string.IsNullOrEmpty(userId))
-            return Results.Unauthorized();
-
-        var command = new ManualTrimTraceCommand(
-            userId,
-            traceId,
-            request.Start5Prime,
-            request.End5Prime,
-            request.Start3Prime,
-            request.End3Prime);
-
-        var result = await sender.Send(command, cancellationToken);
-
-        return result.IsSuccess
-            ? Results.Ok(result.Value.ToResponse())
+            ? Results.Ok(result.Value.ToResponses())
             : result.Error.ToApiResult();
     }
 
@@ -202,6 +239,7 @@ public sealed class TraceEditingEndpoints : IEndpoint
     private static async Task<IResult> UndoTrim(
         [FromRoute] string studyId,
         [FromRoute] string traceId,
+        [FromRoute] string trimId,
         [FromServices] ISender sender = default!,
         [FromServices] ICurrentUserService currentUserService = default!,
         CancellationToken cancellationToken = default)
@@ -210,7 +248,26 @@ public sealed class TraceEditingEndpoints : IEndpoint
         if (string.IsNullOrEmpty(userId))
             return Results.Unauthorized();
 
-        var command = new UndoTrimTraceCommand(userId, traceId);
+        var command = new UndoTrimTraceCommand(userId, traceId, trimId);
+        var result = await sender.Send(command, cancellationToken);
+
+        return result.IsSuccess
+            ? Results.NoContent()
+            : result.Error.ToApiResult();
+    }
+
+    private static async Task<IResult> UndoAllTrims(
+        [FromRoute] string studyId,
+        [FromRoute] string traceId,
+        [FromServices] ISender sender = default!,
+        [FromServices] ICurrentUserService currentUserService = default!,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = currentUserService.UserId;
+        if (string.IsNullOrEmpty(userId))
+            return Results.Unauthorized();
+
+        var command = new UndoTrimTraceCommand(userId, traceId, UndoAll: true);
         var result = await sender.Send(command, cancellationToken);
 
         return result.IsSuccess

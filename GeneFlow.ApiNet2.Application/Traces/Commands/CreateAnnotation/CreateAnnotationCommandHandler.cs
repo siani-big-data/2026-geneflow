@@ -44,8 +44,8 @@ public sealed class CreateAnnotationCommandHandler
         if (strand is null)
             return Result.Failure<AnnotationDto>(TraceErrors.InvalidAnnotationStrand);
 
-        // Get trace
-        var trace = await _unitOfWork.Traces.GetByIdAsync(traceId, cancellationToken);
+        // Get trace with annotations collection loaded for proper change tracking
+        var trace = await _unitOfWork.Traces.GetByIdWithAnnotationsAsync(traceId, cancellationToken);
         if (trace is null)
             return Result.Failure<AnnotationDto>(TraceErrors.NotFound);
 
@@ -65,8 +65,7 @@ public sealed class CreateAnnotationCommandHandler
         if (annotationResult.IsFailure)
             return Result.Failure<AnnotationDto>(annotationResult.Error);
 
-        // Persist
-        _unitOfWork.Traces.Update(trace);
+        // Persist - no need to call Update() since trace is already tracked
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Success(annotationResult.Value.ToDto(traceId.Value.ToString()));

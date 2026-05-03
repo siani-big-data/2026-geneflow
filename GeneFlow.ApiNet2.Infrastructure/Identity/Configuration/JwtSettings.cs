@@ -18,7 +18,7 @@ public sealed class JwtSettings
     public string Audience { get; set; } = string.Empty;
 
     /// <summary>Gets or sets access token expiration in minutes.</summary>
-    public int AccessTokenExpirationMinutes { get; set; } = 15;
+    public int AccessTokenExpirationMinutes { get; set; } = 120;
 
     /// <summary>Gets or sets refresh token expiration in days.</summary>
     public int RefreshTokenExpirationDays { get; set; } = 7;

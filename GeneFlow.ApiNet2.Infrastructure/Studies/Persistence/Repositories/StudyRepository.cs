@@ -270,10 +270,63 @@ public sealed class StudyRepository : IStudyRepository
             .AnyAsync(v => v.StudyId == studyId && v.IpHash == ipHash && v.ViewedAt > cutoffTime, cancellationToken);
     }
 
+    /// <inheritdoc />
+    public async Task<int> CountByMemberAsync(UserId userId, CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("Counting studies for user: {UserId}", userId);
+
+        var connection = _context.Database.GetDbConnection();
+        if (connection.State != System.Data.ConnectionState.Open)
+            await connection.OpenAsync(cancellationToken);
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = @"
+            SELECT COUNT(DISTINCT sm.study_id)
+            FROM studies.study_members sm
+            INNER JOIN studies.studies s ON sm.study_id = s.id
+            WHERE sm.user_id = @userId AND s.is_deleted = false";
+
+        var param = command.CreateParameter();
+        param.ParameterName = "@userId";
+        param.Value = userId.ToString();
+        command.Parameters.Add(param);
+
+        var result = await command.ExecuteScalarAsync(cancellationToken);
+        return Convert.ToInt32(result);
+    }
+
+    /// <inheritdoc />
+    public async Task<int> CountMembersInUserStudiesAsync(UserId userId, CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("Counting members in user's studies: {UserId}", userId);
+
+        var connection = _context.Database.GetDbConnection();
+        if (connection.State != System.Data.ConnectionState.Open)
+            await connection.OpenAsync(cancellationToken);
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = @"
+            SELECT COUNT(DISTINCT sm2.user_id)
+            FROM studies.study_members sm
+            INNER JOIN studies.studies s ON sm.study_id = s.id
+            INNER JOIN studies.study_members sm2 ON s.id = sm2.study_id
+            WHERE sm.user_id = @userId AND s.is_deleted = false AND sm2.user_id != @userId";
+
+        var param = command.CreateParameter();
+        param.ParameterName = "@userId";
+        param.Value = userId.ToString();
+        command.Parameters.Add(param);
+
+        var result = await command.ExecuteScalarAsync(cancellationToken);
+        return Convert.ToInt32(result);
+    }
+
     private async Task<List<string>> GetStudyIdsByMemberAsync(
         string userId,
         CancellationToken cancellationToken)
     {
+        _logger.LogDebug("GetStudyIdsByMemberAsync: Querying for userId={UserId}", userId);
+
         var connection = _context.Database.GetDbConnection();
 
         if (connection.State != System.Data.ConnectionState.Open)
@@ -299,6 +352,149 @@ public sealed class StudyRepository : IStudyRepository
             studyIds.Add(reader.GetString(0));
         }
 
+        _logger.LogDebug(
+            "GetStudyIdsByMemberAsync: Found {Count} study IDs for userId={UserId}: [{StudyIds}]",
+            studyIds.Count,
+            userId,
+            string.Join(", ", studyIds));
+
         return studyIds;
+    }
+
+    // Authorization behavior support methods
+
+    /// <inheritdoc />
+    public async Task<StudyRole?> GetMemberRoleAsync(
+        StudyId studyId,
+        UserId userId,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("Getting member role for user {UserId} in study {StudyId}", userId, studyId);
+
+        var connection = _context.Database.GetDbConnection();
+        if (connection.State != System.Data.ConnectionState.Open)
+            await connection.OpenAsync(cancellationToken);
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = @"
+            SELECT sm.role
+            FROM studies.study_members sm
+            INNER JOIN studies.studies s ON sm.study_id = s.id
+            WHERE sm.study_id = @studyId AND sm.user_id = @userId AND s.is_deleted = false";
+
+        var studyParam = command.CreateParameter();
+        studyParam.ParameterName = "@studyId";
+        studyParam.Value = studyId.ToString();
+        command.Parameters.Add(studyParam);
+
+        var userParam = command.CreateParameter();
+        userParam.ParameterName = "@userId";
+        userParam.Value = userId.ToString();
+        command.Parameters.Add(userParam);
+
+        var result = await command.ExecuteScalarAsync(cancellationToken);
+
+        if (result is null or DBNull)
+            return null;
+
+        var roleName = result.ToString();
+        return StudyRole.FromName(roleName!);
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> IsPublicStudyAsync(
+        StudyId studyId,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("Checking if study {StudyId} is public", studyId);
+
+        return await _context.Studies
+            .AnyAsync(s => s.Id == studyId && s.Status == StudyStatus.Published && !s.IsDeleted, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<int> CountByOwnerIdAsync(
+        UserId ownerId,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("Counting studies owned by user: {UserId}", ownerId);
+
+        var connection = _context.Database.GetDbConnection();
+        if (connection.State != System.Data.ConnectionState.Open)
+            await connection.OpenAsync(cancellationToken);
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = @"
+            SELECT COUNT(*)
+            FROM studies.studies s
+            INNER JOIN studies.study_members sm ON s.id = sm.study_id
+            WHERE sm.user_id = @userId AND sm.role = 'Owner' AND s.is_deleted = false";
+
+        var param = command.CreateParameter();
+        param.ParameterName = "@userId";
+        param.Value = ownerId.ToString();
+        command.Parameters.Add(param);
+
+        var result = await command.ExecuteScalarAsync(cancellationToken);
+        return Convert.ToInt32(result);
+    }
+
+    /// <inheritdoc />
+    public async Task<int> CountMembersAsync(
+        StudyId studyId,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("Counting members in study: {StudyId}", studyId);
+
+        var connection = _context.Database.GetDbConnection();
+        if (connection.State != System.Data.ConnectionState.Open)
+            await connection.OpenAsync(cancellationToken);
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = @"
+            SELECT COUNT(*)
+            FROM studies.study_members sm
+            INNER JOIN studies.studies s ON sm.study_id = s.id
+            WHERE sm.study_id = @studyId AND s.is_deleted = false";
+
+        var param = command.CreateParameter();
+        param.ParameterName = "@studyId";
+        param.Value = studyId.ToString();
+        command.Parameters.Add(param);
+
+        var result = await command.ExecuteScalarAsync(cancellationToken);
+        return Convert.ToInt32(result);
+    }
+
+    /// <inheritdoc />
+    public async Task<UserId?> GetOwnerIdAsync(
+        StudyId studyId,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("Getting owner ID for study: {StudyId}", studyId);
+
+        var connection = _context.Database.GetDbConnection();
+        if (connection.State != System.Data.ConnectionState.Open)
+            await connection.OpenAsync(cancellationToken);
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = @"
+            SELECT sm.user_id
+            FROM studies.study_members sm
+            INNER JOIN studies.studies s ON sm.study_id = s.id
+            WHERE sm.study_id = @studyId AND sm.role = 'Owner' AND s.is_deleted = false
+            LIMIT 1";
+
+        var param = command.CreateParameter();
+        param.ParameterName = "@studyId";
+        param.Value = studyId.ToString();
+        command.Parameters.Add(param);
+
+        var result = await command.ExecuteScalarAsync(cancellationToken);
+
+        if (result is null or DBNull)
+            return null;
+
+        return UserId.TryParse(result.ToString()!, out var userId) ? userId : null;
     }
 }

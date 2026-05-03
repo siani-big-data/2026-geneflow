@@ -25,8 +25,9 @@ public sealed record TraceDto
     // Quality metrics (nullable before processing)
     public QualityMetricsDto? QualityMetrics { get; init; }
 
-    // Trim info (nullable)
-    public TrimRegionDto? TrimRegion { get; init; }
+    // Trims (multiple trim operations)
+    public IReadOnlyList<TraceTrimDto> Trims { get; init; } = [];
+    public int ActiveTrimCount { get; init; }
 
     // Processing info
     public required bool HasChromatogramData { get; init; }

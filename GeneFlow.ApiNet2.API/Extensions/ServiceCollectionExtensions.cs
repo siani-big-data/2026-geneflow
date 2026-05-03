@@ -1,4 +1,5 @@
 using GeneFlow.ApiNet2.API.Middleware;
+using GeneFlow.ApiNet2.Application.Behaviors;
 using GeneFlow.ApiNet2.Infrastructure;
 using Microsoft.OpenApi.Models;
 
@@ -16,11 +17,19 @@ public static class ServiceCollectionExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        // Add MediatR
+        // Add MediatR with pipeline behaviors
+        // Order matters: Authentication runs first, then StudyMembership/TraceAccess, then SubscriptionLimit, then WorkerApiKey
         services.AddMediatR(cfg =>
         {
             cfg.RegisterServicesFromAssembly(
                 typeof(Application.Identity.Commands.Register.RegisterUserCommand).Assembly);
+
+            // Add authorization pipeline behaviors
+            cfg.AddOpenBehavior(typeof(AuthenticationBehavior<,>));
+            cfg.AddOpenBehavior(typeof(StudyMembershipBehavior<,>));
+            cfg.AddOpenBehavior(typeof(TraceAccessBehavior<,>));
+            cfg.AddOpenBehavior(typeof(SubscriptionLimitBehavior<,>));
+            cfg.AddOpenBehavior(typeof(WorkerApiKeyBehavior<,>));
         });
 
         // Add Infrastructure services

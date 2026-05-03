@@ -1,6 +1,7 @@
 using GeneFlow.ApiNet2.Domain.Identity;
 using GeneFlow.ApiNet2.Domain.Studies;
 using GeneFlow.ApiNet2.Domain.Traces;
+using GeneFlow.ApiNet2.Domain.Traces.Entities;
 using GeneFlow.ApiNet2.Domain.Traces.Enumerations;
 using GeneFlow.ApiNet2.Domain.Traces.ValueObjects;
 using Microsoft.EntityFrameworkCore;
@@ -140,31 +141,68 @@ public sealed class TraceConfiguration : IEntityTypeConfiguration<Trace>
                 .HasPrecision(5, 2);
         });
 
-        // TrimRegion (owned value object, nullable)
-        builder.OwnsOne(t => t.TrimRegion, trim =>
+        // Trims (owned collection - multiple trims per trace)
+        builder.OwnsMany(t => t.Trims, trim =>
         {
-            trim.Property(r => r.Start5Prime)
-                .HasColumnName("trim_start_5_prime");
+            trim.ToTable("trace_trims");
 
-            trim.Property(r => r.End5Prime)
-                .HasColumnName("trim_end_5_prime");
+            trim.Property(e => e.Id)
+                .HasColumnName("id")
+                .ValueGeneratedNever();
+            trim.HasKey(e => e.Id);
 
-            trim.Property(r => r.Start3Prime)
-                .HasColumnName("trim_start_3_prime");
+            trim.WithOwner().HasForeignKey("trace_id");
 
-            trim.Property(r => r.End3Prime)
-                .HasColumnName("trim_end_3_prime");
+            trim.Property(e => e.TrimType)
+                .HasColumnName("trim_type")
+                .HasMaxLength(20)
+                .HasConversion(
+                    type => type.Name,
+                    name => TrimType.FromName(name)!)
+                .IsRequired();
 
-            trim.Property(r => r.Algorithm)
-                .HasColumnName("trim_algorithm")
-                .HasMaxLength(TrimRegion.MaxAlgorithmLength);
+            trim.Property(e => e.TrimEnd)
+                .HasColumnName("trim_end")
+                .HasMaxLength(20)
+                .HasConversion(
+                    te => te.Name,
+                    name => TrimEnd.FromName(name)!)
+                .IsRequired();
 
-            trim.Property(r => r.TrimmedBy)
-                .HasColumnName("trimmed_by")
-                .HasMaxLength(100);
+            trim.Property(e => e.StartPosition)
+                .HasColumnName("start_position")
+                .IsRequired();
 
-            trim.Property(r => r.TrimmedAt)
-                .HasColumnName("trimmed_at");
+            trim.Property(e => e.EndPosition)
+                .HasColumnName("end_position")
+                .IsRequired();
+
+            trim.Property(e => e.Algorithm)
+                .HasColumnName("algorithm")
+                .HasMaxLength(TraceTrim.MaxAlgorithmLength)
+                .IsRequired();
+
+            trim.Property(e => e.Reason)
+                .HasColumnName("reason")
+                .HasMaxLength(TraceTrim.MaxReasonLength);
+
+            trim.Property(e => e.AppliedBy)
+                .HasColumnName("applied_by")
+                .HasMaxLength(10)
+                .HasConversion(
+                    id => id.ToString(),
+                    value => UserId.Parse(value))
+                .IsRequired();
+
+            trim.Property(e => e.AppliedAt)
+                .HasColumnName("applied_at")
+                .IsRequired();
+
+            trim.Property(e => e.IsActive)
+                .HasColumnName("is_active")
+                .HasDefaultValue(true);
+
+            trim.HasIndex("trace_id", "StartPosition");
         });
 
         // HasChromatogramData
@@ -186,9 +224,10 @@ public sealed class TraceConfiguration : IEntityTypeConfiguration<Trace>
         {
             edit.ToTable("sequence_edits");
 
-            edit.Property<Guid>("Id")
-                .HasColumnName("id");
-            edit.HasKey("Id");
+            edit.Property(e => e.Id)
+                .HasColumnName("id")
+                .ValueGeneratedNever();
+            edit.HasKey(e => e.Id);
 
             edit.WithOwner().HasForeignKey("trace_id");
 
@@ -240,9 +279,11 @@ public sealed class TraceConfiguration : IEntityTypeConfiguration<Trace>
         {
             annotation.ToTable("trace_annotations");
 
-            annotation.Property<Guid>("Id")
-                .HasColumnName("id");
-            annotation.HasKey("Id");
+            // Configure the entity's Id as the primary key
+            annotation.Property(a => a.Id)
+                .HasColumnName("id")
+                .ValueGeneratedNever();
+            annotation.HasKey(a => a.Id);
 
             annotation.WithOwner().HasForeignKey("trace_id");
 

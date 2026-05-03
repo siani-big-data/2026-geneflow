@@ -50,4 +50,50 @@ public interface IStudyRepository
     Task AddViewAsync(StudyView view, CancellationToken cancellationToken = default);
     Task<bool> HasRecentViewByUserAsync(StudyId studyId, UserId userId, DateTime cutoffTime, CancellationToken cancellationToken = default);
     Task<bool> HasRecentViewByIpHashAsync(StudyId studyId, string ipHash, DateTime cutoffTime, CancellationToken cancellationToken = default);
+
+    // Counts for dashboard
+    Task<int> CountByMemberAsync(UserId userId, CancellationToken cancellationToken = default);
+    Task<int> CountMembersInUserStudiesAsync(UserId userId, CancellationToken cancellationToken = default);
+
+    // Methods for authorization behaviors
+    /// <summary>
+    /// Gets the user's role in a study, or null if the user is not a member.
+    /// Used by StudyMembershipBehavior.
+    /// </summary>
+    Task<StudyRole?> GetMemberRoleAsync(
+        StudyId studyId,
+        UserId userId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Checks if a study is public (Published status).
+    /// Used by StudyMembershipBehavior for allowing read-only access to non-members.
+    /// </summary>
+    Task<bool> IsPublicStudyAsync(
+        StudyId studyId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Counts the number of studies owned by a user.
+    /// Used by SubscriptionLimitBehavior for MaxStudies validation.
+    /// </summary>
+    Task<int> CountByOwnerIdAsync(
+        UserId ownerId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Counts the number of members in a study.
+    /// Used by SubscriptionLimitBehavior for MaxMembersPerStudy validation.
+    /// </summary>
+    Task<int> CountMembersAsync(
+        StudyId studyId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets the owner's user ID for a study.
+    /// Used by SubscriptionLimitBehavior to check owner's subscription limits.
+    /// </summary>
+    Task<UserId?> GetOwnerIdAsync(
+        StudyId studyId,
+        CancellationToken cancellationToken = default);
 }

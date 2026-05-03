@@ -23,7 +23,8 @@ public static class TraceMappingExtensions
         Status = dto.Status,
         StatusId = dto.StatusId,
         QualityMetrics = dto.QualityMetrics?.ToResponse(),
-        TrimRegion = dto.TrimRegion?.ToResponse(),
+        Trims = dto.Trims.ToResponses(),
+        ActiveTrimCount = dto.ActiveTrimCount,
         HasChromatogramData = dto.HasChromatogramData,
         FailureReason = dto.FailureReason,
         ProcessedAt = dto.ProcessedAt,
@@ -69,16 +70,26 @@ public static class TraceMappingExtensions
         GcContentPercentage = dto.GcContentPercentage
     };
 
-    public static TrimRegionResponse ToResponse(this TrimRegionDto dto) => new()
+    public static TraceTrimResponse ToResponse(this TraceTrimDto dto) => new()
     {
-        Start5Prime = dto.Start5Prime,
-        End5Prime = dto.End5Prime,
-        Start3Prime = dto.Start3Prime,
-        End3Prime = dto.End3Prime,
+        Id = dto.Id,
+        TrimType = dto.TrimType,
+        TrimTypeId = dto.TrimTypeId,
+        TrimEnd = dto.TrimEnd,
+        TrimEndId = dto.TrimEndId,
+        StartPosition = dto.StartPosition,
+        EndPosition = dto.EndPosition,
+        Length = dto.Length,
         Algorithm = dto.Algorithm,
-        TrimmedBy = dto.TrimmedBy,
-        TrimmedAt = dto.TrimmedAt
+        Reason = dto.Reason,
+        AppliedBy = dto.AppliedBy,
+        AppliedAt = dto.AppliedAt,
+        IsActive = dto.IsActive
     };
+
+    public static IReadOnlyList<TraceTrimResponse> ToResponses(
+        this IEnumerable<TraceTrimDto> dtos) =>
+        dtos.Select(d => d.ToResponse()).ToList();
 
     public static SequenceEditResponse ToResponse(this SequenceEditDto dto) => new()
     {
@@ -170,8 +181,58 @@ public static class TraceMappingExtensions
         TraceId = dto.TraceId,
         OriginalSequence = dto.OriginalSequence,
         TrimmedSequence = dto.TrimmedSequence,
-        TrimRegion = dto.TrimRegion.ToResponse(),
+        AppliedTrims = dto.AppliedTrims.ToResponses(),
         OriginalLength = dto.OriginalLength,
-        TrimmedLength = dto.TrimmedLength
+        TrimmedLength = dto.TrimmedLength,
+        TotalBasesTrimmed = dto.TotalBasesTrimmed
+    };
+
+    public static SequencePageResponse ToResponse(this SequencePageDto dto) => new()
+    {
+        TraceId = dto.TraceId,
+        Page = dto.Page,
+        PageSize = dto.PageSize,
+        TotalBases = dto.TotalBases,
+        TotalPages = dto.TotalPages,
+        Bases = dto.Bases,
+        QualityScores = dto.QualityScores,
+        Chromatogram = dto.Chromatogram?.ToResponse()
+    };
+
+    public static ChromatogramDataResponse ToResponse(this ChromatogramChunkDto dto) => new()
+    {
+        AChannel = dto.A,
+        TChannel = dto.T,
+        GChannel = dto.G,
+        CChannel = dto.C,
+        PeakPositions = dto.PeakPositions
+    };
+
+    public static TraceManifestResponse ToResponse(this TraceManifestDto dto) => new()
+    {
+        TraceId = dto.TraceId,
+        OriginalFilename = dto.OriginalFilename,
+        Format = dto.Format,
+        TotalBases = dto.TotalBases,
+        ChunkSize = dto.ChunkSize,
+        ChunkCount = dto.ChunkCount,
+        HasChromatogram = dto.HasChromatogram,
+        HasQualityScores = dto.HasQualityScores,
+        CreatedAt = dto.CreatedAt,
+        Chunks = dto.Chunks.Select(c => c.ToResponse()).ToList()
+    };
+
+    public static ChunkMetadataResponse ToResponse(this ChunkMetadataDto dto) => new()
+    {
+        Index = dto.Index,
+        StartPosition = dto.StartPosition,
+        EndPosition = dto.EndPosition,
+        BaseCount = dto.BaseCount
+    };
+
+    public static AnalysisResultsListResponse ToResponse(string traceId, IReadOnlyList<string> types) => new()
+    {
+        TraceId = traceId,
+        AvailableTypes = types
     };
 }

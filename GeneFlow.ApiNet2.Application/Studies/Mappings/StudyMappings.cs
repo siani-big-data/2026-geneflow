@@ -1,4 +1,6 @@
 using GeneFlow.ApiNet2.Application.Studies.DTOs;
+using GeneFlow.ApiNet2.Domain.Identity;
+using GeneFlow.ApiNet2.Domain.Profiles;
 using GeneFlow.ApiNet2.Domain.Studies;
 using GeneFlow.ApiNet2.Domain.Studies.Entities;
 using GeneFlow.ApiNet2.Domain.Studies.Enumerations;
@@ -12,6 +14,37 @@ public static class StudyMappings
 {
     public static StudyDto ToDto(this Study study)
     {
+        return study.ToDto(null, null, null);
+    }
+
+    public static StudyDto ToDto(
+        this Study study,
+        Dictionary<string, User>? userLookup,
+        Dictionary<string, Profile>? profileLookup)
+    {
+        return study.ToDto(userLookup, profileLookup, null);
+    }
+
+    public static StudyDto ToDto(
+        this Study study,
+        Dictionary<string, User>? userLookup,
+        Dictionary<string, Profile>? profileLookup,
+        UserId? currentUserId)
+    {
+        // Determine current user's permissions
+        CurrentUserPermissionsDto permissions;
+        if (currentUserId is not null)
+        {
+            var member = study.GetMember(currentUserId);
+            permissions = member is not null
+                ? CurrentUserPermissionsDto.FromRole(member.Role)
+                : CurrentUserPermissionsDto.ReadOnly;
+        }
+        else
+        {
+            permissions = CurrentUserPermissionsDto.ReadOnly;
+        }
+
         return new StudyDto
         {
             Id = study.Id.ToString(),
@@ -31,8 +64,9 @@ public static class StudyMappings
             Tags = study.Tags,
             ViewsCount = study.Metrics.ViewsCount,
             StarsCount = study.Metrics.StarsCount,
-            Members = study.Members.Select(m => m.ToDto()).ToList(),
+            Members = study.Members.Select(m => m.ToDto(userLookup, profileLookup)).ToList(),
             Papers = study.Papers.Where(p => !p.IsDeleted).Select(p => p.ToDto()).ToList(),
+            CurrentUserPermissions = permissions,
             CreatedAt = study.CreatedAt,
             CreatedBy = study.CreatedBy,
             ModifiedAt = study.ModifiedAt,
@@ -72,13 +106,35 @@ public static class StudyMappings
 
     public static StudyMemberDto ToDto(this StudyMember member)
     {
+        return member.ToDto(null, null);
+    }
+
+    public static StudyMemberDto ToDto(
+        this StudyMember member,
+        Dictionary<string, User>? userLookup,
+        Dictionary<string, Profile>? profileLookup)
+    {
+        var memberUserId = member.UserId.ToString();
+        User? user = null;
+        Profile? profile = null;
+
+        userLookup?.TryGetValue(memberUserId, out user);
+        profileLookup?.TryGetValue(memberUserId, out profile);
+
+        var userName = profile is not null
+            ? profile.FullName
+            : user?.Username.Value;
+
         return new StudyMemberDto
         {
-            UserId = member.UserId.ToString(),
+            UserId = memberUserId,
             Role = member.Role.Name,
             RoleId = member.Role.Id,
             JoinedAt = member.JoinedAt,
-            InvitedBy = member.InvitedBy?.ToString()
+            InvitedBy = member.InvitedBy?.ToString(),
+            UserName = string.IsNullOrWhiteSpace(userName) ? null : userName,
+            UserEmail = user?.Email.Value,
+            UserAvatarUrl = profile?.Photo.ThumbnailUrl ?? profile?.Photo.Url
         };
     }
 

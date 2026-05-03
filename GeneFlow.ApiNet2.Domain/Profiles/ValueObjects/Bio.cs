@@ -8,6 +8,9 @@ namespace GeneFlow.ApiNet2.Domain.Profiles.ValueObjects;
 /// </summary>
 public sealed class Bio : ValueObject
 {
+    /// <summary>Minimum length of bio (if provided).</summary>
+    public const int MinLength = 10;
+
     /// <summary>Maximum length of bio.</summary>
     public const int MaxLength = 500;
 
@@ -25,6 +28,9 @@ public sealed class Bio : ValueObject
             return new Bio(null);
 
         var trimmed = value.Trim();
+
+        if (trimmed.Length < MinLength)
+            return Result.Failure<Bio>(ProfileErrors.BioTooShort(MinLength));
 
         if (trimmed.Length > MaxLength)
             return Result.Failure<Bio>(ProfileErrors.BioTooLong(MaxLength));

@@ -191,13 +191,14 @@ public sealed class TraceEndpoints : IEndpoint
         await stream.ReadExactlyAsync(fileBytes, cancellationToken);
         var checksum = Convert.ToHexString(SHA256.HashData(fileBytes)).ToLowerInvariant();
 
-        // Store file in datalake
-        var traceId = Guid.NewGuid();
+        // Store file in datalake using correct path structure: traces/{traceId}/original.{ext}
+        var traceId = Guid.NewGuid().ToString();
         var extension = Path.GetExtension(file.FileName);
-        var storagePath = $"studies/{studyId}/traces/{traceId}{extension}";
+        var storagePath = $"traces/{traceId}/original{extension}";
         await fileStorageService.StoreFileAsync(fileBytes, storagePath, cancellationToken);
 
         var command = new UploadTraceCommand(
+            traceId,
             userId,
             studyId,
             name,

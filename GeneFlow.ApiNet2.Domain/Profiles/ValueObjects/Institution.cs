@@ -8,8 +8,14 @@ namespace GeneFlow.ApiNet2.Domain.Profiles.ValueObjects;
 /// </summary>
 public sealed class Institution : ValueObject
 {
+    /// <summary>Minimum length of institution name (if provided).</summary>
+    public const int NameMinLength = 2;
+
     /// <summary>Maximum length of institution name.</summary>
     public const int NameMaxLength = 200;
+
+    /// <summary>Minimum length of institution department (if provided).</summary>
+    public const int DepartmentMinLength = 2;
 
     /// <summary>Maximum length of institution department.</summary>
     public const int DepartmentMaxLength = 200;
@@ -48,11 +54,23 @@ public sealed class Institution : ValueObject
         var trimmedName = string.IsNullOrWhiteSpace(name) ? null : name.Trim();
         var trimmedDepartment = string.IsNullOrWhiteSpace(department) ? null : department.Trim();
 
-        if (trimmedName is not null && trimmedName.Length > NameMaxLength)
-            return Result.Failure<Institution>(ProfileErrors.InstitutionNameTooLong(NameMaxLength));
+        if (trimmedName is not null)
+        {
+            if (trimmedName.Length < NameMinLength)
+                return Result.Failure<Institution>(ProfileErrors.InstitutionNameTooShort(NameMinLength));
 
-        if (trimmedDepartment is not null && trimmedDepartment.Length > DepartmentMaxLength)
-            return Result.Failure<Institution>(ProfileErrors.InstitutionDepartmentTooLong(DepartmentMaxLength));
+            if (trimmedName.Length > NameMaxLength)
+                return Result.Failure<Institution>(ProfileErrors.InstitutionNameTooLong(NameMaxLength));
+        }
+
+        if (trimmedDepartment is not null)
+        {
+            if (trimmedDepartment.Length < DepartmentMinLength)
+                return Result.Failure<Institution>(ProfileErrors.InstitutionDepartmentTooShort(DepartmentMinLength));
+
+            if (trimmedDepartment.Length > DepartmentMaxLength)
+                return Result.Failure<Institution>(ProfileErrors.InstitutionDepartmentTooLong(DepartmentMaxLength));
+        }
 
         return new Institution(trimmedName, trimmedDepartment);
     }

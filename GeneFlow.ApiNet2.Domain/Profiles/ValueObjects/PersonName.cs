@@ -10,10 +10,13 @@ namespace GeneFlow.ApiNet2.Domain.Profiles.ValueObjects;
 public sealed partial class PersonName : ValueObject
 {
     /// <summary>Minimum length of first name.</summary>
-    public const int FirstNameMinLength = 1;
+    public const int FirstNameMinLength = 2;
 
     /// <summary>Maximum length of first name.</summary>
     public const int FirstNameMaxLength = 100;
+
+    /// <summary>Minimum length of last name (if provided).</summary>
+    public const int LastNameMinLength = 2;
 
     /// <summary>Maximum length of last name.</summary>
     public const int LastNameMaxLength = 100;
@@ -72,6 +75,9 @@ public sealed partial class PersonName : ValueObject
         // Validate last name (if provided)
         if (trimmedLastName is not null)
         {
+            if (trimmedLastName.Length < LastNameMinLength)
+                return Result.Failure<PersonName>(ProfileErrors.LastNameTooShort(LastNameMinLength));
+
             if (trimmedLastName.Length > LastNameMaxLength)
                 return Result.Failure<PersonName>(ProfileErrors.LastNameTooLong(LastNameMaxLength));
 

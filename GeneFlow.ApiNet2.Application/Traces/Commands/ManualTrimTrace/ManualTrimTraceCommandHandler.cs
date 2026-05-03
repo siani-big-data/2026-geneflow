@@ -2,7 +2,7 @@ using GeneFlow.ApiNet2.Application.Traces.DTOs;
 using GeneFlow.ApiNet2.Application.Traces.Mappings;
 using GeneFlow.ApiNet2.Domain.Identity;
 using GeneFlow.ApiNet2.Domain.Traces;
-using GeneFlow.ApiNet2.Domain.Traces.ValueObjects;
+using GeneFlow.ApiNet2.Domain.Traces.Enumerations;
 using GeneFlow.ApiNet2.SharedKernel.Application.CQRS;
 using GeneFlow.ApiNet2.SharedKernel.Domain.Results;
 
@@ -10,10 +10,10 @@ namespace GeneFlow.ApiNet2.Application.Traces.Commands.ManualTrimTrace;
 
 /// <summary>
 /// Handler for ManualTrimTraceCommand.
-/// Applies user-specified trim boundaries to a trace.
+/// Adds a manual trim to a trace sequence.
 /// </summary>
 public sealed class ManualTrimTraceCommandHandler
-    : ICommandHandler<ManualTrimTraceCommand, Result<TrimRegionDto>>
+    : ICommandHandler<ManualTrimTraceCommand, Result<TraceTrimDto>>
 {
     private readonly ITraceUnitOfWork _unitOfWork;
 
@@ -22,49 +22,40 @@ public sealed class ManualTrimTraceCommandHandler
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<Result<TrimRegionDto>> Handle(
+    public async Task<Result<TraceTrimDto>> Handle(
         ManualTrimTraceCommand request,
         CancellationToken cancellationToken)
     {
         // Parse user ID
         if (!UserId.TryParse(request.UserId, out var userId) || userId is null)
-            return Result.Failure<TrimRegionDto>(TraceErrors.InvalidUserId);
+            return Result.Failure<TraceTrimDto>(TraceErrors.InvalidUserId);
 
         // Parse trace ID
         if (!TraceId.TryParse(request.TraceId, out var traceId) || traceId is null)
-            return Result.Failure<TrimRegionDto>(TraceErrors.NotFound);
+            return Result.Failure<TraceTrimDto>(TraceErrors.NotFound);
 
-        // Get trace
-        var trace = await _unitOfWork.Traces.GetByIdAsync(traceId, cancellationToken);
+        // Parse trim end
+        var trimEnd = TrimEnd.FromName(request.TrimEnd);
+        if (trimEnd is null)
+            return Result.Failure<TraceTrimDto>(TraceErrors.InvalidTrimEnd);
+
+        // Get trace with trims
+        var trace = await _unitOfWork.Traces.GetByIdWithTrimsAsync(traceId, cancellationToken);
         if (trace is null)
-            return Result.Failure<TrimRegionDto>(TraceErrors.NotFound);
+            return Result.Failure<TraceTrimDto>(TraceErrors.NotFound);
 
-        // Check if can be edited
-        if (!trace.CanBeEdited)
-            return Result.Failure<TrimRegionDto>(TraceErrors.CannotEditInCurrentStatus);
-
-        // Get sequence length
-        var sequenceLength = trace.QualityMetrics?.TotalBases ?? 0;
-        if (sequenceLength == 0)
-            return Result.Failure<TrimRegionDto>(TraceErrors.InvalidTotalBases);
-
-        // Create trim region
-        var trimResult = TrimRegion.Create(
-            request.Start5Prime,
-            request.End5Prime,
-            request.Start3Prime,
-            request.End3Prime,
+        // Add trim
+        var trimResult = trace.AddTrim(
+            TrimType.Manual,
+            request.StartPosition,
+            request.EndPosition,
+            trimEnd,
             "Manual",
-            userId.Value.ToString(),
-            sequenceLength);
+            userId,
+            request.Reason);
 
         if (trimResult.IsFailure)
-            return Result.Failure<TrimRegionDto>(trimResult.Error);
-
-        // Apply trim
-        var applyResult = trace.ApplyTrim(trimResult.Value, userId);
-        if (applyResult.IsFailure)
-            return Result.Failure<TrimRegionDto>(applyResult.Error);
+            return Result.Failure<TraceTrimDto>(trimResult.Error);
 
         // Persist
         _unitOfWork.Traces.Update(trace);

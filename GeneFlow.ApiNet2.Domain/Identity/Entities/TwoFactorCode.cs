@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using GeneFlow.ApiNet2.SharedKernel.Domain.DDD;
 
 namespace GeneFlow.ApiNet2.Domain.Identity.Entities;
@@ -85,7 +86,8 @@ public sealed class TwoFactorCode : Entity<Guid>
 
     private static string GenerateCode()
     {
-        var random = new Random();
-        return random.Next(100000, 999999).ToString("D6");
+        // Use cryptographically secure random number generator
+        var code = RandomNumberGenerator.GetInt32(100000, 1000000);
+        return code.ToString("D6");
     }
 }

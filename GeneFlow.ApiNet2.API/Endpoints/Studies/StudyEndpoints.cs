@@ -6,6 +6,7 @@ using GeneFlow.ApiNet2.Application.Identity.Interfaces;
 using GeneFlow.ApiNet2.Application.Studies.Commands.ChangeStudyStatus;
 using GeneFlow.ApiNet2.Application.Studies.Commands.CreateStudy;
 using GeneFlow.ApiNet2.Application.Studies.Commands.DeleteStudy;
+using GeneFlow.ApiNet2.Application.Studies.Commands.DuplicateStudy;
 using GeneFlow.ApiNet2.Application.Studies.Commands.UpdateStudy;
 using GeneFlow.ApiNet2.Application.Studies.Commands.UpdateStudySettings;
 using GeneFlow.ApiNet2.Application.Studies.Queries.GetFeaturedStudies;
@@ -16,6 +17,7 @@ using GeneFlow.ApiNet2.Application.Studies.Queries.GetUserStudies;
 using GeneFlow.ApiNet2.SharedKernel.Domain.Pagination;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace GeneFlow.ApiNet2.API.Endpoints.Studies;
 
@@ -114,6 +116,15 @@ public sealed class StudyEndpoints : IEndpoint
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces<ApiError>(StatusCodes.Status403Forbidden)
             .Produces<ApiError>(StatusCodes.Status404NotFound);
+
+        authGroup.MapPost("/{studyId}/duplicate", DuplicateStudy)
+            .WithName("Studies_Duplicate")
+            .WithSummary("Duplicate a study")
+            .WithDescription("Creates a copy of an existing study. The current user becomes the owner of the duplicate.")
+            .Produces<StudyResponse>(StatusCodes.Status201Created)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces<ApiError>(StatusCodes.Status403Forbidden)
+            .Produces<ApiError>(StatusCodes.Status404NotFound);
     }
 
     private static async Task<IResult> GetResearchFields(
@@ -130,15 +141,15 @@ public sealed class StudyEndpoints : IEndpoint
     }
 
     private static async Task<IResult> GetPublicStudies(
-        [FromQuery] int pageNumber,
-        [FromQuery] int pageSize,
-        [FromQuery] string? searchTerm,
-        [FromQuery] int? researchFieldId,
-        [FromQuery] string? tags,
-        [FromQuery] string? sortBy,
-        [FromQuery] bool sortDescending,
-        [FromServices] ISender sender,
-        CancellationToken cancellationToken)
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? searchTerm = null,
+        [FromQuery] int? researchFieldId = null,
+        [FromQuery] string? tags = null,
+        [FromQuery] string? sortBy = null,
+        [FromQuery] bool sortDescending = true,
+        [FromServices] ISender sender = null!,
+        CancellationToken cancellationToken = default)
     {
         var tagList = string.IsNullOrWhiteSpace(tags)
             ? null
@@ -162,9 +173,9 @@ public sealed class StudyEndpoints : IEndpoint
     }
 
     private static async Task<IResult> GetFeaturedStudies(
-        [FromQuery] int limit,
-        [FromServices] ISender sender,
-        CancellationToken cancellationToken)
+        [FromQuery] int limit = 10,
+        [FromServices] ISender sender = null!,
+        CancellationToken cancellationToken = default)
     {
         var query = new GetFeaturedStudiesQuery(limit > 0 ? limit : 10);
         var result = await sender.Send(query, cancellationToken);
@@ -183,10 +194,18 @@ public sealed class StudyEndpoints : IEndpoint
         [FromQuery] int? researchFieldId,
         [FromServices] ISender sender,
         [FromServices] ICurrentUserService currentUser,
+        [FromServices] ILogger<StudyEndpoints> logger,
         CancellationToken cancellationToken)
     {
+        logger.LogInformation("GetUserStudies endpoint called");
+
         if (currentUser.UserId is null)
+        {
+            logger.LogWarning("GetUserStudies: No authenticated user");
             return Results.Unauthorized();
+        }
+
+        logger.LogInformation("GetUserStudies: UserId from token = {UserId}", currentUser.UserId);
 
         var query = new GetUserStudiesQuery(
             currentUser.UserId.ToString()!,
@@ -201,6 +220,7 @@ public sealed class StudyEndpoints : IEndpoint
         if (result.IsFailure)
             return result.ToHttpResult();
 
+        logger.LogInformation("GetUserStudies: Returning {Count} studies", result.Value.TotalCount);
         return Results.Ok(result.Value.ToPagedResponse(dto => dto.ToResponse()));
     }
 
@@ -340,5 +360,26 @@ public sealed class StudyEndpoints : IEndpoint
             return result.ToHttpResult();
 
         return Results.NoContent();
+    }
+
+    private static async Task<IResult> DuplicateStudy(
+        [FromRoute] string studyId,
+        [FromServices] ISender sender,
+        [FromServices] ICurrentUserService currentUser,
+        CancellationToken cancellationToken)
+    {
+        if (currentUser.UserId is null)
+            return Results.Unauthorized();
+
+        var command = new DuplicateStudyCommand(
+            studyId,
+            currentUser.UserId.ToString()!);
+
+        var result = await sender.Send(command, cancellationToken);
+
+        if (result.IsFailure)
+            return result.ToHttpResult();
+
+        return Results.Created($"/api/v1/studies/{result.Value.Id}", result.Value.ToResponse());
     }
 }

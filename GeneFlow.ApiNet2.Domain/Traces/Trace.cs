@@ -28,7 +28,6 @@ public sealed class Trace : FullAuditableAggregateRoot<TraceId>
     public TraceFormat Format { get; private set; } = null!;
     public TraceStatus Status { get; private set; } = null!;
     public QualityMetrics? QualityMetrics { get; private set; }
-    public TrimRegion? TrimRegion { get; private set; }
     public bool HasChromatogramData { get; private set; }
     public string? FailureReason { get; private set; }
     public DateTime? ProcessedAt { get; private set; }
@@ -38,6 +37,9 @@ public sealed class Trace : FullAuditableAggregateRoot<TraceId>
 
     private readonly List<TraceAnnotation> _annotations = new();
     public IReadOnlyList<TraceAnnotation> Annotations => _annotations.AsReadOnly();
+
+    private readonly List<TraceTrim> _trims = new();
+    public IReadOnlyList<TraceTrim> Trims => _trims.AsReadOnly();
     #endregion
 
     #region Computed Properties
@@ -46,6 +48,7 @@ public sealed class Trace : FullAuditableAggregateRoot<TraceId>
     public bool IsArchived => Status == TraceStatus.Archived;
     public bool CanBeEdited => Status.CanEdit;
     public int ActiveEditCount => _edits.Count(e => e.IsActive);
+    public int ActiveTrimCount => _trims.Count(t => t.IsActive);
     public int AnnotationCount => _annotations.Count;
     public int TotalBases => QualityMetrics?.TotalBases ?? 0;
     #endregion
@@ -203,41 +206,103 @@ public sealed class Trace : FullAuditableAggregateRoot<TraceId>
     #endregion
 
     #region Trimming
-    public Result ApplyTrim(TrimRegion trimRegion, UserId trimmedBy)
+    /// <summary>
+    /// Adds a new trim to the trace sequence.
+    /// </summary>
+    public Result<TraceTrim> AddTrim(
+        TrimType trimType,
+        int startPosition,
+        int endPosition,
+        TrimEnd trimEnd,
+        string algorithm,
+        UserId appliedBy,
+        string? reason = null)
+    {
+        if (!CanBeEdited)
+            return Result.Failure<TraceTrim>(TraceErrors.CannotEditInCurrentStatus);
+
+        var sequenceLength = QualityMetrics?.TotalBases ?? 0;
+        if (sequenceLength == 0)
+            return Result.Failure<TraceTrim>(TraceErrors.InvalidPosition);
+
+        var trimResult = TraceTrim.Create(
+            trimType,
+            startPosition,
+            endPosition,
+            trimEnd,
+            algorithm,
+            appliedBy,
+            reason,
+            sequenceLength);
+
+        if (trimResult.IsFailure)
+            return trimResult;
+
+        var trim = trimResult.Value;
+        _trims.Add(trim);
+        SetModified(appliedBy.Value.ToString());
+
+        RaiseDomainEvent(new TraceTrimAppliedEvent(
+            Id,
+            StudyId,
+            trim.Id,
+            startPosition,
+            endPosition,
+            trimEnd,
+            algorithm,
+            appliedBy));
+
+        return trim;
+    }
+
+    /// <summary>
+    /// Undoes (deactivates) a specific trim.
+    /// </summary>
+    public Result UndoTrim(Guid trimId, UserId undoneBy)
     {
         if (!CanBeEdited)
             return Result.Failure(TraceErrors.CannotEditInCurrentStatus);
 
-        if (TrimRegion is not null)
-            return Result.Failure(TraceErrors.AlreadyTrimmed);
+        var trim = _trims.FirstOrDefault(t => t.Id == trimId && t.IsActive);
+        if (trim is null)
+            return Result.Failure(TraceErrors.TrimNotFound);
 
-        TrimRegion = trimRegion;
-        SetModified(trimmedBy.Value.ToString());
+        trim.Deactivate();
+        SetModified(undoneBy.Value.ToString());
 
-        RaiseDomainEvent(new TraceTrimmedEvent(
-            Id,
-            StudyId,
-            trimRegion.End5Prime,
-            trimRegion.Start3Prime,
-            trimRegion.Algorithm,
-            trimmedBy));
+        RaiseDomainEvent(new TraceTrimUndoneEvent(Id, StudyId, trimId, undoneBy));
 
         return Result.Success();
     }
 
-    public Result UndoTrim(UserId undoneBy)
+    /// <summary>
+    /// Undoes (deactivates) all active trims.
+    /// </summary>
+    public Result UndoAllTrims(UserId undoneBy)
     {
         if (!CanBeEdited)
             return Result.Failure(TraceErrors.CannotEditInCurrentStatus);
 
-        if (TrimRegion is null)
-            return Result.Failure(TraceErrors.NotTrimmed);
+        var activeTrims = _trims.Where(t => t.IsActive).ToList();
+        if (activeTrims.Count == 0)
+            return Result.Failure(TraceErrors.NoActiveTrims);
 
-        TrimRegion = null;
+        foreach (var trim in activeTrims)
+        {
+            trim.Deactivate();
+            RaiseDomainEvent(new TraceTrimUndoneEvent(Id, StudyId, trim.Id, undoneBy));
+        }
+
         SetModified(undoneBy.Value.ToString());
 
         return Result.Success();
     }
+
+    /// <summary>
+    /// Gets all active trims ordered by position.
+    /// </summary>
+    public IReadOnlyList<TraceTrim> GetActiveTrims() =>
+        _trims.Where(t => t.IsActive).OrderBy(t => t.StartPosition).ToList();
     #endregion
 
     #region Sequence Editing

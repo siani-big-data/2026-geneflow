@@ -35,19 +35,22 @@ public sealed class DeleteAnnotationCommandHandler
         if (!Guid.TryParse(request.AnnotationId, out var annotationId))
             return Result.Failure(TraceErrors.AnnotationNotFound);
 
-        // Get trace
-        var trace = await _unitOfWork.Traces.GetByIdAsync(traceId, cancellationToken);
+        // Get trace with annotations collection loaded
+        var trace = await _unitOfWork.Traces.GetByIdWithAnnotationsAsync(traceId, cancellationToken);
         if (trace is null)
             return Result.Failure(TraceErrors.NotFound);
 
-        // Remove annotation
-        var removeResult = trace.RemoveAnnotation(annotationId, userId);
-        if (removeResult.IsFailure)
-            return removeResult;
+        // Verify annotation exists
+        var annotation = trace.Annotations.FirstOrDefault(a => a.Id == annotationId);
+        if (annotation is null)
+            return Result.Failure(TraceErrors.AnnotationNotFound);
 
-        // Persist
-        _unitOfWork.Traces.Update(trace);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        // Check if trace can be edited
+        if (!trace.CanBeEdited)
+            return Result.Failure(TraceErrors.CannotEditInCurrentStatus);
+
+        // Delete annotation directly via SQL (avoids EF Core owned entity tracking issues)
+        await _unitOfWork.Traces.DeleteAnnotationAsync(traceId, annotationId, cancellationToken);
 
         return Result.Success();
     }

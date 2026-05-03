@@ -3,6 +3,7 @@ using GeneFlow.ApiNet2.Domain.Identity;
 using GeneFlow.ApiNet2.Domain.Identity.ValueObjects;
 using GeneFlow.ApiNet2.SharedKernel.Application.CQRS;
 using GeneFlow.ApiNet2.SharedKernel.Domain.Results;
+using Password = GeneFlow.ApiNet2.Domain.Identity.ValueObjects.Password;
 
 namespace GeneFlow.ApiNet2.Application.Identity.Commands.ResetPassword;
 
@@ -36,7 +37,11 @@ public sealed class ResetPasswordCommandHandler : ICommandHandler<ResetPasswordC
         if (user is null)
             return Result.Failure(UserErrors.InvalidPasswordResetToken);
 
-        var hashedPassword = _passwordHasher.Hash(request.NewPassword);
+        var passwordResult = Password.Create(request.NewPassword);
+        if (passwordResult.IsFailure)
+            return Result.Failure(passwordResult.Error);
+
+        var hashedPassword = _passwordHasher.Hash(passwordResult.Value);
         var passwordHashResult = PasswordHash.Create(hashedPassword);
         if (passwordHashResult.IsFailure)
             return Result.Failure(passwordHashResult.Error);

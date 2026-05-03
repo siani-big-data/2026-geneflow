@@ -39,8 +39,8 @@ public sealed class CreateSequenceEditCommandHandler
         if (editType is null)
             return Result.Failure<SequenceEditDto>(TraceErrors.InvalidEditType);
 
-        // Get trace
-        var trace = await _unitOfWork.Traces.GetByIdAsync(traceId, cancellationToken);
+        // Get trace with edits collection loaded for proper change tracking
+        var trace = await _unitOfWork.Traces.GetByIdWithEditsAsync(traceId, cancellationToken);
         if (trace is null)
             return Result.Failure<SequenceEditDto>(TraceErrors.NotFound);
 
@@ -56,8 +56,7 @@ public sealed class CreateSequenceEditCommandHandler
         if (editResult.IsFailure)
             return Result.Failure<SequenceEditDto>(editResult.Error);
 
-        // Persist
-        _unitOfWork.Traces.Update(trace);
+        // Persist - no need to call Update() since trace is already tracked
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Success(editResult.Value.ToDto());

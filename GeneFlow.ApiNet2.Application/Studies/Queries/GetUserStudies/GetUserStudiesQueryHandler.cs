@@ -6,6 +6,7 @@ using GeneFlow.ApiNet2.Domain.Studies.Enumerations;
 using GeneFlow.ApiNet2.SharedKernel.Application.CQRS;
 using GeneFlow.ApiNet2.SharedKernel.Domain.Results;
 using GeneFlow.ApiNet2.SharedKernel.Domain.Pagination;
+using Microsoft.Extensions.Logging;
 
 namespace GeneFlow.ApiNet2.Application.Studies.Queries.GetUserStudies;
 
@@ -16,19 +17,28 @@ public sealed class GetUserStudiesQueryHandler
     : IQueryHandler<GetUserStudiesQuery, Result<PagedList<StudySummaryDto>>>
 {
     private readonly IStudyRepository _studyRepository;
+    private readonly ILogger<GetUserStudiesQueryHandler> _logger;
 
-    public GetUserStudiesQueryHandler(IStudyRepository studyRepository)
+    public GetUserStudiesQueryHandler(
+        IStudyRepository studyRepository,
+        ILogger<GetUserStudiesQueryHandler> logger)
     {
         _studyRepository = studyRepository;
+        _logger = logger;
     }
 
     public async Task<Result<PagedList<StudySummaryDto>>> Handle(
         GetUserStudiesQuery request,
         CancellationToken cancellationToken)
     {
+        _logger.LogInformation("GetUserStudies: Requested for UserId={UserId}", request.UserId);
+
         // Parse user ID
         if (!UserId.TryParse(request.UserId, out var userId) || userId is null)
+        {
+            _logger.LogWarning("GetUserStudies: Invalid UserId format: {UserId}", request.UserId);
             return Result.Failure<PagedList<StudySummaryDto>>(StudyErrors.InvalidUserId);
+        }
 
         // Validate status if provided
         StudyStatus? status = null;
@@ -57,6 +67,12 @@ public sealed class GetUserStudiesQueryHandler
             status,
             researchField,
             cancellationToken);
+
+        _logger.LogInformation(
+            "GetUserStudies: Found {Count} studies for UserId={UserId}. StudyIds: [{StudyIds}]",
+            studies.TotalCount,
+            userId,
+            string.Join(", ", studies.Items.Select(s => s.Id.ToString())));
 
         // Map to DTOs
         var dtos = studies.Items.ToSummaryDtos();

@@ -4,6 +4,11 @@
     <ProjectReference Include="..\GeneFlow.ApiNet2.SharedKernel\GeneFlow.ApiNet2.SharedKernel.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="GeneFlow.ApiNet2.Tests" />
+    <InternalsVisibleTo Include="GeneFlow.ApiNet2.Infrastructure" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>

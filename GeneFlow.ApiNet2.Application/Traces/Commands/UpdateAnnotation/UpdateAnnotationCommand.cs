@@ -1,4 +1,6 @@
+using GeneFlow.ApiNet2.Application.Behaviors;
 using GeneFlow.ApiNet2.Application.Traces.DTOs;
+using GeneFlow.ApiNet2.Domain.Studies.Enumerations;
 using GeneFlow.ApiNet2.SharedKernel.Application.CQRS;
 using GeneFlow.ApiNet2.SharedKernel.Domain.Results;
 using System.Text.Json;
@@ -7,6 +9,7 @@ namespace GeneFlow.ApiNet2.Application.Traces.Commands.UpdateAnnotation;
 
 /// <summary>
 /// Command to update an annotation on a trace.
+/// Requires Editor role or higher in the trace's parent study.
 /// </summary>
 public sealed record UpdateAnnotationCommand(
     string UserId,
@@ -19,4 +22,8 @@ public sealed record UpdateAnnotationCommand(
     int StrandId,
     string Color,
     bool IsShared,
-    JsonDocument? Metadata = null) : ICommand<Result<AnnotationDto>>;
+    JsonDocument? Metadata = null) : ICommand<Result<AnnotationDto>>, IRequireTraceAccess
+{
+    string IRequireTraceAccess.TraceId => TraceId;
+    StudyRole? IRequireTraceAccess.MinimumRole => StudyRole.Editor;
+}

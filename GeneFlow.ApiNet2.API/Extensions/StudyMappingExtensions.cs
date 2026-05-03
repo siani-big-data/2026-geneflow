@@ -33,8 +33,23 @@ public static class StudyMappingExtensions
         dto.Tags,
         dto.Members.ToResponses(),
         dto.Papers.ToResponses(),
+        dto.CurrentUserPermissions.ToResponse(),
         dto.CreatedAt,
         dto.ModifiedAt);
+
+    /// <summary>
+    /// Converts a CurrentUserPermissionsDto to a CurrentUserPermissionsResponse.
+    /// </summary>
+    public static CurrentUserPermissionsResponse ToResponse(this CurrentUserPermissionsDto dto) => new(
+        dto.IsMember,
+        dto.RoleId,
+        dto.RoleName,
+        dto.CanManageMembers,
+        dto.CanEditStudy,
+        dto.CanEditContent,
+        dto.CanChangeStatus,
+        dto.CanDeleteStudy,
+        dto.CanTransferOwnership);
 
     /// <summary>
     /// Converts a StudySummaryDto to a StudySummaryResponse.
@@ -66,7 +81,10 @@ public static class StudyMappingExtensions
         dto.RoleId,
         dto.Role,
         dto.JoinedAt,
-        dto.InvitedBy);
+        dto.InvitedBy,
+        dto.UserName,
+        dto.UserEmail,
+        dto.UserAvatarUrl);
 
     /// <summary>
     /// Converts a StudyPaperDto to a StudyPaperResponse.

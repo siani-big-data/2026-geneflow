@@ -87,16 +87,43 @@ public sealed class TwoFactorAuth : ValueObject
     /// <returns>The updated state and the new code.</returns>
     public (TwoFactorAuth Auth, TwoFactorCode Code) GenerateCode()
     {
+        // Invalidate existing unused codes
         foreach (var existingCode in _codes)
         {
             if (!existingCode.IsUsed)
                 existingCode.MarkAsUsed();
         }
 
+        // Clean up old codes (keep only last 10 to prevent unbounded growth)
+        CleanupOldCodes();
+
         var newCode = TwoFactorCode.Create();
         _codes.Add(newCode);
 
         return (new TwoFactorAuth(IsEnabled, _codes, TotpSecret), newCode);
+    }
+
+    /// <summary>
+    /// Removes old used/expired codes to prevent unbounded list growth.
+    /// Keeps the most recent 10 codes.
+    /// </summary>
+    private void CleanupOldCodes()
+    {
+        const int maxCodesToKeep = 10;
+
+        if (_codes.Count <= maxCodesToKeep)
+            return;
+
+        // Remove oldest codes, keeping only the most recent ones
+        var codesToRemove = _codes
+            .OrderBy(c => c.CreatedAt)
+            .Take(_codes.Count - maxCodesToKeep)
+            .ToList();
+
+        foreach (var code in codesToRemove)
+        {
+            _codes.Remove(code);
+        }
     }
 
     /// <summary>

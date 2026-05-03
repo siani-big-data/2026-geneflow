@@ -8,6 +8,9 @@ namespace GeneFlow.ApiNet2.Domain.Profiles.ValueObjects;
 /// </summary>
 public sealed class ProfessionalRole : ValueObject
 {
+    /// <summary>Minimum length of professional role (if provided).</summary>
+    public const int MinLength = 2;
+
     /// <summary>Maximum length of professional role.</summary>
     public const int MaxLength = 100;
 
@@ -25,6 +28,9 @@ public sealed class ProfessionalRole : ValueObject
             return new ProfessionalRole(null);
 
         var trimmed = value.Trim();
+
+        if (trimmed.Length < MinLength)
+            return Result.Failure<ProfessionalRole>(ProfileErrors.ProfessionalRoleTooShort(MinLength));
 
         if (trimmed.Length > MaxLength)
             return Result.Failure<ProfessionalRole>(ProfileErrors.ProfessionalRoleTooLong(MaxLength));

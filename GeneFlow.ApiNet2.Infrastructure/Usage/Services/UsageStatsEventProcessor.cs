@@ -214,8 +214,19 @@ public sealed class UsageStatsEventProcessor : BackgroundService
 
     private UserId? ExtractUserId(JsonDocument eventData, string eventType)
     {
-        // Try different property names that might contain the user ID
-        var propertyNames = new[] { "userId", "user_id", "ownerId", "owner_id", "createdBy", "created_by" };
+        // Try different property names that might contain the user ID (both camelCase and PascalCase)
+        var propertyNames = new[] {
+            "userId", "UserId", "user_id",
+            "ownerId", "OwnerId", "owner_id",
+            "createdBy", "CreatedBy", "created_by",
+            "trimmedBy", "TrimmedBy", "trimmed_by",
+            "appliedBy", "AppliedBy", "applied_by",
+            "uploadedBy", "UploadedBy", "uploaded_by",
+            "removedBy", "RemovedBy", "removed_by",
+            "addedBy", "AddedBy", "added_by",
+            "editedBy", "EditedBy", "edited_by",
+            "undoneBy", "UndoneBy", "undone_by"
+        };
 
         foreach (var propName in propertyNames)
         {
@@ -235,10 +246,42 @@ public sealed class UsageStatsEventProcessor : BackgroundService
         {
             if (doc.RootElement.TryGetProperty(propName, out var prop))
             {
-                var value = prop.GetString();
-                if (!string.IsNullOrEmpty(value) && UserId.TryParse(value, out var userId))
+                // Handle string serialization (e.g., "U00000001")
+                if (prop.ValueKind == JsonValueKind.String)
                 {
-                    return userId;
+                    var strValue = prop.GetString();
+                    if (!string.IsNullOrEmpty(strValue) && UserId.TryParse(strValue, out var userId))
+                    {
+                        return userId;
+                    }
+                }
+                // Handle object serialization (e.g., { "value": 1 } or { "value": "U00000001" })
+                else if (prop.ValueKind == JsonValueKind.Object)
+                {
+                    // Try "value" (snake_case) first, then "Value" (PascalCase)
+                    JsonElement valueProp = default;
+                    if (prop.TryGetProperty("value", out valueProp) || prop.TryGetProperty("Value", out valueProp))
+                    {
+                        // Handle numeric value (e.g., { "value": 4 })
+                        if (valueProp.ValueKind == JsonValueKind.Number && valueProp.TryGetInt64(out var numValue))
+                        {
+                            return new UserId(numValue);
+                        }
+                        // Handle string value (e.g., { "value": "U00000001" })
+                        else if (valueProp.ValueKind == JsonValueKind.String)
+                        {
+                            var strValue = valueProp.GetString();
+                            if (!string.IsNullOrEmpty(strValue) && UserId.TryParse(strValue, out var userId))
+                            {
+                                return userId;
+                            }
+                        }
+                    }
+                }
+                // Handle direct number (unlikely but possible)
+                else if (prop.ValueKind == JsonValueKind.Number && prop.TryGetInt64(out var numValue))
+                {
+                    return new UserId(numValue);
                 }
             }
         }

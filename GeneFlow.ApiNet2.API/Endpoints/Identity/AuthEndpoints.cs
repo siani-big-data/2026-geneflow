@@ -9,6 +9,8 @@ using GeneFlow.ApiNet2.Application.Identity.Commands.Register;
 using GeneFlow.ApiNet2.Application.Identity.Commands.RequestPasswordReset;
 using GeneFlow.ApiNet2.Application.Identity.Commands.RequestTwoFactorCode;
 using GeneFlow.ApiNet2.Application.Identity.Commands.ResetPassword;
+using GeneFlow.ApiNet2.Application.Identity.Commands.ChangePassword;
+using GeneFlow.ApiNet2.Application.Identity.Interfaces;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -77,6 +79,15 @@ public sealed class AuthEndpoints : IEndpoint
             .WithDescription("Resets the user's password using the provided token.")
             .Produces(StatusCodes.Status204NoContent)
             .ProducesValidationProblem();
+
+        group.MapPost("/change-password", ChangePassword)
+            .WithName("Auth_ChangePassword")
+            .WithSummary("Change password")
+            .WithDescription("Changes the authenticated user's password. Requires the current password for verification.")
+            .RequireAuthorization()
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesValidationProblem()
+            .Produces<ApiError>(StatusCodes.Status401Unauthorized);
     }
 
     private static async Task<IResult> Register(
@@ -187,6 +198,28 @@ public sealed class AuthEndpoints : IEndpoint
         CancellationToken cancellationToken)
     {
         var command = new ResetPasswordCommand(request.Token, request.NewPassword);
+        var result = await sender.Send(command, cancellationToken);
+
+        if (result.IsFailure)
+            return result.ToHttpResult();
+
+        return Results.NoContent();
+    }
+
+    private static async Task<IResult> ChangePassword(
+        [FromBody] ChangePasswordRequest request,
+        [FromServices] ISender sender,
+        [FromServices] ICurrentUserService currentUserService,
+        CancellationToken cancellationToken)
+    {
+        if (!currentUserService.IsAuthenticated || currentUserService.UserId is null)
+            return Results.Unauthorized();
+
+        var command = new ChangePasswordCommand(
+            currentUserService.UserId,
+            request.CurrentPassword,
+            request.NewPassword);
+
         var result = await sender.Send(command, cancellationToken);
 
         if (result.IsFailure)

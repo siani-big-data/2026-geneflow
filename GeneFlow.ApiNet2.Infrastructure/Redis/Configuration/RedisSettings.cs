@@ -17,6 +17,9 @@ public sealed class RedisSettings
     /// <summary>Gets or sets the prefix for event stream keys.</summary>
     public string EventStreamPrefix { get; set; } = "geneflow:events:";
 
+    /// <summary>Gets or sets the prefix for job stream keys.</summary>
+    public string JobStreamPrefix { get; set; } = "geneflow:jobs:";
+
     /// <summary>Gets or sets the connection timeout in milliseconds.</summary>
     public int ConnectTimeoutMs { get; set; } = 5000;
 

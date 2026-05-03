@@ -23,6 +23,7 @@ public static class UserMappings
             EmailVerified = user.EmailVerified,
             IsActive = user.IsActive,
             TwoFactorEnabled = user.TwoFactorEnabled,
+            HasPassword = user.HasPassword,
             Roles = user.Roles.Select(r => r.Name).ToList(),
             CreatedAt = user.CreatedAt,
             ModifiedAt = user.ModifiedAt

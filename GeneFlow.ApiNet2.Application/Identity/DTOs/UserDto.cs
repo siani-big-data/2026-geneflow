@@ -23,6 +23,9 @@ public sealed record UserDto
     /// <summary>Gets whether two-factor authentication is enabled.</summary>
     public required bool TwoFactorEnabled { get; init; }
 
+    /// <summary>Gets whether the user has a password set (false for OAuth-only accounts).</summary>
+    public required bool HasPassword { get; init; }
+
     /// <summary>Gets the user's roles.</summary>
     public required IReadOnlyList<string> Roles { get; init; }
 

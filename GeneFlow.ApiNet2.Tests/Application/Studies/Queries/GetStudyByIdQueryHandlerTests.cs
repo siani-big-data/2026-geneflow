@@ -1,5 +1,6 @@
 using GeneFlow.ApiNet2.Application.Studies.Queries.GetStudyById;
 using GeneFlow.ApiNet2.Domain.Identity;
+using GeneFlow.ApiNet2.Domain.Profiles;
 using GeneFlow.ApiNet2.Domain.Studies;
 using GeneFlow.ApiNet2.Domain.Studies.Enumerations;
 using GeneFlow.ApiNet2.Domain.Studies.ValueObjects;
@@ -12,11 +13,19 @@ namespace GeneFlow.ApiNet2.Tests.Application.Studies.Queries;
 public class GetStudyByIdQueryHandlerTests
 {
     private readonly IStudyRepository _studyRepository = Substitute.For<IStudyRepository>();
+    private readonly IUserRepository _userRepository = Substitute.For<IUserRepository>();
+    private readonly IProfileRepository _profileRepository = Substitute.For<IProfileRepository>();
     private readonly GetStudyByIdQueryHandler _handler;
 
     public GetStudyByIdQueryHandlerTests()
     {
-        _handler = new GetStudyByIdQueryHandler(_studyRepository);
+        _handler = new GetStudyByIdQueryHandler(_studyRepository, _userRepository, _profileRepository);
+
+        // Setup default returns for user and profile repos
+        _userRepository.GetByIdsAsync(Arg.Any<IEnumerable<UserId>>(), Arg.Any<CancellationToken>())
+            .Returns(new List<User>());
+        _profileRepository.GetByUserIdsAsync(Arg.Any<IEnumerable<UserId>>(), Arg.Any<CancellationToken>())
+            .Returns(new List<Profile>());
     }
 
     #region Helper Methods

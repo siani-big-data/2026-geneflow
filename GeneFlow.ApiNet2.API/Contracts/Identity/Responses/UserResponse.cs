@@ -10,6 +10,7 @@ public sealed record UserResponse(
     bool IsActive,
     bool EmailVerified,
     bool TwoFactorEnabled,
+    bool HasPassword,
     IReadOnlyList<string> Roles,
     DateTime CreatedAt,
     DateTime? ModifiedAt);

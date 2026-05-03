@@ -20,6 +20,7 @@ public sealed record StudyResponse(
     IReadOnlyList<string> Tags,
     IReadOnlyList<StudyMemberResponse> Members,
     IReadOnlyList<StudyPaperResponse> Papers,
+    CurrentUserPermissionsResponse CurrentUserPermissions,
     DateTime CreatedAt,
     DateTime? ModifiedAt);
 
@@ -37,3 +38,17 @@ public sealed record StudySettingsResponse(
 public sealed record StudyMetricsResponse(
     int ViewsCount,
     int StarsCount);
+
+/// <summary>
+/// Response model for current user's permissions in a study.
+/// </summary>
+public sealed record CurrentUserPermissionsResponse(
+    bool IsMember,
+    int? RoleId,
+    string? RoleName,
+    bool CanManageMembers,
+    bool CanEditStudy,
+    bool CanEditContent,
+    bool CanChangeStatus,
+    bool CanDeleteStudy,
+    bool CanTransferOwnership);
