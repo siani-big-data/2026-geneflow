@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using System.Text.Json;
 using GeneFlow.ApiNet2.API.Contracts.Identity.Requests;
 using GeneFlow.ApiNet2.API.Contracts.Identity.Responses;
@@ -11,10 +12,15 @@ using Microsoft.Extensions.Configuration;
 namespace GeneFlow.ApiNet2.API.Endpoints.Identity;
 
 /// <summary>
-/// OAuth authentication endpoints.
+/// OAuth authentication endpoints (login via Google/GitHub and GitHub code exchange).
 /// </summary>
 public sealed class OAuthEndpoints : IEndpoint
 {
+    private static readonly JsonSerializerOptions GitHubResponseSerializerOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+    };
+
     /// <inheritdoc />
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
@@ -76,19 +82,19 @@ public sealed class OAuthEndpoints : IEndpoint
         {
             var httpClient = httpClientFactory.CreateClient();
             httpClient.DefaultRequestHeaders.Accept.Add(
-                new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+                new MediaTypeWithQualityHeaderValue("application/json"));
 
-            var tokenRequest = new HttpRequestMessage(HttpMethod.Post, "https://github.com/login/oauth/access_token")
+            using var tokenRequest = new HttpRequestMessage(HttpMethod.Post, "https://github.com/login/oauth/access_token")
             {
                 Content = new FormUrlEncodedContent(new Dictionary<string, string>
                 {
                     ["client_id"] = clientId,
                     ["client_secret"] = clientSecret,
-                    ["code"] = request.Code
-                })
+                    ["code"] = request.Code,
+                }),
             };
 
-            var response = await httpClient.SendAsync(tokenRequest, cancellationToken);
+            using var response = await httpClient.SendAsync(tokenRequest, cancellationToken);
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
             if (!response.IsSuccessStatusCode)
@@ -96,15 +102,11 @@ public sealed class OAuthEndpoints : IEndpoint
                 return Results.BadRequest(new ApiError("OAuth.ExchangeFailed", "Failed to exchange code with GitHub."));
             }
 
-            var tokenResponse = JsonSerializer.Deserialize<GitHubOAuthResponse>(content, new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
-            });
+            var tokenResponse = JsonSerializer.Deserialize<GitHubOAuthResponse>(content, GitHubResponseSerializerOptions);
 
-            if (tokenResponse?.AccessToken == null)
+            if (tokenResponse?.AccessToken is null)
             {
-                // GitHub returns error in the same format when code is invalid
-                if (content.Contains("error"))
+                if (content.Contains("error", StringComparison.Ordinal))
                 {
                     return Results.BadRequest(new ApiError("OAuth.InvalidCode", "The authorization code is invalid or expired."));
                 }
@@ -113,29 +115,17 @@ public sealed class OAuthEndpoints : IEndpoint
 
             return Results.Ok(new GitHubTokenResponse(tokenResponse.AccessToken));
         }
-        catch (Exception)
+        catch (HttpRequestException)
         {
-            return Results.BadRequest(new ApiError("OAuth.Error", "An error occurred while exchanging the code."));
+            return Results.BadRequest(new ApiError("OAuth.Error", "Network error while exchanging the code."));
+        }
+        catch (TaskCanceledException)
+        {
+            return Results.BadRequest(new ApiError("OAuth.Error", "Timeout while exchanging the code."));
+        }
+        catch (JsonException)
+        {
+            return Results.BadRequest(new ApiError("OAuth.Error", "Invalid response received from GitHub."));
         }
     }
 }
-
-/// <summary>
-/// Request to exchange GitHub authorization code.
-/// </summary>
-public sealed record GitHubCodeExchangeRequest(string Code);
-
-/// <summary>
-/// Response with GitHub access token.
-/// </summary>
-public sealed record GitHubTokenResponse(string AccessToken);
-
-/// <summary>
-/// GitHub OAuth token response (internal).
-/// </summary>
-internal sealed record GitHubOAuthResponse(
-    string? AccessToken,
-    string? TokenType,
-    string? Scope,
-    string? Error,
-    string? ErrorDescription);
