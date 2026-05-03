@@ -18,6 +18,21 @@ namespace GeneFlow.ApiNet2.Application.Identity.Commands.OAuthLogin;
 public sealed class OAuthLoginCommandHandler
     : ICommandHandler<OAuthLoginCommand, Result<LoginResultDto>>
 {
+    /// <summary>Minimum length for an auto-generated username.</summary>
+    private const int MinUsernameLength = 3;
+
+    /// <summary>Maximum length for an auto-generated username.</summary>
+    private const int MaxUsernameLength = 20;
+
+    /// <summary>Fallback username used when sanitization yields too few characters.</summary>
+    private const string FallbackUsername = "user";
+
+    /// <summary>
+    /// Maximum number of suffix attempts before falling back to a GUID-based
+    /// username when generating a unique handle.
+    /// </summary>
+    private const int MaxUsernameSuffixAttempts = 100;
+
     private readonly IUserRepository _userRepository;
     private readonly IUserUnitOfWork _unitOfWork;
     private readonly IOAuthTokenValidator _oAuthValidator;
@@ -45,12 +60,10 @@ public sealed class OAuthLoginCommandHandler
         OAuthLoginCommand request,
         CancellationToken cancellationToken)
     {
-        // Parse the provider
         var provider = ExternalProvider.FromName(request.Provider);
         if (provider is null)
             return Result.Failure<LoginResultDto>(OAuthErrors.ProviderNotSupported(request.Provider));
 
-        // Validate the token with the provider
         var validationResult = await _oAuthValidator.ValidateTokenAsync(
             provider, request.Token, cancellationToken);
 
@@ -59,7 +72,6 @@ public sealed class OAuthLoginCommandHandler
 
         var oAuthUserInfo = validationResult.Value;
 
-        // Check if user already exists with this external login
         var existingUser = await _userRepository.GetByExternalLoginAsync(
             provider, oAuthUserInfo.ProviderKey, cancellationToken);
 
@@ -68,7 +80,6 @@ public sealed class OAuthLoginCommandHandler
             return await LoginExistingUser(existingUser, cancellationToken);
         }
 
-        // Check if user exists with this email
         var emailResult = Email.Create(oAuthUserInfo.Email);
         if (emailResult.IsFailure)
             return Result.Failure<LoginResultDto>(emailResult.Error);
@@ -78,7 +89,6 @@ public sealed class OAuthLoginCommandHandler
 
         if (userByEmail is not null)
         {
-            // Link the OAuth provider to existing account
             var linkResult = userByEmail.LinkExternalLogin(
                 provider,
                 oAuthUserInfo.ProviderKey,
@@ -90,7 +100,6 @@ public sealed class OAuthLoginCommandHandler
             return await LoginExistingUser(userByEmail, cancellationToken);
         }
 
-        // Create a new user
         _logger.LogInformation("OAuthLogin: Creating new OAuth user for {Email}", oAuthUserInfo.Email);
         return await CreateNewOAuthUser(
             provider,
@@ -142,7 +151,6 @@ public sealed class OAuthLoginCommandHandler
     {
         _logger.LogInformation("CreateNewOAuthUser: Starting for email {Email}", email.Value);
 
-        // Generate username from email or display name
         var baseUsername = !string.IsNullOrWhiteSpace(oAuthUserInfo.DisplayName)
             ? SanitizeUsername(oAuthUserInfo.DisplayName)
             : SanitizeUsername(email.Value.Split('@')[0]);
@@ -156,7 +164,6 @@ public sealed class OAuthLoginCommandHandler
         if (usernameResult.IsFailure)
             return Result.Failure<LoginResultDto>(usernameResult.Error);
 
-        // Generate user ID
         _logger.LogInformation("CreateNewOAuthUser: Generating sequence ID from Redis...");
         var sequenceId = await _sequenceGenerator.NextAsync("user", cancellationToken);
         _logger.LogInformation("CreateNewOAuthUser: Sequence ID generated: {SequenceId}", sequenceId);
@@ -164,7 +171,6 @@ public sealed class OAuthLoginCommandHandler
         var userId = UserId.FromSequence(sequenceId);
         _logger.LogInformation("CreateNewOAuthUser: UserId created: {UserId}", userId.Value);
 
-        // Create user via OAuth
         _logger.LogInformation("CreateNewOAuthUser: Creating User entity...");
         var userResult = User.CreateFromOAuth(
             userId,
@@ -212,15 +218,21 @@ public sealed class OAuthLoginCommandHandler
         };
     }
 
+    /// <summary>
+    /// Removes non-ASCII alphanumeric characters (keeps a-z, A-Z, 0-9, _),
+    /// then truncates to <see cref="MaxUsernameLength"/>. Falls back to
+    /// <see cref="FallbackUsername"/> if the result has fewer than
+    /// <see cref="MinUsernameLength"/> characters.
+    /// </summary>
     private static string SanitizeUsername(string input)
     {
-        // Remove non-ASCII alphanumeric characters and limit length
-        // Only allow a-z, A-Z, 0-9, and underscore
         var sanitized = new string(input
             .Where(c => (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_')
             .ToArray());
 
-        return sanitized.Length >= 3 ? sanitized[..Math.Min(sanitized.Length, 20)] : "user";
+        return sanitized.Length >= MinUsernameLength
+            ? sanitized[..Math.Min(sanitized.Length, MaxUsernameLength)]
+            : FallbackUsername;
     }
 
     private async Task<string> GenerateUniqueUsernameAsync(string baseUsername, CancellationToken cancellationToken)
@@ -249,8 +261,8 @@ public sealed class OAuthLoginCommandHandler
             username = $"{baseUsername}{counter}";
             counter++;
 
-            if (counter > 100)
-                username = $"{baseUsername}{Guid.NewGuid():N}"[..20];
+            if (counter > MaxUsernameSuffixAttempts)
+                username = $"{baseUsername}{Guid.NewGuid():N}"[..MaxUsernameLength];
         }
     }
 }

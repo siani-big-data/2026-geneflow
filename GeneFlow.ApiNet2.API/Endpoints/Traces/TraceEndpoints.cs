@@ -23,6 +23,9 @@ namespace GeneFlow.ApiNet2.API.Endpoints.Traces;
 /// </summary>
 public sealed class TraceEndpoints : IEndpoint
 {
+    /// <summary>Default page size for paginated trace listings.</summary>
+    private const int DefaultPageSize = 20;
+
     /// <inheritdoc />
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
@@ -102,7 +105,7 @@ public sealed class TraceEndpoints : IEndpoint
     private static async Task<IResult> GetStudyTraces(
         [FromRoute] string studyId,
         [FromQuery] int pageNumber = 1,
-        [FromQuery] int pageSize = 20,
+        [FromQuery] int pageSize = DefaultPageSize,
         [FromQuery] string? searchTerm = null,
         [FromQuery] int? statusId = null,
         [FromQuery] int? formatId = null,
@@ -185,13 +188,11 @@ public sealed class TraceEndpoints : IEndpoint
         if (string.IsNullOrEmpty(userId))
             return Results.Unauthorized();
 
-        // Read file bytes and calculate checksum
         using var stream = file.OpenReadStream();
         var fileBytes = new byte[file.Length];
         await stream.ReadExactlyAsync(fileBytes, cancellationToken);
         var checksum = Convert.ToHexString(SHA256.HashData(fileBytes)).ToLowerInvariant();
 
-        // Store file in datalake using correct path structure: traces/{traceId}/original.{ext}
         var traceId = Guid.NewGuid().ToString();
         var extension = Path.GetExtension(file.FileName);
         var storagePath = $"traces/{traceId}/original{extension}";

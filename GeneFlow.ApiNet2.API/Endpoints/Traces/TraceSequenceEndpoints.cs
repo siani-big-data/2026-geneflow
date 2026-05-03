@@ -16,6 +16,12 @@ namespace GeneFlow.ApiNet2.API.Endpoints.Traces;
 /// </summary>
 public sealed class TraceSequenceEndpoints : IEndpoint
 {
+    /// <summary>
+    /// Default page size (in bases) for paginated sequence reads.
+    /// Sized to match the chunk granularity used by the datalake reader.
+    /// </summary>
+    private const int DefaultSequencePageSize = 10000;
+
     /// <inheritdoc />
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
@@ -84,7 +90,7 @@ public sealed class TraceSequenceEndpoints : IEndpoint
     private static async Task<IResult> GetSequencePage(
         [FromRoute] string traceId,
         [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 10000,
+        [FromQuery] int pageSize = DefaultSequencePageSize,
         [FromServices] ISender sender = default!,
         [FromServices] ICurrentUserService currentUserService = default!,
         CancellationToken cancellationToken = default)
