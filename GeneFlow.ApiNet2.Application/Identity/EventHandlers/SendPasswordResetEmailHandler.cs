@@ -8,6 +8,10 @@ namespace GeneFlow.ApiNet2.Application.Identity.EventHandlers;
 /// <summary>
 /// Sends password reset email when a user requests a password reset.
 /// </summary>
+/// <remarks>
+/// Exceptions are intentionally caught and logged without rethrowing because
+/// email-delivery failures must not abort the password-reset request flow.
+/// </remarks>
 public sealed class SendPasswordResetEmailHandler
     : IDomainEventHandler<PasswordResetRequestedEvent>
 {
@@ -47,7 +51,6 @@ public sealed class SendPasswordResetEmailHandler
                 ex,
                 "Failed to send password reset email to {Email}",
                 notification.Email);
-            // Don't rethrow - email failure shouldn't fail the password reset request
         }
     }
 }

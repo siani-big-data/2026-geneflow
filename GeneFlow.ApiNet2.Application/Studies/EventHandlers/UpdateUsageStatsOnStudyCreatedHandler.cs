@@ -9,6 +9,10 @@ namespace GeneFlow.ApiNet2.Application.Studies.EventHandlers;
 /// Updates usage statistics when a study is created.
 /// Increments the studies owned counter for the owner's billing period.
 /// </summary>
+/// <remarks>
+/// Exceptions are intentionally caught and logged without rethrowing because
+/// usage-stats updates are a side effect that must not fail study creation.
+/// </remarks>
 public sealed class UpdateUsageStatsOnStudyCreatedHandler
     : IDomainEventHandler<StudyCreatedEvent>
 {
@@ -60,7 +64,6 @@ public sealed class UpdateUsageStatsOnStudyCreatedHandler
                 ex,
                 "Failed to update usage stats for study created. StudyId: {StudyId}",
                 notification.StudyId);
-            // Don't rethrow - usage stats update shouldn't fail the study creation
         }
     }
 }

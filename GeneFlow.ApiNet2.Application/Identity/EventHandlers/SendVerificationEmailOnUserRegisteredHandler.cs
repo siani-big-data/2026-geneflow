@@ -8,6 +8,10 @@ namespace GeneFlow.ApiNet2.Application.Identity.EventHandlers;
 /// <summary>
 /// Sends verification email when a user registers.
 /// </summary>
+/// <remarks>
+/// Exceptions are intentionally caught and logged without rethrowing because
+/// email-delivery failures must not break user registration.
+/// </remarks>
 public sealed class SendVerificationEmailOnUserRegisteredHandler
     : IDomainEventHandler<UserRegisteredEvent>
 {
@@ -47,7 +51,6 @@ public sealed class SendVerificationEmailOnUserRegisteredHandler
                 ex,
                 "Failed to send verification email to {Email}",
                 notification.Email);
-            // Don't rethrow - email failure shouldn't fail registration
         }
     }
 }

@@ -27,11 +27,6 @@ public sealed class LogTraceProcessedHandler
             notification.StudyId,
             notification.AverageQualityScore);
 
-        // In a production system, this could also:
-        // - Update real-time dashboards
-        // - Notify study members
-        // - Trigger downstream analysis pipelines
-
         return Task.CompletedTask;
     }
 }

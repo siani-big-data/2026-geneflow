@@ -9,6 +9,10 @@ namespace GeneFlow.ApiNet2.Application.Traces.EventHandlers;
 /// Updates usage statistics when a trace is uploaded.
 /// Increments the trace upload count for the current billing period.
 /// </summary>
+/// <remarks>
+/// Exceptions are intentionally caught and logged without rethrowing because
+/// usage-stats updates are a side effect that must not fail the upload.
+/// </remarks>
 public sealed class UpdateUsageStatsOnTraceUploadedHandler
     : IDomainEventHandler<TraceUploadedEvent>
 {
@@ -61,7 +65,6 @@ public sealed class UpdateUsageStatsOnTraceUploadedHandler
                 ex,
                 "Failed to update usage stats for trace upload. TraceId: {TraceId}",
                 notification.TraceId);
-            // Don't rethrow - usage stats update shouldn't fail the upload
         }
     }
 }

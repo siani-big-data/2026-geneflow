@@ -10,6 +10,10 @@ namespace GeneFlow.ApiNet2.Application.Subscriptions.EventHandlers;
 /// <summary>
 /// Creates a free subscription when a user registers.
 /// </summary>
+/// <remarks>
+/// Exceptions are intentionally caught and logged without rethrowing because
+/// failures in this side-effect handler must not break user registration.
+/// </remarks>
 public sealed class CreateFreeSubscriptionOnUserRegisteredHandler
     : IDomainEventHandler<UserRegisteredEvent>
 {
@@ -44,7 +48,7 @@ public sealed class CreateFreeSubscriptionOnUserRegisteredHandler
             _logger.LogInformation(
                 "Creating free subscription for newly registered user {UserId}",
                 notification.UserId);
-            // Check if user already has a subscription (shouldn't happen, but be safe)
+
             if (await _subscriptionRepository.HasActiveSubscriptionAsync(notification.UserId, cancellationToken))
             {
                 _logger.LogWarning(
@@ -53,7 +57,6 @@ public sealed class CreateFreeSubscriptionOnUserRegisteredHandler
                 return;
             }
 
-            // Get the default (free) plan
             var defaultPlan = await _planRepository.GetDefaultPlanAsync(cancellationToken);
             if (defaultPlan is null)
             {
@@ -63,11 +66,9 @@ public sealed class CreateFreeSubscriptionOnUserRegisteredHandler
                 return;
             }
 
-            // Generate subscription ID
             var sequenceId = await _sequenceGenerator.NextAsync(SubscriptionId.SequenceName, cancellationToken);
             var subscriptionId = SubscriptionId.FromSequence(sequenceId);
 
-            // Create free subscription
             var subscriptionResult = Subscription.CreateFree(subscriptionId, notification.UserId, defaultPlan.Id);
             if (subscriptionResult.IsFailure)
             {
@@ -95,7 +96,6 @@ public sealed class CreateFreeSubscriptionOnUserRegisteredHandler
                 ex,
                 "Failed to create free subscription for user {UserId}",
                 notification.UserId);
-            // Don't rethrow - subscription creation failure shouldn't fail registration
         }
     }
 }

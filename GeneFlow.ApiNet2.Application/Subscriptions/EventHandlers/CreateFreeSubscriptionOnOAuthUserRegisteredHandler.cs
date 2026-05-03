@@ -10,6 +10,10 @@ namespace GeneFlow.ApiNet2.Application.Subscriptions.EventHandlers;
 /// <summary>
 /// Creates a free subscription when a user registers via OAuth.
 /// </summary>
+/// <remarks>
+/// Exceptions are intentionally caught and logged without rethrowing because
+/// failures in this side-effect handler must not break OAuth registration.
+/// </remarks>
 public sealed class CreateFreeSubscriptionOnOAuthUserRegisteredHandler
     : IDomainEventHandler<UserRegisteredViaOAuthEvent>
 {
@@ -46,7 +50,6 @@ public sealed class CreateFreeSubscriptionOnOAuthUserRegisteredHandler
                 "Creating free subscription for newly registered OAuth user {UserId}",
                 notification.UserId);
 
-            // Check if user already has a subscription (shouldn't happen, but be safe)
             if (await _subscriptionRepository.HasActiveSubscriptionAsync(notification.UserId, cancellationToken))
             {
                 _logger.LogWarning(
@@ -55,7 +58,6 @@ public sealed class CreateFreeSubscriptionOnOAuthUserRegisteredHandler
                 return;
             }
 
-            // Get the default (free) plan
             var defaultPlan = await _planRepository.GetDefaultPlanAsync(cancellationToken);
             if (defaultPlan is null)
             {
@@ -70,11 +72,9 @@ public sealed class CreateFreeSubscriptionOnOAuthUserRegisteredHandler
                 defaultPlan.Id,
                 defaultPlan.Name.Value);
 
-            // Generate subscription ID
             var sequenceId = await _sequenceGenerator.NextAsync(SubscriptionId.SequenceName, cancellationToken);
             var subscriptionId = SubscriptionId.FromSequence(sequenceId);
 
-            // Create free subscription
             var subscriptionResult = Subscription.CreateFree(subscriptionId, notification.UserId, defaultPlan.Id);
             if (subscriptionResult.IsFailure)
             {
@@ -106,7 +106,6 @@ public sealed class CreateFreeSubscriptionOnOAuthUserRegisteredHandler
                 ex,
                 "Failed to create free subscription for OAuth user {UserId}",
                 notification.UserId);
-            // Don't rethrow - subscription creation failure shouldn't fail registration
         }
     }
 }

@@ -9,6 +9,10 @@ namespace GeneFlow.ApiNet2.Application.Studies.EventHandlers;
 /// Updates usage statistics when a member is removed from a study.
 /// Decrements the member's studies total.
 /// </summary>
+/// <remarks>
+/// Exceptions are intentionally caught and logged without rethrowing because
+/// usage-stats updates are a side effect that must not fail member removal.
+/// </remarks>
 public sealed class UpdateUsageStatsOnStudyMemberRemovedHandler
     : IDomainEventHandler<StudyMemberRemovedEvent>
 {
@@ -53,7 +57,6 @@ public sealed class UpdateUsageStatsOnStudyMemberRemovedHandler
                 ex,
                 "Failed to update usage stats for member removed. StudyId: {StudyId}",
                 notification.StudyId);
-            // Don't rethrow - usage stats update shouldn't fail the member removal
         }
     }
 }

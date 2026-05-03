@@ -10,6 +10,10 @@ namespace GeneFlow.ApiNet2.Application.Studies.EventHandlers;
 /// Updates usage statistics when a member is added to a study.
 /// Updates the max members count and the new member's studies total.
 /// </summary>
+/// <remarks>
+/// Exceptions are intentionally caught and logged without rethrowing because
+/// usage-stats updates are a side effect that must not fail member addition.
+/// </remarks>
 public sealed class UpdateUsageStatsOnStudyMemberAddedHandler
     : IDomainEventHandler<StudyMemberAddedEvent>
 {
@@ -37,7 +41,6 @@ public sealed class UpdateUsageStatsOnStudyMemberAddedHandler
 
         try
         {
-            // Update the new member's studies total
             var memberStats = await _usageRepository.GetByUserIdAsync(
                 notification.MemberUserId,
                 cancellationToken);
@@ -53,7 +56,6 @@ public sealed class UpdateUsageStatsOnStudyMemberAddedHandler
                     memberStats.StudiesTotal);
             }
 
-            // Update the study owner's max members count
             var study = await _studyRepository.GetByIdWithMembersAsync(
                 notification.StudyId,
                 cancellationToken);
@@ -83,7 +85,6 @@ public sealed class UpdateUsageStatsOnStudyMemberAddedHandler
                 ex,
                 "Failed to update usage stats for member added. StudyId: {StudyId}",
                 notification.StudyId);
-            // Don't rethrow - usage stats update shouldn't fail the member addition
         }
     }
 }

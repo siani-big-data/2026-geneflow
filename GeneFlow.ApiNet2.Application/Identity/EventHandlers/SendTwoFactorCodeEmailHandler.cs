@@ -8,6 +8,11 @@ namespace GeneFlow.ApiNet2.Application.Identity.EventHandlers;
 /// <summary>
 /// Sends two-factor authentication code via email when generated.
 /// </summary>
+/// <remarks>
+/// Exceptions are intentionally caught and logged without rethrowing because
+/// email-delivery failures must not corrupt the login flow. Operators must
+/// monitor logs because a failure here prevents the user from completing 2FA.
+/// </remarks>
 public sealed class SendTwoFactorCodeEmailHandler
     : IDomainEventHandler<TwoFactorCodeGeneratedEvent>
 {
@@ -47,7 +52,6 @@ public sealed class SendTwoFactorCodeEmailHandler
                 ex,
                 "Failed to send 2FA code to {Email}. User will not receive authentication code.",
                 notification.Email);
-            // Don't rethrow - but this is critical, user won't be able to login without the code
         }
     }
 }

@@ -43,10 +43,8 @@ public sealed class ProfilePhotoUploadedEventHandler
 
         try
         {
-            // Decode the base64 photo data
             var photoData = Convert.FromBase64String(notification.PhotoData);
 
-            // Store the original photo
             var photoPath = $"profiles/{notification.ProfileId.Value}/photo.{notification.Extension}";
             await _fileStorageService.StoreFileAsync(photoData, photoPath, cancellationToken);
 
@@ -55,7 +53,6 @@ public sealed class ProfilePhotoUploadedEventHandler
                 photoPath,
                 notification.SizeBytes);
 
-            // Create and store thumbnail
             var thumbnailData = await _imageProcessingService.CreateThumbnailAsync(
                 photoData,
                 width: 150,
@@ -70,7 +67,6 @@ public sealed class ProfilePhotoUploadedEventHandler
                 thumbnailPath,
                 thumbnailData.Length);
 
-            // Publish to Redis for datalake storage (MinIO)
             await _eventBusPublisher.PublishAsync(notification, "profiles", cancellationToken);
             _logger.LogInformation(
                 "Published ProfilePhotoUploadedEvent to datalake for profile {ProfileId}",

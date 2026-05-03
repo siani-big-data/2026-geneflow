@@ -8,6 +8,10 @@ namespace GeneFlow.ApiNet2.Application.Usage.EventHandlers;
 /// <summary>
 /// Handles SubscriptionCreatedEvent to initialize usage stats for the user.
 /// </summary>
+/// <remarks>
+/// Exceptions are intentionally caught and logged without rethrowing because
+/// usage-stats initialization is a side effect that must not fail the subscription flow.
+/// </remarks>
 public sealed class SubscriptionCreatedUsageHandler
     : INotificationHandler<SubscriptionCreatedEvent>
 {
@@ -32,14 +36,12 @@ public sealed class SubscriptionCreatedUsageHandler
 
         try
         {
-            // Check if stats already exist
             var existingStats = await _usageRepository.GetByUserIdAsync(
                 notification.UserId,
                 cancellationToken);
 
             if (existingStats is null)
             {
-                // Create initial empty stats for the user
                 var stats = UsageStats.Create(
                     notification.UserId,
                     BillingPeriodKey.Current());
@@ -57,7 +59,6 @@ public sealed class SubscriptionCreatedUsageHandler
                 ex,
                 "Failed to initialize usage stats for user {UserId}",
                 notification.UserId);
-            // Don't rethrow - usage stats initialization shouldn't fail the subscription
         }
     }
 }

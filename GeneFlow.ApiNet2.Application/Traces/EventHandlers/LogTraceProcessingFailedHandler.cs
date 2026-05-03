@@ -28,11 +28,6 @@ public sealed class LogTraceProcessingFailedHandler
             notification.StudyId,
             notification.Reason);
 
-        // In a production system, this could also:
-        // - Send alerts to monitoring systems
-        // - Notify study administrators
-        // - Update dashboards
-
         return Task.CompletedTask;
     }
 }

@@ -8,13 +8,20 @@ namespace GeneFlow.ApiNet2.Application.Profiles.EventHandlers;
 /// <summary>
 /// Handles the ProfilePhotoDeletedEvent by removing the photo from datalake storage.
 /// </summary>
+/// <remarks>
+/// Exceptions are intentionally caught and logged without rethrowing because
+/// storage cleanup failures must not block the user-facing deletion flow.
+/// </remarks>
 public sealed class ProfilePhotoDeletedEventHandler
     : INotificationHandler<ProfilePhotoDeletedEvent>
 {
     private readonly IFileStorageService _fileStorageService;
     private readonly ILogger<ProfilePhotoDeletedEventHandler> _logger;
 
-    // Supported image extensions
+    /// <summary>
+    /// Supported image extensions probed during deletion because the original
+    /// extension is not stored on the event.
+    /// </summary>
     private static readonly string[] ImageExtensions = { "jpg", "jpeg", "png", "gif", "webp" };
 
     /// <summary>
@@ -39,7 +46,6 @@ public sealed class ProfilePhotoDeletedEventHandler
 
         try
         {
-            // Delete all possible photo files (we don't know the exact extension)
             foreach (var ext in ImageExtensions)
             {
                 var photoPath = $"profiles/{notification.ProfileId.Value}/photo.{ext}";
@@ -64,7 +70,6 @@ public sealed class ProfilePhotoDeletedEventHandler
                 ex,
                 "Failed to delete profile photo for {ProfileId}",
                 notification.ProfileId.Value);
-            // Don't rethrow - deletion failures shouldn't break the flow
         }
     }
 }
