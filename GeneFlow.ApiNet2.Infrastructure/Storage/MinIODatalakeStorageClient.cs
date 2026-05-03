@@ -49,9 +49,14 @@ public sealed class MinIODatalakeStorageClient : IDatalakeStorageClient
 
             return JsonSerializer.Deserialize<TraceManifestDto>(json, JsonOptions);
         }
-        catch (Exception ex)
+        catch (MinioException ex)
         {
-            _logger.LogError(ex, "Failed to get manifest for trace {TraceId}", traceId);
+            _logger.LogError(ex, "MinIO error reading manifest for trace {TraceId}", traceId);
+            return null;
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogError(ex, "Invalid manifest JSON for trace {TraceId}", traceId);
             return null;
         }
     }
@@ -71,9 +76,14 @@ public sealed class MinIODatalakeStorageClient : IDatalakeStorageClient
 
             return JsonSerializer.Deserialize<TraceChunkDto>(json, JsonOptions);
         }
-        catch (Exception ex)
+        catch (MinioException ex)
         {
-            _logger.LogError(ex, "Failed to get chunk {ChunkIndex} for trace {TraceId}", chunkIndex, traceId);
+            _logger.LogError(ex, "MinIO error reading chunk {ChunkIndex} for trace {TraceId}", chunkIndex, traceId);
+            return null;
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogError(ex, "Invalid chunk JSON {ChunkIndex} for trace {TraceId}", chunkIndex, traceId);
             return null;
         }
     }
@@ -87,7 +97,6 @@ public sealed class MinIODatalakeStorageClient : IDatalakeStorageClient
 
         try
         {
-            // List objects with prefix to find the original file
             string? foundKey = null;
             var listArgs = new ListObjectsArgs()
                 .WithBucket(_settings.Bucket)
@@ -121,9 +130,14 @@ public sealed class MinIODatalakeStorageClient : IDatalakeStorageClient
         {
             return null;
         }
-        catch (Exception ex)
+        catch (MinioException ex)
         {
-            _logger.LogError(ex, "Failed to get original file for trace {TraceId}", traceId);
+            _logger.LogError(ex, "MinIO error retrieving original file for trace {TraceId}", traceId);
+            return null;
+        }
+        catch (IOException ex)
+        {
+            _logger.LogError(ex, "I/O error retrieving original file for trace {TraceId}", traceId);
             return null;
         }
     }
@@ -141,7 +155,7 @@ public sealed class MinIODatalakeStorageClient : IDatalakeStorageClient
         {
             return JsonSerializer.Deserialize<T>(json, JsonOptions);
         }
-        catch (Exception ex)
+        catch (JsonException ex)
         {
             _logger.LogError(ex, "Failed to deserialize analysis result {AnalysisType} for trace {TraceId}",
                 analysisType, traceId);
@@ -184,9 +198,9 @@ public sealed class MinIODatalakeStorageClient : IDatalakeStorageClient
 
             return results;
         }
-        catch (Exception ex)
+        catch (MinioException ex)
         {
-            _logger.LogError(ex, "Failed to list analysis results for trace {TraceId}", traceId);
+            _logger.LogError(ex, "MinIO error listing analysis results for trace {TraceId}", traceId);
             return Array.Empty<string>();
         }
     }
@@ -209,9 +223,14 @@ public sealed class MinIODatalakeStorageClient : IDatalakeStorageClient
             await _minioClient.BucketExistsAsync(args, cancellationToken);
             return true;
         }
-        catch (Exception ex)
+        catch (MinioException ex)
         {
-            _logger.LogWarning(ex, "Datalake storage health check failed");
+            _logger.LogWarning(ex, "MinIO datalake storage health check failed");
+            return false;
+        }
+        catch (IOException ex)
+        {
+            _logger.LogWarning(ex, "I/O error during datalake storage health check");
             return false;
         }
     }

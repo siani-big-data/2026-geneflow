@@ -57,7 +57,6 @@ public sealed class MinIOFileStorageService : IFileStorageService
 
         try
         {
-            // Ensure bucket exists
             await EnsureBucketExistsAsync(cancellationToken);
 
             var args = new PutObjectArgs()
@@ -72,9 +71,14 @@ public sealed class MinIOFileStorageService : IFileStorageService
 
             return key;
         }
-        catch (Exception ex)
+        catch (MinioException ex)
         {
-            _logger.LogError(ex, "Failed to store file: {Key}", key);
+            _logger.LogError(ex, "MinIO error storing file: {Key}", key);
+            throw;
+        }
+        catch (IOException ex)
+        {
+            _logger.LogError(ex, "I/O error storing file: {Key}", key);
             throw;
         }
     }
@@ -100,9 +104,14 @@ public sealed class MinIOFileStorageService : IFileStorageService
         {
             _logger.LogDebug("File not found for deletion: {Key}", key);
         }
-        catch (Exception ex)
+        catch (MinioException ex)
         {
-            _logger.LogError(ex, "Failed to delete file: {Key}", key);
+            _logger.LogError(ex, "MinIO error deleting file: {Key}", key);
+            throw;
+        }
+        catch (IOException ex)
+        {
+            _logger.LogError(ex, "I/O error deleting file: {Key}", key);
             throw;
         }
     }
@@ -127,9 +136,9 @@ public sealed class MinIOFileStorageService : IFileStorageService
         {
             return false;
         }
-        catch (Exception ex)
+        catch (MinioException ex)
         {
-            _logger.LogError(ex, "Failed to check file existence: {Key}", key);
+            _logger.LogError(ex, "MinIO error checking file existence: {Key}", key);
             return false;
         }
     }
@@ -161,9 +170,14 @@ public sealed class MinIOFileStorageService : IFileStorageService
             _logger.LogDebug("File not found: {Key}", key);
             return null;
         }
-        catch (Exception ex)
+        catch (MinioException ex)
         {
-            _logger.LogError(ex, "Failed to get file: {Key}", key);
+            _logger.LogError(ex, "MinIO error retrieving file: {Key}", key);
+            return null;
+        }
+        catch (IOException ex)
+        {
+            _logger.LogError(ex, "I/O error retrieving file: {Key}", key);
             return null;
         }
     }
