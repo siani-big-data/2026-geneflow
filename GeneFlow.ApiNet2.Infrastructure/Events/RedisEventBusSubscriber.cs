@@ -11,6 +11,11 @@ namespace GeneFlow.ApiNet2.Infrastructure.Events;
 /// Subscribes to domain events from Redis Streams.
 /// Uses consumer groups for reliable event processing.
 /// </summary>
+/// <remarks>
+/// The per-message handler catch is intentionally broad: handlers come from
+/// arbitrary application code and we cannot enumerate the exception types they
+/// may raise. Failed messages are not acknowledged so they are redelivered.
+/// </remarks>
 public sealed class RedisEventBusSubscriber : IEventBusSubscriber
 {
     private readonly IConnectionMultiplexer _redis;
@@ -39,7 +44,6 @@ public sealed class RedisEventBusSubscriber : IEventBusSubscriber
         var streamName = GetStreamName(category);
         var db = _redis.GetDatabase();
 
-        // Ensure consumer group exists
         await EnsureConsumerGroupAsync(db, streamName, consumerGroup);
 
         _logger.LogInformation(
@@ -50,17 +54,15 @@ public sealed class RedisEventBusSubscriber : IEventBusSubscriber
         {
             try
             {
-                // Read pending messages first, then new messages
                 var entries = await db.StreamReadGroupAsync(
                     streamName,
                     consumerGroup,
                     _consumerName,
-                    ">", // Read only new messages
+                    ">",
                     count: 10);
 
                 if (entries.Length == 0)
                 {
-                    // No messages, wait a bit before polling again
                     await Task.Delay(1000, cancellationToken);
                     continue;
                 }
@@ -82,7 +84,6 @@ public sealed class RedisEventBusSubscriber : IEventBusSubscriber
                             ex,
                             "Failed to process message {MessageId} from stream {Stream}",
                             entry.Id, streamName);
-                        // Don't acknowledge - message will be reprocessed
                     }
                 }
             }
@@ -90,10 +91,15 @@ public sealed class RedisEventBusSubscriber : IEventBusSubscriber
             {
                 break;
             }
-            catch (Exception ex)
+            catch (RedisException ex)
             {
-                _logger.LogError(ex, "Error reading from stream {Stream}", streamName);
-                await Task.Delay(5000, cancellationToken); // Back off on errors
+                _logger.LogError(ex, "Redis error reading from stream {Stream}", streamName);
+                await Task.Delay(5000, cancellationToken);
+            }
+            catch (IOException ex)
+            {
+                _logger.LogError(ex, "I/O error reading from stream {Stream}", streamName);
+                await Task.Delay(5000, cancellationToken);
             }
         }
 
@@ -117,11 +123,10 @@ public sealed class RedisEventBusSubscriber : IEventBusSubscriber
     {
         try
         {
-            // Try to create the consumer group
             await db.StreamCreateConsumerGroupAsync(
                 streamName,
                 consumerGroup,
-                "0", // Start from beginning
+                "0",
                 createStream: true);
 
             _logger.LogDebug(
@@ -130,7 +135,6 @@ public sealed class RedisEventBusSubscriber : IEventBusSubscriber
         }
         catch (RedisServerException ex) when (ex.Message.Contains("BUSYGROUP"))
         {
-            // Consumer group already exists, this is fine
             _logger.LogDebug(
                 "Consumer group {Group} already exists for stream {Stream}",
                 consumerGroup, streamName);
@@ -150,7 +154,6 @@ public sealed class RedisEventBusSubscriber : IEventBusSubscriber
                 v => v.Name.ToString(),
                 v => v.Value.ToString());
 
-            // Check if we have the .NET format (separate fields)
             if (values.ContainsKey("event_type") || values.ContainsKey("event_id"))
             {
                 return new EventMessage(
@@ -163,7 +166,6 @@ public sealed class RedisEventBusSubscriber : IEventBusSubscriber
                     Data: values.GetValueOrDefault("data", "{}"));
             }
 
-            // Python format: all event data is inside a single "data" field
             var rawData = values.GetValueOrDefault("data", "{}");
             var eventData = ParsePythonDict(rawData);
 
@@ -173,12 +175,10 @@ public sealed class RedisEventBusSubscriber : IEventBusSubscriber
                 return null;
             }
 
-            // Extract fields from the parsed Python event
             var eventId = GetJsonString(eventData, "eventId") ?? "";
             var eventType = GetJsonString(eventData, "type") ?? "";
             var innerData = GetJsonString(eventData, "data") ?? "{}";
 
-            // Parse timestamp (Python sends milliseconds since epoch)
             var occurredAt = DateTime.UtcNow;
             if (eventData.RootElement.TryGetProperty("timestamp", out var timestampProp))
             {
@@ -195,9 +195,14 @@ public sealed class RedisEventBusSubscriber : IEventBusSubscriber
                 OccurredAt: occurredAt,
                 Data: innerData);
         }
-        catch (Exception ex)
+        catch (JsonException ex)
         {
-            _logger.LogWarning(ex, "Failed to parse event message {MessageId}", entry.Id);
+            _logger.LogWarning(ex, "Failed to parse event message {MessageId} (invalid JSON)", entry.Id);
+            return null;
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Failed to parse event message {MessageId} (invalid structure)", entry.Id);
             return null;
         }
     }
@@ -206,19 +211,16 @@ public sealed class RedisEventBusSubscriber : IEventBusSubscriber
     {
         try
         {
-            // First try direct JSON parse
             return JsonDocument.Parse(data);
         }
-        catch
+        catch (JsonException)
         {
             try
             {
-                // Convert Python dict string to JSON using a smarter approach
-                // that handles nested JSON strings with double quotes
                 var jsonStr = ConvertPythonDictToJson(data);
                 return JsonDocument.Parse(jsonStr);
             }
-            catch (Exception ex)
+            catch (JsonException ex)
             {
                 _logger.LogDebug(ex, "Failed to parse as Python dict: {Data}", data);
                 return null;
@@ -237,7 +239,6 @@ public sealed class RedisEventBusSubscriber : IEventBusSubscriber
             char c = pythonDict[i];
             char? prev = i > 0 ? pythonDict[i - 1] : null;
 
-            // Track if we're inside a double-quoted string (only when NOT in single-quoted)
             if (c == '"' && prev != '\\' && !inSingleQuotedString)
             {
                 inDoubleQuotedString = !inDoubleQuotedString;
@@ -245,49 +246,33 @@ public sealed class RedisEventBusSubscriber : IEventBusSubscriber
                 continue;
             }
 
-            // Handle double quotes INSIDE single-quoted strings - must escape them
             if (c == '"' && inSingleQuotedString && prev != '\\')
             {
                 result.Append("\\\"");
                 continue;
             }
 
-            // Handle single quotes (Python dict delimiters)
             if (c == '\'' && !inDoubleQuotedString)
             {
-                if (!inSingleQuotedString)
-                {
-                    // Starting a single-quoted string - convert to double quote
-                    inSingleQuotedString = true;
-                    result.Append('"');
-                }
-                else
-                {
-                    // Ending a single-quoted string - convert to double quote
-                    inSingleQuotedString = false;
-                    result.Append('"');
-                }
+                inSingleQuotedString = !inSingleQuotedString;
+                result.Append('"');
                 continue;
             }
 
-            // Handle Python keywords (only outside of quoted strings)
             if (!inDoubleQuotedString && !inSingleQuotedString)
             {
-                // Check for None
                 if (i + 4 <= pythonDict.Length && pythonDict.Substring(i, 4) == "None")
                 {
                     result.Append("null");
                     i += 3;
                     continue;
                 }
-                // Check for True
                 if (i + 4 <= pythonDict.Length && pythonDict.Substring(i, 4) == "True")
                 {
                     result.Append("true");
                     i += 3;
                     continue;
                 }
-                // Check for False
                 if (i + 5 <= pythonDict.Length && pythonDict.Substring(i, 5) == "False")
                 {
                     result.Append("false");

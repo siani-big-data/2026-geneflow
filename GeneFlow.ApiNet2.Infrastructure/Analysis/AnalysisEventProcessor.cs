@@ -5,6 +5,7 @@ using GeneFlow.ApiNet2.SharedKernel.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using StackExchange.Redis;
 
 namespace GeneFlow.ApiNet2.Infrastructure.Analysis;
 
@@ -13,6 +14,11 @@ namespace GeneFlow.ApiNet2.Infrastructure.Analysis;
 /// Subscribes to trace processing, alignment, and analysis events from Redis Streams
 /// and updates the corresponding domain entities.
 /// </summary>
+/// <remarks>
+/// The per-message handler catch is intentionally broad and rethrows the
+/// exception so the message is not acknowledged and is redelivered. Handlers
+/// can fail in unbounded ways (JSON parsing, repository errors, etc.).
+/// </remarks>
 public sealed class AnalysisEventProcessor : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
@@ -21,7 +27,6 @@ public sealed class AnalysisEventProcessor : BackgroundService
 
     private const string ConsumerGroup = "analysis-event-processor";
 
-    // Event types from the Analysis worker
     private static readonly HashSet<string> TraceProcessingEvents = new(StringComparer.OrdinalIgnoreCase)
     {
         "TraceProcessed",
@@ -58,7 +63,6 @@ public sealed class AnalysisEventProcessor : BackgroundService
     {
         _logger.LogInformation("Analysis Event Processor starting...");
 
-        // Start subscriptions in parallel for each category
         var tasks = new[]
         {
             ProcessCategoryAsync("traces", stoppingToken),
@@ -81,9 +85,16 @@ public sealed class AnalysisEventProcessor : BackgroundService
                 async message => await HandleEventAsync(message, category),
                 cancellationToken);
         }
-        catch (Exception ex)
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            _logger.LogError(ex, "Error in {Category} event processor", category);
+        }
+        catch (RedisException ex)
+        {
+            _logger.LogError(ex, "Redis error in {Category} event processor", category);
+        }
+        catch (IOException ex)
+        {
+            _logger.LogError(ex, "I/O error in {Category} event processor", category);
         }
     }
 
@@ -95,7 +106,6 @@ public sealed class AnalysisEventProcessor : BackgroundService
 
         try
         {
-            // Parse the event data
             var eventData = ParseEventData(message.Data);
             if (eventData is null)
             {
@@ -103,7 +113,6 @@ public sealed class AnalysisEventProcessor : BackgroundService
                 return;
             }
 
-            // Route to appropriate handler
             if (TraceProcessingEvents.Contains(message.EventType))
             {
                 await HandleTraceProcessingEventAsync(message.EventType, eventData);
@@ -127,7 +136,7 @@ public sealed class AnalysisEventProcessor : BackgroundService
                 ex,
                 "Failed to process event {EventType} (ID: {EventId})",
                 message.EventType, message.EventId);
-            throw; // Re-throw to prevent acknowledgment
+            throw;
         }
     }
 
@@ -143,7 +152,6 @@ public sealed class AnalysisEventProcessor : BackgroundService
         using var scope = _scopeFactory.CreateScope();
         var unitOfWork = scope.ServiceProvider.GetRequiredService<ITraceUnitOfWork>();
 
-        // Parse TraceId
         if (!TraceId.TryParse(traceId, out var parsedTraceId) || parsedTraceId is null)
         {
             _logger.LogWarning("Invalid TraceId format: {TraceId}", traceId);
@@ -178,15 +186,13 @@ public sealed class AnalysisEventProcessor : BackgroundService
         var meanQuality = GetDecimalProperty(eventData, "meanQuality");
         var hasChromatogram = GetBoolProperty(eventData, "hasChromatogram");
 
-        // Create quality metrics from event data
-        // The Analysis worker provides limited metrics, so we use defaults for missing values
         var qualityMetricsResult = QualityMetrics.Create(
             averageQualityScore: meanQuality ?? 0m,
             totalBases: sequenceLength,
-            qualityAboveQ20Percentage: meanQuality >= 20 ? 80m : 50m, // Estimate based on mean
-            qualityAboveQ30Percentage: meanQuality >= 30 ? 60m : 30m, // Estimate based on mean
+            qualityAboveQ20Percentage: meanQuality >= 20 ? 80m : 50m,
+            qualityAboveQ30Percentage: meanQuality >= 30 ? 60m : 30m,
             trimmedLength: sequenceLength,
-            gcContentPercentage: 50m); // Default GC content, can be updated later
+            gcContentPercentage: 50m);
 
         if (qualityMetricsResult.IsFailure)
         {
@@ -196,7 +202,6 @@ public sealed class AnalysisEventProcessor : BackgroundService
             return;
         }
 
-        // Transition trace to processing first, then complete
         if (trace.Status == Domain.Traces.Enumerations.TraceStatus.Uploaded ||
             trace.Status == Domain.Traces.Enumerations.TraceStatus.Validating)
         {
@@ -235,7 +240,6 @@ public sealed class AnalysisEventProcessor : BackgroundService
             failureReason = failureReason[..Trace.MaxFailureReasonLength];
         }
 
-        // Transition trace to processing first if needed
         if (trace.Status == Domain.Traces.Enumerations.TraceStatus.Uploaded)
         {
             trace.StartProcessing();
@@ -271,8 +275,6 @@ public sealed class AnalysisEventProcessor : BackgroundService
             "Alignment event received: {EventType} for alignment {AlignmentId}",
             eventType, alignmentId);
 
-        // TODO: Phase 3 - Update Alignment entity when Alignment domain is created
-        // For now, just log the event
         switch (eventType)
         {
             case "AlignmentCompleted":
@@ -305,8 +307,6 @@ public sealed class AnalysisEventProcessor : BackgroundService
             "Analysis event received: {EventType} for trace {TraceId}",
             eventType, traceId);
 
-        // TODO: Phase 3 - Store analysis results in trace aggregate or separate entity
-        // For now, just log the event details
         switch (eventType)
         {
             case "TrimmingCompleted":
@@ -364,15 +364,12 @@ public sealed class AnalysisEventProcessor : BackgroundService
     {
         try
         {
-            // The data might be a stringified JSON from Python
-            // First try direct parse
             return JsonDocument.Parse(data);
         }
-        catch
+        catch (JsonException)
         {
             try
             {
-                // Try parsing as escaped string (Python's str(dict))
                 var unescaped = data
                     .Replace("'", "\"")
                     .Replace("None", "null")
@@ -380,7 +377,7 @@ public sealed class AnalysisEventProcessor : BackgroundService
                     .Replace("False", "false");
                 return JsonDocument.Parse(unescaped);
             }
-            catch (Exception ex)
+            catch (JsonException ex)
             {
                 _logger.LogWarning(ex, "Failed to parse event data: {Data}", data);
                 return null;
@@ -425,7 +422,6 @@ public sealed class AnalysisEventProcessor : BackgroundService
                 {
                     return value;
                 }
-                // Try double conversion for floats from Python
                 if (prop.TryGetDouble(out var doubleValue))
                 {
                     return (decimal)doubleValue;

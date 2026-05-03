@@ -5,6 +5,7 @@ using GeneFlow.ApiNet2.SharedKernel.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using StackExchange.Redis;
 
 namespace GeneFlow.ApiNet2.Infrastructure.Usage.Services;
 
@@ -12,6 +13,11 @@ namespace GeneFlow.ApiNet2.Infrastructure.Usage.Services;
 /// Background service that processes domain events from Redis Streams
 /// and updates usage statistics in the datamart.
 /// </summary>
+/// <remarks>
+/// The per-message handler catch is intentionally broad and rethrows the
+/// exception so the message is not acknowledged and is redelivered. Handlers
+/// can fail in unbounded ways (JSON parsing, repository errors, etc.).
+/// </remarks>
 public sealed class UsageStatsEventProcessor : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
@@ -20,7 +26,6 @@ public sealed class UsageStatsEventProcessor : BackgroundService
 
     private const string ConsumerGroup = "usage-stats-processor";
 
-    // Event type mappings
     private static readonly HashSet<string> StudyEvents = new(StringComparer.OrdinalIgnoreCase)
     {
         "StudyCreatedEvent",
@@ -59,7 +64,6 @@ public sealed class UsageStatsEventProcessor : BackgroundService
     {
         _logger.LogInformation("Usage Stats Event Processor starting...");
 
-        // Start subscriptions in parallel for each category
         var tasks = new[]
         {
             ProcessCategoryAsync("studies", stoppingToken),
@@ -82,9 +86,16 @@ public sealed class UsageStatsEventProcessor : BackgroundService
                 async message => await HandleEventAsync(message, category),
                 cancellationToken);
         }
-        catch (Exception ex)
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            _logger.LogError(ex, "Error in {Category} event processor", category);
+        }
+        catch (RedisException ex)
+        {
+            _logger.LogError(ex, "Redis error in {Category} event processor", category);
+        }
+        catch (IOException ex)
+        {
+            _logger.LogError(ex, "I/O error in {Category} event processor", category);
         }
     }
 
@@ -99,7 +110,6 @@ public sealed class UsageStatsEventProcessor : BackgroundService
             using var scope = _scopeFactory.CreateScope();
             var repository = scope.ServiceProvider.GetRequiredService<IUsageStatsRepository>();
 
-            // Parse the event data to extract userId
             var eventData = JsonDocument.Parse(message.Data);
             var userId = ExtractUserId(eventData, message.EventType);
 
@@ -111,7 +121,6 @@ public sealed class UsageStatsEventProcessor : BackgroundService
                 return;
             }
 
-            // Process based on event type
             await ProcessEventAsync(repository, message.EventType, eventData, userId);
 
             _logger.LogDebug(
@@ -124,7 +133,7 @@ public sealed class UsageStatsEventProcessor : BackgroundService
                 ex,
                 "Failed to process event {EventType} (ID: {EventId})",
                 message.EventType, message.EventId);
-            throw; // Re-throw to prevent acknowledgment
+            throw;
         }
     }
 
@@ -136,7 +145,6 @@ public sealed class UsageStatsEventProcessor : BackgroundService
     {
         switch (eventType)
         {
-            // Study events
             case "StudyCreatedEvent":
                 await repository.IncrementStudiesOwnedAsync(userId);
                 break;
@@ -151,7 +159,6 @@ public sealed class UsageStatsEventProcessor : BackgroundService
                 {
                     await repository.UpdateMaxMembersInStudyAsync(userId, memberCount);
                 }
-                // Also increment studies total for the invited user
                 var invitedUserId = GetUserIdProperty(eventData, "invitedUserId", "invited_user_id");
                 if (invitedUserId is not null)
                 {
@@ -167,7 +174,6 @@ public sealed class UsageStatsEventProcessor : BackgroundService
                 }
                 break;
 
-            // Trace events
             case "TraceUploadedEvent":
                 await repository.IncrementTracesAsync(userId, 1);
                 break;
@@ -189,7 +195,6 @@ public sealed class UsageStatsEventProcessor : BackgroundService
                 break;
 
             case "TraceProcessedEvent":
-                // Decrement pending (set to current pending - 1 or fetch new count)
                 var newPendingCount = GetIntProperty(eventData, "pendingCount", "pending_count");
                 if (newPendingCount >= 0)
                 {
@@ -197,7 +202,6 @@ public sealed class UsageStatsEventProcessor : BackgroundService
                 }
                 break;
 
-            // Alignment events
             case "AlignmentCreatedEvent":
                 await repository.IncrementAlignmentsAsync(userId);
                 break;
@@ -214,7 +218,6 @@ public sealed class UsageStatsEventProcessor : BackgroundService
 
     private UserId? ExtractUserId(JsonDocument eventData, string eventType)
     {
-        // Try different property names that might contain the user ID (both camelCase and PascalCase)
         var propertyNames = new[] {
             "userId", "UserId", "user_id",
             "ownerId", "OwnerId", "owner_id",
@@ -246,7 +249,6 @@ public sealed class UsageStatsEventProcessor : BackgroundService
         {
             if (doc.RootElement.TryGetProperty(propName, out var prop))
             {
-                // Handle string serialization (e.g., "U00000001")
                 if (prop.ValueKind == JsonValueKind.String)
                 {
                     var strValue = prop.GetString();
@@ -255,19 +257,15 @@ public sealed class UsageStatsEventProcessor : BackgroundService
                         return userId;
                     }
                 }
-                // Handle object serialization (e.g., { "value": 1 } or { "value": "U00000001" })
                 else if (prop.ValueKind == JsonValueKind.Object)
                 {
-                    // Try "value" (snake_case) first, then "Value" (PascalCase)
                     JsonElement valueProp = default;
                     if (prop.TryGetProperty("value", out valueProp) || prop.TryGetProperty("Value", out valueProp))
                     {
-                        // Handle numeric value (e.g., { "value": 4 })
                         if (valueProp.ValueKind == JsonValueKind.Number && valueProp.TryGetInt64(out var numValue))
                         {
                             return new UserId(numValue);
                         }
-                        // Handle string value (e.g., { "value": "U00000001" })
                         else if (valueProp.ValueKind == JsonValueKind.String)
                         {
                             var strValue = valueProp.GetString();
@@ -278,7 +276,6 @@ public sealed class UsageStatsEventProcessor : BackgroundService
                         }
                     }
                 }
-                // Handle direct number (unlikely but possible)
                 else if (prop.ValueKind == JsonValueKind.Number && prop.TryGetInt64(out var numValue))
                 {
                     return new UserId(numValue);

@@ -14,7 +14,6 @@ public sealed class RedisUsageStatsRepository : IUsageStatsRepository
     private readonly IConnectionMultiplexer _redis;
     private readonly ILogger<RedisUsageStatsRepository> _logger;
 
-    // Hash field names
     private const string FieldStudiesOwned = "studies_owned";
     private const string FieldStudiesTotal = "studies_total";
     private const string FieldTracesThisPeriod = "traces_period";
@@ -59,7 +58,6 @@ public sealed class RedisUsageStatsRepository : IUsageStatsRepository
 
             var stats = UsageStats.Create(userId, periodKey);
 
-            // Check if we need to reset for a new period
             var storedPeriod = GetHashValue(hash, FieldPeriodKey);
             var currentPeriod = periodKey.ToString();
 
@@ -68,11 +66,9 @@ public sealed class RedisUsageStatsRepository : IUsageStatsRepository
 
             if (storedPeriod != currentPeriod)
             {
-                // New period - reset period-specific counters
                 tracesThisPeriod = 0;
                 alignmentsThisPeriod = 0;
 
-                // Update the stored period
                 await db.HashSetAsync(key, new[]
                 {
                     new HashEntry(FieldPeriodKey, currentPeriod),
@@ -100,9 +96,14 @@ public sealed class RedisUsageStatsRepository : IUsageStatsRepository
 
             return stats;
         }
-        catch (Exception ex)
+        catch (RedisException ex)
         {
-            _logger.LogError(ex, "Failed to get usage stats for user {UserId}", userId);
+            _logger.LogError(ex, "Redis error getting usage stats for user {UserId}", userId);
+            return null;
+        }
+        catch (IOException ex)
+        {
+            _logger.LogError(ex, "I/O error getting usage stats for user {UserId}", userId);
             return null;
         }
     }
@@ -133,9 +134,14 @@ public sealed class RedisUsageStatsRepository : IUsageStatsRepository
 
             await db.HashSetAsync(key, entries);
         }
-        catch (Exception ex)
+        catch (RedisException ex)
         {
-            _logger.LogError(ex, "Failed to save usage stats for user {UserId}", stats.Id);
+            _logger.LogError(ex, "Redis error saving usage stats for user {UserId}", stats.Id);
+            throw;
+        }
+        catch (IOException ex)
+        {
+            _logger.LogError(ex, "I/O error saving usage stats for user {UserId}", stats.Id);
             throw;
         }
     }
@@ -197,7 +203,6 @@ public sealed class RedisUsageStatsRepository : IUsageStatsRepository
         var db = _redis.GetDatabase();
         var key = GetRedisKey(userId);
 
-        // Get current max
         var currentMax = (int)await db.HashGetAsync(key, FieldMaxMembers);
         if (memberCount > currentMax)
         {
@@ -242,7 +247,6 @@ public sealed class RedisUsageStatsRepository : IUsageStatsRepository
         var key = GetRedisKey(userId);
         var newValue = await db.HashDecrementAsync(key, field);
 
-        // Ensure non-negative
         if (newValue < 0)
         {
             await db.HashSetAsync(key, field, 0);
@@ -267,7 +271,6 @@ public sealed class RedisUsageStatsRepository : IUsageStatsRepository
 
         if (storedPeriod.IsNullOrEmpty || storedPeriod.ToString() != currentPeriod)
         {
-            // Reset period-specific counters
             await db.HashSetAsync(key, new[]
             {
                 new HashEntry(FieldPeriodKey, currentPeriod),

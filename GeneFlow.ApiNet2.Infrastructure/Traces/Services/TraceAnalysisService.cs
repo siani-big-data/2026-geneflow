@@ -87,7 +87,6 @@ public sealed class TraceAnalysisService : ITraceAnalysisService
 
         try
         {
-            // Check if analysis file exists
             var exists = await _fileStorageService.FileExistsAsync(analysisPath, cancellationToken);
             if (!exists)
             {
@@ -100,7 +99,6 @@ public sealed class TraceAnalysisService : ITraceAnalysisService
                     Error.NotFound("Trace.AnalysisNotFound", "Analysis data not found for this trace."));
             }
 
-            // Download and parse the analysis JSON
             var fileBytes = await _fileStorageService.GetFileAsync(analysisPath, cancellationToken);
             var analysisData = fileBytes is not null
                 ? JsonSerializer.Deserialize<AnalysisJson>(fileBytes, JsonOptions)
@@ -118,15 +116,25 @@ public sealed class TraceAnalysisService : ITraceAnalysisService
 
             return Result.Success(analysisData);
         }
-        catch (Exception ex)
+        catch (IOException ex)
         {
             _logger.LogError(
                 ex,
-                "Error reading analysis file for trace {TraceId}",
+                "I/O error reading analysis file for trace {TraceId}",
                 trace.Id);
 
             return Result.Failure<AnalysisJson>(
                 Error.Failure("Trace.AnalysisReadFailed", "Failed to read analysis data."));
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to deserialize analysis JSON for trace {TraceId}",
+                trace.Id);
+
+            return Result.Failure<AnalysisJson>(
+                Error.Failure("Trace.AnalysisParsingFailed", "Failed to parse analysis data."));
         }
     }
 
