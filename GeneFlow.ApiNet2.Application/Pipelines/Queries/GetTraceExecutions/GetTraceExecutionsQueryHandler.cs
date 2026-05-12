@@ -30,18 +30,15 @@ public sealed class GetTraceExecutionsQueryHandler
         GetTraceExecutionsQuery request,
         CancellationToken cancellationToken)
     {
-        // Parse ID
         if (!TraceId.TryParse(request.TraceId, out var traceId) || traceId == null)
             return Result.Failure<PagedList<PipelineExecutionSummaryDto>>(PipelineErrors.TraceNotProcessed);
 
-        // Parse status filter
         ExecutionStatus? status = null;
         if (request.StatusId.HasValue)
         {
             status = ExecutionStatus.FromId(request.StatusId.Value);
         }
 
-        // Query
         var executions = await _executionRepository.GetByTraceAsync(
             traceId,
             request.PageNumber,
@@ -49,7 +46,6 @@ public sealed class GetTraceExecutionsQueryHandler
             status,
             cancellationToken);
 
-        // Get pipeline names - we need to look them up
         var pipelineIds = executions.Items.Select(e => e.PipelineId).Distinct().ToList();
         var pipelineNames = new Dictionary<string, string>();
 
@@ -62,7 +58,6 @@ public sealed class GetTraceExecutionsQueryHandler
             }
         }
 
-        // Map to DTOs
         var dtos = executions.Items.Select(e =>
             e.ToSummaryDto(pipelineNames.GetValueOrDefault(e.PipelineId.ToString(), "Unknown"))).ToList();
 

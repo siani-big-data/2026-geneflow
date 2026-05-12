@@ -23,7 +23,9 @@ public sealed class GetDefaultPaymentMethodQueryHandler
         GetDefaultPaymentMethodQuery request,
         CancellationToken cancellationToken)
     {
-        var userId = UserId.Parse(request.UserId);
+        if (!UserId.TryParse(request.UserId, out var userId) || userId is null)
+            return Result.Failure<PaymentMethodDto?>(PaymentMethodErrors.InvalidUserId);
+
         var paymentMethod = await _repository.GetDefaultByUserIdAsync(userId, cancellationToken);
 
         if (paymentMethod is null)

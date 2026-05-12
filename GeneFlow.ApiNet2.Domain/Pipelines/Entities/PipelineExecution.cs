@@ -44,7 +44,6 @@ public sealed class PipelineExecution : Entity<PipelineExecutionId>
         CreatedAt = DateTime.UtcNow;
         CompletedSteps = 0;
 
-        // Create step executions for all enabled steps
         var enabledSteps = steps.Where(s => s.IsEnabled).OrderBy(s => s.Order).ToList();
         TotalSteps = enabledSteps.Count;
 
@@ -108,7 +107,6 @@ public sealed class PipelineExecution : Entity<PipelineExecutionId>
         CompletedAt = DateTime.UtcNow;
         CompletedSteps = _stepExecutions.Count(s => s.Status == StepExecutionStatus.Completed);
 
-        // Skip any pending steps
         foreach (var step in _stepExecutions.Where(s => s.Status == StepExecutionStatus.Pending))
         {
             step.Skip();

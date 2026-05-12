@@ -1,0 +1,2 @@
+GeneFlow.ApiNet2.Tests.API.Studies.StudyEndpointsTests.GetPublicStudies_WithTags_ShouldReturnFilteredResults [FAIL]
+GeneFlow.ApiNet2.Tests.API.Studies.StudyEndpointsTests.GetUserStudies_WithAuthentication_ShouldReturnOk [FAIL]

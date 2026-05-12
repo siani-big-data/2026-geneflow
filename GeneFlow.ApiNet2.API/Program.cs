@@ -68,4 +68,7 @@ app.MapGet("/health", () => Results.Ok(new { status = "Healthy", timestamp = Dat
 app.Run();
 
 // Make Program class accessible for integration tests
-public partial class Program { }
+namespace GeneFlow.ApiNet2.API
+{
+    public partial class Program { }
+}

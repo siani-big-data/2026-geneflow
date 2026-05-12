@@ -78,7 +78,6 @@ public sealed class PipelineRepository : IPipelineRepository
             .Include(p => p.Steps)
             .Where(p => p.StudyId == studyId);
 
-        // Apply search filter
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
             var term = searchTerm.ToLowerInvariant();
@@ -87,16 +86,13 @@ public sealed class PipelineRepository : IPipelineRepository
                 (p.Description.Value != null && EF.Functions.ILike(p.Description.Value, $"%{term}%")));
         }
 
-        // Apply status filter
         if (status != null)
         {
             query = query.Where(p => p.Status == status);
         }
 
-        // Get total count
         var totalCount = await query.CountAsync(cancellationToken);
 
-        // Get paginated items
         var items = await query
             .OrderByDescending(p => p.CreatedAt)
             .Skip((pageNumber - 1) * pageSize)

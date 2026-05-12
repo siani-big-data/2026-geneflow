@@ -43,16 +43,11 @@ public sealed class ExecutionStatus : Enumeration<ExecutionStatus>
     {
         return (this, newStatus) switch
         {
-            // From Pending
             _ when this == Pending && newStatus == Running => true,
             _ when this == Pending && newStatus == Cancelled => true,
-
-            // From Running
             _ when this == Running && newStatus == Completed => true,
             _ when this == Running && newStatus == Failed => true,
             _ when this == Running && newStatus == Cancelled => true,
-
-            // Terminal states cannot transition
             _ => false
         };
     }

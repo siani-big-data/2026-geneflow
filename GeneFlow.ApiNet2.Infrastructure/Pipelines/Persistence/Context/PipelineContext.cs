@@ -34,13 +34,11 @@ public sealed class PipelineContext : DbContext
 
         modelBuilder.HasDefaultSchema("pipelines");
 
-        // Ignore smart enumerations - they are stored as string, not separate entities
         modelBuilder.Ignore<PipelineStatus>();
         modelBuilder.Ignore<StepType>();
         modelBuilder.Ignore<ExecutionStatus>();
         modelBuilder.Ignore<StepExecutionStatus>();
 
-        // Only apply configurations from the Pipelines namespace
         modelBuilder.ApplyConfigurationsFromAssembly(
             typeof(PipelineContext).Assembly,
             type => type.Namespace?.Contains("Pipelines") == true);

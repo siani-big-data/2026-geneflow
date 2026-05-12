@@ -23,11 +23,9 @@ public sealed class GetPipelineByIdQueryHandler
         GetPipelineByIdQuery request,
         CancellationToken cancellationToken)
     {
-        // Parse ID
         if (!PipelineId.TryParse(request.PipelineId, out var pipelineId) || pipelineId == null)
             return Result.Failure<PipelineDto>(PipelineErrors.NotFound);
 
-        // Get pipeline with steps
         var pipeline = await _pipelineRepository.GetByIdWithStepsAsync(pipelineId, cancellationToken);
         if (pipeline == null)
             return Result.Failure<PipelineDto>(PipelineErrors.NotFound);

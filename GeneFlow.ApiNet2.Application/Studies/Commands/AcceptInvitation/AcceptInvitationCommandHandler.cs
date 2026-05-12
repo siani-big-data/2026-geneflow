@@ -45,8 +45,10 @@ public sealed class AcceptInvitationCommandHandler
         if (acceptResult.IsFailure)
             return Result.Failure<StudyDto>(acceptResult.Error);
 
-        // Get study
-        var study = await _studyRepository.GetByIdAsync(invitation.StudyId, cancellationToken);
+        // Get study with members loaded so AddMember's permission check finds
+        // the inviter and EF's owned-collection snapshot matches the DB state
+        // (study_members is mapped to a separate table and is NOT auto-included).
+        var study = await _studyRepository.GetByIdWithMembersAsync(invitation.StudyId, cancellationToken);
         if (study is null)
             return Result.Failure<StudyDto>(StudyErrors.NotFound);
 

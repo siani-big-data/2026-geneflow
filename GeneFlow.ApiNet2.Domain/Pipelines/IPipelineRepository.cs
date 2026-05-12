@@ -10,14 +10,12 @@ namespace GeneFlow.ApiNet2.Domain.Pipelines;
 /// </summary>
 public interface IPipelineRepository
 {
-    // CRUD
     Task<Pipeline?> GetByIdAsync(PipelineId id, CancellationToken cancellationToken = default);
     Task<Pipeline?> GetByIdWithStepsAsync(PipelineId id, CancellationToken cancellationToken = default);
     Task AddAsync(Pipeline pipeline, CancellationToken cancellationToken = default);
     void Update(Pipeline pipeline);
     void Delete(Pipeline pipeline);
 
-    // Query methods
     Task<PagedList<Pipeline>> GetByStudyAsync(
         StudyId studyId,
         int pageNumber,
@@ -30,7 +28,6 @@ public interface IPipelineRepository
         StudyId studyId,
         CancellationToken cancellationToken = default);
 
-    // Counts
     Task<int> CountByStudyAsync(
         StudyId studyId,
         CancellationToken cancellationToken = default);
@@ -39,7 +36,6 @@ public interface IPipelineRepository
         StudyId studyId,
         CancellationToken cancellationToken = default);
 
-    // Existence checks
     Task<bool> ExistsAsync(
         PipelineId id,
         CancellationToken cancellationToken = default);

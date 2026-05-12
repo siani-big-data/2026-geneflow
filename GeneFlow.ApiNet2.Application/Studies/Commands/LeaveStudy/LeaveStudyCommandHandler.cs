@@ -42,12 +42,8 @@ public sealed class LeaveStudyCommandHandler
         if (study.OwnerId == userId)
             return Result.Failure(StudyErrors.OwnerCannotLeave);
 
-        // Check if user is a member
-        if (!study.IsMember(userId))
-            return Result.Failure(StudyErrors.NotAMember);
-
-        // Remove the member (user removing themselves)
-        var result = study.RemoveMember(userId, userId);
+        // Leave the study (handles member check and owner validation)
+        var result = study.LeaveStudy(userId);
         if (result.IsFailure)
             return result;
 

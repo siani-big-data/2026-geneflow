@@ -102,11 +102,13 @@ public sealed record AnalysisJob(
 /// <param name="ExecutionId">The pipeline execution identifier.</param>
 /// <param name="PipelineId">The pipeline identifier.</param>
 /// <param name="TraceId">The trace identifier.</param>
+/// <param name="StudyId">The study identifier (used by the worker to locate parsed.json).</param>
 /// <param name="Steps">The steps to execute in order.</param>
 public sealed record PipelineJob(
     string ExecutionId,
     string PipelineId,
     string TraceId,
+    string StudyId,
     List<PipelineStepJob> Steps);
 
 /// <summary>

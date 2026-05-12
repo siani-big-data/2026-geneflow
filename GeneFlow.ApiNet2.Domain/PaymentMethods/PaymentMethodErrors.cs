@@ -7,6 +7,10 @@ namespace GeneFlow.ApiNet2.Domain.PaymentMethods;
 /// </summary>
 public static class PaymentMethodErrors
 {
+    public static readonly Error InvalidUserId = Error.Validation(
+        "PaymentMethod.InvalidUserId",
+        "Invalid user ID format.");
+
     public static readonly Error NotFound = Error.NotFound(
         "PaymentMethod.NotFound",
         "Payment method not found.");

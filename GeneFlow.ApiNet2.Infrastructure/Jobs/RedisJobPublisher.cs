@@ -214,6 +214,7 @@ public sealed class RedisJobPublisher : IJobPublisher
                 executionId = job.ExecutionId,
                 pipelineId = job.PipelineId,
                 traceId = job.TraceId,
+                studyId = job.StudyId,
                 steps = job.Steps.Select(s => new
                 {
                     stepExecutionId = s.StepExecutionId,

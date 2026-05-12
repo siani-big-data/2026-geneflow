@@ -37,7 +37,6 @@ public sealed class PipelineUnitOfWork : IPipelineUnitOfWork
     /// <inheritdoc />
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        // Get all aggregate roots with pending domain events
         var aggregateRoots = _context.ChangeTracker
             .Entries()
             .Where(e => e.Entity is IAggregateRoot)
@@ -50,13 +49,11 @@ public sealed class PipelineUnitOfWork : IPipelineUnitOfWork
 
         var result = await _context.SaveChangesAsync(cancellationToken);
 
-        // Dispatch events after successful save
         foreach (var domainEvent in domainEvents)
         {
             await _eventDispatcher.DispatchAsync(domainEvent, cancellationToken);
         }
 
-        // Clear events from all aggregate roots
         foreach (var aggregateRoot in aggregateRoots)
         {
             aggregateRoot.ClearDomainEvents();

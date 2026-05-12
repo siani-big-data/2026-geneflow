@@ -272,6 +272,122 @@ public class StepTypeTests
 
     #endregion
 
+    #region GetConfigurationSchema
+
+    [Fact]
+    public void GetConfigurationSchema_Quality_ShouldReturnEmptyObject()
+    {
+        // Act
+        var schema = StepType.Quality.GetConfigurationSchema();
+
+        // Assert
+        schema.Should().Be("{}");
+    }
+
+    [Fact]
+    public void GetConfigurationSchema_Trimming_ShouldContainAlgorithmAndCutoff()
+    {
+        // Act
+        var schema = StepType.Trimming.GetConfigurationSchema();
+
+        // Assert
+        schema.Should().Contain("algorithm");
+        schema.Should().Contain("mott");
+        schema.Should().Contain("lucy");
+        schema.Should().Contain("cutoff");
+        schema.Should().Contain("\"type\": \"object\"");
+    }
+
+    [Fact]
+    public void GetConfigurationSchema_Heterozygote_ShouldContainMinMaxRatio()
+    {
+        // Act
+        var schema = StepType.Heterozygote.GetConfigurationSchema();
+
+        // Assert
+        schema.Should().Contain("min_ratio");
+        schema.Should().Contain("max_ratio");
+        schema.Should().Contain("\"type\": \"object\"");
+    }
+
+    [Fact]
+    public void GetConfigurationSchema_Motif_ShouldRequirePattern()
+    {
+        // Act
+        var schema = StepType.Motif.GetConfigurationSchema();
+
+        // Assert
+        schema.Should().Contain("\"required\": [\"pattern\"]");
+        schema.Should().Contain("pattern");
+        schema.Should().Contain("search_complement");
+    }
+
+    [Fact]
+    public void GetConfigurationSchema_Translation_ShouldContainFrame()
+    {
+        // Act
+        var schema = StepType.Translation.GetConfigurationSchema();
+
+        // Assert
+        schema.Should().Contain("frame");
+        schema.Should().Contain("\"enum\": [1, 2, 3, -1, -2, -3]");
+    }
+
+    [Fact]
+    public void GetConfigurationSchema_ORF_ShouldContainMinLengthAndFrames()
+    {
+        // Act
+        var schema = StepType.ORF.GetConfigurationSchema();
+
+        // Assert
+        schema.Should().Contain("min_length");
+        schema.Should().Contain("frames");
+        schema.Should().Contain("\"minimum\": 30");
+    }
+
+    [Fact]
+    public void GetConfigurationSchema_Restriction_ShouldRequireEnzymes()
+    {
+        // Act
+        var schema = StepType.Restriction.GetConfigurationSchema();
+
+        // Assert
+        schema.Should().Contain("\"required\": [\"enzymes\"]");
+        schema.Should().Contain("enzymes");
+        schema.Should().Contain("\"minItems\": 1");
+    }
+
+    [Fact]
+    public void GetConfigurationSchema_AllTypes_ShouldReturnValidJson()
+    {
+        // Assert - All schemas should be valid JSON (at minimum, parseable)
+        foreach (var stepType in StepType.GetAll())
+        {
+            var schema = stepType.GetConfigurationSchema();
+            schema.Should().NotBeNullOrWhiteSpace();
+            schema.Should().StartWith("{");
+            schema.Should().EndWith("}");
+        }
+    }
+
+    [Fact]
+    public void GetConfigurationSchema_TypesRequiringConfiguration_ShouldHaveNonEmptySchema()
+    {
+        // Arrange
+        var typesRequiringConfig = StepType.GetAll().Where(t => t.RequiresConfiguration);
+
+        // Assert
+        foreach (var stepType in typesRequiringConfig)
+        {
+            var schema = stepType.GetConfigurationSchema();
+            schema.Should().NotBe("{}",
+                because: $"{stepType.Name} requires configuration but has empty schema");
+            schema.Should().Contain("properties");
+        }
+    }
+
+    #endregion
+
     #region Equality
 
     [Fact]

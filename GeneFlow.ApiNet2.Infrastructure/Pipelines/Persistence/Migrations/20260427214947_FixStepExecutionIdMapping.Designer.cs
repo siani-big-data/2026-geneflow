@@ -78,10 +78,8 @@ namespace GeneFlow.ApiNet2.Infrastructure.Pipelines.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("total_steps");
 
-                    b.Property<string>("TraceId")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)")
+                    b.Property<Guid>("TraceId")
+                        .HasColumnType("uuid")
                         .HasColumnName("trace_id");
 
                     b.HasKey("Id");

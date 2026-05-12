@@ -29,7 +29,6 @@ public sealed class UpdatePipelineStepCommandHandler
         UpdatePipelineStepCommand request,
         CancellationToken cancellationToken)
     {
-        // Parse IDs
         if (!UserId.TryParse(request.UserId, out var userId) || userId == null)
             return Result.Failure<PipelineStepDto>(PipelineErrors.InvalidUserId);
 
@@ -39,22 +38,18 @@ public sealed class UpdatePipelineStepCommandHandler
         if (!Guid.TryParse(request.StepId, out var stepId))
             return Result.Failure<PipelineStepDto>(PipelineErrors.StepNotFound);
 
-        // Get pipeline with steps
         var pipeline = await _pipelineRepository.GetByIdWithStepsAsync(pipelineId, cancellationToken);
         if (pipeline == null)
             return Result.Failure<PipelineStepDto>(PipelineErrors.NotFound);
 
-        // Find step to get its type
         var existingStep = pipeline.Steps.FirstOrDefault(s => s.Id == stepId);
         if (existingStep == null)
             return Result.Failure<PipelineStepDto>(PipelineErrors.StepNotFound);
 
-        // Create configuration
         var configResult = StepConfiguration.Create(request.Configuration, existingStep.StepType);
         if (configResult.IsFailure)
             return Result.Failure<PipelineStepDto>(configResult.Error);
 
-        // Update step
         var updateResult = pipeline.UpdateStep(
             stepId,
             configResult.Value,
@@ -65,11 +60,8 @@ public sealed class UpdatePipelineStepCommandHandler
         if (updateResult.IsFailure)
             return Result.Failure<PipelineStepDto>(updateResult.Error);
 
-        // Persist
-        // Entity already tracked - no Update needed
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // Get updated step
         var updatedStep = pipeline.Steps.First(s => s.Id == stepId);
         return Result.Success(updatedStep.ToDto());
     }

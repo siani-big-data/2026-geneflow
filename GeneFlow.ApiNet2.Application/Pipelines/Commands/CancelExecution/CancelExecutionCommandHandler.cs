@@ -31,28 +31,23 @@ public sealed class CancelExecutionCommandHandler
         CancelExecutionCommand request,
         CancellationToken cancellationToken)
     {
-        // Parse IDs
         if (!UserId.TryParse(request.UserId, out var userId) || userId == null)
             return Result.Failure<PipelineExecutionDto>(PipelineErrors.InvalidUserId);
 
         if (!PipelineExecutionId.TryParse(request.ExecutionId, out var executionId) || executionId == null)
             return Result.Failure<PipelineExecutionDto>(PipelineErrors.ExecutionNotFound);
 
-        // Get execution
         var execution = await _executionRepository.GetByIdWithStepsAsync(executionId, cancellationToken);
         if (execution == null)
             return Result.Failure<PipelineExecutionDto>(PipelineErrors.ExecutionNotFound);
 
-        // Get pipeline name for DTO
         var pipeline = await _pipelineRepository.GetByIdAsync(execution.PipelineId, cancellationToken);
         var pipelineName = pipeline?.Name.Value ?? "Unknown";
 
-        // Cancel
         var cancelResult = execution.Cancel();
         if (cancelResult.IsFailure)
             return Result.Failure<PipelineExecutionDto>(cancelResult.Error);
 
-        // Persist
         _executionRepository.Update(execution);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 

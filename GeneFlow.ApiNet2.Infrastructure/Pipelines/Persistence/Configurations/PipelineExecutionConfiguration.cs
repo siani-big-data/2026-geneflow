@@ -20,7 +20,6 @@ public sealed class PipelineExecutionConfiguration : IEntityTypeConfiguration<Pi
 
         builder.HasKey(e => e.Id);
 
-        // Configure PipelineExecutionId
         builder.Property(e => e.Id)
             .HasColumnName("id")
             .HasMaxLength(10)
@@ -28,7 +27,6 @@ public sealed class PipelineExecutionConfiguration : IEntityTypeConfiguration<Pi
                 id => id.ToString(),
                 value => PipelineExecutionId.Parse(value));
 
-        // Configure PipelineId (reference)
         builder.Property(e => e.PipelineId)
             .HasColumnName("pipeline_id")
             .HasMaxLength(10)
@@ -39,18 +37,16 @@ public sealed class PipelineExecutionConfiguration : IEntityTypeConfiguration<Pi
 
         builder.HasIndex(e => e.PipelineId);
 
-        // Configure TraceId (reference)
         builder.Property(e => e.TraceId)
             .HasColumnName("trace_id")
-            .HasMaxLength(10)
+            .HasColumnType("uuid")
             .HasConversion(
-                id => id.ToString(),
-                value => TraceId.Parse(value))
+                id => id.Value,
+                value => TraceId.From(value))
             .IsRequired();
 
         builder.HasIndex(e => e.TraceId);
 
-        // Configure StartedBy (reference to User)
         builder.Property(e => e.StartedBy)
             .HasColumnName("started_by")
             .HasMaxLength(10)
@@ -59,7 +55,6 @@ public sealed class PipelineExecutionConfiguration : IEntityTypeConfiguration<Pi
                 value => UserId.Parse(value))
             .IsRequired();
 
-        // ExecutionStatus (smart enumeration stored as string)
         builder.Property(e => e.Status)
             .HasColumnName("status")
             .HasMaxLength(20)
@@ -70,7 +65,6 @@ public sealed class PipelineExecutionConfiguration : IEntityTypeConfiguration<Pi
 
         builder.HasIndex(e => e.Status);
 
-        // Timestamps
         builder.Property(e => e.CreatedAt)
             .HasColumnName("created_at")
             .IsRequired();
@@ -81,12 +75,10 @@ public sealed class PipelineExecutionConfiguration : IEntityTypeConfiguration<Pi
         builder.Property(e => e.CompletedAt)
             .HasColumnName("completed_at");
 
-        // Error message
         builder.Property(e => e.ErrorMessage)
             .HasColumnName("error_message")
             .HasMaxLength(PipelineExecution.MaxErrorMessageLength);
 
-        // Step counts
         builder.Property(e => e.TotalSteps)
             .HasColumnName("total_steps")
             .IsRequired();
@@ -95,7 +87,6 @@ public sealed class PipelineExecutionConfiguration : IEntityTypeConfiguration<Pi
             .HasColumnName("completed_steps")
             .HasDefaultValue(0);
 
-        // Step executions (owned collection)
         builder.OwnsMany(e => e.StepExecutions, stepExec =>
         {
             stepExec.ToTable("pipeline_step_executions");
@@ -153,7 +144,6 @@ public sealed class PipelineExecutionConfiguration : IEntityTypeConfiguration<Pi
             stepExec.HasIndex("execution_id", "Order").IsUnique();
         });
 
-        // Composite index for finding running executions per trace
         builder.HasIndex(e => new { e.TraceId, e.Status });
     }
 }

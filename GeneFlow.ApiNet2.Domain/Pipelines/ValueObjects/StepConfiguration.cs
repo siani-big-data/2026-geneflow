@@ -27,7 +27,6 @@ public sealed class StepConfiguration : ValueObject
     {
         if (string.IsNullOrWhiteSpace(json))
         {
-            // Empty configuration is valid for steps that don't require configuration
             if (stepType.RequiresConfiguration)
                 return Result.Failure<StepConfiguration>(PipelineErrors.StepConfigurationRequired(stepType.Name));
 
@@ -39,12 +38,10 @@ public sealed class StepConfiguration : ValueObject
         if (trimmed.Length > MaxLength)
             return Result.Failure<StepConfiguration>(PipelineErrors.StepConfigurationTooLong(MaxLength));
 
-        // Validate JSON syntax
         try
         {
             using var doc = JsonDocument.Parse(trimmed);
 
-            // Basic validation based on step type
             var validationResult = ValidateForStepType(doc, stepType);
             if (validationResult.IsFailure)
                 return Result.Failure<StepConfiguration>(validationResult.Error);
@@ -65,6 +62,10 @@ public sealed class StepConfiguration : ValueObject
     /// <summary>
     /// Gets the configuration as a dictionary.
     /// </summary>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when the stored JSON cannot be deserialized. The JSON is validated at
+    /// <see cref="Create"/> time, so a failure here indicates persisted corruption.
+    /// </exception>
     public Dictionary<string, object> ToDictionary()
     {
         if (string.IsNullOrEmpty(Value) || Value == "{}")
@@ -75,9 +76,11 @@ public sealed class StepConfiguration : ValueObject
             return JsonSerializer.Deserialize<Dictionary<string, object>>(Value)
                    ?? new Dictionary<string, object>();
         }
-        catch
+        catch (JsonException ex)
         {
-            return new Dictionary<string, object>();
+            throw new InvalidOperationException(
+                "StepConfiguration value is not valid JSON. The configuration was validated on creation, so this indicates persisted corruption.",
+                ex);
         }
     }
 
@@ -96,7 +99,6 @@ public sealed class StepConfiguration : ValueObject
         }
         catch
         {
-            // Return default on any error
         }
 
         return defaultValue;
@@ -106,7 +108,6 @@ public sealed class StepConfiguration : ValueObject
     {
         var root = doc.RootElement;
 
-        // Validate specific step types
         if (stepType == StepType.Motif)
         {
             if (!root.TryGetProperty("pattern", out var pattern) ||

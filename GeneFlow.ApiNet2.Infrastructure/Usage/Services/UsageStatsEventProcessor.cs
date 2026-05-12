@@ -38,9 +38,7 @@ public sealed class UsageStatsEventProcessor : BackgroundService
     {
         "TraceUploadedEvent",
         "TracesUploadedEvent",
-        "TraceDeletedEvent",
-        "TraceProcessedEvent",
-        "TraceProcessingStartedEvent"
+        "TraceDeletedEvent"
     };
 
     private static readonly HashSet<string> AlignmentEvents = new(StringComparer.OrdinalIgnoreCase)
@@ -48,6 +46,23 @@ public sealed class UsageStatsEventProcessor : BackgroundService
         "AlignmentCreatedEvent",
         "AlignmentCompletedEvent",
         "AlignmentFailedEvent"
+    };
+
+    // Events whose payload does carry a user context AND that we update stats for.
+    // Events arriving on the same Redis category but not in this set are skipped
+    // silently (e.g. TraceProcessed/TraceProcessingStartedEvent are emitted by
+    // the worker / DomainEventDispatcher but have no owner field — they're not
+    // billable transitions, so the projector ignores them).
+    private static readonly HashSet<string> HandledEvents = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "StudyCreatedEvent",
+        "StudyDeletedEvent",
+        "StudyMemberAddedEvent",
+        "StudyMemberRemovedEvent",
+        "TraceUploadedEvent",
+        "TracesUploadedEvent",
+        "AlignmentCreatedEvent",
+        "AlignmentCompletedEvent"
     };
 
     public UsageStatsEventProcessor(
@@ -107,6 +122,19 @@ public sealed class UsageStatsEventProcessor : BackgroundService
 
         try
         {
+            // Both the Python worker (bare class names) and the .NET re-publish
+            // (with "Event" suffix) write to the same Redis category. Many of
+            // those events legitimately have no user context (e.g. trace
+            // lifecycle transitions). Skip silently for anything we don't
+            // actually project into the usage datamart so the logs stay clean.
+            if (!HandledEvents.Contains(message.EventType))
+            {
+                _logger.LogDebug(
+                    "Ignoring non-projected event {EventType} (ID: {EventId})",
+                    message.EventType, message.EventId);
+                return;
+            }
+
             using var scope = _scopeFactory.CreateScope();
             var repository = scope.ServiceProvider.GetRequiredService<IUsageStatsRepository>();
 
@@ -183,22 +211,6 @@ public sealed class UsageStatsEventProcessor : BackgroundService
                 if (traceCount > 0)
                 {
                     await repository.IncrementTracesAsync(userId, traceCount);
-                }
-                break;
-
-            case "TraceProcessingStartedEvent":
-                var pendingCount = GetIntProperty(eventData, "pendingCount", "pending_count");
-                if (pendingCount >= 0)
-                {
-                    await repository.SetTracesPendingAsync(userId, pendingCount);
-                }
-                break;
-
-            case "TraceProcessedEvent":
-                var newPendingCount = GetIntProperty(eventData, "pendingCount", "pending_count");
-                if (newPendingCount >= 0)
-                {
-                    await repository.SetTracesPendingAsync(userId, newPendingCount);
                 }
                 break;
 

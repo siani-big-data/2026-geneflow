@@ -1,0 +1,2522 @@
+﻿--
+-- PostgreSQL database dump
+--
+
+\restrict iqjpjbusleJwmEhESIUc6ecTc7x6NhTjYhmMIlxZyU3BbpnA91h1R6CG0W0Xik9
+
+-- Dumped from database version 16.13
+-- Dumped by pg_dump version 16.13
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- Name: billing; Type: SCHEMA; Schema: -; Owner: -
+--
+
+CREATE SCHEMA billing;
+
+
+--
+-- Name: identity; Type: SCHEMA; Schema: -; Owner: -
+--
+
+CREATE SCHEMA identity;
+
+
+--
+-- Name: pipelines; Type: SCHEMA; Schema: -; Owner: -
+--
+
+CREATE SCHEMA pipelines;
+
+
+--
+-- Name: plans; Type: SCHEMA; Schema: -; Owner: -
+--
+
+CREATE SCHEMA plans;
+
+
+--
+-- Name: profiles; Type: SCHEMA; Schema: -; Owner: -
+--
+
+CREATE SCHEMA profiles;
+
+
+--
+-- Name: studies; Type: SCHEMA; Schema: -; Owner: -
+--
+
+CREATE SCHEMA studies;
+
+
+--
+-- Name: subscriptions; Type: SCHEMA; Schema: -; Owner: -
+--
+
+CREATE SCHEMA subscriptions;
+
+
+--
+-- Name: traces; Type: SCHEMA; Schema: -; Owner: -
+--
+
+CREATE SCHEMA traces;
+
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: payment_methods; Type: TABLE; Schema: billing; Owner: -
+--
+
+CREATE TABLE billing.payment_methods (
+    id character varying(9) NOT NULL,
+    user_id character varying(9) NOT NULL,
+    stripe_payment_method_id character varying(255) NOT NULL,
+    brand character varying(50) NOT NULL,
+    last4 character varying(4) NOT NULL,
+    expiry_month integer NOT NULL,
+    expiry_year integer NOT NULL,
+    is_default boolean DEFAULT false NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    modified_at timestamp with time zone
+);
+
+
+--
+-- Name: external_logins; Type: TABLE; Schema: identity; Owner: -
+--
+
+CREATE TABLE identity.external_logins (
+    id uuid NOT NULL,
+    provider character varying(50) NOT NULL,
+    provider_key character varying(256) NOT NULL,
+    provider_display_name character varying(256),
+    linked_at timestamp with time zone NOT NULL,
+    "UserId" character varying(10) NOT NULL
+);
+
+
+--
+-- Name: pipeline_executions; Type: TABLE; Schema: identity; Owner: -
+--
+
+CREATE TABLE identity.pipeline_executions (
+    id character varying(10) NOT NULL,
+    pipeline_id character varying(10) NOT NULL,
+    trace_id character varying(10) NOT NULL,
+    started_by character varying(10) NOT NULL,
+    status character varying(20) NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    started_at timestamp with time zone,
+    completed_at timestamp with time zone,
+    error_message character varying(2000),
+    total_steps integer NOT NULL,
+    completed_steps integer DEFAULT 0 NOT NULL
+);
+
+
+--
+-- Name: pipeline_step_executions; Type: TABLE; Schema: identity; Owner: -
+--
+
+CREATE TABLE identity.pipeline_step_executions (
+    id uuid NOT NULL,
+    pipeline_step_id uuid NOT NULL,
+    "order" integer NOT NULL,
+    step_type character varying(30) NOT NULL,
+    status character varying(20) NOT NULL,
+    started_at timestamp with time zone,
+    completed_at timestamp with time zone,
+    error_message character varying(2000),
+    result_summary character varying(4000),
+    result_data jsonb,
+    execution_id character varying(10)
+);
+
+
+--
+-- Name: pipeline_steps; Type: TABLE; Schema: identity; Owner: -
+--
+
+CREATE TABLE identity.pipeline_steps (
+    id uuid NOT NULL,
+    step_type character varying(30) NOT NULL,
+    "order" integer NOT NULL,
+    label character varying(100),
+    configuration character varying(4000) DEFAULT '{}'::character varying NOT NULL,
+    is_enabled boolean DEFAULT true NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    pipeline_id character varying(10)
+);
+
+
+--
+-- Name: pipelines; Type: TABLE; Schema: identity; Owner: -
+--
+
+CREATE TABLE identity.pipelines (
+    id character varying(10) NOT NULL,
+    study_id character varying(10) NOT NULL,
+    owner_id character varying(10) NOT NULL,
+    name character varying(100) NOT NULL,
+    description character varying(1000),
+    status character varying(20) NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    created_by character varying(50),
+    modified_at timestamp with time zone,
+    modified_by character varying(50),
+    "IsDeleted" boolean NOT NULL,
+    "DeletedAt" timestamp with time zone,
+    "DeletedBy" text
+);
+
+
+--
+-- Name: plan_features; Type: TABLE; Schema: identity; Owner: -
+--
+
+CREATE TABLE identity.plan_features (
+    id integer NOT NULL,
+    plan_id character varying(9) NOT NULL,
+    featuREDACTED integer NOT NULL,
+    featuREDACTED character varying(50) NOT NULL
+);
+
+
+--
+-- Name: plan_features_id_seq; Type: SEQUENCE; Schema: identity; Owner: -
+--
+
+ALTER TABLE identity.plan_features ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME identity.plan_features_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: plans; Type: TABLE; Schema: identity; Owner: -
+--
+
+CREATE TABLE identity.plans (
+    id character varying(9) NOT NULL,
+    name character varying(50) NOT NULL,
+    description character varying(500),
+    monthly_price numeric(10,2) NOT NULL,
+    annual_price numeric(10,2) NOT NULL,
+    currency character varying(3) NOT NULL,
+    max_studies integer NOT NULL,
+    max_traces_per_month integer NOT NULL,
+    max_members_per_study integer NOT NULL,
+    is_active boolean NOT NULL,
+    is_default boolean NOT NULL,
+    display_order integer NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    created_by character varying(100),
+    modified_at timestamp with time zone,
+    modified_by character varying(100)
+);
+
+
+--
+-- Name: profiles; Type: TABLE; Schema: identity; Owner: -
+--
+
+CREATE TABLE identity.profiles (
+    id character varying(10) NOT NULL,
+    user_id character varying(10) NOT NULL,
+    first_name character varying(100) NOT NULL,
+    last_name character varying(100),
+    bio character varying(500),
+    location character varying(200),
+    professional_role character varying(100),
+    institution_name character varying(200),
+    institution_department character varying(200),
+    research_field character varying(50),
+    orcid_id character varying(19),
+    website character varying(500),
+    photo_url character varying(1000),
+    photo_thumbnail_url character varying(1000),
+    photo_size_bytes bigint,
+    created_at timestamp with time zone NOT NULL,
+    created_by character varying(100),
+    modified_at timestamp with time zone,
+    modified_by character varying(100),
+    is_deleted boolean NOT NULL,
+    deleted_at timestamp with time zone,
+    deleted_by character varying(100)
+);
+
+
+--
+-- Name: refresh_tokens; Type: TABLE; Schema: identity; Owner: -
+--
+
+CREATE TABLE identity.refresh_tokens (
+    token character varying(256) NOT NULL,
+    expires_at timestamp with time zone NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    is_revoked boolean NOT NULL,
+    revoked_at timestamp with time zone,
+    replaced_by_token character varying(256),
+    "UserId" character varying(10) NOT NULL
+);
+
+
+--
+-- Name: sequence_edits; Type: TABLE; Schema: identity; Owner: -
+--
+
+CREATE TABLE identity.sequence_edits (
+    id uuid NOT NULL,
+    edit_type character varying(20) NOT NULL,
+    "position" integer NOT NULL,
+    original_base character(1),
+    new_base character(1),
+    reason character varying(500),
+    edited_by character varying(10) NOT NULL,
+    edited_at timestamp with time zone NOT NULL,
+    is_active boolean DEFAULT true NOT NULL,
+    trace_id uuid
+);
+
+
+--
+-- Name: studies; Type: TABLE; Schema: identity; Owner: -
+--
+
+CREATE TABLE identity.studies (
+    id character varying(10) NOT NULL,
+    owner_id character varying(10) NOT NULL,
+    title character varying(200) NOT NULL,
+    description character varying(5000),
+    research_field character varying(50) NOT NULL,
+    status character varying(20) NOT NULL,
+    allow_public_comments boolean DEFAULT true NOT NULL,
+    allow_data_download boolean DEFAULT false NOT NULL,
+    requiREDACTED boolean DEFAULT true NOT NULL,
+    views_count integer DEFAULT 0 NOT NULL,
+    stars_count integer DEFAULT 0 NOT NULL,
+    institution character varying(200),
+    principal_investigator character varying(200),
+    is_featured boolean DEFAULT false NOT NULL,
+    tags text[] NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    created_by character varying(100),
+    modified_at timestamp with time zone,
+    modified_by character varying(100),
+    is_deleted boolean NOT NULL,
+    deleted_at timestamp with time zone,
+    deleted_by character varying(100)
+);
+
+
+--
+-- Name: study_invitations; Type: TABLE; Schema: identity; Owner: -
+--
+
+CREATE TABLE identity.study_invitations (
+    id character varying(10) NOT NULL,
+    study_id character varying(10) NOT NULL,
+    email character varying(320) NOT NULL,
+    role character varying(20) NOT NULL,
+    status character varying(20) NOT NULL,
+    token character varying(64) NOT NULL,
+    invited_by character varying(10) NOT NULL,
+    expires_at timestamp with time zone NOT NULL,
+    responded_at timestamp with time zone,
+    message character varying(500),
+    created_at timestamp with time zone NOT NULL,
+    created_by character varying(100),
+    modified_at timestamp with time zone,
+    modified_by character varying(100)
+);
+
+
+--
+-- Name: study_members; Type: TABLE; Schema: identity; Owner: -
+--
+
+CREATE TABLE identity.study_members (
+    id uuid NOT NULL,
+    user_id character varying(10) NOT NULL,
+    role character varying(20) NOT NULL,
+    joined_at timestamp with time zone NOT NULL,
+    invited_by character varying(10),
+    study_id character varying(10)
+);
+
+
+--
+-- Name: study_papers; Type: TABLE; Schema: identity; Owner: -
+--
+
+CREATE TABLE identity.study_papers (
+    id character varying(10) NOT NULL,
+    title character varying(500) NOT NULL,
+    authors character varying(1000),
+    doi character varying(100),
+    abstract character varying(5000),
+    journal character varying(200),
+    publication_year integer,
+    file_id character varying(100),
+    file_name character varying(255),
+    file_size_bytes bigint,
+    study_id character varying(10),
+    created_at timestamp with time zone NOT NULL,
+    created_by character varying(100),
+    modified_at timestamp with time zone,
+    modified_by character varying(100),
+    is_deleted boolean DEFAULT false NOT NULL,
+    deleted_at timestamp with time zone,
+    deleted_by character varying(100)
+);
+
+
+--
+-- Name: study_stars; Type: TABLE; Schema: identity; Owner: -
+--
+
+CREATE TABLE identity.study_stars (
+    id uuid NOT NULL,
+    study_id character varying(10) NOT NULL,
+    user_id character varying(10) NOT NULL,
+    starred_at timestamp with time zone NOT NULL
+);
+
+
+--
+-- Name: study_views; Type: TABLE; Schema: identity; Owner: -
+--
+
+CREATE TABLE identity.study_views (
+    id bigint NOT NULL,
+    study_id character varying(10) NOT NULL,
+    user_id character varying(10),
+    ip_hash character varying(64),
+    user_agent character varying(500),
+    viewed_at timestamp with time zone NOT NULL
+);
+
+
+--
+-- Name: study_views_id_seq; Type: SEQUENCE; Schema: identity; Owner: -
+--
+
+ALTER TABLE identity.study_views ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME identity.study_views_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: subscriptions; Type: TABLE; Schema: identity; Owner: -
+--
+
+CREATE TABLE identity.subscriptions (
+    id character varying(9) NOT NULL,
+    user_id character varying(9) NOT NULL,
+    plan_id character varying(9) NOT NULL,
+    plan_name character varying(50) NOT NULL,
+    status integer NOT NULL,
+    billing_cycle integer NOT NULL,
+    period_start timestamp with time zone NOT NULL,
+    period_end timestamp with time zone NOT NULL,
+    auto_renew boolean NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    modified_at timestamp with time zone,
+    cancelled_at timestamp with time zone,
+    cancellation_reason character varying(500),
+    trial_end_date timestamp with time zone
+);
+
+
+--
+-- Name: trace_annotations; Type: TABLE; Schema: identity; Owner: -
+--
+
+CREATE TABLE identity.trace_annotations (
+    id uuid NOT NULL,
+    type character varying(20) NOT NULL,
+    label character varying(100) NOT NULL,
+    description character varying(500),
+    start_position integer NOT NULL,
+    end_position integer NOT NULL,
+    strand character varying(10) NOT NULL,
+    color character varying(20) NOT NULL,
+    is_shared boolean DEFAULT false NOT NULL,
+    metadata jsonb,
+    trace_id uuid,
+    created_at timestamp with time zone NOT NULL,
+    created_by character varying(100),
+    modified_at timestamp with time zone,
+    modified_by character varying(100)
+);
+
+
+--
+-- Name: traces; Type: TABLE; Schema: identity; Owner: -
+--
+
+CREATE TABLE identity.traces (
+    id uuid NOT NULL,
+    study_id character varying(10) NOT NULL,
+    uploaded_by character varying(10) NOT NULL,
+    name character varying(100) NOT NULL,
+    description character varying(500),
+    file_name character varying(255) NOT NULL,
+    content_type character varying(100) NOT NULL,
+    storage_path character varying(500) NOT NULL,
+    size_bytes bigint NOT NULL,
+    checksum character varying(64) NOT NULL,
+    format character varying(20) NOT NULL,
+    status character varying(20) NOT NULL,
+    average_quality_score numeric(5,2),
+    total_bases integer,
+    quality_above_q20_percentage numeric(5,2),
+    quality_above_q30_percentage numeric(5,2),
+    trimmed_length integer,
+    gc_content_percentage numeric(5,2),
+    trim_start_5_prime integer,
+    trim_end_5_prime integer,
+    trim_start_3_prime integer,
+    trim_end_3_prime integer,
+    trim_algorithm character varying(50),
+    trimmed_by character varying(100),
+    trimmed_at timestamp with time zone,
+    has_chromatogram_data boolean DEFAULT false NOT NULL,
+    failuREDACTED character varying(1000),
+    processed_at timestamp with time zone,
+    created_at timestamp with time zone NOT NULL,
+    created_by character varying(100),
+    modified_at timestamp with time zone,
+    modified_by character varying(100),
+    is_deleted boolean DEFAULT false NOT NULL,
+    deleted_at timestamp with time zone,
+    deleted_by character varying(100)
+);
+
+
+--
+-- Name: two_factor_codes; Type: TABLE; Schema: identity; Owner: -
+--
+
+CREATE TABLE identity.two_factor_codes (
+    id uuid NOT NULL,
+    code character varying(6) NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    expires_at timestamp with time zone NOT NULL,
+    is_used boolean NOT NULL,
+    used_at timestamp with time zone,
+    "UserId" character varying(10)
+);
+
+
+--
+-- Name: users; Type: TABLE; Schema: identity; Owner: -
+--
+
+CREATE TABLE identity.users (
+    id character varying(10) NOT NULL,
+    email character varying(256) NOT NULL,
+    username character varying(50) NOT NULL,
+    password_hash character varying(256) NOT NULL,
+    is_active boolean NOT NULL,
+    email_verified boolean NOT NULL,
+    email_verification_token character varying(128),
+    email_verification_token_expiry timestamp with time zone,
+    password_reset_token character varying(128),
+    password_reset_token_expiry timestamp with time zone,
+    failed_login_attempts integer NOT NULL,
+    lockout_end timestamp with time zone,
+    two_factor_enabled boolean NOT NULL,
+    totp_secret character varying(512),
+    totp_secret_created_at timestamp with time zone,
+    roles jsonb NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    created_by character varying(100),
+    modified_at timestamp with time zone,
+    modified_by character varying(100),
+    is_deleted boolean NOT NULL,
+    deleted_at timestamp with time zone,
+    deleted_by character varying(100)
+);
+
+
+--
+-- Name: pipeline_executions; Type: TABLE; Schema: pipelines; Owner: -
+--
+
+CREATE TABLE pipelines.pipeline_executions (
+    id character varying(10) NOT NULL,
+    pipeline_id character varying(10) NOT NULL,
+    trace_id uuid NOT NULL,
+    started_by character varying(10) NOT NULL,
+    status character varying(20) NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    started_at timestamp with time zone,
+    completed_at timestamp with time zone,
+    error_message character varying(2000),
+    total_steps integer NOT NULL,
+    completed_steps integer DEFAULT 0 NOT NULL
+);
+
+
+--
+-- Name: pipeline_step_executions; Type: TABLE; Schema: pipelines; Owner: -
+--
+
+CREATE TABLE pipelines.pipeline_step_executions (
+    id uuid NOT NULL,
+    pipeline_step_id uuid NOT NULL,
+    "order" integer NOT NULL,
+    step_type character varying(30) NOT NULL,
+    status character varying(20) NOT NULL,
+    started_at timestamp with time zone,
+    completed_at timestamp with time zone,
+    error_message character varying(2000),
+    result_summary character varying(4000),
+    result_data jsonb,
+    execution_id character varying(10)
+);
+
+
+--
+-- Name: pipeline_steps; Type: TABLE; Schema: pipelines; Owner: -
+--
+
+CREATE TABLE pipelines.pipeline_steps (
+    id uuid NOT NULL,
+    step_type character varying(30) NOT NULL,
+    "order" integer NOT NULL,
+    label character varying(100),
+    configuration character varying(4000) DEFAULT '{}'::character varying NOT NULL,
+    is_enabled boolean DEFAULT true NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    pipeline_id character varying(10)
+);
+
+
+--
+-- Name: pipelines; Type: TABLE; Schema: pipelines; Owner: -
+--
+
+CREATE TABLE pipelines.pipelines (
+    id character varying(10) NOT NULL,
+    study_id character varying(10) NOT NULL,
+    owner_id character varying(10) NOT NULL,
+    name character varying(100) NOT NULL,
+    description character varying(1000),
+    status character varying(20) NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    created_by character varying(50),
+    modified_at timestamp with time zone,
+    modified_by character varying(50),
+    "IsDeleted" boolean NOT NULL,
+    "DeletedAt" timestamp with time zone,
+    "DeletedBy" text
+);
+
+
+--
+-- Name: plan_features; Type: TABLE; Schema: plans; Owner: -
+--
+
+CREATE TABLE plans.plan_features (
+    id integer NOT NULL,
+    plan_id character varying(9) NOT NULL,
+    featuREDACTED integer NOT NULL,
+    featuREDACTED character varying(50) NOT NULL
+);
+
+
+--
+-- Name: plan_features_id_seq; Type: SEQUENCE; Schema: plans; Owner: -
+--
+
+ALTER TABLE plans.plan_features ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME plans.plan_features_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: plans; Type: TABLE; Schema: plans; Owner: -
+--
+
+CREATE TABLE plans.plans (
+    id character varying(9) NOT NULL,
+    name character varying(50) NOT NULL,
+    description character varying(500),
+    monthly_price numeric(10,2) NOT NULL,
+    annual_price numeric(10,2) NOT NULL,
+    currency character varying(3) NOT NULL,
+    max_studies integer NOT NULL,
+    max_traces_per_month integer NOT NULL,
+    max_members_per_study integer NOT NULL,
+    is_active boolean NOT NULL,
+    is_default boolean NOT NULL,
+    display_order integer NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    created_by character varying(100),
+    modified_at timestamp with time zone,
+    modified_by character varying(100)
+);
+
+
+--
+-- Name: profiles; Type: TABLE; Schema: profiles; Owner: -
+--
+
+CREATE TABLE profiles.profiles (
+    id character varying(10) NOT NULL,
+    user_id character varying(10) NOT NULL,
+    first_name character varying(100) NOT NULL,
+    last_name character varying(100),
+    bio character varying(500),
+    location character varying(200),
+    professional_role character varying(100),
+    institution_name character varying(200),
+    institution_department character varying(200),
+    research_field character varying(50),
+    orcid_id character varying(19),
+    website character varying(500),
+    photo_url character varying(1000),
+    photo_thumbnail_url character varying(1000),
+    photo_size_bytes bigint,
+    created_at timestamp with time zone NOT NULL,
+    created_by character varying(100),
+    modified_at timestamp with time zone,
+    modified_by character varying(100),
+    is_deleted boolean NOT NULL,
+    deleted_at timestamp with time zone,
+    deleted_by character varying(100)
+);
+
+
+--
+-- Name: __EFMigrationsHistory; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public."__EFMigrationsHistory" (
+    "MigrationId" character varying(150) NOT NULL,
+    "ProductVersion" character varying(32) NOT NULL
+);
+
+
+--
+-- Name: studies; Type: TABLE; Schema: studies; Owner: -
+--
+
+CREATE TABLE studies.studies (
+    id character varying(10) NOT NULL,
+    owner_id character varying(10) NOT NULL,
+    title character varying(200) NOT NULL,
+    description character varying(5000),
+    research_field character varying(50) NOT NULL,
+    status character varying(20) NOT NULL,
+    allow_public_comments boolean DEFAULT true NOT NULL,
+    allow_data_download boolean DEFAULT false NOT NULL,
+    requiREDACTED boolean DEFAULT true NOT NULL,
+    views_count integer DEFAULT 0 NOT NULL,
+    stars_count integer DEFAULT 0 NOT NULL,
+    institution character varying(200),
+    principal_investigator character varying(200),
+    is_featured boolean DEFAULT false NOT NULL,
+    tags text[] NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    created_by character varying(100),
+    modified_at timestamp with time zone,
+    modified_by character varying(100),
+    is_deleted boolean NOT NULL,
+    deleted_at timestamp with time zone,
+    deleted_by character varying(100)
+);
+
+
+--
+-- Name: study_invitations; Type: TABLE; Schema: studies; Owner: -
+--
+
+CREATE TABLE studies.study_invitations (
+    id uuid NOT NULL,
+    study_id character varying(10) NOT NULL,
+    email character varying(320) NOT NULL,
+    role character varying(20) NOT NULL,
+    status character varying(20) NOT NULL,
+    token character varying(64) NOT NULL,
+    invited_by character varying(10) NOT NULL,
+    expires_at timestamp with time zone NOT NULL,
+    responded_at timestamp with time zone,
+    message character varying(500),
+    created_at timestamp with time zone NOT NULL,
+    created_by character varying(100),
+    modified_at timestamp with time zone,
+    modified_by character varying(100)
+);
+
+
+--
+-- Name: study_members; Type: TABLE; Schema: studies; Owner: -
+--
+
+CREATE TABLE studies.study_members (
+    id uuid NOT NULL,
+    user_id character varying(10) NOT NULL,
+    role character varying(20) NOT NULL,
+    joined_at timestamp with time zone NOT NULL,
+    invited_by character varying(10),
+    study_id character varying(10)
+);
+
+
+--
+-- Name: study_papers; Type: TABLE; Schema: studies; Owner: -
+--
+
+CREATE TABLE studies.study_papers (
+    id character varying(10) NOT NULL,
+    title character varying(500) NOT NULL,
+    authors character varying(1000),
+    doi character varying(100),
+    abstract character varying(5000),
+    journal character varying(200),
+    publication_year integer,
+    file_id character varying(100),
+    file_name character varying(255),
+    file_size_bytes bigint,
+    study_id character varying(10),
+    created_at timestamp with time zone NOT NULL,
+    created_by character varying(100),
+    modified_at timestamp with time zone,
+    modified_by character varying(100),
+    is_deleted boolean DEFAULT false NOT NULL,
+    deleted_at timestamp with time zone,
+    deleted_by character varying(100)
+);
+
+
+--
+-- Name: study_stars; Type: TABLE; Schema: studies; Owner: -
+--
+
+CREATE TABLE studies.study_stars (
+    id uuid NOT NULL,
+    study_id character varying(10) NOT NULL,
+    user_id character varying(10) NOT NULL,
+    starred_at timestamp with time zone NOT NULL
+);
+
+
+--
+-- Name: study_views; Type: TABLE; Schema: studies; Owner: -
+--
+
+CREATE TABLE studies.study_views (
+    id bigint NOT NULL,
+    study_id character varying(10) NOT NULL,
+    user_id character varying(10),
+    ip_hash character varying(64),
+    user_agent character varying(500),
+    viewed_at timestamp with time zone NOT NULL
+);
+
+
+--
+-- Name: study_views_id_seq; Type: SEQUENCE; Schema: studies; Owner: -
+--
+
+ALTER TABLE studies.study_views ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME studies.study_views_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: subscriptions; Type: TABLE; Schema: subscriptions; Owner: -
+--
+
+CREATE TABLE subscriptions.subscriptions (
+    id character varying(9) NOT NULL,
+    user_id character varying(9) NOT NULL,
+    plan_id character varying(9) NOT NULL,
+    plan_name character varying(50) NOT NULL,
+    status integer NOT NULL,
+    billing_cycle integer NOT NULL,
+    period_start timestamp with time zone NOT NULL,
+    period_end timestamp with time zone NOT NULL,
+    auto_renew boolean NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    modified_at timestamp with time zone,
+    cancelled_at timestamp with time zone,
+    cancellation_reason character varying(500),
+    trial_end_date timestamp with time zone
+);
+
+
+--
+-- Name: sequence_edits; Type: TABLE; Schema: traces; Owner: -
+--
+
+CREATE TABLE traces.sequence_edits (
+    id uuid NOT NULL,
+    edit_type character varying(20) NOT NULL,
+    "position" integer NOT NULL,
+    original_base character(1),
+    new_base character(1),
+    reason character varying(500),
+    edited_by character varying(10) NOT NULL,
+    edited_at timestamp with time zone NOT NULL,
+    is_active boolean DEFAULT true NOT NULL,
+    trace_id uuid
+);
+
+
+--
+-- Name: trace_annotations; Type: TABLE; Schema: traces; Owner: -
+--
+
+CREATE TABLE traces.trace_annotations (
+    id uuid NOT NULL,
+    type character varying(20) NOT NULL,
+    label character varying(100) NOT NULL,
+    description character varying(500),
+    start_position integer NOT NULL,
+    end_position integer NOT NULL,
+    strand character varying(10) NOT NULL,
+    color character varying(20) NOT NULL,
+    is_shared boolean DEFAULT false NOT NULL,
+    metadata jsonb,
+    trace_id uuid,
+    created_at timestamp with time zone NOT NULL,
+    created_by character varying(100),
+    modified_at timestamp with time zone,
+    modified_by character varying(100)
+);
+
+
+--
+-- Name: trace_trims; Type: TABLE; Schema: traces; Owner: -
+--
+
+CREATE TABLE traces.trace_trims (
+    id uuid NOT NULL,
+    trim_type character varying(20) NOT NULL,
+    trim_end character varying(20) NOT NULL,
+    start_position integer NOT NULL,
+    end_position integer NOT NULL,
+    algorithm character varying(50) NOT NULL,
+    reason character varying(500),
+    applied_by character varying(10) NOT NULL,
+    applied_at timestamp with time zone NOT NULL,
+    is_active boolean DEFAULT true NOT NULL,
+    trace_id uuid NOT NULL
+);
+
+
+--
+-- Name: traces; Type: TABLE; Schema: traces; Owner: -
+--
+
+CREATE TABLE traces.traces (
+    id uuid NOT NULL,
+    study_id character varying(10) NOT NULL,
+    uploaded_by character varying(10) NOT NULL,
+    name character varying(100) NOT NULL,
+    description character varying(500),
+    file_name character varying(255) NOT NULL,
+    content_type character varying(100) NOT NULL,
+    storage_path character varying(500) NOT NULL,
+    size_bytes bigint NOT NULL,
+    checksum character varying(64) NOT NULL,
+    format character varying(20) NOT NULL,
+    status character varying(20) NOT NULL,
+    average_quality_score numeric(5,2),
+    total_bases integer,
+    quality_above_q20_percentage numeric(5,2),
+    quality_above_q30_percentage numeric(5,2),
+    trimmed_length integer,
+    gc_content_percentage numeric(5,2),
+    has_chromatogram_data boolean DEFAULT false NOT NULL,
+    failuREDACTED character varying(1000),
+    processed_at timestamp with time zone,
+    created_at timestamp with time zone NOT NULL,
+    created_by character varying(100),
+    modified_at timestamp with time zone,
+    modified_by character varying(100),
+    is_deleted boolean DEFAULT false NOT NULL,
+    deleted_at timestamp with time zone,
+    deleted_by character varying(100)
+);
+
+
+--
+-- Data for Name: payment_methods; Type: TABLE DATA; Schema: billing; Owner: -
+--
+
+COPY billing.payment_methods (id, user_id, stripe_payment_method_id, brand, last4, expiry_month, expiry_year, is_default, created_at, modified_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: external_logins; Type: TABLE DATA; Schema: identity; Owner: -
+--
+
+COPY identity.external_logins (id, provider, provider_key, provider_display_name, linked_at, "UserId") FROM stdin;
+\.
+
+
+--
+-- Data for Name: pipeline_executions; Type: TABLE DATA; Schema: identity; Owner: -
+--
+
+COPY identity.pipeline_executions (id, pipeline_id, trace_id, started_by, status, created_at, started_at, completed_at, error_message, total_steps, completed_steps) FROM stdin;
+\.
+
+
+--
+-- Data for Name: pipeline_step_executions; Type: TABLE DATA; Schema: identity; Owner: -
+--
+
+COPY identity.pipeline_step_executions (id, pipeline_step_id, "order", step_type, status, started_at, completed_at, error_message, result_summary, result_data, execution_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: pipeline_steps; Type: TABLE DATA; Schema: identity; Owner: -
+--
+
+COPY identity.pipeline_steps (id, step_type, "order", label, configuration, is_enabled, created_at, pipeline_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: pipelines; Type: TABLE DATA; Schema: identity; Owner: -
+--
+
+COPY identity.pipelines (id, study_id, owner_id, name, description, status, created_at, created_by, modified_at, modified_by, "IsDeleted", "DeletedAt", "DeletedBy") FROM stdin;
+\.
+
+
+--
+-- Data for Name: plan_features; Type: TABLE DATA; Schema: identity; Owner: -
+--
+
+COPY identity.plan_features (id, plan_id, featuREDACTED, featuREDACTED) FROM stdin;
+\.
+
+
+--
+-- Data for Name: plans; Type: TABLE DATA; Schema: identity; Owner: -
+--
+
+COPY identity.plans (id, name, description, monthly_price, annual_price, currency, max_studies, max_traces_per_month, max_members_per_study, is_active, is_default, display_order, created_at, created_by, modified_at, modified_by) FROM stdin;
+\.
+
+
+--
+-- Data for Name: profiles; Type: TABLE DATA; Schema: identity; Owner: -
+--
+
+COPY identity.profiles (id, user_id, first_name, last_name, bio, location, professional_role, institution_name, institution_department, research_field, orcid_id, website, photo_url, photo_thumbnail_url, photo_size_bytes, created_at, created_by, modified_at, modified_by, is_deleted, deleted_at, deleted_by) FROM stdin;
+\.
+
+
+--
+-- Data for Name: refresh_tokens; Type: TABLE DATA; Schema: identity; Owner: -
+--
+
+COPY identity.refresh_tokens (token, expires_at, created_at, is_revoked, revoked_at, replaced_by_token, "UserId") FROM stdin;
+\.
+
+
+--
+-- Data for Name: sequence_edits; Type: TABLE DATA; Schema: identity; Owner: -
+--
+
+COPY identity.sequence_edits (id, edit_type, "position", original_base, new_base, reason, edited_by, edited_at, is_active, trace_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: studies; Type: TABLE DATA; Schema: identity; Owner: -
+--
+
+COPY identity.studies (id, owner_id, title, description, research_field, status, allow_public_comments, allow_data_download, requiREDACTED, views_count, stars_count, institution, principal_investigator, is_featured, tags, created_at, created_by, modified_at, modified_by, is_deleted, deleted_at, deleted_by) FROM stdin;
+\.
+
+
+--
+-- Data for Name: study_invitations; Type: TABLE DATA; Schema: identity; Owner: -
+--
+
+COPY identity.study_invitations (id, study_id, email, role, status, token, invited_by, expires_at, responded_at, message, created_at, created_by, modified_at, modified_by) FROM stdin;
+\.
+
+
+--
+-- Data for Name: study_members; Type: TABLE DATA; Schema: identity; Owner: -
+--
+
+COPY identity.study_members (id, user_id, role, joined_at, invited_by, study_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: study_papers; Type: TABLE DATA; Schema: identity; Owner: -
+--
+
+COPY identity.study_papers (id, title, authors, doi, abstract, journal, publication_year, file_id, file_name, file_size_bytes, study_id, created_at, created_by, modified_at, modified_by, is_deleted, deleted_at, deleted_by) FROM stdin;
+\.
+
+
+--
+-- Data for Name: study_stars; Type: TABLE DATA; Schema: identity; Owner: -
+--
+
+COPY identity.study_stars (id, study_id, user_id, starred_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: study_views; Type: TABLE DATA; Schema: identity; Owner: -
+--
+
+COPY identity.study_views (id, study_id, user_id, ip_hash, user_agent, viewed_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: subscriptions; Type: TABLE DATA; Schema: identity; Owner: -
+--
+
+COPY identity.subscriptions (id, user_id, plan_id, plan_name, status, billing_cycle, period_start, period_end, auto_renew, created_at, modified_at, cancelled_at, cancellation_reason, trial_end_date) FROM stdin;
+\.
+
+
+--
+-- Data for Name: trace_annotations; Type: TABLE DATA; Schema: identity; Owner: -
+--
+
+COPY identity.trace_annotations (id, type, label, description, start_position, end_position, strand, color, is_shared, metadata, trace_id, created_at, created_by, modified_at, modified_by) FROM stdin;
+\.
+
+
+--
+-- Data for Name: traces; Type: TABLE DATA; Schema: identity; Owner: -
+--
+
+COPY identity.traces (id, study_id, uploaded_by, name, description, file_name, content_type, storage_path, size_bytes, checksum, format, status, average_quality_score, total_bases, quality_above_q20_percentage, quality_above_q30_percentage, trimmed_length, gc_content_percentage, trim_start_5_prime, trim_end_5_prime, trim_start_3_prime, trim_end_3_prime, trim_algorithm, trimmed_by, trimmed_at, has_chromatogram_data, failuREDACTED, processed_at, created_at, created_by, modified_at, modified_by, is_deleted, deleted_at, deleted_by) FROM stdin;
+\.
+
+
+--
+-- Data for Name: two_factor_codes; Type: TABLE DATA; Schema: identity; Owner: -
+--
+
+COPY identity.two_factor_codes (id, code, created_at, expires_at, is_used, used_at, "UserId") FROM stdin;
+\.
+
+
+--
+-- Data for Name: users; Type: TABLE DATA; Schema: identity; Owner: -
+--
+
+COPY identity.users (id, email, username, password_hash, is_active, email_verified, email_verification_token, email_verification_token_expiry, password_reset_token, password_reset_token_expiry, failed_login_attempts, lockout_end, two_factor_enabled, totp_secret, totp_secret_created_at, roles, created_at, created_by, modified_at, modified_by, is_deleted, deleted_at, deleted_by) FROM stdin;
+\.
+
+
+--
+-- Data for Name: pipeline_executions; Type: TABLE DATA; Schema: pipelines; Owner: -
+--
+
+COPY pipelines.pipeline_executions (id, pipeline_id, trace_id, started_by, status, created_at, started_at, completed_at, error_message, total_steps, completed_steps) FROM stdin;
+\.
+
+
+--
+-- Data for Name: pipeline_step_executions; Type: TABLE DATA; Schema: pipelines; Owner: -
+--
+
+COPY pipelines.pipeline_step_executions (id, pipeline_step_id, "order", step_type, status, started_at, completed_at, error_message, result_summary, result_data, execution_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: pipeline_steps; Type: TABLE DATA; Schema: pipelines; Owner: -
+--
+
+COPY pipelines.pipeline_steps (id, step_type, "order", label, configuration, is_enabled, created_at, pipeline_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: pipelines; Type: TABLE DATA; Schema: pipelines; Owner: -
+--
+
+COPY pipelines.pipelines (id, study_id, owner_id, name, description, status, created_at, created_by, modified_at, modified_by, "IsDeleted", "DeletedAt", "DeletedBy") FROM stdin;
+\.
+
+
+--
+-- Data for Name: plan_features; Type: TABLE DATA; Schema: plans; Owner: -
+--
+
+COPY plans.plan_features (id, plan_id, featuREDACTED, featuREDACTED) FROM stdin;
+\.
+
+
+--
+-- Data for Name: plans; Type: TABLE DATA; Schema: plans; Owner: -
+--
+
+COPY plans.plans (id, name, description, monthly_price, annual_price, currency, max_studies, max_traces_per_month, max_members_per_study, is_active, is_default, display_order, created_at, created_by, modified_at, modified_by) FROM stdin;
+\.
+
+
+--
+-- Data for Name: profiles; Type: TABLE DATA; Schema: profiles; Owner: -
+--
+
+COPY profiles.profiles (id, user_id, first_name, last_name, bio, location, professional_role, institution_name, institution_department, research_field, orcid_id, website, photo_url, photo_thumbnail_url, photo_size_bytes, created_at, created_by, modified_at, modified_by, is_deleted, deleted_at, deleted_by) FROM stdin;
+\.
+
+
+--
+-- Data for Name: __EFMigrationsHistory; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public."__EFMigrationsHistory" ("MigrationId", "ProductVersion") FROM stdin;
+20260406014506_InitialUserContext	8.0.11
+20260427191401_AddPipelines	8.0.11
+20260408184107_InitialPlans	8.0.11
+20260411171003_ConvertPlanIdToPrefixedString	8.0.11
+20260408184129_InitialSubscriptions	8.0.11
+20260411171025_ConvertSubscriptionIdToPrefixedString	8.0.11
+20260407201811_InitialProfiles	8.0.11
+20260418000000_InitialPaymentMethods	8.0.11
+20260412145010_InitialStudies	8.0.11
+20260421000950_InitialTraces	8.0.11
+20260429000001_AddTraceTrims	8.0.11
+20260427201642_AddPipelines	8.0.11
+20260427214947_FixStepExecutionIdMapping	8.0.11
+20260507120000_FixPipelineExecutionTraceIdColumnType	8.0.11
+\.
+
+
+--
+-- Data for Name: studies; Type: TABLE DATA; Schema: studies; Owner: -
+--
+
+COPY studies.studies (id, owner_id, title, description, research_field, status, allow_public_comments, allow_data_download, requiREDACTED, views_count, stars_count, institution, principal_investigator, is_featured, tags, created_at, created_by, modified_at, modified_by, is_deleted, deleted_at, deleted_by) FROM stdin;
+\.
+
+
+--
+-- Data for Name: study_invitations; Type: TABLE DATA; Schema: studies; Owner: -
+--
+
+COPY studies.study_invitations (id, study_id, email, role, status, token, invited_by, expires_at, responded_at, message, created_at, created_by, modified_at, modified_by) FROM stdin;
+\.
+
+
+--
+-- Data for Name: study_members; Type: TABLE DATA; Schema: studies; Owner: -
+--
+
+COPY studies.study_members (id, user_id, role, joined_at, invited_by, study_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: study_papers; Type: TABLE DATA; Schema: studies; Owner: -
+--
+
+COPY studies.study_papers (id, title, authors, doi, abstract, journal, publication_year, file_id, file_name, file_size_bytes, study_id, created_at, created_by, modified_at, modified_by, is_deleted, deleted_at, deleted_by) FROM stdin;
+\.
+
+
+--
+-- Data for Name: study_stars; Type: TABLE DATA; Schema: studies; Owner: -
+--
+
+COPY studies.study_stars (id, study_id, user_id, starred_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: study_views; Type: TABLE DATA; Schema: studies; Owner: -
+--
+
+COPY studies.study_views (id, study_id, user_id, ip_hash, user_agent, viewed_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: subscriptions; Type: TABLE DATA; Schema: subscriptions; Owner: -
+--
+
+COPY subscriptions.subscriptions (id, user_id, plan_id, plan_name, status, billing_cycle, period_start, period_end, auto_renew, created_at, modified_at, cancelled_at, cancellation_reason, trial_end_date) FROM stdin;
+\.
+
+
+--
+-- Data for Name: sequence_edits; Type: TABLE DATA; Schema: traces; Owner: -
+--
+
+COPY traces.sequence_edits (id, edit_type, "position", original_base, new_base, reason, edited_by, edited_at, is_active, trace_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: trace_annotations; Type: TABLE DATA; Schema: traces; Owner: -
+--
+
+COPY traces.trace_annotations (id, type, label, description, start_position, end_position, strand, color, is_shared, metadata, trace_id, created_at, created_by, modified_at, modified_by) FROM stdin;
+\.
+
+
+--
+-- Data for Name: trace_trims; Type: TABLE DATA; Schema: traces; Owner: -
+--
+
+COPY traces.trace_trims (id, trim_type, trim_end, start_position, end_position, algorithm, reason, applied_by, applied_at, is_active, trace_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: traces; Type: TABLE DATA; Schema: traces; Owner: -
+--
+
+COPY traces.traces (id, study_id, uploaded_by, name, description, file_name, content_type, storage_path, size_bytes, checksum, format, status, average_quality_score, total_bases, quality_above_q20_percentage, quality_above_q30_percentage, trimmed_length, gc_content_percentage, has_chromatogram_data, failuREDACTED, processed_at, created_at, created_by, modified_at, modified_by, is_deleted, deleted_at, deleted_by) FROM stdin;
+\.
+
+
+--
+-- Name: plan_features_id_seq; Type: SEQUENCE SET; Schema: identity; Owner: -
+--
+
+SELECT pg_catalog.setval('identity.plan_features_id_seq', 1, false);
+
+
+--
+-- Name: study_views_id_seq; Type: SEQUENCE SET; Schema: identity; Owner: -
+--
+
+SELECT pg_catalog.setval('identity.study_views_id_seq', 1, false);
+
+
+--
+-- Name: plan_features_id_seq; Type: SEQUENCE SET; Schema: plans; Owner: -
+--
+
+SELECT pg_catalog.setval('plans.plan_features_id_seq', 1, false);
+
+
+--
+-- Name: study_views_id_seq; Type: SEQUENCE SET; Schema: studies; Owner: -
+--
+
+SELECT pg_catalog.setval('studies.study_views_id_seq', 1, false);
+
+
+--
+-- Name: payment_methods PK_payment_methods; Type: CONSTRAINT; Schema: billing; Owner: -
+--
+
+ALTER TABLE ONLY billing.payment_methods
+    ADD CONSTRAINT "PK_payment_methods" PRIMARY KEY (id);
+
+
+--
+-- Name: external_logins PK_external_logins; Type: CONSTRAINT; Schema: identity; Owner: -
+--
+
+ALTER TABLE ONLY identity.external_logins
+    ADD CONSTRAINT "PK_external_logins" PRIMARY KEY (id);
+
+
+--
+-- Name: pipeline_executions PK_pipeline_executions; Type: CONSTRAINT; Schema: identity; Owner: -
+--
+
+ALTER TABLE ONLY identity.pipeline_executions
+    ADD CONSTRAINT "PK_pipeline_executions" PRIMARY KEY (id);
+
+
+--
+-- Name: pipeline_step_executions PK_pipeline_step_executions; Type: CONSTRAINT; Schema: identity; Owner: -
+--
+
+ALTER TABLE ONLY identity.pipeline_step_executions
+    ADD CONSTRAINT "PK_pipeline_step_executions" PRIMARY KEY (id);
+
+
+--
+-- Name: pipeline_steps PK_pipeline_steps; Type: CONSTRAINT; Schema: identity; Owner: -
+--
+
+ALTER TABLE ONLY identity.pipeline_steps
+    ADD CONSTRAINT "PK_pipeline_steps" PRIMARY KEY (id);
+
+
+--
+-- Name: pipelines PK_pipelines; Type: CONSTRAINT; Schema: identity; Owner: -
+--
+
+ALTER TABLE ONLY identity.pipelines
+    ADD CONSTRAINT "PK_pipelines" PRIMARY KEY (id);
+
+
+--
+-- Name: plan_features PK_plan_features; Type: CONSTRAINT; Schema: identity; Owner: -
+--
+
+ALTER TABLE ONLY identity.plan_features
+    ADD CONSTRAINT "PK_plan_features" PRIMARY KEY (id);
+
+
+--
+-- Name: plans PK_plans; Type: CONSTRAINT; Schema: identity; Owner: -
+--
+
+ALTER TABLE ONLY identity.plans
+    ADD CONSTRAINT "PK_plans" PRIMARY KEY (id);
+
+
+--
+-- Name: profiles PK_profiles; Type: CONSTRAINT; Schema: identity; Owner: -
+--
+
+ALTER TABLE ONLY identity.profiles
+    ADD CONSTRAINT "PK_profiles" PRIMARY KEY (id);
+
+
+--
+-- Name: refresh_tokens PK_refresh_tokens; Type: CONSTRAINT; Schema: identity; Owner: -
+--
+
+ALTER TABLE ONLY identity.refresh_tokens
+    ADD CONSTRAINT "PK_refresh_tokens" PRIMARY KEY (token);
+
+
+--
+-- Name: sequence_edits PK_sequence_edits; Type: CONSTRAINT; Schema: identity; Owner: -
+--
+
+ALTER TABLE ONLY identity.sequence_edits
+    ADD CONSTRAINT "PK_sequence_edits" PRIMARY KEY (id);
+
+
+--
+-- Name: studies PK_studies; Type: CONSTRAINT; Schema: identity; Owner: -
+--
+
+ALTER TABLE ONLY identity.studies
+    ADD CONSTRAINT "PK_studies" PRIMARY KEY (id);
+
+
+--
+-- Name: study_invitations PK_study_invitations; Type: CONSTRAINT; Schema: identity; Owner: -
+--
+
+ALTER TABLE ONLY identity.study_invitations
+    ADD CONSTRAINT "PK_study_invitations" PRIMARY KEY (id);
+
+
+--
+-- Name: study_members PK_study_members; Type: CONSTRAINT; Schema: identity; Owner: -
+--
+
+ALTER TABLE ONLY identity.study_members
+    ADD CONSTRAINT "PK_study_members" PRIMARY KEY (id);
+
+
+--
+-- Name: study_papers PK_study_papers; Type: CONSTRAINT; Schema: identity; Owner: -
+--
+
+ALTER TABLE ONLY identity.study_papers
+    ADD CONSTRAINT "PK_study_papers" PRIMARY KEY (id);
+
+
+--
+-- Name: study_stars PK_study_stars; Type: CONSTRAINT; Schema: identity; Owner: -
+--
+
+ALTER TABLE ONLY identity.study_stars
+    ADD CONSTRAINT "PK_study_stars" PRIMARY KEY (id);
+
+
+--
+-- Name: study_views PK_study_views; Type: CONSTRAINT; Schema: identity; Owner: -
+--
+
+ALTER TABLE ONLY identity.study_views
+    ADD CONSTRAINT "PK_study_views" PRIMARY KEY (id);
+
+
+--
+-- Name: subscriptions PK_subscriptions; Type: CONSTRAINT; Schema: identity; Owner: -
+--
+
+ALTER TABLE ONLY identity.subscriptions
+    ADD CONSTRAINT "PK_subscriptions" PRIMARY KEY (id);
+
+
+--
+-- Name: trace_annotations PK_trace_annotations; Type: CONSTRAINT; Schema: identity; Owner: -
+--
+
+ALTER TABLE ONLY identity.trace_annotations
+    ADD CONSTRAINT "PK_trace_annotations" PRIMARY KEY (id);
+
+
+--
+-- Name: traces PK_traces; Type: CONSTRAINT; Schema: identity; Owner: -
+--
+
+ALTER TABLE ONLY identity.traces
+    ADD CONSTRAINT "PK_traces" PRIMARY KEY (id);
+
+
+--
+-- Name: two_factor_codes PK_two_factor_codes; Type: CONSTRAINT; Schema: identity; Owner: -
+--
+
+ALTER TABLE ONLY identity.two_factor_codes
+    ADD CONSTRAINT "PK_two_factor_codes" PRIMARY KEY (id);
+
+
+--
+-- Name: users PK_users; Type: CONSTRAINT; Schema: identity; Owner: -
+--
+
+ALTER TABLE ONLY identity.users
+    ADD CONSTRAINT "PK_users" PRIMARY KEY (id);
+
+
+--
+-- Name: pipeline_executions PK_pipeline_executions; Type: CONSTRAINT; Schema: pipelines; Owner: -
+--
+
+ALTER TABLE ONLY pipelines.pipeline_executions
+    ADD CONSTRAINT "PK_pipeline_executions" PRIMARY KEY (id);
+
+
+--
+-- Name: pipeline_step_executions PK_pipeline_step_executions; Type: CONSTRAINT; Schema: pipelines; Owner: -
+--
+
+ALTER TABLE ONLY pipelines.pipeline_step_executions
+    ADD CONSTRAINT "PK_pipeline_step_executions" PRIMARY KEY (id);
+
+
+--
+-- Name: pipeline_steps PK_pipeline_steps; Type: CONSTRAINT; Schema: pipelines; Owner: -
+--
+
+ALTER TABLE ONLY pipelines.pipeline_steps
+    ADD CONSTRAINT "PK_pipeline_steps" PRIMARY KEY (id);
+
+
+--
+-- Name: pipelines PK_pipelines; Type: CONSTRAINT; Schema: pipelines; Owner: -
+--
+
+ALTER TABLE ONLY pipelines.pipelines
+    ADD CONSTRAINT "PK_pipelines" PRIMARY KEY (id);
+
+
+--
+-- Name: plan_features PK_plan_features; Type: CONSTRAINT; Schema: plans; Owner: -
+--
+
+ALTER TABLE ONLY plans.plan_features
+    ADD CONSTRAINT "PK_plan_features" PRIMARY KEY (id);
+
+
+--
+-- Name: plans PK_plans; Type: CONSTRAINT; Schema: plans; Owner: -
+--
+
+ALTER TABLE ONLY plans.plans
+    ADD CONSTRAINT "PK_plans" PRIMARY KEY (id);
+
+
+--
+-- Name: profiles PK_profiles; Type: CONSTRAINT; Schema: profiles; Owner: -
+--
+
+ALTER TABLE ONLY profiles.profiles
+    ADD CONSTRAINT "PK_profiles" PRIMARY KEY (id);
+
+
+--
+-- Name: __EFMigrationsHistory PK___EFMigrationsHistory; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."__EFMigrationsHistory"
+    ADD CONSTRAINT "PK___EFMigrationsHistory" PRIMARY KEY ("MigrationId");
+
+
+--
+-- Name: studies PK_studies; Type: CONSTRAINT; Schema: studies; Owner: -
+--
+
+ALTER TABLE ONLY studies.studies
+    ADD CONSTRAINT "PK_studies" PRIMARY KEY (id);
+
+
+--
+-- Name: study_invitations PK_study_invitations; Type: CONSTRAINT; Schema: studies; Owner: -
+--
+
+ALTER TABLE ONLY studies.study_invitations
+    ADD CONSTRAINT "PK_study_invitations" PRIMARY KEY (id);
+
+
+--
+-- Name: study_members PK_study_members; Type: CONSTRAINT; Schema: studies; Owner: -
+--
+
+ALTER TABLE ONLY studies.study_members
+    ADD CONSTRAINT "PK_study_members" PRIMARY KEY (id);
+
+
+--
+-- Name: study_papers PK_study_papers; Type: CONSTRAINT; Schema: studies; Owner: -
+--
+
+ALTER TABLE ONLY studies.study_papers
+    ADD CONSTRAINT "PK_study_papers" PRIMARY KEY (id);
+
+
+--
+-- Name: study_stars PK_study_stars; Type: CONSTRAINT; Schema: studies; Owner: -
+--
+
+ALTER TABLE ONLY studies.study_stars
+    ADD CONSTRAINT "PK_study_stars" PRIMARY KEY (id);
+
+
+--
+-- Name: study_views PK_study_views; Type: CONSTRAINT; Schema: studies; Owner: -
+--
+
+ALTER TABLE ONLY studies.study_views
+    ADD CONSTRAINT "PK_study_views" PRIMARY KEY (id);
+
+
+--
+-- Name: subscriptions PK_subscriptions; Type: CONSTRAINT; Schema: subscriptions; Owner: -
+--
+
+ALTER TABLE ONLY subscriptions.subscriptions
+    ADD CONSTRAINT "PK_subscriptions" PRIMARY KEY (id);
+
+
+--
+-- Name: sequence_edits PK_sequence_edits; Type: CONSTRAINT; Schema: traces; Owner: -
+--
+
+ALTER TABLE ONLY traces.sequence_edits
+    ADD CONSTRAINT "PK_sequence_edits" PRIMARY KEY (id);
+
+
+--
+-- Name: trace_annotations PK_trace_annotations; Type: CONSTRAINT; Schema: traces; Owner: -
+--
+
+ALTER TABLE ONLY traces.trace_annotations
+    ADD CONSTRAINT "PK_trace_annotations" PRIMARY KEY (id);
+
+
+--
+-- Name: trace_trims PK_trace_trims; Type: CONSTRAINT; Schema: traces; Owner: -
+--
+
+ALTER TABLE ONLY traces.trace_trims
+    ADD CONSTRAINT "PK_trace_trims" PRIMARY KEY (id);
+
+
+--
+-- Name: traces PK_traces; Type: CONSTRAINT; Schema: traces; Owner: -
+--
+
+ALTER TABLE ONLY traces.traces
+    ADD CONSTRAINT "PK_traces" PRIMARY KEY (id);
+
+
+--
+-- Name: ix_payment_methods_stripe_id; Type: INDEX; Schema: billing; Owner: -
+--
+
+CREATE UNIQUE INDEX ix_payment_methods_stripe_id ON billing.payment_methods USING btree (stripe_payment_method_id);
+
+
+--
+-- Name: ix_payment_methods_user_default; Type: INDEX; Schema: billing; Owner: -
+--
+
+CREATE INDEX ix_payment_methods_user_default ON billing.payment_methods USING btree (user_id, is_default);
+
+
+--
+-- Name: ix_payment_methods_user_id; Type: INDEX; Schema: billing; Owner: -
+--
+
+CREATE INDEX ix_payment_methods_user_id ON billing.payment_methods USING btree (user_id);
+
+
+--
+-- Name: IX_external_logins_UserId; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE INDEX "IX_external_logins_UserId" ON identity.external_logins USING btree ("UserId");
+
+
+--
+-- Name: IX_external_logins_provider_provider_key; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE UNIQUE INDEX "IX_external_logins_provider_provider_key" ON identity.external_logins USING btree (provider, provider_key);
+
+
+--
+-- Name: IX_pipeline_executions_pipeline_id; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE INDEX "IX_pipeline_executions_pipeline_id" ON identity.pipeline_executions USING btree (pipeline_id);
+
+
+--
+-- Name: IX_pipeline_executions_status; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE INDEX "IX_pipeline_executions_status" ON identity.pipeline_executions USING btree (status);
+
+
+--
+-- Name: IX_pipeline_executions_trace_id; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE INDEX "IX_pipeline_executions_trace_id" ON identity.pipeline_executions USING btree (trace_id);
+
+
+--
+-- Name: IX_pipeline_executions_trace_id_status; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE INDEX "IX_pipeline_executions_trace_id_status" ON identity.pipeline_executions USING btree (trace_id, status);
+
+
+--
+-- Name: IX_pipeline_step_executions_execution_id_order; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE UNIQUE INDEX "IX_pipeline_step_executions_execution_id_order" ON identity.pipeline_step_executions USING btree (execution_id, "order");
+
+
+--
+-- Name: IX_pipeline_steps_pipeline_id_order; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE UNIQUE INDEX "IX_pipeline_steps_pipeline_id_order" ON identity.pipeline_steps USING btree (pipeline_id, "order");
+
+
+--
+-- Name: IX_pipelines_name; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE INDEX "IX_pipelines_name" ON identity.pipelines USING btree (name);
+
+
+--
+-- Name: IX_pipelines_owner_id; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE INDEX "IX_pipelines_owner_id" ON identity.pipelines USING btree (owner_id);
+
+
+--
+-- Name: IX_pipelines_status; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE INDEX "IX_pipelines_status" ON identity.pipelines USING btree (status);
+
+
+--
+-- Name: IX_pipelines_study_id; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE INDEX "IX_pipelines_study_id" ON identity.pipelines USING btree (study_id);
+
+
+--
+-- Name: IX_plan_features_plan_id; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE INDEX "IX_plan_features_plan_id" ON identity.plan_features USING btree (plan_id);
+
+
+--
+-- Name: IX_plans_display_order; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE INDEX "IX_plans_display_order" ON identity.plans USING btree (display_order);
+
+
+--
+-- Name: IX_plans_is_active; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE INDEX "IX_plans_is_active" ON identity.plans USING btree (is_active);
+
+
+--
+-- Name: IX_plans_is_default; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE INDEX "IX_plans_is_default" ON identity.plans USING btree (is_default);
+
+
+--
+-- Name: IX_plans_name; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE UNIQUE INDEX "IX_plans_name" ON identity.plans USING btree (name);
+
+
+--
+-- Name: IX_profiles_research_field; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE INDEX "IX_profiles_research_field" ON identity.profiles USING btree (research_field);
+
+
+--
+-- Name: IX_profiles_user_id; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE UNIQUE INDEX "IX_profiles_user_id" ON identity.profiles USING btree (user_id);
+
+
+--
+-- Name: IX_refresh_tokens_UserId; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE INDEX "IX_refresh_tokens_UserId" ON identity.refresh_tokens USING btree ("UserId");
+
+
+--
+-- Name: IX_refresh_tokens_token; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE INDEX "IX_refresh_tokens_token" ON identity.refresh_tokens USING btree (token);
+
+
+--
+-- Name: IX_sequence_edits_trace_id_position; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE INDEX "IX_sequence_edits_trace_id_position" ON identity.sequence_edits USING btree (trace_id, "position");
+
+
+--
+-- Name: IX_studies_is_featured; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE INDEX "IX_studies_is_featured" ON identity.studies USING btree (is_featured);
+
+
+--
+-- Name: IX_studies_owner_id; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE INDEX "IX_studies_owner_id" ON identity.studies USING btree (owner_id);
+
+
+--
+-- Name: IX_studies_research_field; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE INDEX "IX_studies_research_field" ON identity.studies USING btree (research_field);
+
+
+--
+-- Name: IX_studies_status; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE INDEX "IX_studies_status" ON identity.studies USING btree (status);
+
+
+--
+-- Name: IX_study_invitations_email; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE INDEX "IX_study_invitations_email" ON identity.study_invitations USING btree (email);
+
+
+--
+-- Name: IX_study_invitations_status; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE INDEX "IX_study_invitations_status" ON identity.study_invitations USING btree (status);
+
+
+--
+-- Name: IX_study_invitations_study_id; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE INDEX "IX_study_invitations_study_id" ON identity.study_invitations USING btree (study_id);
+
+
+--
+-- Name: IX_study_invitations_study_id_email; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE INDEX "IX_study_invitations_study_id_email" ON identity.study_invitations USING btree (study_id, email);
+
+
+--
+-- Name: IX_study_invitations_token; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE UNIQUE INDEX "IX_study_invitations_token" ON identity.study_invitations USING btree (token);
+
+
+--
+-- Name: IX_study_members_study_id_user_id; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE UNIQUE INDEX "IX_study_members_study_id_user_id" ON identity.study_members USING btree (study_id, user_id);
+
+
+--
+-- Name: IX_study_papers_study_id; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE INDEX "IX_study_papers_study_id" ON identity.study_papers USING btree (study_id);
+
+
+--
+-- Name: IX_study_stars_study_id; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE INDEX "IX_study_stars_study_id" ON identity.study_stars USING btree (study_id);
+
+
+--
+-- Name: IX_study_stars_study_id_user_id; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE UNIQUE INDEX "IX_study_stars_study_id_user_id" ON identity.study_stars USING btree (study_id, user_id);
+
+
+--
+-- Name: IX_study_stars_user_id; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE INDEX "IX_study_stars_user_id" ON identity.study_stars USING btree (user_id);
+
+
+--
+-- Name: IX_study_views_study_id; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE INDEX "IX_study_views_study_id" ON identity.study_views USING btree (study_id);
+
+
+--
+-- Name: IX_study_views_study_id_ip_hash_viewed_at; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE INDEX "IX_study_views_study_id_ip_hash_viewed_at" ON identity.study_views USING btree (study_id, ip_hash, viewed_at);
+
+
+--
+-- Name: IX_study_views_study_id_viewed_at; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE INDEX "IX_study_views_study_id_viewed_at" ON identity.study_views USING btree (study_id, viewed_at);
+
+
+--
+-- Name: IX_subscriptions_plan_id; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE INDEX "IX_subscriptions_plan_id" ON identity.subscriptions USING btree (plan_id);
+
+
+--
+-- Name: IX_subscriptions_status; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE INDEX "IX_subscriptions_status" ON identity.subscriptions USING btree (status);
+
+
+--
+-- Name: IX_subscriptions_user_id; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE INDEX "IX_subscriptions_user_id" ON identity.subscriptions USING btree (user_id);
+
+
+--
+-- Name: IX_subscriptions_user_id_status; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE INDEX "IX_subscriptions_user_id_status" ON identity.subscriptions USING btree (user_id, status);
+
+
+--
+-- Name: IX_trace_annotations_trace_id_is_shared; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE INDEX "IX_trace_annotations_trace_id_is_shared" ON identity.trace_annotations USING btree (trace_id, is_shared);
+
+
+--
+-- Name: IX_trace_annotations_trace_id_start_position_end_position; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE INDEX "IX_trace_annotations_trace_id_start_position_end_position" ON identity.trace_annotations USING btree (trace_id, start_position, end_position);
+
+
+--
+-- Name: IX_traces_format; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE INDEX "IX_traces_format" ON identity.traces USING btree (format);
+
+
+--
+-- Name: IX_traces_status; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE INDEX "IX_traces_status" ON identity.traces USING btree (status);
+
+
+--
+-- Name: IX_traces_study_id; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE INDEX "IX_traces_study_id" ON identity.traces USING btree (study_id);
+
+
+--
+-- Name: IX_two_factor_codes_UserId; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE INDEX "IX_two_factor_codes_UserId" ON identity.two_factor_codes USING btree ("UserId");
+
+
+--
+-- Name: IX_users_email; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE UNIQUE INDEX "IX_users_email" ON identity.users USING btree (email);
+
+
+--
+-- Name: IX_users_username; Type: INDEX; Schema: identity; Owner: -
+--
+
+CREATE UNIQUE INDEX "IX_users_username" ON identity.users USING btree (username);
+
+
+--
+-- Name: IX_pipeline_executions_pipeline_id; Type: INDEX; Schema: pipelines; Owner: -
+--
+
+CREATE INDEX "IX_pipeline_executions_pipeline_id" ON pipelines.pipeline_executions USING btree (pipeline_id);
+
+
+--
+-- Name: IX_pipeline_executions_status; Type: INDEX; Schema: pipelines; Owner: -
+--
+
+CREATE INDEX "IX_pipeline_executions_status" ON pipelines.pipeline_executions USING btree (status);
+
+
+--
+-- Name: IX_pipeline_executions_trace_id; Type: INDEX; Schema: pipelines; Owner: -
+--
+
+CREATE INDEX "IX_pipeline_executions_trace_id" ON pipelines.pipeline_executions USING btree (trace_id);
+
+
+--
+-- Name: IX_pipeline_executions_trace_id_status; Type: INDEX; Schema: pipelines; Owner: -
+--
+
+CREATE INDEX "IX_pipeline_executions_trace_id_status" ON pipelines.pipeline_executions USING btree (trace_id, status);
+
+
+--
+-- Name: IX_pipeline_step_executions_execution_id_order; Type: INDEX; Schema: pipelines; Owner: -
+--
+
+CREATE UNIQUE INDEX "IX_pipeline_step_executions_execution_id_order" ON pipelines.pipeline_step_executions USING btree (execution_id, "order");
+
+
+--
+-- Name: IX_pipeline_steps_pipeline_id_order; Type: INDEX; Schema: pipelines; Owner: -
+--
+
+CREATE UNIQUE INDEX "IX_pipeline_steps_pipeline_id_order" ON pipelines.pipeline_steps USING btree (pipeline_id, "order");
+
+
+--
+-- Name: IX_pipelines_name; Type: INDEX; Schema: pipelines; Owner: -
+--
+
+CREATE INDEX "IX_pipelines_name" ON pipelines.pipelines USING btree (name);
+
+
+--
+-- Name: IX_pipelines_owner_id; Type: INDEX; Schema: pipelines; Owner: -
+--
+
+CREATE INDEX "IX_pipelines_owner_id" ON pipelines.pipelines USING btree (owner_id);
+
+
+--
+-- Name: IX_pipelines_status; Type: INDEX; Schema: pipelines; Owner: -
+--
+
+CREATE INDEX "IX_pipelines_status" ON pipelines.pipelines USING btree (status);
+
+
+--
+-- Name: IX_pipelines_study_id; Type: INDEX; Schema: pipelines; Owner: -
+--
+
+CREATE INDEX "IX_pipelines_study_id" ON pipelines.pipelines USING btree (study_id);
+
+
+--
+-- Name: IX_plan_features_plan_id; Type: INDEX; Schema: plans; Owner: -
+--
+
+CREATE INDEX "IX_plan_features_plan_id" ON plans.plan_features USING btree (plan_id);
+
+
+--
+-- Name: IX_plans_display_order; Type: INDEX; Schema: plans; Owner: -
+--
+
+CREATE INDEX "IX_plans_display_order" ON plans.plans USING btree (display_order);
+
+
+--
+-- Name: IX_plans_is_active; Type: INDEX; Schema: plans; Owner: -
+--
+
+CREATE INDEX "IX_plans_is_active" ON plans.plans USING btree (is_active);
+
+
+--
+-- Name: IX_plans_is_default; Type: INDEX; Schema: plans; Owner: -
+--
+
+CREATE INDEX "IX_plans_is_default" ON plans.plans USING btree (is_default);
+
+
+--
+-- Name: IX_plans_name; Type: INDEX; Schema: plans; Owner: -
+--
+
+CREATE UNIQUE INDEX "IX_plans_name" ON plans.plans USING btree (name);
+
+
+--
+-- Name: IX_profiles_research_field; Type: INDEX; Schema: profiles; Owner: -
+--
+
+CREATE INDEX "IX_profiles_research_field" ON profiles.profiles USING btree (research_field);
+
+
+--
+-- Name: IX_profiles_user_id; Type: INDEX; Schema: profiles; Owner: -
+--
+
+CREATE UNIQUE INDEX "IX_profiles_user_id" ON profiles.profiles USING btree (user_id);
+
+
+--
+-- Name: IX_studies_is_featured; Type: INDEX; Schema: studies; Owner: -
+--
+
+CREATE INDEX "IX_studies_is_featured" ON studies.studies USING btree (is_featured);
+
+
+--
+-- Name: IX_studies_owner_id; Type: INDEX; Schema: studies; Owner: -
+--
+
+CREATE INDEX "IX_studies_owner_id" ON studies.studies USING btree (owner_id);
+
+
+--
+-- Name: IX_studies_research_field; Type: INDEX; Schema: studies; Owner: -
+--
+
+CREATE INDEX "IX_studies_research_field" ON studies.studies USING btree (research_field);
+
+
+--
+-- Name: IX_studies_status; Type: INDEX; Schema: studies; Owner: -
+--
+
+CREATE INDEX "IX_studies_status" ON studies.studies USING btree (status);
+
+
+--
+-- Name: IX_study_invitations_email; Type: INDEX; Schema: studies; Owner: -
+--
+
+CREATE INDEX "IX_study_invitations_email" ON studies.study_invitations USING btree (email);
+
+
+--
+-- Name: IX_study_invitations_status; Type: INDEX; Schema: studies; Owner: -
+--
+
+CREATE INDEX "IX_study_invitations_status" ON studies.study_invitations USING btree (status);
+
+
+--
+-- Name: IX_study_invitations_study_id; Type: INDEX; Schema: studies; Owner: -
+--
+
+CREATE INDEX "IX_study_invitations_study_id" ON studies.study_invitations USING btree (study_id);
+
+
+--
+-- Name: IX_study_invitations_study_id_email; Type: INDEX; Schema: studies; Owner: -
+--
+
+CREATE INDEX "IX_study_invitations_study_id_email" ON studies.study_invitations USING btree (study_id, email);
+
+
+--
+-- Name: IX_study_invitations_token; Type: INDEX; Schema: studies; Owner: -
+--
+
+CREATE UNIQUE INDEX "IX_study_invitations_token" ON studies.study_invitations USING btree (token);
+
+
+--
+-- Name: IX_study_members_study_id_user_id; Type: INDEX; Schema: studies; Owner: -
+--
+
+CREATE UNIQUE INDEX "IX_study_members_study_id_user_id" ON studies.study_members USING btree (study_id, user_id);
+
+
+--
+-- Name: IX_study_papers_study_id; Type: INDEX; Schema: studies; Owner: -
+--
+
+CREATE INDEX "IX_study_papers_study_id" ON studies.study_papers USING btree (study_id);
+
+
+--
+-- Name: IX_study_stars_study_id; Type: INDEX; Schema: studies; Owner: -
+--
+
+CREATE INDEX "IX_study_stars_study_id" ON studies.study_stars USING btree (study_id);
+
+
+--
+-- Name: IX_study_stars_study_id_user_id; Type: INDEX; Schema: studies; Owner: -
+--
+
+CREATE UNIQUE INDEX "IX_study_stars_study_id_user_id" ON studies.study_stars USING btree (study_id, user_id);
+
+
+--
+-- Name: IX_study_stars_user_id; Type: INDEX; Schema: studies; Owner: -
+--
+
+CREATE INDEX "IX_study_stars_user_id" ON studies.study_stars USING btree (user_id);
+
+
+--
+-- Name: IX_study_views_study_id; Type: INDEX; Schema: studies; Owner: -
+--
+
+CREATE INDEX "IX_study_views_study_id" ON studies.study_views USING btree (study_id);
+
+
+--
+-- Name: IX_study_views_study_id_ip_hash_viewed_at; Type: INDEX; Schema: studies; Owner: -
+--
+
+CREATE INDEX "IX_study_views_study_id_ip_hash_viewed_at" ON studies.study_views USING btree (study_id, ip_hash, viewed_at);
+
+
+--
+-- Name: IX_study_views_study_id_viewed_at; Type: INDEX; Schema: studies; Owner: -
+--
+
+CREATE INDEX "IX_study_views_study_id_viewed_at" ON studies.study_views USING btree (study_id, viewed_at);
+
+
+--
+-- Name: IX_subscriptions_plan_id; Type: INDEX; Schema: subscriptions; Owner: -
+--
+
+CREATE INDEX "IX_subscriptions_plan_id" ON subscriptions.subscriptions USING btree (plan_id);
+
+
+--
+-- Name: IX_subscriptions_status; Type: INDEX; Schema: subscriptions; Owner: -
+--
+
+CREATE INDEX "IX_subscriptions_status" ON subscriptions.subscriptions USING btree (status);
+
+
+--
+-- Name: IX_subscriptions_user_id; Type: INDEX; Schema: subscriptions; Owner: -
+--
+
+CREATE INDEX "IX_subscriptions_user_id" ON subscriptions.subscriptions USING btree (user_id);
+
+
+--
+-- Name: IX_subscriptions_user_id_status; Type: INDEX; Schema: subscriptions; Owner: -
+--
+
+CREATE INDEX "IX_subscriptions_user_id_status" ON subscriptions.subscriptions USING btree (user_id, status);
+
+
+--
+-- Name: IX_sequence_edits_trace_id_position; Type: INDEX; Schema: traces; Owner: -
+--
+
+CREATE INDEX "IX_sequence_edits_trace_id_position" ON traces.sequence_edits USING btree (trace_id, "position");
+
+
+--
+-- Name: IX_trace_annotations_trace_id_is_shared; Type: INDEX; Schema: traces; Owner: -
+--
+
+CREATE INDEX "IX_trace_annotations_trace_id_is_shared" ON traces.trace_annotations USING btree (trace_id, is_shared);
+
+
+--
+-- Name: IX_trace_annotations_trace_id_start_position_end_position; Type: INDEX; Schema: traces; Owner: -
+--
+
+CREATE INDEX "IX_trace_annotations_trace_id_start_position_end_position" ON traces.trace_annotations USING btree (trace_id, start_position, end_position);
+
+
+--
+-- Name: IX_trace_trims_trace_id_start_position; Type: INDEX; Schema: traces; Owner: -
+--
+
+CREATE INDEX "IX_trace_trims_trace_id_start_position" ON traces.trace_trims USING btree (trace_id, start_position);
+
+
+--
+-- Name: IX_traces_format; Type: INDEX; Schema: traces; Owner: -
+--
+
+CREATE INDEX "IX_traces_format" ON traces.traces USING btree (format);
+
+
+--
+-- Name: IX_traces_status; Type: INDEX; Schema: traces; Owner: -
+--
+
+CREATE INDEX "IX_traces_status" ON traces.traces USING btree (status);
+
+
+--
+-- Name: IX_traces_study_id; Type: INDEX; Schema: traces; Owner: -
+--
+
+CREATE INDEX "IX_traces_study_id" ON traces.traces USING btree (study_id);
+
+
+--
+-- Name: external_logins FK_external_logins_users_UserId; Type: FK CONSTRAINT; Schema: identity; Owner: -
+--
+
+ALTER TABLE ONLY identity.external_logins
+    ADD CONSTRAINT "FK_external_logins_users_UserId" FOREIGN KEY ("UserId") REFERENCES identity.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: pipeline_step_executions FK_pipeline_step_executions_pipeline_executions_execution_id; Type: FK CONSTRAINT; Schema: identity; Owner: -
+--
+
+ALTER TABLE ONLY identity.pipeline_step_executions
+    ADD CONSTRAINT "FK_pipeline_step_executions_pipeline_executions_execution_id" FOREIGN KEY (execution_id) REFERENCES identity.pipeline_executions(id);
+
+
+--
+-- Name: pipeline_steps FK_pipeline_steps_pipelines_pipeline_id; Type: FK CONSTRAINT; Schema: identity; Owner: -
+--
+
+ALTER TABLE ONLY identity.pipeline_steps
+    ADD CONSTRAINT "FK_pipeline_steps_pipelines_pipeline_id" FOREIGN KEY (pipeline_id) REFERENCES identity.pipelines(id);
+
+
+--
+-- Name: plan_features FK_plan_features_plans_plan_id; Type: FK CONSTRAINT; Schema: identity; Owner: -
+--
+
+ALTER TABLE ONLY identity.plan_features
+    ADD CONSTRAINT "FK_plan_features_plans_plan_id" FOREIGN KEY (plan_id) REFERENCES identity.plans(id) ON DELETE CASCADE;
+
+
+--
+-- Name: refresh_tokens FK_refresh_tokens_users_UserId; Type: FK CONSTRAINT; Schema: identity; Owner: -
+--
+
+ALTER TABLE ONLY identity.refresh_tokens
+    ADD CONSTRAINT "FK_refresh_tokens_users_UserId" FOREIGN KEY ("UserId") REFERENCES identity.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: sequence_edits FK_sequence_edits_traces_trace_id; Type: FK CONSTRAINT; Schema: identity; Owner: -
+--
+
+ALTER TABLE ONLY identity.sequence_edits
+    ADD CONSTRAINT "FK_sequence_edits_traces_trace_id" FOREIGN KEY (trace_id) REFERENCES identity.traces(id);
+
+
+--
+-- Name: study_members FK_study_members_studies_study_id; Type: FK CONSTRAINT; Schema: identity; Owner: -
+--
+
+ALTER TABLE ONLY identity.study_members
+    ADD CONSTRAINT "FK_study_members_studies_study_id" FOREIGN KEY (study_id) REFERENCES identity.studies(id);
+
+
+--
+-- Name: study_papers FK_study_papers_studies_study_id; Type: FK CONSTRAINT; Schema: identity; Owner: -
+--
+
+ALTER TABLE ONLY identity.study_papers
+    ADD CONSTRAINT "FK_study_papers_studies_study_id" FOREIGN KEY (study_id) REFERENCES identity.studies(id);
+
+
+--
+-- Name: trace_annotations FK_trace_annotations_traces_trace_id; Type: FK CONSTRAINT; Schema: identity; Owner: -
+--
+
+ALTER TABLE ONLY identity.trace_annotations
+    ADD CONSTRAINT "FK_trace_annotations_traces_trace_id" FOREIGN KEY (trace_id) REFERENCES identity.traces(id);
+
+
+--
+-- Name: two_factor_codes FK_two_factor_codes_users_UserId; Type: FK CONSTRAINT; Schema: identity; Owner: -
+--
+
+ALTER TABLE ONLY identity.two_factor_codes
+    ADD CONSTRAINT "FK_two_factor_codes_users_UserId" FOREIGN KEY ("UserId") REFERENCES identity.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: pipeline_step_executions FK_pipeline_step_executions_pipeline_executions_execution_id; Type: FK CONSTRAINT; Schema: pipelines; Owner: -
+--
+
+ALTER TABLE ONLY pipelines.pipeline_step_executions
+    ADD CONSTRAINT "FK_pipeline_step_executions_pipeline_executions_execution_id" FOREIGN KEY (execution_id) REFERENCES pipelines.pipeline_executions(id);
+
+
+--
+-- Name: pipeline_steps FK_pipeline_steps_pipelines_pipeline_id; Type: FK CONSTRAINT; Schema: pipelines; Owner: -
+--
+
+ALTER TABLE ONLY pipelines.pipeline_steps
+    ADD CONSTRAINT "FK_pipeline_steps_pipelines_pipeline_id" FOREIGN KEY (pipeline_id) REFERENCES pipelines.pipelines(id);
+
+
+--
+-- Name: plan_features FK_plan_features_plans_plan_id; Type: FK CONSTRAINT; Schema: plans; Owner: -
+--
+
+ALTER TABLE ONLY plans.plan_features
+    ADD CONSTRAINT "FK_plan_features_plans_plan_id" FOREIGN KEY (plan_id) REFERENCES plans.plans(id) ON DELETE CASCADE;
+
+
+--
+-- Name: study_members FK_study_members_studies_study_id; Type: FK CONSTRAINT; Schema: studies; Owner: -
+--
+
+ALTER TABLE ONLY studies.study_members
+    ADD CONSTRAINT "FK_study_members_studies_study_id" FOREIGN KEY (study_id) REFERENCES studies.studies(id);
+
+
+--
+-- Name: study_papers FK_study_papers_studies_study_id; Type: FK CONSTRAINT; Schema: studies; Owner: -
+--
+
+ALTER TABLE ONLY studies.study_papers
+    ADD CONSTRAINT "FK_study_papers_studies_study_id" FOREIGN KEY (study_id) REFERENCES studies.studies(id);
+
+
+--
+-- Name: sequence_edits FK_sequence_edits_traces_trace_id; Type: FK CONSTRAINT; Schema: traces; Owner: -
+--
+
+ALTER TABLE ONLY traces.sequence_edits
+    ADD CONSTRAINT "FK_sequence_edits_traces_trace_id" FOREIGN KEY (trace_id) REFERENCES traces.traces(id);
+
+
+--
+-- Name: trace_annotations FK_trace_annotations_traces_trace_id; Type: FK CONSTRAINT; Schema: traces; Owner: -
+--
+
+ALTER TABLE ONLY traces.trace_annotations
+    ADD CONSTRAINT "FK_trace_annotations_traces_trace_id" FOREIGN KEY (trace_id) REFERENCES traces.traces(id);
+
+
+--
+-- Name: trace_trims FK_trace_trims_traces_trace_id; Type: FK CONSTRAINT; Schema: traces; Owner: -
+--
+
+ALTER TABLE ONLY traces.trace_trims
+    ADD CONSTRAINT "FK_trace_trims_traces_trace_id" FOREIGN KEY (trace_id) REFERENCES traces.traces(id) ON DELETE CASCADE;
+
+
+--
+-- PostgreSQL database dump complete
+--
+
+\unrestrict iqjpjbusleJwmEhESIUc6ecTc7x6NhTjYhmMIlxZyU3BbpnA91h1R6CG0W0Xik9
+

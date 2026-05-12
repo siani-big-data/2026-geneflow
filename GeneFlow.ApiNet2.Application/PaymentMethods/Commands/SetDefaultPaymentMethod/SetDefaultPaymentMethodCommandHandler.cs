@@ -27,8 +27,11 @@ public sealed class SetDefaultPaymentMethodCommandHandler
         SetDefaultPaymentMethodCommand request,
         CancellationToken cancellationToken)
     {
-        var userId = UserId.Parse(request.UserId);
-        var paymentMethodId = PaymentMethodId.Parse(request.PaymentMethodId);
+        if (!UserId.TryParse(request.UserId, out var userId) || userId is null)
+            return Result.Failure(PaymentMethodErrors.InvalidUserId);
+
+        if (!PaymentMethodId.TryParse(request.PaymentMethodId, out var paymentMethodId) || paymentMethodId is null)
+            return Result.Failure(PaymentMethodErrors.NotFound);
 
         var paymentMethod = await _repository.GetByIdAsync(paymentMethodId, cancellationToken);
         if (paymentMethod is null)

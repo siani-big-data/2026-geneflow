@@ -328,4 +328,175 @@ public class ProfileTests
     }
 
     #endregion
+
+    #region Additional Tests - SetInstitution, SetLocation, SetProfessionalRole
+
+    [Fact]
+    public void UpdateBasicInfo_WithInstitution_ShouldSetInstitution()
+    {
+        // Arrange
+        var profile = Profile.Create(CreateProfileId(), CreateUserId(), CreatePersonName()).Value;
+        var institution = Institution.Create("MIT", "Biology Department").Value;
+
+        // Act
+        var result = profile.UpdateBasicInfo(
+            CreatePersonName(),
+            Bio.Empty,
+            Location.Empty,
+            ProfessionalRole.Empty,
+            institution,
+            null);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        profile.Institution.Name.Should().Be("MIT");
+        profile.Institution.Department.Should().Be("Biology Department");
+    }
+
+    [Fact]
+    public void UpdateBasicInfo_WithLocation_ShouldSetLocation()
+    {
+        // Arrange
+        var profile = Profile.Create(CreateProfileId(), CreateUserId(), CreatePersonName()).Value;
+        var location = Location.Create("Cambridge, MA").Value;
+
+        // Act
+        var result = profile.UpdateBasicInfo(
+            CreatePersonName(),
+            Bio.Empty,
+            location,
+            ProfessionalRole.Empty,
+            Institution.Empty,
+            null);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        profile.Location.Value.Should().Be("Cambridge, MA");
+    }
+
+    [Fact]
+    public void UpdateBasicInfo_WithProfessionalRole_ShouldSetRole()
+    {
+        // Arrange
+        var profile = Profile.Create(CreateProfileId(), CreateUserId(), CreatePersonName()).Value;
+        var role = ProfessionalRole.Create("Senior Researcher").Value;
+
+        // Act
+        var result = profile.UpdateBasicInfo(
+            CreatePersonName(),
+            Bio.Empty,
+            Location.Empty,
+            role,
+            Institution.Empty,
+            null);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        profile.ProfessionalRole.Value.Should().Be("Senior Researcher");
+    }
+
+    [Fact]
+    public void UpdateBasicInfo_WithResearchField_ShouldSetField()
+    {
+        // Arrange
+        var profile = Profile.Create(CreateProfileId(), CreateUserId(), CreatePersonName()).Value;
+
+        // Act
+        var result = profile.UpdateBasicInfo(
+            CreatePersonName(),
+            Bio.Empty,
+            Location.Empty,
+            ProfessionalRole.Empty,
+            Institution.Empty,
+            ResearchField.Bioinformatics);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        profile.ResearchField.Should().Be(ResearchField.Bioinformatics);
+    }
+
+    [Fact]
+    public void UpdateBasicInfo_WithNullResearchField_ShouldClearField()
+    {
+        // Arrange
+        var profile = Profile.Create(CreateProfileId(), CreateUserId(), CreatePersonName()).Value;
+        profile.UpdateBasicInfo(
+            CreatePersonName(),
+            Bio.Empty,
+            Location.Empty,
+            ProfessionalRole.Empty,
+            Institution.Empty,
+            ResearchField.Genomics);
+
+        // Act
+        var result = profile.UpdateBasicInfo(
+            CreatePersonName(),
+            Bio.Empty,
+            Location.Empty,
+            ProfessionalRole.Empty,
+            Institution.Empty,
+            null);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        profile.ResearchField.Should().BeNull();
+    }
+
+    #endregion
+
+    #region Additional Tests - Profile Completeness
+
+    [Fact]
+    public void IsComplete_WithValidFirstName_ShouldReturnTrue()
+    {
+        // Arrange
+        var profile = Profile.Create(CreateProfileId(), CreateUserId(), CreatePersonName("Alice")).Value;
+
+        // Assert
+        profile.IsComplete.Should().BeTrue();
+    }
+
+    [Fact]
+    public void FullName_WithLastName_ShouldReturnFullName()
+    {
+        // Arrange
+        var profile = Profile.Create(CreateProfileId(), CreateUserId(), CreatePersonName("Alice", "Smith")).Value;
+
+        // Assert
+        profile.FullName.Should().Be("Alice Smith");
+    }
+
+    [Fact]
+    public void FullName_WithoutLastName_ShouldReturnFirstNameOnly()
+    {
+        // Arrange
+        var name = PersonName.Create("Alice", null).Value;
+        var profile = Profile.Create(CreateProfileId(), CreateUserId(), name).Value;
+
+        // Assert
+        profile.FullName.Should().Be("Alice");
+    }
+
+    [Fact]
+    public void Initials_WithFirstAndLastName_ShouldReturnBothInitials()
+    {
+        // Arrange
+        var profile = Profile.Create(CreateProfileId(), CreateUserId(), CreatePersonName("Alice", "Smith")).Value;
+
+        // Assert
+        profile.Initials.Should().Be("AS");
+    }
+
+    [Fact]
+    public void Initials_WithFirstNameOnly_ShouldReturnSingleInitial()
+    {
+        // Arrange
+        var name = PersonName.Create("Alice", null).Value;
+        var profile = Profile.Create(CreateProfileId(), CreateUserId(), name).Value;
+
+        // Assert
+        profile.Initials.Should().Be("A");
+    }
+
+    #endregion
 }

@@ -180,6 +180,7 @@ public static class StudyMappings
             Status = invitation.Status.Name,
             StatusId = invitation.Status.Id,
             InvitedBy = invitation.InvitedBy.ToString(),
+            Token = invitation.Token,
             ExpiresAt = invitation.ExpiresAt,
             RespondedAt = invitation.RespondedAt,
             Message = invitation.Message,

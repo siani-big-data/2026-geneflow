@@ -16,6 +16,14 @@ namespace GeneFlow.ApiNet2.Domain.Pipelines;
 public sealed class Pipeline : FullAuditableAggregateRoot<PipelineId>
 {
     #region Constants
+    /// <summary>
+    /// Maximum number of steps allowed in a single pipeline.
+    /// Capped at 10 to keep pipelines manageable for users (UI editing,
+    /// step reordering, debugging) and to bound execution complexity:
+    /// each additional step multiplies the surface area of validation,
+    /// configuration, and runtime cost. Pipelines that need more stages
+    /// should be split into chained pipelines instead.
+    /// </summary>
     public const int MaxSteps = 10;
     #endregion
 
@@ -163,7 +171,6 @@ public sealed class Pipeline : FullAuditableAggregateRoot<PipelineId>
         var removedOrder = step.Order;
         _steps.Remove(step);
 
-        // Reorder remaining steps
         foreach (var s in _steps.Where(s => s.Order > removedOrder))
         {
             s.SetOrder(s.Order - 1);
@@ -186,14 +193,12 @@ public sealed class Pipeline : FullAuditableAggregateRoot<PipelineId>
         if (stepIds.Distinct().Count() != stepIds.Count)
             return Result.Failure(PipelineErrors.DuplicateStepOrder);
 
-        // Verify all step IDs exist
         foreach (var stepId in stepIds)
         {
             if (!_steps.Any(s => s.Id == stepId))
                 return Result.Failure(PipelineErrors.StepNotFound);
         }
 
-        // Apply new order
         for (var i = 0; i < stepIds.Count; i++)
         {
             var step = _steps.First(s => s.Id == stepIds[i]);
@@ -223,7 +228,7 @@ public sealed class Pipeline : FullAuditableAggregateRoot<PipelineId>
 
     public Result Deactivate(UserId deactivatedBy)
     {
-        if (!Status.CanTransitionTo(PipelineStatus.Draft))
+        if (Status != PipelineStatus.Active)
             return Result.Failure(PipelineErrors.InvalidStatusTransition(Status, PipelineStatus.Draft));
 
         Status = PipelineStatus.Draft;

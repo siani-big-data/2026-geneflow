@@ -29,17 +29,11 @@ public sealed class PipelineStatus : Enumeration<PipelineStatus>
     {
         return (this, newStatus) switch
         {
-            // From Draft
             _ when this == Draft && newStatus == Active => true,
             _ when this == Draft && newStatus == Archived => true,
-
-            // From Active
             _ when this == Active && newStatus == Draft => true,
             _ when this == Active && newStatus == Archived => true,
-
-            // From Archived - can restore to draft
             _ when this == Archived && newStatus == Draft => true,
-
             _ => false
         };
     }

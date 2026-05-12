@@ -34,14 +34,12 @@ public sealed class CreatePipelineCommandHandler
         CreatePipelineCommand request,
         CancellationToken cancellationToken)
     {
-        // Parse IDs
         if (!UserId.TryParse(request.UserId, out var userId) || userId == null)
             return Result.Failure<PipelineDto>(PipelineErrors.InvalidUserId);
 
         if (!StudyId.TryParse(request.StudyId, out var studyId) || studyId == null)
             return Result.Failure<PipelineDto>(PipelineErrors.InvalidStudyId);
 
-        // Create value objects
         var nameResult = PipelineName.Create(request.Name);
         if (nameResult.IsFailure)
             return Result.Failure<PipelineDto>(nameResult.Error);
@@ -50,17 +48,14 @@ public sealed class CreatePipelineCommandHandler
         if (descriptionResult.IsFailure)
             return Result.Failure<PipelineDto>(descriptionResult.Error);
 
-        // Check for duplicate name in study
         if (await _pipelineRepository.NameExistsInStudyAsync(studyId, request.Name, null, cancellationToken))
-            return Result.Failure<PipelineDto>(PipelineErrors.NameRequired); // TODO: Add specific error
+            return Result.Failure<PipelineDto>(PipelineErrors.NameRequired);
 
-        // Generate ID
         var sequenceValue = await _sequenceGenerator.NextAsync(
             PipelineId.SequenceName,
             cancellationToken);
         var pipelineId = PipelineId.FromSequence(sequenceValue);
 
-        // Create pipeline
         var pipelineResult = Pipeline.Create(
             pipelineId,
             studyId,
@@ -73,7 +68,6 @@ public sealed class CreatePipelineCommandHandler
 
         var pipeline = pipelineResult.Value;
 
-        // Persist
         await _pipelineRepository.AddAsync(pipeline, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 

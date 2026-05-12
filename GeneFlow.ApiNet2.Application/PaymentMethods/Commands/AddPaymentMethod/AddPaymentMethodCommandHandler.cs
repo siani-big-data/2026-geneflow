@@ -32,7 +32,8 @@ public sealed class AddPaymentMethodCommandHandler
         AddPaymentMethodCommand request,
         CancellationToken cancellationToken)
     {
-        var userId = UserId.Parse(request.UserId);
+        if (!UserId.TryParse(request.UserId, out var userId) || userId is null)
+            return Result.Failure<PaymentMethodDto>(PaymentMethodErrors.InvalidUserId);
 
         // Check if already exists
         var existing = await _repository.GetByStripeIdAsync(request.StripePaymentMethodId, cancellationToken);

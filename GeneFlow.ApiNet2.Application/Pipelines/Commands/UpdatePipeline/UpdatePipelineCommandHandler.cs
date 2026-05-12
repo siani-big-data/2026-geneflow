@@ -29,19 +29,16 @@ public sealed class UpdatePipelineCommandHandler
         UpdatePipelineCommand request,
         CancellationToken cancellationToken)
     {
-        // Parse IDs
         if (!UserId.TryParse(request.UserId, out var userId) || userId == null)
             return Result.Failure<PipelineDto>(PipelineErrors.InvalidUserId);
 
         if (!PipelineId.TryParse(request.PipelineId, out var pipelineId) || pipelineId == null)
             return Result.Failure<PipelineDto>(PipelineErrors.NotFound);
 
-        // Get pipeline
         var pipeline = await _pipelineRepository.GetByIdWithStepsAsync(pipelineId, cancellationToken);
         if (pipeline == null)
             return Result.Failure<PipelineDto>(PipelineErrors.NotFound);
 
-        // Create value objects
         var nameResult = PipelineName.Create(request.Name);
         if (nameResult.IsFailure)
             return Result.Failure<PipelineDto>(nameResult.Error);
@@ -50,13 +47,10 @@ public sealed class UpdatePipelineCommandHandler
         if (descriptionResult.IsFailure)
             return Result.Failure<PipelineDto>(descriptionResult.Error);
 
-        // Update
         var updateResult = pipeline.Update(nameResult.Value, descriptionResult.Value, userId);
         if (updateResult.IsFailure)
             return Result.Failure<PipelineDto>(updateResult.Error);
 
-        // Persist
-        // Entity already tracked - no Update needed
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Success(pipeline.ToDto());

@@ -21,7 +21,6 @@ public sealed class PipelineConfiguration : IEntityTypeConfiguration<Pipeline>
 
         builder.HasKey(p => p.Id);
 
-        // Configure PipelineId
         builder.Property(p => p.Id)
             .HasColumnName("id")
             .HasMaxLength(10)
@@ -29,7 +28,6 @@ public sealed class PipelineConfiguration : IEntityTypeConfiguration<Pipeline>
                 id => id.ToString(),
                 value => PipelineId.Parse(value));
 
-        // Configure StudyId (reference to Study aggregate)
         builder.Property(p => p.StudyId)
             .HasColumnName("study_id")
             .HasMaxLength(10)
@@ -40,7 +38,6 @@ public sealed class PipelineConfiguration : IEntityTypeConfiguration<Pipeline>
 
         builder.HasIndex(p => p.StudyId);
 
-        // Configure OwnerId (reference to User aggregate)
         builder.Property(p => p.OwnerId)
             .HasColumnName("owner_id")
             .HasMaxLength(10)
@@ -51,7 +48,6 @@ public sealed class PipelineConfiguration : IEntityTypeConfiguration<Pipeline>
 
         builder.HasIndex(p => p.OwnerId);
 
-        // PipelineName (owned value object)
         builder.OwnsOne(p => p.Name, name =>
         {
             name.Property(n => n.Value)
@@ -59,11 +55,9 @@ public sealed class PipelineConfiguration : IEntityTypeConfiguration<Pipeline>
                 .HasMaxLength(PipelineName.MaxLength)
                 .IsRequired();
 
-            // Index for study + name uniqueness (on the owned property)
             name.HasIndex(n => n.Value);
         });
 
-        // PipelineDescription (owned value object)
         builder.OwnsOne(p => p.Description, description =>
         {
             description.Property(d => d.Value)
@@ -71,7 +65,6 @@ public sealed class PipelineConfiguration : IEntityTypeConfiguration<Pipeline>
                 .HasMaxLength(PipelineDescription.MaxLength);
         });
 
-        // PipelineStatus (smart enumeration stored as string)
         builder.Property(p => p.Status)
             .HasColumnName("status")
             .HasMaxLength(20)
@@ -82,7 +75,6 @@ public sealed class PipelineConfiguration : IEntityTypeConfiguration<Pipeline>
 
         builder.HasIndex(p => p.Status);
 
-        // Audit columns
         builder.Property(p => p.CreatedAt)
             .HasColumnName("created_at")
             .IsRequired();
@@ -98,7 +90,6 @@ public sealed class PipelineConfiguration : IEntityTypeConfiguration<Pipeline>
             .HasColumnName("modified_by")
             .HasMaxLength(50);
 
-        // Steps (owned collection)
         builder.OwnsMany(p => p.Steps, step =>
         {
             step.ToTable("pipeline_steps");
@@ -144,8 +135,5 @@ public sealed class PipelineConfiguration : IEntityTypeConfiguration<Pipeline>
 
             step.HasIndex("pipeline_id", "Order").IsUnique();
         });
-
-        // Note: Composite index for study + name uniqueness is configured via migration
-        // since Name is an owned type and cannot be referenced directly in HasIndex
     }
 }

@@ -66,7 +66,7 @@ public class GetCurrentUserProfileQueryHandlerTests
 
         // Update profile with more data
         var name = PersonName.Create("Jane", "Smith").Value;
-        var bio = Bio.Create("Test bio").Value;
+        var bio = Bio.Create("Test bio description").Value;
         profile.UpdateBasicInfo(
             name, bio, Location.Empty, ProfessionalRole.Empty, Institution.Empty, null);
 
@@ -85,7 +85,7 @@ public class GetCurrentUserProfileQueryHandlerTests
         // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.FirstName.Should().Be("Jane");
-        result.Value.Bio.Should().Be("Test bio");
+        result.Value.Bio.Should().Be("Test bio description");
     }
 
     #endregion

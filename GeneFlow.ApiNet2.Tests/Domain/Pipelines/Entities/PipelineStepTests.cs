@@ -246,4 +246,51 @@ public class PipelineStepTests
     }
 
     #endregion
+
+    #region DisplayName
+
+    [Fact]
+    public void DisplayName_WhenLabelExists_ShouldReturnLabel()
+    {
+        // Arrange
+        var step = PipelineStep.Create(StepType.Quality, 1, "My Custom Label", CreateConfig());
+
+        // Assert
+        step.DisplayName.Should().Be("My Custom Label");
+    }
+
+    [Fact]
+    public void DisplayName_WhenLabelIsNull_ShouldReturnStepTypeDisplayName()
+    {
+        // Arrange
+        var step = PipelineStep.Create(StepType.Quality, 1, null, CreateConfig());
+
+        // Assert
+        step.DisplayName.Should().Be(StepType.Quality.DisplayName);
+        step.DisplayName.Should().Be("Quality Analysis");
+    }
+
+    [Fact]
+    public void DisplayName_WhenLabelIsEmpty_ShouldReturnStepTypeDisplayName()
+    {
+        // Arrange
+        var step = PipelineStep.Create(StepType.Trimming, 1, "", CreateConfig());
+
+        // Assert
+        step.DisplayName.Should().Be(StepType.Trimming.DisplayName);
+        step.DisplayName.Should().Be("Sequence Trimming");
+    }
+
+    [Fact]
+    public void DisplayName_WhenLabelIsWhitespace_ShouldReturnStepTypeDisplayName()
+    {
+        // Arrange - Note: Create trims whitespace, so "   " becomes null
+        var step = PipelineStep.Create(StepType.Heterozygote, 1, "   ", CreateConfig());
+
+        // Assert
+        step.DisplayName.Should().Be(StepType.Heterozygote.DisplayName);
+        step.DisplayName.Should().Be("Heterozygote Detection");
+    }
+
+    #endregion
 }

@@ -29,23 +29,19 @@ public sealed class GetPipelineExecutionsQueryHandler
         GetPipelineExecutionsQuery request,
         CancellationToken cancellationToken)
     {
-        // Parse ID
         if (!PipelineId.TryParse(request.PipelineId, out var pipelineId) || pipelineId == null)
             return Result.Failure<PagedList<PipelineExecutionSummaryDto>>(PipelineErrors.NotFound);
 
-        // Get pipeline name
         var pipeline = await _pipelineRepository.GetByIdAsync(pipelineId, cancellationToken);
         if (pipeline == null)
             return Result.Failure<PagedList<PipelineExecutionSummaryDto>>(PipelineErrors.NotFound);
 
-        // Parse status filter
         ExecutionStatus? status = null;
         if (request.StatusId.HasValue)
         {
             status = ExecutionStatus.FromId(request.StatusId.Value);
         }
 
-        // Query
         var executions = await _executionRepository.GetByPipelineAsync(
             pipelineId,
             request.PageNumber,
@@ -53,7 +49,6 @@ public sealed class GetPipelineExecutionsQueryHandler
             status,
             cancellationToken);
 
-        // Map to DTOs
         var dtos = executions.Items.Select(e => e.ToSummaryDto(pipeline.Name.Value)).ToList();
 
         return Result.Success(PagedList<PipelineExecutionSummaryDto>.Create(

@@ -23,7 +23,9 @@ public sealed class GetPaymentMethodsQueryHandler
         GetPaymentMethodsQuery request,
         CancellationToken cancellationToken)
     {
-        var userId = UserId.Parse(request.UserId);
+        if (!UserId.TryParse(request.UserId, out var userId) || userId is null)
+            return Result.Failure<IReadOnlyList<PaymentMethodDto>>(PaymentMethodErrors.InvalidUserId);
+
         var paymentMethods = await _repository.GetByUserIdAsync(userId, cancellationToken);
 
         var dtos = paymentMethods.Select(pm => new PaymentMethodDto(

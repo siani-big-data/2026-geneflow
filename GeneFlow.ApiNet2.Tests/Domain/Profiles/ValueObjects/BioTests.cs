@@ -105,8 +105,8 @@ public class BioTests
     public void Equals_WithSameValue_ShouldReturnTrue()
     {
         // Arrange
-        var bio1 = Bio.Create("Test bio").Value;
-        var bio2 = Bio.Create("Test bio").Value;
+        var bio1 = Bio.Create("Test bio text here").Value;
+        var bio2 = Bio.Create("Test bio text here").Value;
 
         // Assert
         bio1.Should().Be(bio2);
@@ -116,8 +116,8 @@ public class BioTests
     public void Equals_WithDifferentValue_ShouldReturnFalse()
     {
         // Arrange
-        var bio1 = Bio.Create("Bio one").Value;
-        var bio2 = Bio.Create("Bio two").Value;
+        var bio1 = Bio.Create("Bio one text here").Value;
+        var bio2 = Bio.Create("Bio two text here").Value;
 
         // Assert
         bio1.Should().NotBe(bio2);
@@ -142,13 +142,13 @@ public class BioTests
     public void ToString_WithValue_ShouldReturnBioText()
     {
         // Arrange
-        var bio = Bio.Create("Test bio").Value;
+        var bio = Bio.Create("Test bio text here").Value;
 
         // Act
         var result = bio.ToString();
 
         // Assert
-        result.Should().Be("Test bio");
+        result.Should().Be("Test bio text here");
     }
 
     [Fact]
@@ -168,13 +168,13 @@ public class BioTests
     public void ImplicitConversion_ShouldReturnBioValue()
     {
         // Arrange
-        var bio = Bio.Create("Test bio").Value;
+        var bio = Bio.Create("Test bio text here").Value;
 
         // Act
         string? result = bio;
 
         // Assert
-        result.Should().Be("Test bio");
+        result.Should().Be("Test bio text here");
     }
 
     #endregion

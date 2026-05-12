@@ -4,6 +4,7 @@ using GeneFlow.ApiNet2.Domain.Plans;
 using GeneFlow.ApiNet2.Domain.Plans.ValueObjects;
 using GeneFlow.ApiNet2.Domain.Subscriptions;
 using GeneFlow.ApiNet2.Domain.Subscriptions.Enumerations;
+using GeneFlow.ApiNet2.Domain.Subscriptions.Events;
 using GeneFlow.ApiNet2.SharedKernel.Infrastructure;
 
 namespace GeneFlow.ApiNet2.Tests.Application.Subscriptions.Commands;
@@ -318,6 +319,132 @@ public class CreateSubscriptionCommandHandlerTests
         // Assert
         result.IsFailure.Should().BeTrue();
         result.Error.Code.Should().Contain("PlanNotActive");
+    }
+
+    #endregion
+
+    #region Domain Events
+
+    [Fact]
+    public async Task Handle_ShouldRaiseSubscriptionCreatedEvent()
+    {
+        // Arrange
+        var plan = CreateTestPlan();
+        var command = new CreateSubscriptionCommand(
+            "U00000001",
+            plan.Id.ToString(),
+            BillingCycle.Monthly.Id,
+            false);
+
+        Subscription? capturedSubscription = null;
+
+        _subscriptionRepository
+            .HasActiveSubscriptionAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns(false);
+
+        _planRepository
+            .GetByIdAsync(Arg.Any<PlanId>(), Arg.Any<CancellationToken>())
+            .Returns(plan);
+
+        _subscriptionRepository
+            .When(x => x.AddAsync(Arg.Any<Subscription>(), Arg.Any<CancellationToken>()))
+            .Do(callInfo => capturedSubscription = callInfo.Arg<Subscription>());
+
+        _unitOfWork
+            .SaveChangesAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(1));
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        capturedSubscription.Should().NotBeNull();
+        capturedSubscription!.DomainEvents.Should().ContainSingle();
+        capturedSubscription.DomainEvents.First().Should().BeOfType<SubscriptionCreatedEvent>();
+
+        var domainEvent = capturedSubscription.DomainEvents.First() as SubscriptionCreatedEvent;
+        domainEvent!.SubscriptionId.Should().Be(capturedSubscription.Id);
+        domainEvent.UserId.Value.Should().Be(1);
+        domainEvent.PlanId.Should().Be(plan.Id);
+    }
+
+    [Fact]
+    public async Task Handle_WithTrial_ShouldRaiseSubscriptionCreatedEvent()
+    {
+        // Arrange
+        var plan = CreateTestPlan();
+        var command = new CreateSubscriptionCommand(
+            "U00000001",
+            plan.Id.ToString(),
+            BillingCycle.Monthly.Id,
+            true); // startWithTrial
+
+        Subscription? capturedSubscription = null;
+
+        _subscriptionRepository
+            .HasActiveSubscriptionAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns(false);
+
+        _planRepository
+            .GetByIdAsync(Arg.Any<PlanId>(), Arg.Any<CancellationToken>())
+            .Returns(plan);
+
+        _subscriptionRepository
+            .When(x => x.AddAsync(Arg.Any<Subscription>(), Arg.Any<CancellationToken>()))
+            .Do(callInfo => capturedSubscription = callInfo.Arg<Subscription>());
+
+        _unitOfWork
+            .SaveChangesAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(1));
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        capturedSubscription.Should().NotBeNull();
+        capturedSubscription!.DomainEvents.Should().ContainSingle()
+            .Which.Should().BeOfType<SubscriptionCreatedEvent>();
+    }
+
+    [Fact]
+    public async Task Handle_WithFreePlan_ShouldRaiseSubscriptionCreatedEvent()
+    {
+        // Arrange
+        var plan = CreateTestPlan(isFree: true);
+        var command = new CreateSubscriptionCommand(
+            "U00000001",
+            plan.Id.ToString(),
+            BillingCycle.Monthly.Id,
+            false);
+
+        Subscription? capturedSubscription = null;
+
+        _subscriptionRepository
+            .HasActiveSubscriptionAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns(false);
+
+        _planRepository
+            .GetByIdAsync(Arg.Any<PlanId>(), Arg.Any<CancellationToken>())
+            .Returns(plan);
+
+        _subscriptionRepository
+            .When(x => x.AddAsync(Arg.Any<Subscription>(), Arg.Any<CancellationToken>()))
+            .Do(callInfo => capturedSubscription = callInfo.Arg<Subscription>());
+
+        _unitOfWork
+            .SaveChangesAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(1));
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        capturedSubscription.Should().NotBeNull();
+        capturedSubscription!.DomainEvents.Should().ContainSingle()
+            .Which.Should().BeOfType<SubscriptionCreatedEvent>();
     }
 
     #endregion

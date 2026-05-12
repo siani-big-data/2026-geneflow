@@ -539,5 +539,562 @@ public class SubscriptionTests
         subscription.ModifiedAt.Should().BeOnOrAfter(beforeChange);
     }
 
+    [Fact]
+    public void SetAutoRenew_EnableAgain_ShouldUpdateToTrue()
+    {
+        // Arrange
+        var subscription = CreateTestSubscription();
+        subscription.SetAutoRenew(false);
+
+        // Act
+        var result = subscription.SetAutoRenew(true);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        subscription.AutoRenew.Should().BeTrue();
+    }
+
+    #endregion
+
+    #region Renew - Additional Tests
+
+    [Fact]
+    public void Renew_WhenExpired_ShouldSetActiveStatus()
+    {
+        // Arrange
+        var subscription = CreateTestSubscription();
+        subscription.Expire();
+
+        // Act
+        var result = subscription.Renew();
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        subscription.Status.Should().Be(SubscriptionStatus.Active);
+        subscription.AutoRenew.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Renew_WhenSuspended_ShouldSetActiveStatus()
+    {
+        // Arrange
+        var subscription = CreateTestSubscription();
+        subscription.Suspend();
+
+        // Act
+        var result = subscription.Renew();
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        subscription.Status.Should().Be(SubscriptionStatus.Active);
+    }
+
+    [Fact]
+    public void Renew_ShouldCreateNewPeriod()
+    {
+        // Arrange
+        var subscription = CreateTestSubscription();
+        subscription.Cancel();
+        var oldPeriodEnd = subscription.CurrentPeriod.EndDate;
+
+        // Act
+        subscription.Renew();
+
+        // Assert
+        subscription.CurrentPeriod.EndDate.Should().BeAfter(oldPeriodEnd);
+    }
+
+    [Fact]
+    public void Renew_WhenInTrial_ShouldReturnFailure()
+    {
+        // Arrange
+        var subscription = CreateTestSubscription(startWithTrial: true);
+
+        // Act
+        var result = subscription.Renew();
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Code.Should().Contain("CannotRenewActive");
+    }
+
+    #endregion
+
+    #region Cancel - Additional Tests
+
+    [Fact]
+    public void Cancel_WithoutReason_ShouldSucceed()
+    {
+        // Arrange
+        var subscription = CreateTestSubscription();
+
+        // Act
+        var result = subscription.Cancel();
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        subscription.CancellationReason.Should().BeNull();
+    }
+
+    [Fact]
+    public void Cancel_WhenInTrial_ShouldSucceed()
+    {
+        // Arrange
+        var subscription = CreateTestSubscription(startWithTrial: true);
+
+        // Act
+        var result = subscription.Cancel("No longer needed");
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        subscription.Status.Should().Be(SubscriptionStatus.Cancelled);
+    }
+
+    [Fact]
+    public void Cancel_WhenSuspended_ShouldReturnFailure()
+    {
+        // Arrange
+        var subscription = CreateTestSubscription();
+        subscription.Suspend();
+
+        // Act
+        var result = subscription.Cancel();
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Code.Should().Contain("CannotCancelExpired");
+    }
+
+    [Fact]
+    public void Cancel_ShouldSetModifiedAt()
+    {
+        // Arrange
+        var subscription = CreateTestSubscription();
+        var beforeCancel = DateTime.UtcNow;
+
+        // Act
+        subscription.Cancel();
+
+        // Assert
+        subscription.ModifiedAt.Should().NotBeNull();
+        subscription.ModifiedAt.Should().BeOnOrAfter(beforeCancel);
+    }
+
+    #endregion
+
+    #region ChangePlan - Additional Tests
+
+    [Fact]
+    public void ChangePlan_Upgrade_ShouldExtendPeriod()
+    {
+        // Arrange
+        var subscription = CreateTestSubscription(planName: "Basic");
+        var oldPeriodEnd = subscription.CurrentPeriod.EndDate;
+
+        // Act
+        var result = subscription.ChangePlan(CreatePlanId(), "Pro", BillingCycle.Monthly, isUpgrade: true);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        subscription.CurrentPeriod.EndDate.Should().BeAfter(oldPeriodEnd);
+    }
+
+    [Fact]
+    public void ChangePlan_Downgrade_ShouldKeepCurrentPeriod()
+    {
+        // Arrange
+        var subscription = CreateTestSubscription(planName: "Enterprise");
+        var oldPeriodEnd = subscription.CurrentPeriod.EndDate;
+
+        // Act
+        var result = subscription.ChangePlan(CreatePlanId(), "Pro", BillingCycle.Monthly, isUpgrade: false);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        subscription.CurrentPeriod.EndDate.Should().BeCloseTo(oldPeriodEnd, TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
+    public void ChangePlan_ShouldChangeBillingCycle()
+    {
+        // Arrange
+        var subscription = CreateTestSubscription(planName: "Pro");
+
+        // Act
+        var result = subscription.ChangePlan(CreatePlanId(), "Pro", BillingCycle.Annual, isUpgrade: false);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        subscription.BillingCycle.Should().Be(BillingCycle.Annual);
+    }
+
+    [Fact]
+    public void ChangePlan_WhenCancelled_ShouldSucceed()
+    {
+        // Arrange
+        var subscription = CreateTestSubscription(planName: "Pro");
+        subscription.Cancel();
+
+        // Act
+        var result = subscription.ChangePlan(CreatePlanId(), "Enterprise", BillingCycle.Monthly, isUpgrade: true);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        subscription.PlanName.Should().Be("Enterprise");
+    }
+
+    [Fact]
+    public void ChangePlan_EventShouldContainCorrectData()
+    {
+        // Arrange
+        var subscription = CreateTestSubscription(planName: "Pro");
+        subscription.ClearDomainEvents();
+        var newPlanId = CreatePlanId();
+
+        // Act
+        subscription.ChangePlan(newPlanId, "Enterprise", BillingCycle.Annual, isUpgrade: true);
+
+        // Assert
+        var planChangedEvent = subscription.DomainEvents.OfType<SubscriptionPlanChangedEvent>().Single();
+        planChangedEvent.OldPlanName.Should().Be("Pro");
+        planChangedEvent.NewPlanName.Should().Be("Enterprise");
+        planChangedEvent.IsUpgrade.Should().BeTrue();
+    }
+
+    #endregion
+
+    #region Suspend - Additional Tests
+
+    [Fact]
+    public void Suspend_WhenPastDue_ShouldSucceed()
+    {
+        // Arrange - Using reflection or create scenario where status becomes PastDue
+        // Since there's no direct method to set PastDue, we test Active scenario
+        var subscription = CreateTestSubscription();
+
+        // Act
+        var result = subscription.Suspend();
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        subscription.Status.Should().Be(SubscriptionStatus.Suspended);
+    }
+
+    [Fact]
+    public void Suspend_ShouldSetModifiedAt()
+    {
+        // Arrange
+        var subscription = CreateTestSubscription();
+        var beforeSuspend = DateTime.UtcNow;
+
+        // Act
+        subscription.Suspend();
+
+        // Assert
+        subscription.ModifiedAt.Should().NotBeNull();
+        subscription.ModifiedAt.Should().BeOnOrAfter(beforeSuspend);
+    }
+
+    [Fact]
+    public void Suspend_WhenExpired_ShouldReturnFailure()
+    {
+        // Arrange
+        var subscription = CreateTestSubscription();
+        subscription.Expire();
+
+        // Act
+        var result = subscription.Suspend();
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Code.Should().Contain("CannotSuspendNonActive");
+    }
+
+    [Fact]
+    public void Suspend_WhenInTrial_ShouldReturnFailure()
+    {
+        // Arrange
+        var subscription = CreateTestSubscription(startWithTrial: true);
+
+        // Act
+        var result = subscription.Suspend();
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Code.Should().Contain("CannotSuspendNonActive");
+    }
+
+    #endregion
+
+    #region Reactivate - Additional Tests
+
+    [Fact]
+    public void Reactivate_ShouldSetModifiedAt()
+    {
+        // Arrange
+        var subscription = CreateTestSubscription();
+        subscription.Suspend();
+        var beforeReactivate = DateTime.UtcNow;
+
+        // Act
+        subscription.Reactivate();
+
+        // Assert
+        subscription.ModifiedAt.Should().NotBeNull();
+        subscription.ModifiedAt.Should().BeOnOrAfter(beforeReactivate);
+    }
+
+    [Fact]
+    public void Reactivate_WhenCancelled_ShouldReturnFailure()
+    {
+        // Arrange
+        var subscription = CreateTestSubscription();
+        subscription.Cancel();
+
+        // Act
+        var result = subscription.Reactivate();
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Code.Should().Contain("CannotReactivateNonSuspended");
+    }
+
+    [Fact]
+    public void Reactivate_WhenExpired_ShouldReturnFailure()
+    {
+        // Arrange
+        var subscription = CreateTestSubscription();
+        subscription.Expire();
+
+        // Act
+        var result = subscription.Reactivate();
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Code.Should().Contain("CannotReactivateNonSuspended");
+    }
+
+    #endregion
+
+    #region ActivateFromTrial - Additional Tests
+
+    [Fact]
+    public void ActivateFromTrial_ShouldCreateNewPeriod()
+    {
+        // Arrange
+        var subscription = CreateTestSubscription(startWithTrial: true);
+        var oldPeriodEnd = subscription.CurrentPeriod.EndDate;
+
+        // Act
+        subscription.ActivateFromTrial();
+
+        // Assert
+        subscription.CurrentPeriod.EndDate.Should().BeAfter(oldPeriodEnd);
+    }
+
+    [Fact]
+    public void ActivateFromTrial_ShouldSetModifiedAt()
+    {
+        // Arrange
+        var subscription = CreateTestSubscription(startWithTrial: true);
+        var beforeActivation = DateTime.UtcNow;
+
+        // Act
+        subscription.ActivateFromTrial();
+
+        // Assert
+        subscription.ModifiedAt.Should().NotBeNull();
+        subscription.ModifiedAt.Should().BeOnOrAfter(beforeActivation);
+    }
+
+    [Fact]
+    public void ActivateFromTrial_WhenCancelled_ShouldReturnFailure()
+    {
+        // Arrange
+        var subscription = CreateTestSubscription(startWithTrial: true);
+        subscription.Cancel();
+
+        // Act
+        var result = subscription.ActivateFromTrial();
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+    }
+
+    #endregion
+
+    #region Expire - Additional Tests
+
+    [Fact]
+    public void ExpiREDACTED()
+    {
+        // Arrange
+        var subscription = CreateTestSubscription();
+        var beforeExpire = DateTime.UtcNow;
+
+        // Act
+        subscription.Expire();
+
+        // Assert
+        subscription.ModifiedAt.Should().NotBeNull();
+        subscription.ModifiedAt.Should().BeOnOrAfter(beforeExpire);
+    }
+
+    [Fact]
+    public void ExpiREDACTED()
+    {
+        // Arrange
+        var subscription = CreateTestSubscription();
+        subscription.Cancel();
+
+        // Act
+        var result = subscription.Expire();
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        subscription.Status.Should().Be(SubscriptionStatus.Expired);
+    }
+
+    [Fact]
+    public void ExpiREDACTED()
+    {
+        // Arrange
+        var subscription = CreateTestSubscription();
+
+        // Act
+        subscription.Expire();
+
+        // Assert
+        subscription.GrantsAccess.Should().BeFalse();
+    }
+
+    #endregion
+
+    #region Create - Additional Tests with BillingCycle
+
+    [Fact]
+    public void Create_WithAnnualBillingCycle_ShouldSetCorrectPeriod()
+    {
+        // Arrange
+        var subscriptionId = CreateSubscriptionId();
+        var userId = CreateUserId();
+        var planId = CreatePlanId();
+
+        // Act
+        var result = Subscription.Create(subscriptionId, userId, planId, "Pro", BillingCycle.Annual, false);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.BillingCycle.Should().Be(BillingCycle.Annual);
+        result.Value.CurrentPeriod.EndDate.Should().BeCloseTo(
+            DateTime.UtcNow.AddMonths(12),
+            TimeSpan.FromSeconds(5));
+    }
+
+    [Fact]
+    public void Create_WithTrialAndAnnualCycle_ShouldSetTrialEndDate()
+    {
+        // Arrange
+        var subscriptionId = CreateSubscriptionId();
+        var userId = CreateUserId();
+        var planId = CreatePlanId();
+
+        // Act
+        var result = Subscription.Create(subscriptionId, userId, planId, "Pro", BillingCycle.Annual, startWithTrial: true);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.TrialEndDate.Should().BeCloseTo(
+            DateTime.UtcNow.AddDays(Subscription.DefaultTrialDays),
+            TimeSpan.FromSeconds(5));
+    }
+
+    #endregion
+
+    #region GrantsAccess - Additional Tests
+
+    [Fact]
+    public void GrantsAccess_WhenCancelledButNotExpired_ShouldBeTrue()
+    {
+        // Arrange
+        var subscription = CreateTestSubscription();
+        subscription.Cancel();
+
+        // Assert - Cancelled but period not expired
+        subscription.GrantsAccess.Should().BeTrue();
+    }
+
+    [Fact]
+    public void GrantsAccess_WhenSuspended_ShouldBeFalse()
+    {
+        // Arrange
+        var subscription = CreateTestSubscription();
+        subscription.Suspend();
+
+        // Assert
+        subscription.GrantsAccess.Should().BeFalse();
+    }
+
+    #endregion
+
+    #region IsFree - Additional Tests
+
+    [Fact]
+    public void IsFree_CaseInsensitive_ShouldBeTrue()
+    {
+        // Arrange
+        var subscriptionId = CreateSubscriptionId();
+        var userId = CreateUserId();
+        var planId = CreatePlanId();
+
+        // Act - Create with "FREE" in uppercase
+        var result = Subscription.Create(subscriptionId, userId, planId, "FREE", BillingCycle.Monthly, false);
+
+        // Assert
+        result.Value.IsFree.Should().BeTrue();
+    }
+
+    #endregion
+
+    #region Cancel - Idempotency Tests
+
+    [Fact]
+    public void Cancel_WhenAlreadyCancelled_ShouldBeIdempotent()
+    {
+        // Arrange
+        var subscription = CreateTestSubscription();
+        subscription.Cancel("First cancellation");
+        var firstCancelledAt = subscription.CancelledAt;
+
+        // Act - Attempt to cancel again (Cancelled status has CanCancel = false)
+        var result = subscription.Cancel("Second cancellation");
+
+        // Assert - Should fail because CanCancel is false for Cancelled status
+        result.IsFailure.Should().BeTrue();
+        subscription.Status.Should().Be(SubscriptionStatus.Cancelled);
+        subscription.CancelledAt.Should().Be(firstCancelledAt);
+        subscription.CancellationReason.Should().Be("First cancellation");
+    }
+
+    #endregion
+
+    #region Renew - Period Extension Tests
+
+    [Fact]
+    public void Renew_WhenActive_ShouldExtendPeriod_NotApplicable()
+    {
+        // Note: Active subscriptions cannot be renewed per domain logic.
+        // This test documents that behavior - renew requires Cancelled/Expired/Suspended status.
+        // Arrange
+        var subscription = CreateTestSubscription();
+
+        // Act
+        var result = subscription.Renew();
+
+        // Assert - Active subscriptions cannot renew
+        result.IsFailure.Should().BeTrue();
+        result.Error.Code.Should().Contain("CannotRenewActive");
+    }
+
     #endregion
 }

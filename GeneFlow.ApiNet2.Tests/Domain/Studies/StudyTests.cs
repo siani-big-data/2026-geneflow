@@ -1,5 +1,6 @@
 using GeneFlow.ApiNet2.Domain.Identity;
 using GeneFlow.ApiNet2.Domain.Studies;
+using GeneFlow.ApiNet2.Domain.Studies.Entities;
 using GeneFlow.ApiNet2.Domain.Studies.Enumerations;
 using GeneFlow.ApiNet2.Domain.Studies.Events;
 using GeneFlow.ApiNet2.Domain.Studies.ValueObjects;
@@ -170,6 +171,115 @@ public class StudyTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
+    }
+
+    #endregion
+
+    #region UpdateInstitution
+
+    [Fact]
+    public void UpdateInstitution_WithMaxLength_ShouldSucceed()
+    {
+        // Arrange
+        var ownerId = CreateUserId();
+        var study = Study.Create(
+            CreateStudyId(), ownerId,
+            CreateTitle(), CreateDescription(), ResearchField.Genomics).Value;
+        var maxLengthInstitution = new string('a', Study.MaxInstitutionLength);
+
+        // Act
+        var result = study.UpdateInstitution(maxLengthInstitution, ownerId);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        study.Institution.Should().Be(maxLengthInstitution);
+    }
+
+    [Fact]
+    public void UpdateInstitution_ExceedingMaxLength_ShouldFail()
+    {
+        // Arrange
+        var ownerId = CreateUserId();
+        var study = Study.Create(
+            CreateStudyId(), ownerId,
+            CreateTitle(), CreateDescription(), ResearchField.Genomics).Value;
+        var tooLongInstitution = new string('a', Study.MaxInstitutionLength + 1);
+
+        // Act
+        var result = study.UpdateInstitution(tooLongInstitution, ownerId);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Code.Should().Contain("InstitutionTooLong");
+    }
+
+    #endregion
+
+    #region UpdatePrincipalInvestigator
+
+    [Fact]
+    public void UpdatePrincipalInvestigator_WithMaxLength_ShouldSucceed()
+    {
+        // Arrange
+        var ownerId = CreateUserId();
+        var study = Study.Create(
+            CreateStudyId(), ownerId,
+            CreateTitle(), CreateDescription(), ResearchField.Genomics).Value;
+        var maxLengthPi = new string('a', Study.MaxPrincipalInvestigatorLength);
+
+        // Act
+        var result = study.UpdatePrincipalInvestigator(maxLengthPi, ownerId);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        study.PrincipalInvestigator.Should().Be(maxLengthPi);
+    }
+
+    [Fact]
+    public void UpdatePrincipalInvestigator_ExceedingMaxLength_ShouldFail()
+    {
+        // Arrange
+        var ownerId = CreateUserId();
+        var study = Study.Create(
+            CreateStudyId(), ownerId,
+            CreateTitle(), CreateDescription(), ResearchField.Genomics).Value;
+        var tooLongPi = new string('a', Study.MaxPrincipalInvestigatorLength + 1);
+
+        // Act
+        var result = study.UpdatePrincipalInvestigator(tooLongPi, ownerId);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Code.Should().Contain("PrincipalInvestigatorTooLong");
+    }
+
+    #endregion
+
+    #region UpdateSettings
+
+    [Fact]
+    public void UpdateSettings_ShouldUpdateAllFields()
+    {
+        // Arrange
+        var ownerId = CreateUserId();
+        var study = Study.Create(
+            CreateStudyId(), ownerId,
+            CreateTitle(), CreateDescription(), ResearchField.Genomics).Value;
+        study.ClearDomainEvents();
+
+        var newSettings = StudySettings.Create(
+            allowPublicComments: false,
+            allowDataDownload: true,
+            requireApprovalToJoin: false);
+
+        // Act
+        var result = study.UpdateSettings(newSettings, ownerId);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        study.Settings.AllowPublicComments.Should().BeFalse();
+        study.Settings.AllowDataDownload.Should().BeTrue();
+        study.Settings.RequireApprovalToJoin.Should().BeFalse();
     }
 
     #endregion
@@ -603,6 +713,58 @@ public class StudyTests
 
     #endregion
 
+    #region Paper Management
+
+    [Fact]
+    public void AddPaper_WithoutPermission_ShouldFail()
+    {
+        // Arrange
+        var ownerId = CreateUserId(1);
+        var viewerId = CreateUserId(2);
+        var study = Study.Create(
+            CreateStudyId(), ownerId,
+            CreateTitle(), CreateDescription(), ResearchField.Genomics).Value;
+        study.AddMember(viewerId, StudyRole.Viewer, ownerId);
+
+        var paperResult = StudyPaper.Create(
+            CreatePaperId(),
+            "Test Paper Title",
+            "Author 1, Author 2",
+            "10.1234/test",
+            "This is the abstract",
+            "Nature",
+            2024,
+            null, null, null,
+            viewerId);
+
+        // Act
+        var result = study.AddPaper(paperResult.Value, viewerId);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Code.Should().Contain("InsufficientPermissions");
+    }
+
+    [Fact]
+    public void RemovePaper_NonExistentPaper_ShouldFail()
+    {
+        // Arrange
+        var ownerId = CreateUserId();
+        var study = Study.Create(
+            CreateStudyId(), ownerId,
+            CreateTitle(), CreateDescription(), ResearchField.Genomics).Value;
+        var nonExistentPaperId = CreatePaperId(999);
+
+        // Act
+        var result = study.RemovePaper(nonExistentPaperId, ownerId);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Code.Should().Contain("PaperNotFound");
+    }
+
+    #endregion
+
     #region Featured Management
 
     [Fact]
@@ -819,6 +981,42 @@ public class StudyTests
 
         // Assert
         study.CanUserView(viewerId).Should().BeTrue();
+    }
+
+    [Fact]
+    public void CanUserView_PublicStudy_ShouldReturnTrue()
+    {
+        // Arrange
+        var ownerId = CreateUserId(1);
+        var nonMemberId = CreateUserId(2);
+        var study = Study.Create(
+            CreateStudyId(), ownerId,
+            CreateTitle(), CreateDescription(), ResearchField.Genomics).Value;
+        // Make the study public by transitioning: Draft -> Active -> Completed -> Published
+        study.ChangeStatus(StudyStatus.Active, ownerId);
+        study.ChangeStatus(StudyStatus.Completed, ownerId);
+        study.ChangeStatus(StudyStatus.Published, ownerId);
+
+        // Act & Assert
+        study.IsPublic.Should().BeTrue();
+        study.CanUserView(nonMemberId).Should().BeTrue();
+    }
+
+    [Fact]
+    public void CanUserView_PrivateStudy_NonMember_ShouldReturnFalse()
+    {
+        // Arrange
+        var ownerId = CreateUserId(1);
+        var nonMemberId = CreateUserId(2);
+        var study = Study.Create(
+            CreateStudyId(), ownerId,
+            CreateTitle(), CreateDescription(), ResearchField.Genomics).Value;
+        // Study is in Draft status (private)
+
+        // Act & Assert
+        study.IsPublic.Should().BeFalse();
+        study.IsMember(nonMemberId).Should().BeFalse();
+        study.CanUserView(nonMemberId).Should().BeFalse();
     }
 
     [Fact]

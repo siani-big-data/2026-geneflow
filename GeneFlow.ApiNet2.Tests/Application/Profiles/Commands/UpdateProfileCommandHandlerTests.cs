@@ -5,6 +5,8 @@ using GeneFlow.ApiNet2.Domain.Profiles.ValueObjects;
 
 namespace GeneFlow.ApiNet2.Tests.Application.Profiles.Commands;
 
+// Note: ProfilePhoto is already included in GeneFlow.ApiNet2.Domain.Profiles.ValueObjects
+
 /// <summary>
 /// Unit tests for UpdateProfileCommandHandler.
 /// </summary>
@@ -217,6 +219,222 @@ public class UpdateProfileCommandHandlerTests
         // Assert
         _profileRepository.Received(1).Update(Arg.Any<Profile>());
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    #endregion
+
+    #region Edge Cases
+
+    [Fact]
+    public async Task Handle_WithAllOptionalFieldsNull_ShouldSucceed()
+    {
+        // Arrange
+        var profile = CreateTestProfile();
+        var command = new UpdateProfileCommand(
+            "U00000001",
+            "John",
+            null,  // LastName
+            null,  // Bio
+            null,  // Location
+            null,  // ProfessionalRole
+            null,  // InstitutionName
+            null,  // InstitutionDepartment
+            null); // ResearchField
+
+        _profileRepository
+            .GetByUserIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns(profile);
+
+        _unitOfWork
+            .SaveChangesAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(1));
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.FirstName.Should().Be("John");
+        result.Value.LastName.Should().BeNull();
+        result.Value.Bio.Should().BeNull();
+        result.Value.Location.Should().BeNull();
+        result.Value.ProfessionalRole.Should().BeNull();
+        result.Value.InstitutionName.Should().BeNull();
+        result.Value.InstitutionDepartment.Should().BeNull();
+        result.Value.ResearchField.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task Handle_WithMaxLengthFirstName_ShouldSucceed()
+    {
+        // Arrange
+        var profile = CreateTestProfile();
+        var maxLengthName = new string('A', 50); // Assuming 50 is max length
+        var command = new UpdateProfileCommand(
+            "U00000001",
+            maxLengthName,
+            null, null, null, null, null, null, null);
+
+        _profileRepository
+            .GetByUserIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns(profile);
+
+        _unitOfWork
+            .SaveChangesAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(1));
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.FirstName.Should().Be(maxLengthName);
+    }
+
+    [Fact]
+    public async Task Handle_WithMaxLengthBio_ShouldSucceed()
+    {
+        // Arrange
+        var profile = CreateTestProfile();
+        var maxLengthBio = new string('A', 500); // Assuming 500 is max length for bio
+        var command = new UpdateProfileCommand(
+            "U00000001",
+            "John",
+            null,
+            maxLengthBio,
+            null, null, null, null, null);
+
+        _profileRepository
+            .GetByUserIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns(profile);
+
+        _unitOfWork
+            .SaveChangesAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(1));
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Bio.Should().Be(maxLengthBio);
+    }
+
+    [Fact]
+    public async Task Handle_WithValidResearchField_ShouldUpdateField()
+    {
+        // Arrange
+        var profile = CreateTestProfile();
+        var command = new UpdateProfileCommand(
+            "U00000001",
+            "John",
+            null, null, null, null, null, null,
+            "Genomics");
+
+        _profileRepository
+            .GetByUserIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns(profile);
+
+        _unitOfWork
+            .SaveChangesAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(1));
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.ResearchField.Should().Be("Genomics");
+    }
+
+    [Fact]
+    public async Task Handle_WithAllFieldsPopulated_ShouldUpdateAll()
+    {
+        // Arrange
+        var profile = CreateTestProfile();
+        var command = new UpdateProfileCommand(
+            "U00000001",
+            "Jane",
+            "Smith",
+            "I am a researcher specializing in molecular biology",
+            "Boston, MA",
+            "Principal Investigator",
+            "Harvard University",
+            "Department of Molecular Biology",
+            "Genomics");
+
+        _profileRepository
+            .GetByUserIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns(profile);
+
+        _unitOfWork
+            .SaveChangesAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(1));
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.FirstName.Should().Be("Jane");
+        result.Value.LastName.Should().Be("Smith");
+        result.Value.Bio.Should().Be("I am a researcher specializing in molecular biology");
+        result.Value.Location.Should().Be("Boston, MA");
+        result.Value.ProfessionalRole.Should().Be("Principal Investigator");
+        result.Value.InstitutionName.Should().Be("Harvard University");
+        result.Value.InstitutionDepartment.Should().Be("Department of Molecular Biology");
+        result.Value.ResearchField.Should().Be("Genomics");
+    }
+
+    [Fact]
+    public async Task Handle_ShouldPreserveExistingPhotoWhenUpdatingProfile()
+    {
+        // Arrange
+        var profile = CreateTestProfile();
+        var photo = ProfilePhoto.Create("https://example.com/photo.jpg").Value;
+        profile.UpdatePhoto(photo);
+
+        var command = new UpdateProfileCommand(
+            "U00000001",
+            "Updated Name",
+            null, null, null, null, null, null, null);
+
+        _profileRepository
+            .GetByUserIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns(profile);
+
+        _unitOfWork
+            .SaveChangesAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(1));
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.FirstName.Should().Be("Updated Name");
+        result.Value.PhotoUrl.Should().Be("https://example.com/photo.jpg");
+    }
+
+    [Fact]
+    public async Task Handle_WithNullFirstName_ShouldReturnFailure()
+    {
+        // Arrange
+        var profile = CreateTestProfile();
+        var command = new UpdateProfileCommand(
+            "U00000001",
+            null!,  // Null first name should fail
+            null, null, null, null, null, null, null);
+
+        _profileRepository
+            .GetByUserIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns(profile);
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
     }
 
     #endregion

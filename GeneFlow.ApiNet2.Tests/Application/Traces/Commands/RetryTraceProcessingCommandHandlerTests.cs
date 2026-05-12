@@ -47,6 +47,49 @@ public class RetryTraceProcessingCommandHandlerTests
     }
 
     [Fact]
+    public async Task Handle_ShouldResetStatusToUploaded()
+    {
+        // Arrange
+        var trace = CreateFailedTrace();
+        var originalStatus = trace.Status;
+        var command = new RetryTraceProcessingCommand("U00000001", trace.Id.ToString());
+
+        _traceRepository.GetByIdAsync(Arg.Any<TraceId>(), Arg.Any<CancellationToken>())
+            .Returns(trace);
+
+        // Pre-condition: trace should be in Failed status
+        originalStatus.Should().Be(TraceStatus.Failed);
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        trace.Status.Should().Be(TraceStatus.Uploaded);
+    }
+
+    [Fact]
+    public async Task Handle_ShouldClearFailureReason()
+    {
+        // Arrange
+        var trace = CreateFailedTrace();
+        var command = new RetryTraceProcessingCommand("U00000001", trace.Id.ToString());
+
+        _traceRepository.GetByIdAsync(Arg.Any<TraceId>(), Arg.Any<CancellationToken>())
+            .Returns(trace);
+
+        // Pre-condition: trace should have a failure reason
+        trace.FailureReason.Should().NotBeNullOrEmpty();
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        trace.FailureReason.Should().BeNull();
+    }
+
+    [Fact]
     public async Task Handle_ShouldPersistChanges()
     {
         // Arrange

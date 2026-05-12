@@ -56,7 +56,7 @@ public class GetProfileByUserIdQueryHandlerTests
         var profile = CreateTestProfile();
 
         // Update profile with additional data
-        var bio = Bio.Create("Test bio").Value;
+        var bio = Bio.Create("Test bio description").Value;
         var location = Location.Create("New York").Value;
         profile.UpdateBasicInfo(
             profile.Name, bio, location, ProfessionalRole.Empty, Institution.Empty, null);
@@ -72,7 +72,7 @@ public class GetProfileByUserIdQueryHandlerTests
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        result.Value.Bio.Should().Be("Test bio");
+        result.Value.Bio.Should().Be("Test bio description");
         result.Value.Location.Should().Be("New York");
         result.Value.FullName.Should().Be("John Doe");
         result.Value.Initials.Should().Be("JD");

@@ -13,6 +13,7 @@ public sealed record StudyInvitationDto
     public required string Status { get; init; }
     public required int StatusId { get; init; }
     public required string InvitedBy { get; init; }
+    public required string Token { get; init; }
     public required DateTime ExpiresAt { get; init; }
     public DateTime? RespondedAt { get; init; }
     public string? Message { get; init; }

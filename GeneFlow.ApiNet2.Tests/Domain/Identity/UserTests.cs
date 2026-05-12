@@ -547,5 +547,433 @@ public class UserTests
         user.IsActive.Should().BeTrue();
     }
 
+    [Fact]
+    public void Deactivate_WhenAlreadyInactive_ShouldNotChangeState()
+    {
+        // Arrange
+        var user = CreateTestUser();
+        user.Deactivate();
+        user.ClearDomainEvents();
+
+        // Act
+        user.Deactivate();
+
+        // Assert
+        user.IsActive.Should().BeFalse();
+        user.DomainEvents.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Activate_WhenAlreadyActive_ShouldNotChangeState()
+    {
+        // Arrange
+        var user = CreateTestUser();
+        user.ClearDomainEvents();
+
+        // Act
+        user.Activate();
+
+        // Assert
+        user.IsActive.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Deactivate_ShouldRaiseUserDeactivatedEvent()
+    {
+        // Arrange
+        var user = CreateTestUser();
+        user.ClearDomainEvents();
+
+        // Act
+        user.Deactivate();
+
+        // Assert
+        user.DomainEvents.Should().ContainSingle(e => e is UserDeactivatedEvent);
+    }
+
+    #endregion
+
+    #region ChangePassword
+
+    [Fact]
+    public void ChangePassword_ShouldUpdatePasswordHash()
+    {
+        // Arrange
+        var user = CreateTestUser();
+        var newPasswordHash = PasswordHash.Create("$2a$12$newpasswordhash").Value;
+
+        // Act
+        user.ChangePassword(newPasswordHash);
+
+        // Assert
+        user.PasswordHash.Should().Be(newPasswordHash);
+    }
+
+    [Fact]
+    public void ChangePassword_ShouldRaiseUserPasswordChangedEvent()
+    {
+        // Arrange
+        var user = CreateTestUser();
+        user.ClearDomainEvents();
+        var newPasswordHash = PasswordHash.Create("$2a$12$newpasswordhash").Value;
+
+        // Act
+        user.ChangePassword(newPasswordHash);
+
+        // Assert
+        user.DomainEvents.Should().ContainSingle(e => e is UserPasswordChangedEvent);
+    }
+
+    #endregion
+
+    #region RegenerateEmailVerificationToken
+
+    [Fact]
+    public void RegenerateEmailVerificationToken_ShouldReturnNewToken()
+    {
+        // Arrange
+        var user = CreateTestUser();
+        var originalToken = user.EmailVerificationToken;
+
+        // Act
+        var newToken = user.RegenerateEmailVerificationToken();
+
+        // Assert
+        newToken.Should().NotBeNullOrEmpty();
+        newToken.Should().NotBe(originalToken);
+    }
+
+    [Fact]
+    public void RegenerateEmailVerificationToken_ShouldUpdateTokenExpiry()
+    {
+        // Arrange
+        var user = CreateTestUser();
+        var originalExpiry = user.EmailVerificationTokenExpiry;
+
+        // Act
+        user.RegenerateEmailVerificationToken();
+
+        // Assert
+        user.EmailVerificationTokenExpiry.Should().BeAfter(DateTime.UtcNow);
+    }
+
+    #endregion
+
+    #region VerifyEmail - Additional Cases
+
+    [Fact]
+    public void VerifyEmail_WhenAlreadyVerified_ShouldReturnSuccess()
+    {
+        // Arrange
+        var user = CreateTestUser();
+        var token = user.EmailVerificationToken!;
+        user.VerifyEmail(token);
+        user.ClearDomainEvents();
+
+        // Act - try to verify again (idempotent operation)
+        var result = user.VerifyEmail("any_token");
+
+        // Assert - idempotent: already verified returns success
+        result.IsSuccess.Should().BeTrue();
+    }
+
+    #endregion
+
+    #region Password Reset - Additional Cases
+
+    [Fact]
+    public void ResetPassword_ShouldRaiseUserPasswordChangedEvent()
+    {
+        // Arrange
+        var user = CreateTestUser();
+        var token = user.RequestPasswordReset();
+        var newPasswordHash = PasswordHash.Create("$2a$12$newpasswordhash").Value;
+        user.ClearDomainEvents();
+
+        // Act
+        user.ResetPassword(token, newPasswordHash);
+
+        // Assert
+        user.DomainEvents.Should().ContainSingle(e => e is UserPasswordChangedEvent);
+    }
+
+    [Fact]
+    public void ResetPassword_ShouldClearPasswordResetToken()
+    {
+        // Arrange
+        var user = CreateTestUser();
+        var token = user.RequestPasswordReset();
+        var newPasswordHash = PasswordHash.Create("$2a$12$newpasswordhash").Value;
+
+        // Act
+        user.ResetPassword(token, newPasswordHash);
+
+        // Assert
+        user.PasswordResetToken.Should().BeNull();
+        user.PasswordResetTokenExpiry.Should().BeNull();
+    }
+
+    #endregion
+
+    #region ValidateTwoFactorCode
+
+    [Fact]
+    public void ValidateTwoFactorCode_WithValidCode_ShouldReturnSuccess()
+    {
+        // Arrange
+        var user = CreateTestUser();
+        user.EnableTwoFactor();
+        var code = user.GenerateTwoFactorCode();
+
+        // Act
+        var result = user.ValidateTwoFactorCode(code.Code);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+    }
+
+    [Fact]
+    public void ValidateTwoFactorCode_WithInvalidCode_ShouldReturnFailure()
+    {
+        // Arrange
+        var user = CreateTestUser();
+        user.EnableTwoFactor();
+        user.GenerateTwoFactorCode();
+
+        // Act
+        var result = user.ValidateTwoFactorCode("invalid");
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+    }
+
+    #endregion
+
+    #region Login Attempts - Additional Cases
+
+    [Fact]
+    public void RecordFailedLogin_ShouldRaiseUserLockedOutEventWhenLocked()
+    {
+        // Arrange
+        var user = CreateTestUser();
+        user.ClearDomainEvents();
+
+        // Act - reach max failed attempts
+        for (var i = 0; i < AccountLockout.MaxFailedAttempts; i++)
+        {
+            user.RecordFailedLogin();
+        }
+
+        // Assert
+        user.DomainEvents.Should().ContainSingle(e => e is UserLockedOutEvent);
+    }
+
+    [Fact]
+    public void RecordSuccessfulLogin_ShouldClearLockoutEnd()
+    {
+        // Arrange
+        var user = CreateTestUser();
+        for (var i = 0; i < AccountLockout.MaxFailedAttempts; i++)
+        {
+            user.RecordFailedLogin();
+        }
+
+        // Act
+        user.RecordSuccessfulLogin();
+
+        // Assert
+        user.LockoutEnd.Should().BeNull();
+    }
+
+    #endregion
+
+    #region Refresh Tokens - Additional Cases
+
+    [Fact]
+    public void AddRefreshToken_ShouldRemoveInactiveTokens()
+    {
+        // Arrange
+        var user = CreateTestUser();
+        var revokedToken = RefreshToken.Create("revoked", DateTime.UtcNow.AddDays(7)).Value.Revoke();
+        user.AddRefreshToken(revokedToken);
+
+        var activeToken = RefreshToken.Create("active", DateTime.UtcNow.AddDays(7)).Value;
+
+        // Act
+        user.AddRefreshToken(activeToken);
+
+        // Assert - revoked (inactive) token should be removed
+        user.RefreshTokens.Should().NotContain(t => t.Token == "revoked");
+        user.RefreshTokens.Should().Contain(t => t.Token == "active");
+    }
+
+    [Fact]
+    public void GetRefreshToken_WithNonexistentToken_ShouldReturnNull()
+    {
+        // Arrange
+        var user = CreateTestUser();
+
+        // Act
+        var token = user.GetRefreshToken("nonexistent");
+
+        // Assert
+        token.Should().BeNull();
+    }
+
+    #endregion
+
+    #region External Logins - Additional Cases
+
+    [Fact]
+    public void LinkExternalLogin_ShouldRaiseExternalLoginLinkedEvent()
+    {
+        // Arrange
+        var user = CreateTestUser();
+        user.ClearDomainEvents();
+
+        // Act
+        user.LinkExternalLogin(ExternalProvider.Google, "google_key_123");
+
+        // Assert
+        user.DomainEvents.Should().ContainSingle(e => e is ExternalLoginLinkedEvent);
+    }
+
+    [Fact]
+    public void UnlinkExternalLogin_WhenNotLinked_ShouldReturnFailure()
+    {
+        // Arrange
+        var user = CreateTestUser();
+
+        // Act
+        var result = user.UnlinkExternalLogin(ExternalProvider.Google);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+    }
+
+    [Fact]
+    public void LinkExternalLogin_WithMultipleProviders_ShouldSupportAll()
+    {
+        // Arrange
+        var user = CreateTestUser();
+
+        // Act
+        user.LinkExternalLogin(ExternalProvider.Google, "google_key");
+        user.LinkExternalLogin(ExternalProvider.GitHub, "github_key");
+
+        // Assert
+        user.ExternalLogins.Should().HaveCount(2);
+    }
+
+    #endregion
+
+    #region Roles - Additional Cases
+
+    [Fact]
+    public void AddRole_ShouldRaiseUserRoleAddedEvent()
+    {
+        // Arrange
+        var user = CreateTestUser();
+        user.ClearDomainEvents();
+
+        // Act
+        user.AddRole(Role.Admin);
+
+        // Assert
+        user.DomainEvents.Should().ContainSingle(e => e is UserRoleAddedEvent);
+    }
+
+    [Fact]
+    public void RemoveRole_ShouldRaiseUserRoleRemovedEvent()
+    {
+        // Arrange
+        var user = CreateTestUser();
+        user.AddRole(Role.Admin);
+        user.ClearDomainEvents();
+
+        // Act
+        user.RemoveRole(Role.Admin);
+
+        // Assert
+        user.DomainEvents.Should().ContainSingle(e => e is UserRoleRemovedEvent);
+    }
+
+    #endregion
+
+    #region SoftDelete
+
+    [Fact]
+    public void SoftDelete_ShouldDeactivateUser()
+    {
+        // Arrange
+        var user = CreateTestUser();
+
+        // Act
+        user.SoftDelete();
+
+        // Assert
+        user.IsDeleted.Should().BeTrue();
+        user.IsActive.Should().BeFalse();
+    }
+
+    [Fact]
+    public void SoftDelete_ShouldRevokeAllRefreshTokens()
+    {
+        // Arrange
+        var user = CreateTestUser();
+        user.AddRefreshToken(RefreshToken.Create("token1", DateTime.UtcNow.AddDays(7)).Value);
+        user.AddRefreshToken(RefreshToken.Create("token2", DateTime.UtcNow.AddDays(7)).Value);
+
+        // Act
+        user.SoftDelete();
+
+        // Assert
+        user.RefreshTokens.Should().AllSatisfy(t => t.IsRevoked.Should().BeTrue());
+    }
+
+    [Fact]
+    public void SoftDelete_WhenAlreadyDeleted_ShouldNotChangeState()
+    {
+        // Arrange
+        var user = CreateTestUser();
+        user.SoftDelete();
+        var deletedAt = user.DeletedAt;
+
+        // Act
+        user.SoftDelete();
+
+        // Assert
+        user.DeletedAt.Should().Be(deletedAt);
+    }
+
+    #endregion
+
+    #region HasPassword
+
+    [Fact]
+    public void HasPassword_WhenCreatedWithPassword_ShouldReturnTrue()
+    {
+        // Arrange
+        var user = CreateTestUser();
+
+        // Assert
+        user.HasPassword.Should().BeTrue();
+    }
+
+    [Fact]
+    public void HasPassword_WhenCreatedFromOAuth_ShouldReturnFalse()
+    {
+        // Arrange
+        var userId = new UserId(1);
+        var email = Email.Create("oauth@example.com").Value;
+        var username = Username.Create("oauthuser").Value;
+
+        // Act
+        var result = User.CreateFromOAuth(userId, email, username, ExternalProvider.Google, "google_key_123");
+
+        // Assert
+        result.Value.HasPassword.Should().BeFalse();
+    }
+
     #endregion
 }

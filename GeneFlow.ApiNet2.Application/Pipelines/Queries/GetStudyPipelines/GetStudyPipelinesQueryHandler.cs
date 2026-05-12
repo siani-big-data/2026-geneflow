@@ -26,11 +26,9 @@ public sealed class GetStudyPipelinesQueryHandler
         GetStudyPipelinesQuery request,
         CancellationToken cancellationToken)
     {
-        // Parse ID
         if (!StudyId.TryParse(request.StudyId, out var studyId) || studyId == null)
             return Result.Failure<PagedList<PipelineSummaryDto>>(PipelineErrors.InvalidStudyId);
 
-        // Parse status filter
         PipelineStatus? status = null;
         if (request.StatusId.HasValue)
         {
@@ -39,7 +37,6 @@ public sealed class GetStudyPipelinesQueryHandler
                 return Result.Failure<PagedList<PipelineSummaryDto>>(PipelineErrors.InvalidStatus);
         }
 
-        // Query
         var pipelines = await _pipelineRepository.GetByStudyAsync(
             studyId,
             request.PageNumber,
@@ -48,7 +45,6 @@ public sealed class GetStudyPipelinesQueryHandler
             status,
             cancellationToken);
 
-        // Map to DTOs
         var dtos = pipelines.Items.ToSummaryDtos();
 
         return Result.Success(PagedList<PipelineSummaryDto>.Create(

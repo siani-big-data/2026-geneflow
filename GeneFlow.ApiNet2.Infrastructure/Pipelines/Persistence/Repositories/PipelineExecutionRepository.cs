@@ -1,6 +1,7 @@
 using GeneFlow.ApiNet2.Domain.Pipelines;
 using GeneFlow.ApiNet2.Domain.Pipelines.Entities;
 using GeneFlow.ApiNet2.Domain.Pipelines.Enumerations;
+using GeneFlow.ApiNet2.Domain.Studies;
 using GeneFlow.ApiNet2.Domain.Traces;
 using GeneFlow.ApiNet2.Infrastructure.Pipelines.Persistence.Context;
 using GeneFlow.ApiNet2.SharedKernel.Domain.Pagination;
@@ -115,6 +116,34 @@ public sealed class PipelineExecutionRepository : IPipelineExecutionRepository
             .ToListAsync(cancellationToken);
 
         return PagedList<PipelineExecution>.Create(items, pageNumber, pageSize, totalCount);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<PipelineExecution>> GetRecentByStudiesAsync(
+        IReadOnlyCollection<StudyId> studyIds,
+        int limit,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug(
+            "Getting recent executions across {StudyCount} studies (limit {Limit})",
+            studyIds.Count,
+            limit);
+
+        if (studyIds.Count == 0 || limit <= 0)
+        {
+            return Array.Empty<PipelineExecution>();
+        }
+
+        var pipelineIds = _context.Pipelines
+            .Where(p => studyIds.Contains(p.StudyId))
+            .Select(p => p.Id);
+
+        return await _context.PipelineExecutions
+            .Include(e => e.StepExecutions)
+            .Where(e => pipelineIds.Contains(e.PipelineId))
+            .OrderByDescending(e => e.CreatedAt)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
     }
 
     /// <inheritdoc />

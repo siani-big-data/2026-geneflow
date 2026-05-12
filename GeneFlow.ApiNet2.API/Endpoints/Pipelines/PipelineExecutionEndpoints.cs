@@ -6,6 +6,7 @@ using GeneFlow.ApiNet2.Application.Pipelines.Commands.CancelExecution;
 using GeneFlow.ApiNet2.Application.Pipelines.Commands.CompleteStepExecution;
 using GeneFlow.ApiNet2.Application.Pipelines.Commands.FailStepExecution;
 using GeneFlow.ApiNet2.Application.Pipelines.Queries.GetExecutionById;
+using GeneFlow.ApiNet2.Application.Pipelines.Queries.GetRecentUserExecutions;
 using GeneFlow.ApiNet2.Application.Pipelines.Queries.GetTraceExecutions;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -20,7 +21,6 @@ public sealed class PipelineExecutionEndpoints : IEndpoint
     /// <inheritdoc />
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        // Execution endpoints (not study-scoped)
         var group = app.MapGroup("/api/v1/pipeline-executions")
             .WithTags("Pipeline Executions")
             .RequireAuthorization()
@@ -40,7 +40,15 @@ public sealed class PipelineExecutionEndpoints : IEndpoint
             .Produces<PipelineExecutionResponse>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status400BadRequest);
 
-        // Trace executions (within study context)
+        app.MapGet("/api/v1/me/pipeline-executions", GetRecentUserExecutions)
+            .WithTags("Pipeline Executions")
+            .WithName("PipelineExecutions_GetRecentForCurrentUser")
+            .WithSummary("Get the current user's most recent pipeline executions")
+            .WithDescription("Returns the most recent pipeline executions across all studies the user is a member of. Used by the dashboard's recent-pipelines lateral panel.")
+            .RequireAuthorization()
+            .Produces<IReadOnlyList<RecentPipelineExecutionResponse>>(StatusCodes.Status200OK)
+            .WithOpenApi();
+
         app.MapGet("/api/v1/studies/{studyId}/traces/{traceId}/executions", GetTraceExecutions)
             .WithTags("Pipeline Executions")
             .WithName("PipelineExecutions_GetByTrace")
@@ -50,7 +58,6 @@ public sealed class PipelineExecutionEndpoints : IEndpoint
             .Produces<PagedResponse<PipelineExecutionSummaryResponse>>(StatusCodes.Status200OK)
             .WithOpenApi();
 
-        // Worker callback endpoints (require worker API key)
         var workerGroup = app.MapGroup("/api/v1/worker/pipeline-executions")
             .WithTags("Worker Callbacks")
             .WithOpenApi();
@@ -144,6 +151,47 @@ public sealed class PipelineExecutionEndpoints : IEndpoint
         return Results.Ok(response);
     }
 
+    private static async Task<IResult> GetRecentUserExecutions(
+        [FromQuery] int? limit,
+        [FromServices] ISender sender,
+        [FromServices] ICurrentUserService currentUser,
+        CancellationToken cancellationToken)
+    {
+        if (currentUser.UserId is null)
+            return Results.Unauthorized();
+
+        const int defaultLimit = 5;
+        const int maxLimit = 20;
+        var resolvedLimit = limit is > 0 ? Math.Min(limit.Value, maxLimit) : defaultLimit;
+
+        var result = await sender.Send(
+            new GetRecentUserExecutionsQuery(currentUser.UserId, resolvedLimit),
+            cancellationToken);
+
+        if (result.IsFailure)
+            return result.Error.ToApiResult();
+
+        var response = result.Value
+            .Select(e => new RecentPipelineExecutionResponse(
+                e.Id,
+                e.PipelineId,
+                e.PipelineName,
+                e.TraceId,
+                e.StudyId,
+                e.StudyTitle,
+                e.StatusId,
+                e.StatusName,
+                e.TotalSteps,
+                e.CompletedSteps,
+                e.ProgressPercentage,
+                e.CreatedAt,
+                e.CompletedAt,
+                e.DurationSeconds))
+            .ToList();
+
+        return Results.Ok(response);
+    }
+
     private static async Task<IResult> CompleteStepExecution(
         [FromRoute] string executionId,
         [FromRoute] string stepId,
@@ -151,8 +199,6 @@ public sealed class PipelineExecutionEndpoints : IEndpoint
         [FromServices] ISender sender,
         CancellationToken cancellationToken)
     {
-        // Note: Worker authentication should be handled by middleware/policy
-
         var result = await sender.Send(
             new CompleteStepExecutionCommand(
                 executionId,
@@ -173,8 +219,6 @@ public sealed class PipelineExecutionEndpoints : IEndpoint
         [FromServices] ISender sender,
         CancellationToken cancellationToken)
     {
-        // Note: Worker authentication should be handled by middleware/policy
-
         var result = await sender.Send(
             new FailStepExecutionCommand(
                 executionId,

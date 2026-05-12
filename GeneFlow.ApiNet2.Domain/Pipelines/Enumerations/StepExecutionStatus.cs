@@ -43,15 +43,10 @@ public sealed class StepExecutionStatus : Enumeration<StepExecutionStatus>
     {
         return (this, newStatus) switch
         {
-            // From Pending
             _ when this == Pending && newStatus == Running => true,
             _ when this == Pending && newStatus == Skipped => true,
-
-            // From Running
             _ when this == Running && newStatus == Completed => true,
             _ when this == Running && newStatus == Failed => true,
-
-            // Terminal states cannot transition
             _ => false
         };
     }

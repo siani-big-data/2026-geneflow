@@ -122,7 +122,8 @@ public static class StudyMappingExtensions
         dto.Role,
         dto.StatusId,
         dto.Status,
-        dto.StatusId == 1 ? null : null, // Token is only included for pending invitations via GetByToken
+        // Include the token only for pending invitations so the recipient can accept/decline in-app.
+        dto.StatusId == 1 ? dto.Token : null,
         dto.InvitedBy,
         dto.ExpiresAt,
         dto.RespondedAt,

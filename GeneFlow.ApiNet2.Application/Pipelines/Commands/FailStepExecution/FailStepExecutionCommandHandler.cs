@@ -30,36 +30,29 @@ public sealed class FailStepExecutionCommandHandler
         FailStepExecutionCommand request,
         CancellationToken cancellationToken)
     {
-        // Parse IDs
         if (!PipelineExecutionId.TryParse(request.ExecutionId, out var executionId) || executionId == null)
             return Result.Failure(PipelineErrors.ExecutionNotFound);
 
         if (!Guid.TryParse(request.StepExecutionId, out var stepExecutionId))
             return Result.Failure(PipelineErrors.StepExecutionNotFound);
 
-        // Get execution with steps
         var execution = await _executionRepository.GetByIdWithStepsAsync(executionId, cancellationToken);
         if (execution == null)
             return Result.Failure(PipelineErrors.ExecutionNotFound);
 
-        // Find step execution
         var stepExecution = execution.GetStepExecution(stepExecutionId);
         if (stepExecution == null)
             return Result.Failure(PipelineErrors.StepExecutionNotFound);
 
-        // Fail step
         var failResult = stepExecution.Fail(request.ErrorMessage);
         if (failResult.IsFailure)
             return failResult;
 
-        // Also fail the entire execution
         execution.Fail(request.ErrorMessage);
 
-        // Persist
         _executionRepository.Update(execution);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // Publish step event
         await _publisher.Publish(
             new PipelineStepCompletedEvent(
                 executionId,
@@ -70,7 +63,6 @@ public sealed class FailStepExecutionCommandHandler
                 stepExecution.Duration ?? TimeSpan.Zero),
             cancellationToken);
 
-        // Publish execution failed event
         await _publisher.Publish(
             new PipelineExecutionFailedEvent(
                 executionId,

@@ -4,6 +4,7 @@ using GeneFlow.ApiNet2.Domain.Plans;
 using GeneFlow.ApiNet2.Domain.Plans.ValueObjects;
 using GeneFlow.ApiNet2.Domain.Subscriptions;
 using GeneFlow.ApiNet2.Domain.Subscriptions.Enumerations;
+using GeneFlow.ApiNet2.Domain.Subscriptions.Events;
 
 namespace GeneFlow.ApiNet2.Tests.Application.Subscriptions.Commands;
 
@@ -318,6 +319,299 @@ public class ChangePlanCommandHandlerTests
         // Assert
         result.IsFailure.Should().BeTrue();
         result.Error.Code.Should().Contain("CannotDowngradeToFreeDuringPaidPeriod");
+    }
+
+    #endregion
+
+    #region Domain Events
+
+    [Fact]
+    public async Task Handle_ShouldRaisePlanChangedEvent()
+    {
+        // Arrange
+        var currentPlan = CreateTestPlan("Pro", 29m);
+        var newPlan = CreateTestPlan("Enterprise", 99m);
+        var subscription = CreateTestSubscription(currentPlan);
+
+        var command = new ChangePlanCommand(
+            "U00000001",
+            newPlan.Id.ToString(),
+            BillingCycle.Monthly.Id);
+
+        _subscriptionRepository
+            .GetActiveByUserIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns(subscription);
+
+        _planRepository
+            .GetByIdAsync(newPlan.Id, Arg.Any<CancellationToken>())
+            .Returns(newPlan);
+
+        _planRepository
+            .GetByIdAsync(currentPlan.Id, Arg.Any<CancellationToken>())
+            .Returns(currentPlan);
+
+        _unitOfWork
+            .SaveChangesAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(1));
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+
+        // The subscription should have a PlanChangedEvent
+        // Note: Domain events are cleared after SaveChanges in production,
+        // but in tests we can verify the event was raised
+        subscription.DomainEvents.Should().Contain(e => e is SubscriptionPlanChangedEvent);
+        var domainEvent = subscription.DomainEvents.OfType<SubscriptionPlanChangedEvent>().First();
+        domainEvent.OldPlanId.Should().Be(currentPlan.Id);
+        domainEvent.NewPlanId.Should().Be(newPlan.Id);
+        domainEvent.OldPlanName.Should().Be("Pro");
+        domainEvent.NewPlanName.Should().Be("Enterprise");
+        domainEvent.IsUpgrade.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Handle_WithDowngrade_ShouldRaisePlanChangedEventWithIsUpgradeFalse()
+    {
+        // Arrange
+        var currentPlan = CreateTestPlan("Enterprise", 99m);
+        var newPlan = CreateTestPlan("Pro", 29m);
+        var subscription = CreateTestSubscription(currentPlan);
+
+        var command = new ChangePlanCommand(
+            "U00000001",
+            newPlan.Id.ToString(),
+            BillingCycle.Monthly.Id);
+
+        _subscriptionRepository
+            .GetActiveByUserIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns(subscription);
+
+        _planRepository
+            .GetByIdAsync(newPlan.Id, Arg.Any<CancellationToken>())
+            .Returns(newPlan);
+
+        _planRepository
+            .GetByIdAsync(currentPlan.Id, Arg.Any<CancellationToken>())
+            .Returns(currentPlan);
+
+        _unitOfWork
+            .SaveChangesAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(1));
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        subscription.DomainEvents.Should().Contain(e => e is SubscriptionPlanChangedEvent);
+        var domainEvent = subscription.DomainEvents.OfType<SubscriptionPlanChangedEvent>().First();
+        domainEvent.IsUpgrade.Should().BeFalse();
+    }
+
+    #endregion
+
+    #region Same Plan Validation
+
+    [Fact]
+    public async Task Handle_WithSamePlanAndBillingCycle_ShouldStillSucceed()
+    {
+        // Arrange - Note: The handler doesn't explicitly prevent changing to the same plan
+        // The domain allows plan "change" to same plan (with new billing cycle or just refresh)
+        var currentPlan = CreateTestPlan("Pro", 29m);
+        var subscription = CreateTestSubscription(currentPlan);
+
+        var command = new ChangePlanCommand(
+            "U00000001",
+            currentPlan.Id.ToString(),
+            BillingCycle.Monthly.Id);
+
+        _subscriptionRepository
+            .GetActiveByUserIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns(subscription);
+
+        _planRepository
+            .GetByIdAsync(currentPlan.Id, Arg.Any<CancellationToken>())
+            .Returns(currentPlan);
+
+        _unitOfWork
+            .SaveChangesAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(1));
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert - The handler allows this operation (same plan refresh)
+        result.IsSuccess.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Handle_WithSamePlanDifferentBillingCycle_ShouldChangeBillingCycle()
+    {
+        // Arrange
+        var plan = CreateTestPlan("Pro", 29m);
+        var subscription = CreateTestSubscription(plan);
+
+        var command = new ChangePlanCommand(
+            "U00000001",
+            plan.Id.ToString(),
+            BillingCycle.Annual.Id);
+
+        _subscriptionRepository
+            .GetActiveByUserIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns(subscription);
+
+        _planRepository
+            .GetByIdAsync(plan.Id, Arg.Any<CancellationToken>())
+            .Returns(plan);
+
+        _unitOfWork
+            .SaveChangesAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(1));
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.BillingCycle.Should().Be("Annual");
+    }
+
+    #endregion
+
+    #region Proration Tests
+
+    [Fact]
+    public async Task Handle_WithUpgrade_ShouldIdentifyAsUpgrade()
+    {
+        // Arrange
+        var currentPlan = CreateTestPlan("Basic", 19m);
+        var newPlan = CreateTestPlan("Pro", 29m);
+        var subscription = CreateTestSubscription(currentPlan);
+
+        var command = new ChangePlanCommand(
+            "U00000001",
+            newPlan.Id.ToString(),
+            BillingCycle.Monthly.Id);
+
+        _subscriptionRepository
+            .GetActiveByUserIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns(subscription);
+
+        _planRepository
+            .GetByIdAsync(newPlan.Id, Arg.Any<CancellationToken>())
+            .Returns(newPlan);
+
+        _planRepository
+            .GetByIdAsync(currentPlan.Id, Arg.Any<CancellationToken>())
+            .Returns(currentPlan);
+
+        _unitOfWork
+            .SaveChangesAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(1));
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+
+        // Verify the domain event indicates this was an upgrade
+        var planChangedEvent = subscription.DomainEvents
+            .OfType<SubscriptionPlanChangedEvent>()
+            .FirstOrDefault();
+
+        planChangedEvent.Should().NotBeNull();
+        planChangedEvent!.IsUpgrade.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Handle_WithDowngrade_ShouldIdentifyAsDowngrade()
+    {
+        // Arrange
+        var currentPlan = CreateTestPlan("Pro", 29m);
+        var newPlan = CreateTestPlan("Basic", 19m);
+        var subscription = CreateTestSubscription(currentPlan);
+
+        var command = new ChangePlanCommand(
+            "U00000001",
+            newPlan.Id.ToString(),
+            BillingCycle.Monthly.Id);
+
+        _subscriptionRepository
+            .GetActiveByUserIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns(subscription);
+
+        _planRepository
+            .GetByIdAsync(newPlan.Id, Arg.Any<CancellationToken>())
+            .Returns(newPlan);
+
+        _planRepository
+            .GetByIdAsync(currentPlan.Id, Arg.Any<CancellationToken>())
+            .Returns(currentPlan);
+
+        _unitOfWork
+            .SaveChangesAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(1));
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+
+        var planChangedEvent = subscription.DomainEvents
+            .OfType<SubscriptionPlanChangedEvent>()
+            .FirstOrDefault();
+
+        planChangedEvent.Should().NotBeNull();
+        planChangedEvent!.IsUpgrade.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task Handle_WhenCurrentPlanNotFound_ShouldTreatAsUpgrade()
+    {
+        // Arrange - Edge case: current plan might be deleted
+        var currentPlan = CreateTestPlan("DeletedPlan", 50m);
+        var newPlan = CreateTestPlan("Pro", 29m);
+        var subscription = CreateTestSubscription(currentPlan);
+
+        var command = new ChangePlanCommand(
+            "U00000001",
+            newPlan.Id.ToString(),
+            BillingCycle.Monthly.Id);
+
+        _subscriptionRepository
+            .GetActiveByUserIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns(subscription);
+
+        _planRepository
+            .GetByIdAsync(newPlan.Id, Arg.Any<CancellationToken>())
+            .Returns(newPlan);
+
+        _planRepository
+            .GetByIdAsync(currentPlan.Id, Arg.Any<CancellationToken>())
+            .Returns((Plan?)null); // Current plan not found
+
+        _unitOfWork
+            .SaveChangesAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(1));
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+
+        // When current plan is not found, isUpgrade defaults to true
+        var planChangedEvent = subscription.DomainEvents
+            .OfType<SubscriptionPlanChangedEvent>()
+            .FirstOrDefault();
+
+        planChangedEvent.Should().NotBeNull();
+        planChangedEvent!.IsUpgrade.Should().BeTrue();
     }
 
     #endregion

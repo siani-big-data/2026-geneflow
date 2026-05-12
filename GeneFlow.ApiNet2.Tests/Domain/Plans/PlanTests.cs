@@ -361,4 +361,81 @@ public class PlanTests
     }
 
     #endregion
+
+    #region Deactivate - Idempotency Tests
+
+    [Fact]
+    public void Deactivate_WhenAlreadyInactive_ShouldBeIdempotent()
+    {
+        // Arrange
+        var plan = CreateTestPlan();
+        plan.Deactivate();
+        plan.IsActive.Should().BeFalse();
+
+        // Act - Deactivate again
+        var result = plan.Deactivate();
+
+        // Assert - Should succeed idempotently (already inactive)
+        result.IsSuccess.Should().BeTrue();
+        plan.IsActive.Should().BeFalse();
+    }
+
+    #endregion
+
+    #region Activate - Idempotency Tests
+
+    [Fact]
+    public void Activate_WhenAlreadyActive_ShouldBeIdempotent()
+    {
+        // Arrange
+        var plan = CreateTestPlan();
+        plan.IsActive.Should().BeTrue();
+
+        // Act - Activate again
+        var result = plan.Activate();
+
+        // Assert - Should succeed idempotently (already active)
+        result.IsSuccess.Should().BeTrue();
+        plan.IsActive.Should().BeTrue();
+    }
+
+    #endregion
+
+    #region SetAsDefault - Idempotency Tests
+
+    [Fact]
+    public void SetAsDefault_WhenAlreadyDefault_ShouldBeIdempotent()
+    {
+        // Arrange
+        var plan = CreateFreePlan(); // Free plan is created as default
+        plan.IsDefault.Should().BeTrue();
+
+        // Act - Set as default again
+        var result = plan.SetAsDefault();
+
+        // Assert - Should succeed idempotently (already default)
+        result.IsSuccess.Should().BeTrue();
+        plan.IsDefault.Should().BeTrue();
+    }
+
+    #endregion
+
+    #region RemoveDefaultStatus - Idempotency Tests
+
+    [Fact]
+    public void RemoveDefaultStatus_WhenNotDefault_ShouldBeIdempotent()
+    {
+        // Arrange
+        var plan = CreateTestPlan(); // Regular plan is not default
+        plan.IsDefault.Should().BeFalse();
+
+        // Act - Remove default status when not default
+        var result = plan.RemoveDefaultStatus();
+
+        // Assert - Should succeed idempotently (already not default)
+        result.IsSuccess.Should().BeTrue();
+        plan.IsDefault.Should().BeFalse();
+    }
+
+    #endregion
 }

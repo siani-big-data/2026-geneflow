@@ -27,16 +27,13 @@ public sealed class GetExecutionByIdQueryHandler
         GetExecutionByIdQuery request,
         CancellationToken cancellationToken)
     {
-        // Parse ID
         if (!PipelineExecutionId.TryParse(request.ExecutionId, out var executionId) || executionId == null)
             return Result.Failure<PipelineExecutionDto>(PipelineErrors.ExecutionNotFound);
 
-        // Get execution with steps
         var execution = await _executionRepository.GetByIdWithStepsAsync(executionId, cancellationToken);
         if (execution == null)
             return Result.Failure<PipelineExecutionDto>(PipelineErrors.ExecutionNotFound);
 
-        // Get pipeline name
         var pipeline = await _pipelineRepository.GetByIdAsync(execution.PipelineId, cancellationToken);
         var pipelineName = pipeline?.Name.Value ?? "Unknown";
 

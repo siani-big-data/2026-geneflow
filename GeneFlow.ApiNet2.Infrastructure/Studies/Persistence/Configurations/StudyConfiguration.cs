@@ -123,23 +123,40 @@ public sealed class StudyConfiguration : IEntityTypeConfiguration<Study>
         builder.HasIndex(s => s.IsFeatured);
 
         // Tags (stored as string array in PostgreSQL)
-        builder.Property(s => s.Tags)
+        // Use backing field to avoid IReadOnlyList<string> converter issues with InMemory provider
+        builder.Property<List<string>>("_tags")
             .HasColumnName("tags")
             .HasColumnType("text[]")
             .HasConversion(
                 tags => tags.ToArray(),
-                array => array.ToList());
+                array => array.ToList())
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
+
+        builder.Ignore(s => s.Tags);
 
         // Members (owned collection)
         builder.OwnsMany(s => s.Members, member =>
         {
             member.ToTable("study_members");
 
+            // Guid PK is generated in the domain (StudyMember.Create => Guid.NewGuid()).
+            // ValueGeneratedNever() prevents EF from treating new owned entries with
+            // a pre-set Guid as "loaded from DB" (which would mark them Modified
+            // instead of Added and trigger DbUpdateConcurrencyException on insert).
             member.Property<Guid>("Id")
-                .HasColumnName("id");
+                .HasColumnName("id")
+                .ValueGeneratedNever();
             member.HasKey("Id");
 
             member.WithOwner().HasForeignKey("study_id");
+
+            // Mark the shadow FK as required so EF generates DELETE when a member is
+            // removed from the collection, instead of trying to orphan it via
+            // UPDATE study_id = NULL (which violates the NOT NULL DB constraint).
+            // Use the non-generic Property(name) overload to configure the existing
+            // shadow property without re-declaring its CLR type (must match the
+            // principal key's StudyId type, not string).
+            member.Property("study_id").IsRequired();
 
             member.Property(m => m.UserId)
                 .HasColumnName("user_id")

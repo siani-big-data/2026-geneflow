@@ -148,5 +148,172 @@ public class DeleteProfilePhotoCommandHandlerTests
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
+    [Fact]
+    public async Task Handle_ShouldCallSaveChanges()
+    {
+        // Arrange
+        var profile = CreateTestProfile();
+        var photo = ProfilePhoto.Create("https://example.com/photo.jpg").Value;
+        profile.UpdatePhoto(photo);
+
+        var command = new DeleteProfilePhotoCommand("U00000001");
+
+        _profileRepository
+            .GetByUserIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns(profile);
+
+        _unitOfWork
+            .SaveChangesAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(1));
+
+        // Act
+        await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_ShouldPublishProfilePhotoDeletedEvent()
+    {
+        // Arrange
+        var profile = CreateTestProfile();
+        var photo = ProfilePhoto.Create("https://example.com/photo.jpg").Value;
+        profile.UpdatePhoto(photo);
+
+        var command = new DeleteProfilePhotoCommand("U00000001");
+
+        _profileRepository
+            .GetByUserIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns(profile);
+
+        _unitOfWork
+            .SaveChangesAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(1));
+
+        // Act
+        await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        await _mediatorPublisher.Received(1).Publish(
+            Arg.Is<GeneFlow.ApiNet2.Domain.Profiles.Events.ProfilePhotoDeletedEvent>(e => e.ProfileId == profile.Id),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_WhenProfileNotFound_ShouldNotCallSaveChanges()
+    {
+        // Arrange
+        var command = new DeleteProfilePhotoCommand("U00000001");
+
+        _profileRepository
+            .GetByUserIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns((Profile?)null);
+
+        // Act
+        await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_WhenProfileNotFound_ShouldNotPublishEvent()
+    {
+        // Arrange
+        var command = new DeleteProfilePhotoCommand("U00000001");
+
+        _profileRepository
+            .GetByUserIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns((Profile?)null);
+
+        // Act
+        await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        await _mediatorPublisher.DidNotReceive().Publish(
+            Arg.Any<GeneFlow.ApiNet2.Domain.Profiles.Events.ProfilePhotoDeletedEvent>(),
+            Arg.Any<CancellationToken>());
+    }
+
+    #endregion
+
+    #region Edge Cases
+
+    [Fact]
+    public async Task Handle_WithValidUserId_ShouldDeletePhoto()
+    {
+        // Arrange
+        var profile = CreateTestProfile();
+        var photo = ProfilePhoto.Create("https://example.com/photo.jpg", "https://example.com/thumb.jpg", 1024).Value;
+        profile.UpdatePhoto(photo);
+
+        var command = new DeleteProfilePhotoCommand("U00000001");
+
+        _profileRepository
+            .GetByUserIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns(profile);
+
+        _unitOfWork
+            .SaveChangesAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(1));
+
+        // Verify photo exists before delete
+        profile.Photo.HasPhoto.Should().BeTrue();
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        profile.Photo.HasPhoto.Should().BeFalse();
+        profile.Photo.Url.Should().BeNull();
+        profile.Photo.ThumbnailUrl.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task Handle_WithNonExistentProfile_ShouldReturnNotFound()
+    {
+        // Arrange
+        var command = new DeleteProfilePhotoCommand("U00000999");
+
+        _profileRepository
+            .GetByUserIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns((Profile?)null);
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Code.Should().Contain("NotFound");
+    }
+
+    [Fact]
+    public async Task Handle_WhenNoPhoto_ShouldSucceed()
+    {
+        // Arrange
+        var profile = CreateTestProfile();
+        // Profile created without photo - Photo should be empty
+        profile.Photo.HasPhoto.Should().BeFalse();
+
+        var command = new DeleteProfilePhotoCommand("U00000001");
+
+        _profileRepository
+            .GetByUserIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns(profile);
+
+        _unitOfWork
+            .SaveChangesAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(1));
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        profile.Photo.HasPhoto.Should().BeFalse();
+    }
+
     #endregion
 }

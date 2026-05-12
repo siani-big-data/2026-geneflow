@@ -43,7 +43,6 @@ public sealed class ExecutePipelineCommandHandler
         ExecutePipelineCommand request,
         CancellationToken cancellationToken)
     {
-        // Parse IDs
         if (!UserId.TryParse(request.UserId, out var userId) || userId == null)
             return Result.Failure<PipelineExecutionDto>(PipelineErrors.InvalidUserId);
 
@@ -53,12 +52,10 @@ public sealed class ExecutePipelineCommandHandler
         if (!TraceId.TryParse(request.TraceId, out var traceId) || traceId == null)
             return Result.Failure<PipelineExecutionDto>(PipelineErrors.TraceNotProcessed);
 
-        // Get pipeline with steps
         var pipeline = await _pipelineRepository.GetByIdWithStepsAsync(pipelineId, cancellationToken);
         if (pipeline == null)
             return Result.Failure<PipelineExecutionDto>(PipelineErrors.NotFound);
 
-        // Check if trace exists and is processed
         var trace = await _traceRepository.GetByIdAsync(traceId, cancellationToken);
         if (trace == null)
             return Result.Failure<PipelineExecutionDto>(PipelineErrors.TraceNotProcessed);
@@ -66,32 +63,28 @@ public sealed class ExecutePipelineCommandHandler
         if (trace.Status != TraceStatus.Processed)
             return Result.Failure<PipelineExecutionDto>(PipelineErrors.TraceNotProcessed);
 
-        // Check for already running execution
         if (await _executionRepository.HasRunningExecutionForTraceAsync(traceId, cancellationToken))
             return Result.Failure<PipelineExecutionDto>(PipelineErrors.TraceAlreadyRunning);
 
-        // Generate execution ID
         var sequenceValue = await _sequenceGenerator.NextAsync(
             PipelineExecutionId.SequenceName,
             cancellationToken);
         var executionId = PipelineExecutionId.FromSequence(sequenceValue);
 
-        // Start execution
         var executionResult = pipeline.StartExecution(executionId, traceId, userId);
         if (executionResult.IsFailure)
             return Result.Failure<PipelineExecutionDto>(executionResult.Error);
 
         var execution = executionResult.Value;
 
-        // Persist
         await _executionRepository.AddAsync(execution, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // Publish job to Redis
         var job = new PipelineJob(
             execution.Id.ToString(),
             pipeline.Id.ToString(),
             traceId.ToString(),
+            trace.StudyId.ToString(),
             execution.StepExecutions.Select(se => new PipelineStepJob(
                 se.Id,
                 se.Order,

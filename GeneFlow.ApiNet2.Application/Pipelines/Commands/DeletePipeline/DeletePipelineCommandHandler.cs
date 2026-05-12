@@ -26,23 +26,19 @@ public sealed class DeletePipelineCommandHandler
         DeletePipelineCommand request,
         CancellationToken cancellationToken)
     {
-        // Parse IDs
         if (!UserId.TryParse(request.UserId, out var userId) || userId == null)
             return Result.Failure(PipelineErrors.InvalidUserId);
 
         if (!PipelineId.TryParse(request.PipelineId, out var pipelineId) || pipelineId == null)
             return Result.Failure(PipelineErrors.NotFound);
 
-        // Get pipeline
         var pipeline = await _pipelineRepository.GetByIdAsync(pipelineId, cancellationToken);
         if (pipeline == null)
             return Result.Failure(PipelineErrors.NotFound);
 
-        // Check if can be deleted
         if (!pipeline.CanBeDeleted)
             return Result.Failure(PipelineErrors.PipelineNotDeletable);
 
-        // Delete
         _pipelineRepository.Delete(pipeline);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 

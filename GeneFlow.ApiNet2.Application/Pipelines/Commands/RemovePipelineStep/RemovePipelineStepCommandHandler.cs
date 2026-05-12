@@ -26,7 +26,6 @@ public sealed class RemovePipelineStepCommandHandler
         RemovePipelineStepCommand request,
         CancellationToken cancellationToken)
     {
-        // Parse IDs
         if (!UserId.TryParse(request.UserId, out var userId) || userId == null)
             return Result.Failure(PipelineErrors.InvalidUserId);
 
@@ -36,18 +35,14 @@ public sealed class RemovePipelineStepCommandHandler
         if (!Guid.TryParse(request.StepId, out var stepId))
             return Result.Failure(PipelineErrors.StepNotFound);
 
-        // Get pipeline with steps
         var pipeline = await _pipelineRepository.GetByIdWithStepsAsync(pipelineId, cancellationToken);
         if (pipeline == null)
             return Result.Failure(PipelineErrors.NotFound);
 
-        // Remove step
         var removeResult = pipeline.RemoveStep(stepId, userId);
         if (removeResult.IsFailure)
             return removeResult;
 
-        // Persist
-        // Entity already tracked - no Update needed
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Success();

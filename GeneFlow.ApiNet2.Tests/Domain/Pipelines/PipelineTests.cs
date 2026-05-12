@@ -179,6 +179,30 @@ public class PipelineTests
         pipeline.ModifiedAt.Should().BeOnOrAfter(beforeUpdate);
     }
 
+    [Fact]
+    public void Update_AllFields_ShouldSucceed()
+    {
+        // Arrange
+        var ownerId = CreateUserId();
+        var pipeline = Pipeline.Create(
+            CreatePipelineId(), CreateStudyId(), ownerId,
+            CreateName("Original Name"), CreateDescription("Original description")).Value;
+        pipeline.ClearDomainEvents();
+
+        var newName = CreateName("Updated Pipeline Name");
+        var newDescription = CreateDescription("Updated pipeline description with more details");
+
+        // Act
+        var result = pipeline.Update(newName, newDescription, ownerId);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        pipeline.Name.Should().Be(newName);
+        pipeline.Name.Value.Should().Be("Updated Pipeline Name");
+        pipeline.Description.Should().Be(newDescription);
+        pipeline.Description.Value.Should().Be("Updated pipeline description with more details");
+    }
+
     #endregion
 
     #region Step Management - AddStep
@@ -331,6 +355,26 @@ public class PipelineTests
         result.Value.IsEnabled.Should().BeFalse();
     }
 
+    [Fact]
+    public void AddStep_DuplicateStepType_ShouldSucceed()
+    {
+        // Arrange - Pipeline allows multiple steps of the same type
+        var ownerId = CreateUserId();
+        var pipeline = Pipeline.Create(
+            CreatePipelineId(), CreateStudyId(), ownerId,
+            CreateName(), CreateDescription()).Value;
+
+        // Act - Add two steps of the same type
+        var result1 = pipeline.AddStep(StepType.Quality, CreateConfig(), "Quality Step 1", true, ownerId);
+        var result2 = pipeline.AddStep(StepType.Quality, CreateConfig(), "Quality Step 2", true, ownerId);
+
+        // Assert - Both should succeed (no duplicate validation exists)
+        result1.IsSuccess.Should().BeTrue();
+        result2.IsSuccess.Should().BeTrue();
+        pipeline.Steps.Should().HaveCount(2);
+        pipeline.Steps.All(s => s.StepType == StepType.Quality).Should().BeTrue();
+    }
+
     #endregion
 
     #region Step Management - UpdateStep
@@ -372,6 +416,26 @@ public class PipelineTests
         // Assert
         result.IsFailure.Should().BeTrue();
         result.Error.Code.Should().Contain("StepNotFound");
+    }
+
+    [Fact]
+    public void UpdateStep_WithLongLabel_ShouldReturnStepLabelTooLongError()
+    {
+        // Arrange
+        var ownerId = CreateUserId();
+        var pipeline = Pipeline.Create(
+            CreatePipelineId(), CreateStudyId(), ownerId,
+            CreateName(), CreateDescription()).Value;
+        var stepResult = pipeline.AddStep(StepType.Quality, CreateConfig(), "Original Label", true, ownerId);
+        var stepId = stepResult.Value.Id;
+        var longLabel = new string('a', 101);
+
+        // Act
+        var result = pipeline.UpdateStep(stepId, CreateConfig(), longLabel, true, ownerId);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Code.Should().Contain("StepLabelTooLong");
     }
 
     #endregion
@@ -520,6 +584,31 @@ public class PipelineTests
         result.Error.Code.Should().Contain("StepNotFound");
     }
 
+    [Fact]
+    public void ReorderSteps_AfterStepRemoval_ShouldMaintainOrder()
+    {
+        // Arrange
+        var ownerId = CreateUserId();
+        var pipeline = Pipeline.Create(
+            CreatePipelineId(), CreateStudyId(), ownerId,
+            CreateName(), CreateDescription()).Value;
+        var step1 = pipeline.AddStep(StepType.Quality, CreateConfig(), "Step 1", true, ownerId).Value;
+        var step2 = pipeline.AddStep(StepType.Quality, CreateConfig(), "Step 2", true, ownerId).Value;
+        var step3 = pipeline.AddStep(StepType.Quality, CreateConfig(), "Step 3", true, ownerId).Value;
+
+        // Remove the middle step
+        pipeline.RemoveStep(step2.Id, ownerId);
+
+        // Act - Reorder the remaining steps (swap step1 and step3)
+        var result = pipeline.ReorderSteps(new[] { step3.Id, step1.Id }.ToList(), ownerId);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        pipeline.Steps.Should().HaveCount(2);
+        pipeline.Steps.First(s => s.Id == step3.Id).Order.Should().Be(1);
+        pipeline.Steps.First(s => s.Id == step1.Id).Order.Should().Be(2);
+    }
+
     #endregion
 
     #region Status Management - Activate
@@ -612,6 +701,27 @@ public class PipelineTests
         pipeline.DomainEvents.First().Should().BeOfType<PipelineActivatedEvent>();
     }
 
+    [Fact]
+    public void Activate_WithNoEnabledSteps_ShouldFail()
+    {
+        // Arrange
+        var ownerId = CreateUserId();
+        var pipeline = Pipeline.Create(
+            CreatePipelineId(), CreateStudyId(), ownerId,
+            CreateName(), CreateDescription()).Value;
+        // Add only disabled steps
+        pipeline.AddStep(StepType.Quality, CreateConfig(), "Disabled Step 1", false, ownerId);
+        pipeline.AddStep(StepType.Quality, CreateConfig(), "Disabled Step 2", false, ownerId);
+
+        // Act
+        var result = pipeline.Activate(ownerId);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Code.Should().Contain("NoStepsConfigured");
+        pipeline.EnabledStepCount.Should().Be(0);
+    }
+
     #endregion
 
     #region Status Management - Deactivate
@@ -645,6 +755,42 @@ public class PipelineTests
         var result = pipeline.Deactivate(ownerId);
 
         // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Code.Should().Contain("InvalidStatusTransition");
+    }
+
+    [Fact]
+    public void Deactivate_WhenNotActive_ShouldReturnError()
+    {
+        // Arrange - Pipeline is in Archived status
+        var ownerId = CreateUserId();
+        var pipeline = Pipeline.Create(
+            CreatePipelineId(), CreateStudyId(), ownerId,
+            CreateName(), CreateDescription()).Value;
+        pipeline.Archive(ownerId);
+
+        // Act
+        var result = pipeline.Deactivate(ownerId);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Code.Should().Contain("InvalidStatusTransition");
+    }
+
+    [Fact]
+    public void Deactivate_WhenAlreadyDraft_ShouldReturnError()
+    {
+        // Arrange - Pipeline is already in Draft status (initial state)
+        var ownerId = CreateUserId();
+        var pipeline = Pipeline.Create(
+            CreatePipelineId(), CreateStudyId(), ownerId,
+            CreateName(), CreateDescription()).Value;
+        pipeline.Status.Should().Be(PipelineStatus.Draft);
+
+        // Act - Trying to deactivate when already in Draft
+        var result = pipeline.Deactivate(ownerId);
+
+        // Assert - Should fail because Draft -> Draft is not a valid transition
         result.IsFailure.Should().BeTrue();
         result.Error.Code.Should().Contain("InvalidStatusTransition");
     }

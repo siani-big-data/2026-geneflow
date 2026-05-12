@@ -12,8 +12,10 @@ using GeneFlow.ApiNet2.Domain.Subscriptions;
 using GeneFlow.ApiNet2.Domain.Pipelines;
 using GeneFlow.ApiNet2.Domain.Traces;
 using GeneFlow.ApiNet2.Infrastructure.Analysis;
+using GeneFlow.ApiNet2.Infrastructure.Analysis.Repositories;
 using GeneFlow.ApiNet2.Infrastructure.Events;
 using GeneFlow.ApiNet2.Infrastructure.Jobs;
+using GeneFlow.ApiNet2.Infrastructure.Pipelines.Orchestration;
 using GeneFlow.ApiNet2.Infrastructure.Identity.Configuration;
 using GeneFlow.ApiNet2.Infrastructure.Identity.Persistence.Context;
 using GeneFlow.ApiNet2.Infrastructure.Identity.Persistence.Repositories;
@@ -258,6 +260,9 @@ public static class DependencyInjection
         // Usage statistics repository (Redis-based datamart)
         services.AddScoped<IUsageStatsRepository, RedisUsageStatsRepository>();
 
+        // Analysis result store (Redis-backed read-through cache for smart-tool results)
+        services.AddSingleton<IAnalysisResultStore, RedisAnalysisResultStore>();
+
         return services;
     }
 
@@ -318,6 +323,30 @@ public static class DependencyInjection
 
         // Analysis event processor (consumes events from Python Analysis worker)
         services.AddHostedService<AnalysisEventProcessor>();
+
+        // SSE fan-out: in-memory broker + background consumer that pushes
+        // analysis completion events to connected browser EventSources.
+        services.AddSingleton<Analysis.Sse.AnalysisEventBroker>();
+        services.AddHostedService<Analysis.Sse.AnalysisSseBroadcaster>();
+
+        // SSE fan-out for trace processing transitions (Pending → Processing
+        // → Ready/Failed). Independent consumer group on the "traces" stream.
+        services.AddSingleton<Traces.Sse.TraceProcessingEventBroker>();
+        services.AddHostedService<Traces.Sse.TraceProcessingSseBroadcaster>();
+
+        // SSE fan-out for pipeline execution progress (started, each step
+        // completed, completed, failed). Independent consumer group on the
+        // "pipelines" stream.
+        services.AddSingleton<Pipelines.Sse.PipelineExecutionEventBroker>();
+        services.AddHostedService<Pipelines.Sse.PipelineExecutionSseBroadcaster>();
+
+        // Pipeline orchestration: in-process BackgroundService that consumes
+        // pipeline jobs, dispatches each step to the analysis worker and walks
+        // the PipelineExecution state machine via TaskCompletionSource hand-off.
+        services.AddSingleton<PipelineStepCompletionRegistry>();
+        services.AddScoped<PipelineTraceDataResolver>();
+        services.AddHostedService<PipelineOrchestrationService>();
+        services.AddHostedService<PipelineEventListener>();
 
         return services;
     }

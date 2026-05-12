@@ -3,6 +3,7 @@ using GeneFlow.ApiNet2.Domain.Identity;
 using GeneFlow.ApiNet2.Domain.Plans;
 using GeneFlow.ApiNet2.Domain.Subscriptions;
 using GeneFlow.ApiNet2.Domain.Subscriptions.Enumerations;
+using GeneFlow.ApiNet2.Domain.Subscriptions.Events;
 
 namespace GeneFlow.ApiNet2.Tests.Application.Subscriptions.Commands;
 
@@ -156,6 +157,193 @@ public class CancelSubscriptionCommandHandlerTests
         // Assert
         result.IsFailure.Should().BeTrue();
         result.Error.Code.Should().Contain("CannotCancelExpired");
+    }
+
+    [Fact]
+    public async Task Handle_WhenSubscriptionAlreadyCancelled_ShouldReturnFailure()
+    {
+        // Arrange
+        var subscription = CreateTestSubscription();
+        subscription.Cancel("Previous cancellation"); // Cancel it first
+
+        var command = new CancelSubscriptionCommand("U00000001", "Second cancellation attempt");
+
+        _subscriptionRepository
+            .GetActiveByUserIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns(subscription);
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Code.Should().Contain("CannotCancelExpired");
+    }
+
+    #endregion
+
+    #region Domain Events
+
+    [Fact]
+    public async Task Handle_ShouldRaiseCancelledEvent()
+    {
+        // Arrange
+        var subscription = CreateTestSubscription();
+        var command = new CancelSubscriptionCommand("U00000001", "Not satisfied with service");
+
+        _subscriptionRepository
+            .GetActiveByUserIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns(subscription);
+
+        _unitOfWork
+            .SaveChangesAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(1));
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+
+        // Verify domain event was raised
+        subscription.DomainEvents.Should().Contain(e => e is SubscriptionCancelledEvent);
+        var domainEvent = subscription.DomainEvents.OfType<SubscriptionCancelledEvent>().First();
+        domainEvent.SubscriptionId.Should().Be(subscription.Id);
+        domainEvent.UserId.Should().Be(subscription.UserId);
+        domainEvent.Reason.Should().Be("Not satisfied with service");
+    }
+
+    [Fact]
+    public async Task Handle_WithoutReason_ShouldRaiseCancelledEventWithNullReason()
+    {
+        // Arrange
+        var subscription = CreateTestSubscription();
+        var command = new CancelSubscriptionCommand("U00000001", null);
+
+        _subscriptionRepository
+            .GetActiveByUserIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns(subscription);
+
+        _unitOfWork
+            .SaveChangesAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(1));
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+
+        var domainEvent = subscription.DomainEvents.OfType<SubscriptionCancelledEvent>().First();
+        domainEvent.Reason.Should().BeNull();
+    }
+
+    #endregion
+
+    #region Cancellation Behavior
+
+    [Fact]
+    public async Task Handle_ShouldCancelImmediately()
+    {
+        // Arrange
+        var subscription = CreateTestSubscription();
+        var command = new CancelSubscriptionCommand("U00000001", null);
+
+        _subscriptionRepository
+            .GetActiveByUserIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns(subscription);
+
+        _unitOfWork
+            .SaveChangesAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(1));
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        subscription.Status.Should().Be(SubscriptionStatus.Cancelled);
+        subscription.CancelledAt.Should().NotBeNull();
+        subscription.CancelledAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
+    }
+
+    [Fact]
+    public async Task Handle_ShouldSetCancellationReason()
+    {
+        // Arrange
+        var subscription = CreateTestSubscription();
+        const string reason = "Found a better alternative";
+        var command = new CancelSubscriptionCommand("U00000001", reason);
+
+        _subscriptionRepository
+            .GetActiveByUserIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns(subscription);
+
+        _unitOfWork
+            .SaveChangesAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(1));
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        subscription.CancellationReason.Should().Be(reason);
+    }
+
+    [Fact]
+    public async Task Handle_ShouldDisableAutoRenew()
+    {
+        // Arrange
+        var subscription = CreateTestSubscription();
+        subscription.AutoRenew.Should().BeTrue(); // Verify initial state
+
+        var command = new CancelSubscriptionCommand("U00000001", null);
+
+        _subscriptionRepository
+            .GetActiveByUserIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns(subscription);
+
+        _unitOfWork
+            .SaveChangesAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(1));
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        subscription.AutoRenew.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task Handle_WithTrialSubscription_ShouldCancelSuccessfully()
+    {
+        // Arrange - Create a trial subscription
+        var trialSubscription = Subscription.Create(
+            SubscriptionId.FromSequence(_subscriptionSequence++),
+            new UserId(1),
+            PlanId.FromSequence(_planSequence++),
+            "Pro",
+            BillingCycle.Monthly,
+            startWithTrial: true).Value;
+
+        var command = new CancelSubscriptionCommand("U00000001", "Trial not what I expected");
+
+        _subscriptionRepository
+            .GetActiveByUserIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns(trialSubscription);
+
+        _unitOfWork
+            .SaveChangesAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(1));
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        trialSubscription.Status.Should().Be(SubscriptionStatus.Cancelled);
     }
 
     #endregion
