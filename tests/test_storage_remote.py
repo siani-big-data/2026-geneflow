@@ -279,9 +279,7 @@ class TestSupabaseStorageProviderMocked:
 
     @pytest.mark.asyncio
     async def test_list_returns_names(self, provider):
-        response = _make_response(
-            200, json_data=[{"name": "a"}, {"name": "b"}, {"other": "skip"}]
-        )
+        response = _make_response(200, json_data=[{"name": "a"}, {"name": "b"}, {"other": "skip"}])
         client = _client_with("post", response)
 
         with _patch_async_client(client):

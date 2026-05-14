@@ -84,9 +84,7 @@ class DistanceCalculator:
         seq_length = len(aligned_sequences[0])
         for i, seq in enumerate(aligned_sequences):
             if len(seq) != seq_length:
-                raise ValueError(
-                    f"Sequence {i} has length {len(seq)}, expected {seq_length}"
-                )
+                raise ValueError(f"Sequence {i} has length {len(seq)}, expected {seq_length}")
 
         if labels is None:
             labels = [f"seq_{i}" for i in range(len(aligned_sequences))]

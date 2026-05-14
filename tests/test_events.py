@@ -95,16 +95,12 @@ class TestEventSerialization:
         _assert_envelope(event.to_dict(), event)
 
     def test_heterozygote_detection_completed(self):
-        event = HeterozygoteDetectionCompleted(
-            traceId="t", heterozygoteCount=2, positions=[10, 20]
-        )
+        event = HeterozygoteDetectionCompleted(traceId="t", heterozygoteCount=2, positions=[10, 20])
         assert event.category == "analysis"
         _assert_envelope(event.to_dict(), event)
 
     def test_motif_search_completed(self):
-        event = MotifSearchCompleted(
-            traceId="t", pattern="ACGT", matchCount=3, positions=[1, 5, 9]
-        )
+        event = MotifSearchCompleted(traceId="t", pattern="ACGT", matchCount=3, positions=[1, 5, 9])
         assert event.category == "analysis"
         _assert_envelope(event.to_dict(), event)
 
@@ -126,9 +122,7 @@ class TestEventSerialization:
         _assert_envelope(event.to_dict(), event)
 
     def test_analysis_result_stored(self):
-        event = AnalysisResultStored(
-            traceId="t", analysisType="quality", resultData={"score": 1}
-        )
+        event = AnalysisResultStored(traceId="t", analysisType="quality", resultData={"score": 1})
         assert event.category == "traces"
         _assert_envelope(event.to_dict(), event)
 

@@ -11,7 +11,6 @@ from src.analyzers.quality import QualityAnalyzer
 from src.models import ChromatogramData, ParsedTrace, Sequence, TraceFormat
 from src.utils.chunking import _chunk_chromatogram, chunk_trace_data
 
-
 # ---------------------------------------------------------------------------
 # MultipleAligner branches: progressive align + edge cases
 # ---------------------------------------------------------------------------
@@ -253,17 +252,13 @@ class TestQualityAnalyzerBranches:
         assert len(windows) == 1
 
     def test_find_low_quality_regions_trailing(self):
-        seq = Sequence(
-            id="s", sequence="A" * 10, quality=[30, 30, 30, 30, 5, 5, 5, 5, 5, 5]
-        )
+        seq = Sequence(id="s", sequence="A" * 10, quality=[30, 30, 30, 30, 5, 5, 5, 5, 5, 5])
         regions = QualityAnalyzer().find_low_quality_regions(seq, threshold=20, min_length=3)
         assert len(regions) == 1
         assert regions[0]["start"] == 4
 
     def test_find_low_quality_regions_middle(self):
-        seq = Sequence(
-            id="s", sequence="A" * 8, quality=[30, 30, 5, 5, 5, 30, 30, 30]
-        )
+        seq = Sequence(id="s", sequence="A" * 8, quality=[30, 30, 5, 5, 5, 30, 30, 30])
         regions = QualityAnalyzer().find_low_quality_regions(seq, threshold=20, min_length=2)
         assert len(regions) == 1
         assert regions[0]["length"] == 3

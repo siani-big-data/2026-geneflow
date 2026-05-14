@@ -1,10 +1,11 @@
 """Tests for phylogenetic analysis module."""
 
-import math
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+from src.events.events import PhylogenyCompleted, PhylogenyFailed
+from src.models import PhylogenyJob
 from src.phylogeny import (
     BootstrapAnalyzer,
     BootstrapResult,
@@ -18,9 +19,6 @@ from src.phylogeny import (
     TreeMethod,
     TreeNode,
 )
-from src.models import PhylogenyJob
-from src.events.events import PhylogenyCompleted, PhylogenyFailed
-
 
 # =============================================================================
 # Test Data
@@ -94,9 +92,7 @@ class TestDistanceCalculator:
     def test_jukes_cantor_identical(self):
         """Identical sequences should have 0 Jukes-Cantor distance."""
         calc = DistanceCalculator()
-        result = calc.calculate(
-            IDENTICAL_SEQUENCES, ["a", "b"], DistanceMethod.JUKES_CANTOR
-        )
+        result = calc.calculate(IDENTICAL_SEQUENCES, ["a", "b"], DistanceMethod.JUKES_CANTOR)
 
         assert result.matrix[0][1] == 0.0
         assert result.method == "jukes_cantor"
@@ -128,12 +124,8 @@ class TestDistanceCalculator:
         # Transversion: A <-> T (purine <-> pyrimidine)
         transversion_seqs = ["AAAAA", "TAAAA"]
 
-        trans_result = calc.calculate(
-            transition_seqs, ["a", "b"], DistanceMethod.KIMURA_2P
-        )
-        transv_result = calc.calculate(
-            transversion_seqs, ["a", "b"], DistanceMethod.KIMURA_2P
-        )
+        trans_result = calc.calculate(transition_seqs, ["a", "b"], DistanceMethod.KIMURA_2P)
+        transv_result = calc.calculate(transversion_seqs, ["a", "b"], DistanceMethod.KIMURA_2P)
 
         # Both have same p-distance (0.2) but K2P treats them differently
         assert trans_result.matrix[0][1] > 0
@@ -651,9 +643,7 @@ class TestPhylogenyWorker:
         assert event.sequenceCount == 3
 
     @pytest.mark.asyncio
-    async def test_process_job_with_bootstrap(
-        self, mock_redis, mock_publisher, mock_settings
-    ):
+    async def test_process_job_with_bootstrap(self, mock_redis, mock_publisher, mock_settings):
         """Worker should handle bootstrap analysis."""
         from src.workers.phylogeny import PhylogenyWorker
 
@@ -676,9 +666,7 @@ class TestPhylogenyWorker:
         assert event.bootstrapReplicates == 50
 
     @pytest.mark.asyncio
-    async def test_process_job_failure(
-        self, mock_redis, mock_publisher, mock_settings
-    ):
+    async def test_process_job_failure(self, mock_redis, mock_publisher, mock_settings):
         """Worker should publish failure event on error."""
         from src.workers.phylogeny import PhylogenyWorker
 

@@ -4,7 +4,6 @@ from __futuREDACTED import annotations
 
 import asyncio
 import sys
-from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
@@ -17,7 +16,6 @@ from src.models import ChromatogramData, Sequence, TraceFormat
 from src.parsers.parser import BaseParser, ParserFactory
 from src.storage.base import StorageError
 from src.storage.http import HTTPStorageProvider
-
 
 # ---------------------------------------------------------------------------
 # HeterozygoteAnalyzer: chromatogram detection branches
@@ -76,9 +74,7 @@ class TestHeterozygoteChromatogram:
         chrom.traceG[0] = 70
         seq = Sequence(id="s", sequence="A")
 
-        result = HeterozygoteAnalyzer().analyze(
-            seq, chromatogram=chrom, min_confidence=0.99
-        )
+        result = HeterozygoteAnalyzer().analyze(seq, chromatogram=chrom, min_confidence=0.99)
 
         assert result.heterozygoteCount == 0
 
@@ -138,9 +134,7 @@ class TestTranslation:
             TranslationAnalyzer().analyze(Sequence(id="s", sequence="ATG"), frame=99)
 
     def test_reverse_frame(self):
-        result = TranslationAnalyzer().analyze(
-            Sequence(id="s", sequence="ATGAAATAA"), frame=-1
-        )
+        result = TranslationAnalyzer().analyze(Sequence(id="s", sequence="ATGAAATAA"), frame=-1)
         assert result.proteinLength >= 0
 
     def test_translate_all_frames(self):
@@ -163,9 +157,7 @@ class TestTranslation:
         assert info["properties"]["aromatic"] > 0
 
     def test_reverse_complement_unknown_base(self):
-        result = TranslationAnalyzer().analyze(
-            Sequence(id="s", sequence="ATGXYZTAA"), frame=-1
-        )
+        result = TranslationAnalyzer().analyze(Sequence(id="s", sequence="ATGXYZTAA"), frame=-1)
         assert result is not None
 
 

@@ -24,9 +24,7 @@ class BootstrapResult:
             "originalTree": self.original_tree.to_dict(),
             "supportValues": self.support_values,
             "replicates": self.replicates,
-            "consensusTree": self.consensus_tree.to_dict()
-            if self.consensus_tree
-            else None,
+            "consensusTree": self.consensus_tree.to_dict() if self.consensus_tree else None,
         }
 
     @classmethod

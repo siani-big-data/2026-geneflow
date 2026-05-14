@@ -67,9 +67,7 @@ class ApplicationLifecycle:
         """Gracefully shutdown all services."""
         logger.info("application_stopping")
 
-        total_jobs = sum(
-            w.metrics.jobsProcessed for w in self.components.workers.values()
-        )
+        total_jobs = sum(w.metrics.jobsProcessed for w in self.components.workers.values())
 
         for worker in self.components.workers.values():
             await worker.stop()

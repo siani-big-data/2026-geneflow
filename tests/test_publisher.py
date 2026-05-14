@@ -29,9 +29,7 @@ def mock_redis() -> AsyncMock:
 
 @pytest.fixture
 def event() -> WorkerStarted:
-    return WorkerStarted(
-        workerName="w", workerId="id-1", enabledWorkers=["trace"]
-    )
+    return WorkerStarted(workerName="w", workerId="id-1", enabledWorkers=["trace"])
 
 
 class TestEventBusPublisher:

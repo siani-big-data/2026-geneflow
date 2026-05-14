@@ -41,7 +41,11 @@ class AB1Parser(BaseParser):
         if "phred_quality" in record.letter_annotations:
             quality = list(record.letter_annotations["phred_quality"])
 
-        name = self._to_string(record.name) if record.name else (self._to_string(record.id) if record.id else None)
+        name = (
+            self._to_string(record.name)
+            if record.name
+            else (self._to_string(record.id) if record.id else None)
+        )
 
         description = None
         if record.description and record.description != "<unknown description>":
@@ -69,7 +73,7 @@ class AB1Parser(BaseParser):
         )
 
     def _extract_chromatogram(self, record) -> ChromatogramData | None:
-        """Extract chromatogram data from BioPython record (DATA9=G, DATA10=A, DATA11=T, DATA12=C)."""
+        """Extract chromatogram from BioPython record (DATA9=G, DATA10=A, DATA11=T, DATA12=C)."""
         try:
             abif_raw = record.annotations.get("abif_raw", {})
 

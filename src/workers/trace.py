@@ -71,9 +71,7 @@ class TraceWorker(BaseWorker):
                 if synthesized is not None:
                     parsed.chromatogram = synthesized
                     parsed.metadata["syntheticChromatogram"] = True
-                    parsed.metadata["syntheticChromatogramFormat"] = (
-                        f"synthetic-{job.format.value}"
-                    )
+                    parsed.metadata["syntheticChromatogramFormat"] = f"synthetic-{job.format.value}"
                     synthetic_chromatogram = True
 
             logger.info(
@@ -145,9 +143,7 @@ class TraceWorker(BaseWorker):
         except FileNotFoundError:
             raise ValueError(f"Trace file not found: {job.storagePath}")
 
-    async def _stoREDACTED(
-        self, job: TraceProcessingJob, parsed, chunked_data=None
-    ) -> None:
+    async def _stoREDACTED(self, job: TraceProcessingJob, parsed, chunked_data=None) -> None:
         """Store parsed trace result and chunked data for frontend."""
         result_path = f"{job.studyId}/{job.traceId}/parsed.json"
         result_data = json.dumps(parsed.to_dict()).encode("utf-8")

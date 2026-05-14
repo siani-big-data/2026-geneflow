@@ -46,7 +46,9 @@ def _build_scf(
             else:
                 samples += struct.pack(">H", value)
 
-    peak_locations = b"".join(struct.pack(">I", i * (num_samples // num_bases or 1)) for i in range(num_bases))
+    peak_locations = b"".join(
+        struct.pack(">I", i * (num_samples // num_bases or 1)) for i in range(num_bases)
+    )
 
     probs = bytearray()
     for ch_idx in range(4):

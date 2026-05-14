@@ -157,9 +157,7 @@ class TreeBuilder:
 
             for k in active:
                 if k != min_i and k != min_j:
-                    new_dist = (
-                        matrix[min_i][k] * size_i + matrix[min_j][k] * size_j
-                    ) / new_size
+                    new_dist = (matrix[min_i][k] * size_i + matrix[min_j][k] * size_j) / new_size
                     matrix[min_i][k] = new_dist
                     matrix[k][min_i] = new_dist
 
@@ -243,9 +241,7 @@ class TreeBuilder:
 
             for k in active:
                 if k != min_i and k != min_j:
-                    new_dist = (
-                        matrix[min_i][k] + matrix[min_j][k] - matrix[min_i][min_j]
-                    ) / 2
+                    new_dist = (matrix[min_i][k] + matrix[min_j][k] - matrix[min_i][min_j]) / 2
                     matrix[min_i][k] = new_dist
                     matrix[k][min_i] = new_dist
 

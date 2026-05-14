@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Optional
 
-from src.models import ChromatogramData, ParsedTrace, QualityMetrics
+from src.models import ChromatogramData, ParsedTrace
 
 DEFAULT_CHUNK_SIZE = 10_000
 
@@ -127,7 +127,11 @@ def _chunk_chromatogram(
     if start_base >= len(chromatogram.peakLocations):
         return None
 
-    start_idx = chromatogram.peakLocations[start_base] if start_base < len(chromatogram.peakLocations) else 0
+    start_idx = (
+        chromatogram.peakLocations[start_base]
+        if start_base < len(chromatogram.peakLocations)
+        else 0
+    )
     end_idx = (
         chromatogram.peakLocations[min(end_base, len(chromatogram.peakLocations) - 1)] + 1
         if end_base < len(chromatogram.peakLocations)

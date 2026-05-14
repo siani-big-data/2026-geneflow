@@ -1,6 +1,7 @@
 """Event bus publisher for GeneFlow Analysis Worker."""
 
 import json
+
 import structlog
 from redis.asyncio import Redis
 

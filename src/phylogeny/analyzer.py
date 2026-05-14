@@ -107,9 +107,7 @@ class PhylogenyAnalyzer:
         alignment_length = len(aligned_sequences[0])
         for i, seq in enumerate(aligned_sequences):
             if len(seq) != alignment_length:
-                raise ValueError(
-                    f"Sequence {i} has length {len(seq)}, expected {alignment_length}"
-                )
+                raise ValueError(f"Sequence {i} has length {len(seq)}, expected {alignment_length}")
 
         if labels is None:
             labels = [f"seq_{i}" for i in range(len(aligned_sequences))]
