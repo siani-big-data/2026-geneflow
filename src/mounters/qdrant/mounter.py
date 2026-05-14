@@ -170,19 +170,16 @@ class QdrantMounter(BaseMounter):
             logger.warning("qdrant_invalid_trace_delete_event", payload=payload)
             return
 
-        # Delete from sequences collection (keyed by trace_id)
         await self._connection.delete_points(
             collection=SEQUENCES_COLLECTION.name,
             point_ids=[trace_id],
         )
 
-        # Delete from traces collection (keyed by trace_id)
         await self._connection.delete_points(
             collection=TRACES_COLLECTION.name,
             point_ids=[trace_id],
         )
 
-        # Delete related annotations by trace_id filter
         await self._connection.delete_by_filter(
             collection=ANNOTATIONS_COLLECTION.name,
             field="trace_id",

@@ -56,12 +56,10 @@ class StorageMounter(BaseMounter):
         if event_type == "TraceUploaded":
             await self._trace_handler.handle_uploaded(payload)
         elif event_type == "TraceProcessed":
-            # TraceProcessed from Analysis worker contains parsed/chunked data
             await self._trace_handler.handle_processed(payload)
         elif event_type == "TraceDeleted":
             await self._trace_handler.handle_deleted(payload)
         elif event_type == "AnalysisResultStored":
-            # Analysis results (trimming, heterozygote, etc.) from Analysis worker
             await self._trace_handler.handle_analysis_result(payload)
         elif event_type == "ProfilePhotoUploadedEvent":
             await self._photo_handler.handle_uploaded(payload)

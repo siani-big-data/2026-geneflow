@@ -56,7 +56,6 @@ class TraceHandler:
             logger.warning("storage_trace_processed_no_chunks", trace_id=trace_id)
             return
 
-        # Store each chunk
         for chunk in chunks:
             chunk_index = chunk.get("index", 0)
             chunk_filename = f"chunk_{chunk_index:04d}.json"
@@ -68,7 +67,6 @@ class TraceHandler:
                 json.dumps(chunk).encode(),
             )
 
-        # Store the manifest
         manifest_key = f"traces/{trace_id}/manifest.json"
         await self._connection.put_object(
             self._bucket,
@@ -203,10 +201,8 @@ class TraceHandler:
             )
             return
 
-        # Store analysis result as JSON
         result_key = f"traces/{trace_id}/analysis/{analysis_type}.json"
 
-        # Add metadata to result
         result_with_meta = {
             "trace_id": trace_id,
             "analysis_type": analysis_type,

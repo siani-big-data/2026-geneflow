@@ -24,13 +24,11 @@ def setup_mounters(settings: Settings, datalake_path: str | None = None) -> Moun
     """
     engine = MounterEngine(datalake_path=datalake_path)
 
-    # Register PostgreSQL mounter if enabled
     if settings.postgres_enabled and settings.postgres_dsn:
         postgres_mounter = PostgresMounter(dsn=settings.postgres_dsn)
         engine.register(postgres_mounter)
         logger.info("postgres_mounter_registered")
 
-    # Register Storage mounter if configured
     if settings.minio_endpoint:
         storage_mounter = StorageMounter(
             endpoint_url=settings.minio_endpoint,
@@ -41,7 +39,6 @@ def setup_mounters(settings: Settings, datalake_path: str | None = None) -> Moun
         engine.register(storage_mounter)
         logger.info("storage_mounter_registered")
 
-    # Register Qdrant mounter if enabled
     if settings.qdrant_enabled:
         qdrant_mounter = QdrantMounter(
             qdrant_url=settings.qdrant_url,
