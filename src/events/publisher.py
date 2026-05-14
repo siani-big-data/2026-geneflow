@@ -1,5 +1,6 @@
 """Event bus publisher for GeneFlow Analysis Worker."""
 
+import json
 import structlog
 from redis.asyncio import Redis
 
@@ -35,7 +36,7 @@ class EventBusPublisher:
         try:
             message_id = await self._redis.xadd(
                 stream_name,
-                {"data": str(event_data)},
+                {"data": json.dumps(event_data)},
                 maxlen=self._max_len,
                 approximate=True,
             )

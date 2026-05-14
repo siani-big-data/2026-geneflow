@@ -45,14 +45,15 @@ class BaseEvent:
         return {}
 
 
-# =============================================================================
-# Trace Events
-# =============================================================================
-
-
 @dataclass
 class TraceProcessed(BaseEvent):
-    """Event emitted when a trace is successfully processed."""
+    """
+    Event emitted when a trace is successfully processed.
+
+    Includes chunked sequence data for storage in the datalake.
+    The parsedData field contains the manifest and chunks ready
+    for the StorageMounter to store.
+    """
 
     traceId: str = ""
     studyId: str = ""
@@ -60,20 +61,28 @@ class TraceProcessed(BaseEvent):
     sequenceLength: int = 0
     meanQuality: Optional[float] = None
     hasChromatogram: bool = False
+    hasQualityScores: bool = False
+    chunkCount: int = 0
+    parsedData: Optional[dict[str, Any]] = None
 
     @property
     def category(self) -> str:
         return "traces"
 
     def _get_data(self) -> dict[str, Any]:
-        return {
+        data = {
             "traceId": self.traceId,
             "studyId": self.studyId,
             "format": self.format,
             "sequenceLength": self.sequenceLength,
             "meanQuality": self.meanQuality,
             "hasChromatogram": self.hasChromatogram,
+            "hasQualityScores": self.hasQualityScores,
+            "chunkCount": self.chunkCount,
         }
+        if self.parsedData is not None:
+            data["parsedData"] = self.parsedData
+        return data
 
 
 @dataclass
@@ -96,11 +105,6 @@ class TraceProcessingFailed(BaseEvent):
             "error": self.error,
             "errorType": self.errorType,
         }
-
-
-# =============================================================================
-# Alignment Events
-# =============================================================================
 
 
 @dataclass
@@ -147,11 +151,6 @@ class AlignmentFailed(BaseEvent):
             "error": self.error,
             "errorType": self.errorType,
         }
-
-
-# =============================================================================
-# Analysis Events
-# =============================================================================
 
 
 @dataclass
@@ -284,9 +283,29 @@ class RestrictionAnalysisCompleted(BaseEvent):
         }
 
 
-# =============================================================================
-# System Events
-# =============================================================================
+@dataclass
+class AnalysisResultStored(BaseEvent):
+    """
+    Event emitted when an analysis result should be stored in the datalake.
+
+    Consumed by the StorageMounter to persist analysis results
+    alongside the trace chunks in object storage.
+    """
+
+    traceId: str = ""
+    analysisType: str = ""
+    resultData: dict = field(default_factory=dict)
+
+    @property
+    def category(self) -> str:
+        return "traces"
+
+    def _get_data(self) -> dict[str, Any]:
+        return {
+            "traceId": self.traceId,
+            "analysisType": self.analysisType,
+            "resultData": self.resultData,
+        }
 
 
 @dataclass
@@ -328,4 +347,52 @@ class WorkerStopped(BaseEvent):
             "workerId": self.workerId,
             "reason": self.reason,
             "jobsProcessed": self.jobsProcessed,
+        }
+
+
+@dataclass
+class PhylogenyCompleted(BaseEvent):
+    """Event emitted when phylogenetic analysis is completed."""
+
+    analysisId: str = ""
+    alignmentId: str = ""
+    sequenceCount: int = 0
+    treeMethod: str = ""
+    distanceMethod: str = ""
+    hasBootstrap: bool = False
+    bootstrapReplicates: int = 0
+
+    @property
+    def category(self) -> str:
+        return "phylogeny"
+
+    def _get_data(self) -> dict[str, Any]:
+        return {
+            "analysisId": self.analysisId,
+            "alignmentId": self.alignmentId,
+            "sequenceCount": self.sequenceCount,
+            "treeMethod": self.treeMethod,
+            "distanceMethod": self.distanceMethod,
+            "hasBootstrap": self.hasBootstrap,
+            "bootstrapReplicates": self.bootstrapReplicates,
+        }
+
+
+@dataclass
+class PhylogenyFailed(BaseEvent):
+    """Event emitted when phylogenetic analysis fails."""
+
+    analysisId: str = ""
+    error: str = ""
+    errorType: str = ""
+
+    @property
+    def category(self) -> str:
+        return "phylogeny"
+
+    def _get_data(self) -> dict[str, Any]:
+        return {
+            "analysisId": self.analysisId,
+            "error": self.error,
+            "errorType": self.errorType,
         }
