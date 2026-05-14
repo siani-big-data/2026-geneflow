@@ -1,0 +1,43 @@
+# GeneFlow Analysis Worker
+# Standalone docker-compose for analysis processing
+
+services:
+  analysis:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: geneflow-analysis
+    environment:
+      # Redis connection
+      WORKER_REDIS_URL: redis://geneflow-core-redis:6379
+      WORKER_REDIS_CONSUMER_GROUP: geneflow-analysis-consumers
+      WORKER_REDIS_CONSUMER_NAME: analysis-1
+      # Storage - MinIO for trace files
+      WORKER_STORAGE_PROVIDER: minio
+      WORKER_MINIO_ENDPOINT: geneflow-core-minio:9000
+      WORKER_MINIO_ACCESS_KEY: geneflow
+      WORKER_MINIO_SECRET_KEY: geneflow123
+      WORKER_MINIO_BUCKET: geneflow
+      WORKER_MINIO_SECURE: "false"
+      # API (Health endpoint)
+      WORKER_API_HOST: 0.0.0.0
+      WORKER_API_PORT: 8080
+      # Logging
+      WORKER_LOG_LEVEL: DEBUG
+    ports:
+      - "8082:8080"
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    networks:
+      - geneflow-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+networks:
+  geneflow-network:
+    external: true
