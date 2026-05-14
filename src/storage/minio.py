@@ -56,7 +56,6 @@ class MinIOStorageProvider(StorageProvider):
         new_content = "\n".join(event_lines) + "\n"
 
         async with self._get_client() as client:
-            # Try to get existing content
             existing_content = ""
             try:
                 response = await client.get_object(Bucket=self.bucket, Key=key)
@@ -66,7 +65,6 @@ class MinIOStorageProvider(StorageProvider):
                 if e.response["Error"]["Code"] != "NoSuchKey":
                     raise
 
-            # Append and upload
             full_content = existing_content + new_content
             await client.put_object(
                 Bucket=self.bucket,
@@ -117,7 +115,6 @@ class MinIOStorageProvider(StorageProvider):
             paginator = client.get_paginator("list_objects_v2")
             async for page in paginator.paginate(Bucket=self.bucket, Prefix=prefix, Delimiter="/"):
                 for common_prefix in page.get("CommonPrefixes", []):
-                    # Extract category from "events/category/"
                     category = common_prefix["Prefix"].replace(prefix, "").rstrip("/")
                     if category:
                         categories.add(category)
@@ -133,7 +130,6 @@ class MinIOStorageProvider(StorageProvider):
             async for page in paginator.paginate(Bucket=self.bucket, Prefix=prefix):
                 for obj in page.get("Contents", []):
                     key = obj["Key"]
-                    # Extract date from "events/category/YYYY-MM-DD.jsonl"
                     filename = key.split("/")[-1]
                     if filename.endswith(".jsonl"):
                         date_str = filename.replace(".jsonl", "")

@@ -51,13 +51,11 @@ class SupabaseStorageProvider(StorageProvider):
 
         client = await self._get_client()
 
-        # Try to get existing content
         existing_content = ""
         response = await client.get(f"/object/{self.bucket}/{path}")
         if response.status_code == 200:
             existing_content = response.text
 
-        # Upload combined content (upsert)
         full_content = existing_content + new_content
         response = await client.post(
             f"/object/{self.bucket}/{path}",
@@ -106,7 +104,6 @@ class SupabaseStorageProvider(StorageProvider):
         client = await self._get_client()
         categories = set()
 
-        # List folders in events/
         response = await client.post(
             f"/object/list/{self.bucket}",
             json={"prefix": "events/", "limit": 1000},
@@ -120,7 +117,6 @@ class SupabaseStorageProvider(StorageProvider):
 
         for item in items:
             name = item.get("name", "")
-            # Folders end with /
             if name and item.get("id") is None:
                 categories.add(name.rstrip("/"))
 
