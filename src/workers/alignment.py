@@ -45,7 +45,6 @@ class AlignmentWorker(BaseWorker):
     async def process_job(self, job_id: str, job_data: dict[str, Any]) -> None:
         """Process an alignment job."""
         try:
-            # Parse job data
             job = AlignmentJob.from_dict(job_data)
 
             logger.info(
@@ -55,11 +54,9 @@ class AlignmentWorker(BaseWorker):
                 sequence_count=len(job.sequences),
             )
 
-            # Validate sequences
             if not job.sequences or len(job.sequences) < 2:
                 raise ValueError("At least 2 sequences required for alignment")
 
-            # Perform alignment based on type
             if job.type == AlignmentType.PAIRWISE:
                 result = self._pairwise_aligner.align(
                     job.sequences,
@@ -73,7 +70,6 @@ class AlignmentWorker(BaseWorker):
                     **job.options,
                 )
 
-            # Build consensus if requested
             consensus = None
             if job.options.get("build_consensus", False):
                 method = ConsensusMethod(job.options.get("consensus_method", "majority"))
@@ -92,7 +88,6 @@ class AlignmentWorker(BaseWorker):
                 has_consensus=consensus is not None,
             )
 
-            # Publish success event
             event = AlignmentCompleted(
                 alignmentId=job.alignmentId,
                 type=job.type.value,
@@ -112,7 +107,6 @@ class AlignmentWorker(BaseWorker):
                 error_type=type(e).__name__,
             )
 
-            # Publish failure event
             event = AlignmentFailed(
                 alignmentId=job_data.get("alignmentId", "unknown"),
                 error=str(e),

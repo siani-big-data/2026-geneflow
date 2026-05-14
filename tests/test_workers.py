@@ -269,7 +269,8 @@ class TestAnalysisWorker:
 
         await worker.process_job("msg-1", job_data)
 
-        mock_publisher.publish.assert_called_once()
+        # Publishes both TrimmingCompleted and AnalysisResultStored events
+        assert mock_publisher.publish.call_count == 2
 
     @pytest.mark.asyncio
     async def test_fails_without_sequence(self, mock_redis, mock_publisher, settings):

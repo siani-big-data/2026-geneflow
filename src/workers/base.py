@@ -70,14 +70,12 @@ class BaseWorker(ABC):
         self._status = WorkerStatus.STARTING
         logger.info("worker_starting", worker=self.name, stream=self.stream_name)
 
-        # Ensure consumer group exists
         await self._ensuREDACTED()
 
         self._running = True
         self._status = WorkerStatus.RUNNING
         logger.info("worker_started", worker=self.name)
 
-        # Start consuming
         await self._consume_loop()
 
     async def stop(self) -> None:
@@ -110,7 +108,6 @@ class BaseWorker(ABC):
                 group=self._consumer_group,
             )
         except Exception as e:
-            # Group already exists
             if "BUSYGROUP" in str(e):
                 logger.debug(
                     "consumer_group_exists",
@@ -124,7 +121,6 @@ class BaseWorker(ABC):
         """Main consumption loop."""
         while self._running:
             try:
-                # Read from stream
                 messages = await self._redis.xreadgroup(
                     groupname=self._consumer_group,
                     consumername=self._consumer_name,
@@ -150,7 +146,7 @@ class BaseWorker(ABC):
                     error=str(e),
                     error_type=type(e).__name__,
                 )
-                await asyncio.sleep(1)  # Back off on error
+                await asyncio.sleep(1)
 
     async def _process_message(
         self,
@@ -161,7 +157,6 @@ class BaseWorker(ABC):
         start_time = datetime.now(timezone.utc)
 
         try:
-            # Parse job data
             job_data = self._parse_message_data(data)
 
             logger.info(
@@ -171,23 +166,19 @@ class BaseWorker(ABC):
                 job_data_keys=list(job_data.keys()),
             )
 
-            # Process the job
             await self.process_job(message_id, job_data)
 
-            # Acknowledge the message
             await self._redis.xack(
                 self.stream_name,
                 self._consumer_group,
                 message_id,
             )
 
-            # Update metrics
             self._metrics.jobsProcessed += 1
             self._metrics.lastJobAt = datetime.now(timezone.utc)
 
             processing_time = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
 
-            # Update average processing time
             total_jobs = self._metrics.jobsProcessed
             current_avg = self._metrics.averageProcessingTimeMs
             self._metrics.averageProcessingTimeMs = (
@@ -212,8 +203,6 @@ class BaseWorker(ABC):
                 error_type=type(e).__name__,
             )
 
-            # Still acknowledge to avoid reprocessing
-            # In production, you might want dead-letter queue handling
             await self._redis.xack(
                 self.stream_name,
                 self._consumer_group,
@@ -221,8 +210,7 @@ class BaseWorker(ABC):
             )
 
     def _parse_message_data(self, data: dict[str, Any]) -> dict[str, Any]:
-        """Parse message data from Redis."""
-        # Redis returns bytes, decode to string
+        """Parse and decode message data from Redis."""
         parsed = {}
         for key, value in data.items():
             if isinstance(key, bytes):
@@ -230,13 +218,11 @@ class BaseWorker(ABC):
             if isinstance(value, bytes):
                 value = value.decode("utf-8")
 
-            # Try to parse JSON
             try:
                 parsed[key] = json.loads(value)
             except (json.JSONDecodeError, TypeError):
                 parsed[key] = value
 
-        # If there's a 'data' key with nested content, flatten it
         if "data" in parsed and isinstance(parsed["data"], dict):
             return parsed["data"]
 

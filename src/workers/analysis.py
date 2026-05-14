@@ -15,6 +15,7 @@ from src.analyzers import (
 )
 from src.config import Settings
 from src.events.events import (
+    AnalysisResultStored,
     HeterozygoteDetectionCompleted,
     MotifSearchCompleted,
     ORFDetectionCompleted,
@@ -63,7 +64,6 @@ class AnalysisWorker(BaseWorker):
     async def process_job(self, job_id: str, job_data: dict[str, Any]) -> None:
         """Process an analysis job."""
         try:
-            # Parse job data
             job = AnalysisJob.from_dict(job_data)
 
             logger.info(
@@ -72,7 +72,6 @@ class AnalysisWorker(BaseWorker):
                 analysis_type=job.analysisType.value,
             )
 
-            # Dispatch to appropriate handler
             if job.analysisType == AnalysisType.QUALITY:
                 await self._process_quality(job)
             elif job.analysisType == AnalysisType.TRIMMING:
@@ -161,6 +160,22 @@ class AnalysisWorker(BaseWorker):
         )
         await self._publisher.publish(event)
 
+        storage_event = AnalysisResultStored(
+            traceId=job.traceId,
+            analysisType="trimming",
+            resultData={
+                "algorithm": algorithm.value,
+                "original_length": result.originalLength,
+                "trimmed_length": result.trimmedLength,
+                "trim_start": result.trimStart,
+                "trim_end": result.trimEnd,
+                "trimmed_sequence": result.trimmedSequence,
+                "trimmed_quality": result.trimmedQuality,
+            },
+            correlationId=job.traceId,
+        )
+        await self._publisher.publish(storage_event)
+
     async def _process_heterozygote(self, job: AnalysisJob) -> None:
         """Process heterozygote detection."""
         if not job.sequence:
@@ -191,6 +206,17 @@ class AnalysisWorker(BaseWorker):
             correlationId=job.traceId,
         )
         await self._publisher.publish(event)
+
+        storage_event = AnalysisResultStored(
+            traceId=job.traceId,
+            analysisType="heterozygote",
+            resultData={
+                "heterozygote_count": result.heterozygoteCount,
+                "calls": [c.to_dict() for c in result.calls],
+            },
+            correlationId=job.traceId,
+        )
+        await self._publisher.publish(storage_event)
 
     async def _process_motif(self, job: AnalysisJob) -> None:
         """Process motif search."""
@@ -230,6 +256,18 @@ class AnalysisWorker(BaseWorker):
         )
         await self._publisher.publish(event)
 
+        storage_event = AnalysisResultStored(
+            traceId=job.traceId,
+            analysisType="motif",
+            resultData={
+                "pattern": pattern,
+                "match_count": result.matchCount,
+                "matches": [m.to_dict() for m in result.matches],
+            },
+            correlationId=job.traceId,
+        )
+        await self._publisher.publish(storage_event)
+
     async def _process_translation(self, job: AnalysisJob) -> None:
         """Process translation."""
         if not job.sequence:
@@ -258,6 +296,21 @@ class AnalysisWorker(BaseWorker):
             correlationId=job.traceId,
         )
         await self._publisher.publish(event)
+
+        storage_event = AnalysisResultStored(
+            traceId=job.traceId,
+            analysisType="translation",
+            resultData={
+                "frame": frame,
+                "protein_length": result.proteinLength,
+                "protein_sequence": result.proteinSequence,
+                "stop_codon_count": result.stopCodonCount,
+                "start_codon_positions": result.startCodonPositions,
+                "amino_acid_composition": result.aminoAcidComposition,
+            },
+            correlationId=job.traceId,
+        )
+        await self._publisher.publish(storage_event)
 
     async def _process_orf(self, job: AnalysisJob) -> None:
         """Process ORF detection."""
@@ -290,6 +343,18 @@ class AnalysisWorker(BaseWorker):
         )
         await self._publisher.publish(event)
 
+        storage_event = AnalysisResultStored(
+            traceId=job.traceId,
+            analysisType="orf",
+            resultData={
+                "total_orfs": result.totalOrfs,
+                "longest_orf_length": longest_length,
+                "orfs": [orf.to_dict() for orf in result.orfs],
+            },
+            correlationId=job.traceId,
+        )
+        await self._publisher.publish(storage_event)
+
     async def _process_restriction(self, job: AnalysisJob) -> None:
         """Process restriction analysis."""
         if not job.sequence:
@@ -321,3 +386,16 @@ class AnalysisWorker(BaseWorker):
             correlationId=job.traceId,
         )
         await self._publisher.publish(event)
+
+        storage_event = AnalysisResultStored(
+            traceId=job.traceId,
+            analysisType="restriction",
+            resultData={
+                "enzyme_count": result.enzymeCount,
+                "total_sites": result.totalSites,
+                "enzymes_with_sites": enzymes_with_sites,
+                "sites": [s.to_dict() for s in result.sites],
+            },
+            correlationId=job.traceId,
+        )
+        await self._publisher.publish(storage_event)
