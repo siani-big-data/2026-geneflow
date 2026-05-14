@@ -121,6 +121,7 @@ class RetryHandler:
     async def _retry_event(self, event: RetryableEvent) -> None:
         """Attempt to retry an event."""
         self._retries_attempted += 1
+        assert self._retry_callback is not None, "retry handler not started"
 
         try:
             await self._retry_callback(event.category, event.date, event.eventLine)
@@ -167,6 +168,8 @@ class RetryHandler:
             logger.warning("dlq_event_not_found", event_id=event_id)
             return False
 
+        assert self._retry_callback is not None, "retry handler not started"
+
         try:
             await self._retry_callback(
                 record["category"],
@@ -182,6 +185,8 @@ class RetryHandler:
     async def replay_all_dlq(self, date: datetime | None = None) -> dict:
         """Retry all events from DLQ."""
         events = await self._dlq.get_events(date) if date else await self._dlq.get_all_events()
+
+        assert self._retry_callback is not None, "retry handler not started"
 
         succeeded = 0
         failed = 0

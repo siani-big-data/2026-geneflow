@@ -132,7 +132,7 @@ class PaymentsHandler(BaseHandler):
     async def _log_event(
         self,
         payment_method_id: str | None,
-        user_id: str,
+        user_id: str | None,
         event_type: str,
         payload: dict,
     ) -> None:

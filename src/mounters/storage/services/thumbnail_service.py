@@ -34,10 +34,9 @@ class ThumbnailService:
         try:
             from PIL import Image
 
-            image = Image.open(BytesIO(photo_data))
+            opened = Image.open(BytesIO(photo_data))
 
-            if image.mode in ("RGBA", "P"):
-                image = image.convert("RGB")
+            image = opened.convert("RGB") if opened.mode in ("RGBA", "P") else opened
 
             image.thumbnail(self._size, Image.Resampling.LANCZOS)
 

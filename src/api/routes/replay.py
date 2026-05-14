@@ -30,14 +30,18 @@ def create_replay_router(
         dates = await storage.list_dates(category)
 
         if not dates:
-            return ReplayResponse(category=category, events=[], count=0)
+            return ReplayResponse(
+                category=category, events=[], count=0, first_date=None, last_date=None
+            )
 
         if from_date:
             start = datetime.strptime(from_date, DATE_FORMAT)
             dates = [d for d in dates if d >= start]
 
         if not dates:
-            return ReplayResponse(category=category, events=[], count=0)
+            return ReplayResponse(
+                category=category, events=[], count=0, first_date=None, last_date=None
+            )
 
         lines = await storage.read_events_range(category, dates[0], dates[-1])
 

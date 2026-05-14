@@ -20,6 +20,10 @@ class TraceHandler:
     async def handle_uploaded(self, payload: dict) -> None:
         """Handle TraceUploaded event."""
         trace_id = payload.get("id")
+        if not trace_id:
+            logger.warning("storage_trace_uploaded_missing_id")
+            return
+
         original_file = payload.get("original_file", b"")
         extension = payload.get("original_extension", "ab1")
         parsed_data = payload.get("parsed_data", {})

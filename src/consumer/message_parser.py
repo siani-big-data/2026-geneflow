@@ -2,6 +2,7 @@
 
 import json
 from datetime import datetime
+from typing import Any
 
 from src.models import DatalakeEvent, EventBusMessage
 
@@ -20,7 +21,7 @@ class MessageParser:
         except (ValueError, TypeError):
             return datetime.utcnow()
 
-    def parse_event_data(self, data: any) -> dict:
+    def parse_event_data(self, data: Any) -> dict:
         """Parse event data, handling string or dict."""
         if isinstance(data, str):
             try:

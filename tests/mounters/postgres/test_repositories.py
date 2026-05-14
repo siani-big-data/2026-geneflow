@@ -13,8 +13,8 @@ from src.mounters.postgres.repositories.user_repository import UserRepository
 def conn():
     c = MagicMock()
     c.execute = AsyncMock(return_value="OK")
-    c.fetch_one = AsyncMock(return_value={"id": 1})
-    c.fetch_all = AsyncMock(return_value=[{"id": 1}, {"id": 2}])
+    c.fetchrow = AsyncMock(return_value={"id": 1})
+    c.fetch = AsyncMock(return_value=[{"id": 1}, {"id": 2}])
     return c
 
 
@@ -28,13 +28,13 @@ class TestBaseRepository:
         repo = BaseRepository(conn)
         result = await repo.fetch_one("Q", 1)
         assert result == {"id": 1}
-        conn.fetch_one.assert_awaited_once_with("Q", 1)
+        conn.fetchrow.assert_awaited_once_with("Q", 1)
 
     async def test_fetch_all_delegates(self, conn):
         repo = BaseRepository(conn)
         result = await repo.fetch_all("Q")
         assert result == [{"id": 1}, {"id": 2}]
-        conn.fetch_all.assert_awaited_once_with("Q")
+        conn.fetch.assert_awaited_once_with("Q")
 
 
 class TestUserRepository:

@@ -7,6 +7,7 @@ from qdrant_client.models import (
     FieldCondition,
     Filter,
     MatchValue,
+    PointIdsList,
     PointStruct,
     VectorParams,
 )
@@ -89,7 +90,7 @@ class QdrantConnection:
 
         await self.client.delete(
             collection_name=collection,
-            points_selector=point_ids,
+            points_selector=PointIdsList(points=list(point_ids)),
         )
         logger.debug("qdrant_points_deleted", collection=collection, count=len(point_ids))
 

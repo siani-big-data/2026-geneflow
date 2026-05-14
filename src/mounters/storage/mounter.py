@@ -48,61 +48,73 @@ class StorageMounter(BaseMounter):
         self._running = False
         logger.info("storage_mounter_stopped")
 
+    @property
+    def _traces(self) -> TraceHandler:
+        if self._trace_handler is None:
+            raise RuntimeError("Storage mounter not started")
+        return self._trace_handler
+
+    @property
+    def _photos(self) -> ProfilePhotoHandler:
+        if self._photo_handler is None:
+            raise RuntimeError("Storage mounter not started")
+        return self._photo_handler
+
     async def handle_event(self, event: dict) -> None:
         """Handle an incoming event."""
         event_type = event.get("type", "") or event.get("event_type", "")
         payload = event.get("payload", {}) or event.get("data", {})
 
         if event_type == "TraceUploaded":
-            await self._trace_handler.handle_uploaded(payload)
+            await self._traces.handle_uploaded(payload)
         elif event_type == "TraceProcessed":
-            await self._trace_handler.handle_processed(payload)
+            await self._traces.handle_processed(payload)
         elif event_type == "TraceDeleted":
-            await self._trace_handler.handle_deleted(payload)
+            await self._traces.handle_deleted(payload)
         elif event_type == "AnalysisResultStored":
-            await self._trace_handler.handle_analysis_result(payload)
+            await self._traces.handle_analysis_result(payload)
         elif event_type == "ProfilePhotoUploadedEvent":
-            await self._photo_handler.handle_uploaded(payload)
+            await self._photos.handle_uploaded(payload)
         elif event_type == "ProfilePhotoDeletedEvent":
-            await self._photo_handler.handle_deleted(payload)
+            await self._photos.handle_deleted(payload)
 
         self._metrics["events_processed"] += 1
 
     async def get_manifest(self, trace_id: str):
         """Get the manifest for a trace."""
-        return await self._trace_handler.get_manifest(trace_id)
+        return await self._traces.get_manifest(trace_id)
 
     async def get_chunk(self, trace_id: str, chunk_index: int):
         """Get a specific chunk for a trace."""
-        return await self._trace_handler.get_chunk(trace_id, chunk_index)
+        return await self._traces.get_chunk(trace_id, chunk_index)
 
     async def get_original(self, trace_id: str):
         """Get the original file for a trace."""
-        return await self._trace_handler.get_original(trace_id)
+        return await self._traces.get_original(trace_id)
 
     async def get_analysis_result(self, trace_id: str, analysis_type: str):
         """Get analysis result for a trace."""
-        return await self._trace_handler.get_analysis_result(trace_id, analysis_type)
+        return await self._traces.get_analysis_result(trace_id, analysis_type)
 
     async def list_analysis_results(self, trace_id: str):
         """List available analysis results for a trace."""
-        return await self._trace_handler.list_analysis_results(trace_id)
+        return await self._traces.list_analysis_results(trace_id)
 
     async def get_profile_photo(self, profile_id: str):
         """Get the profile photo for a profile."""
-        return await self._photo_handler.get_photo(profile_id)
+        return await self._photos.get_photo(profile_id)
 
     async def get_profile_thumbnail(self, profile_id: str):
         """Get the thumbnail for a profile photo."""
-        return await self._photo_handler.get_thumbnail(profile_id)
+        return await self._photos.get_thumbnail(profile_id)
 
     async def get_profile_photo_url(self, profile_id: str):
         """Get the URL for a profile photo."""
-        return await self._photo_handler.get_photo_url(profile_id)
+        return await self._photos.get_photo_url(profile_id)
 
     async def get_profile_thumbnail_url(self, profile_id: str):
         """Get the URL for a profile thumbnail."""
-        return await self._photo_handler.get_thumbnail_url(profile_id)
+        return await self._photos.get_thumbnail_url(profile_id)
 
     async def health_check(self) -> bool:
         """Check if storage connection is healthy."""

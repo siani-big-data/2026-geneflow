@@ -1,6 +1,6 @@
 """S3-compatible storage connection wrapper using aiobotocore."""
 
-from typing import Optional
+from typing import Any, Optional
 
 import structlog
 from aiobotocore.session import get_session
@@ -24,8 +24,8 @@ class StorageConnection:
         self._secret_key = secret_key
         self._secure = secure
         self._session = get_session()
-        self._client = None
-        self._client_context = None
+        self._client: Any = None
+        self._client_context: Any = None
 
     async def connect(self) -> None:
         """Establish connection to storage."""

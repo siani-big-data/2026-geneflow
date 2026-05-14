@@ -34,7 +34,7 @@ def create_dlq_router(
     )
     async def get_all_dlq(_: None = Depends(verify_api_key)):
         result = await dlq_service.get_all_events()
-        return DLQResponse(events=result.events, count=result.count)
+        return DLQResponse(events=result.events, count=result.count, date=None)
 
     @router.post(
         "/retry/{event_id}",

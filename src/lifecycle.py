@@ -86,6 +86,7 @@ class ApplicationLifecycle:
 
     async def _wait_for_shutdown(self) -> None:
         """Wait for shutdown signal or task completion."""
+        assert self._consumer_task is not None and self._api_task is not None
         if sys.platform == "win32":
             await asyncio.gather(self._consumer_task, self._api_task)
         else:

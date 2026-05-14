@@ -105,9 +105,9 @@ class MounterEngine:
                 file_date = self._parse_date_from_filename(event_file.name)
 
                 if file_date:
-                    if from_date and file_date < from_date.date():
+                    if from_date and file_date < from_date:
                         continue
-                    if to_date and file_date > to_date.date():
+                    if to_date and file_date > to_date:
                         continue
 
                 with open(event_file, "r") as f:
@@ -145,6 +145,6 @@ class MounterEngine:
         """Parse date from filename like 2026-03-25.jsonl."""
         try:
             date_str = filename.replace(".jsonl", "")
-            return datetime.strptime(date_str, "%Y-%m-%d").date()
+            return datetime.strptime(date_str, "%Y-%m-%d")
         except ValueError:
             return None

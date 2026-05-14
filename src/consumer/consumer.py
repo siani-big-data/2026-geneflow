@@ -127,6 +127,7 @@ class DatalakeConsumer:
 
     async def _ensuREDACTED(self) -> None:
         """Create consumer groups if they don't exist."""
+        assert self.redis is not None, "redis client not initialized"
         for stream_name in self._streams.keys():
             try:
                 await self.redis.xgroup_create(
@@ -144,7 +145,8 @@ class DatalakeConsumer:
 
     async def _consume_loop(self) -> None:
         """Main consume loop."""
-        streams_to_read = {name: ">" for name in self._streams.keys()}
+        assert self.redis is not None, "redis client not initialized"
+        streams_to_read: dict = {name: ">" for name in self._streams.keys()}
         batch_size = getattr(self.settings, "batch_size", REDIS_BATCH_SIZE)
         block_ms = getattr(self.settings, "redis_block_ms", REDIS_BLOCK_MS)
 
@@ -183,6 +185,7 @@ class DatalakeConsumer:
         data: dict,
     ) -> None:
         """Process a message from Redis."""
+        assert self.redis is not None, "redis client not initialized"
         try:
             self._events_received += 1
             event_msg = self._message_parser.parse_redis_message(data)
@@ -233,6 +236,7 @@ class DatalakeConsumer:
         pending_acks: list[tuple[str, str]],
     ) -> None:
         """Callback when buffer flushes."""
+        assert self.redis is not None, "redis client not initialized"
         try:
             await self.storage.append_events_batch(category, date, event_lines)
             self._events_persisted += len(event_lines)
