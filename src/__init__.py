@@ -1,1 +1,1 @@
-# GeneFlow Analysis Worker
+"""GeneFlow Analysis Worker."""

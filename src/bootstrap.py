@@ -8,7 +8,7 @@ from src.api import AnalysisAPI
 from src.config import Settings
 from src.events.publisher import EventBusPublisher
 from src.storage.factory import StorageFactory
-from src.workers import AlignmentWorker, AnalysisWorker, TraceWorker
+from src.workers import AlignmentWorker, AnalysisWorker, PhylogenyWorker, TraceWorker
 
 if TYPE_CHECKING:
     from src.storage.base import BaseStorageProvider
@@ -79,6 +79,7 @@ def create_workers(
     redis: Redis,
     publisher: EventBusPublisher,
     settings: Settings,
+    storage: "BaseStorageProvider | None" = None,
 ) -> dict[str, "BaseWorker"]:
     """Create enabled workers based on settings.
 
@@ -86,6 +87,7 @@ def create_workers(
         redis: Redis client.
         publisher: Event bus publisher.
         settings: Application settings.
+        storage: Storage provider for file access.
 
     Returns:
         Dictionary of worker name to worker instance.
@@ -93,13 +95,16 @@ def create_workers(
     workers: dict[str, "BaseWorker"] = {}
 
     if settings.trace_worker_enabled:
-        workers["trace"] = TraceWorker(redis, publisher, settings)
+        workers["trace"] = TraceWorker(redis, publisher, settings, storage_provider=storage)
 
     if settings.alignment_worker_enabled:
         workers["alignment"] = AlignmentWorker(redis, publisher, settings)
 
     if settings.analysis_worker_enabled:
         workers["analysis"] = AnalysisWorker(redis, publisher, settings)
+
+    if settings.phylogeny_worker_enabled:
+        workers["phylogeny"] = PhylogenyWorker(redis, publisher, settings)
 
     return workers
 
@@ -134,10 +139,9 @@ def bootstrap(settings: Settings | None = None) -> ApplicationComponents:
     redis = create_redis(settings)
     publisher = create_publisher(redis, settings)
     storage = create_storage(settings)
-    workers = create_workers(redis, publisher, settings)
+    workers = create_workers(redis, publisher, settings, storage)
     api = create_api(settings)
 
-    # Register workers with API for health monitoring
     api.register_workers(workers)
 
     return ApplicationComponents(

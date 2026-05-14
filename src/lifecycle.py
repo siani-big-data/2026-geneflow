@@ -30,7 +30,6 @@ class ApplicationLifecycle:
             redis=self.components.settings.redis_url,
         )
 
-        # Connect to Redis
         try:
             await self.components.redis.ping()
             self.components.api.set_redis_health(True)
@@ -40,7 +39,6 @@ class ApplicationLifecycle:
             self.components.api.set_redis_health(False)
             raise
 
-        # Publish start event
         enabled_workers = list(self.components.workers.keys())
         await self.components.publisher.publish(
             WorkerStarted(
@@ -50,7 +48,6 @@ class ApplicationLifecycle:
             )
         )
 
-        # Start worker tasks
         for name, worker in self.components.workers.items():
             task = asyncio.create_task(
                 worker.start(),
@@ -58,7 +55,6 @@ class ApplicationLifecycle:
             )
             self._worker_tasks.append(task)
 
-        # Start API server
         self._api_task = asyncio.create_task(self._run_api())
 
         logger.info(
@@ -71,24 +67,19 @@ class ApplicationLifecycle:
         """Gracefully shutdown all services."""
         logger.info("application_stopping")
 
-        # Calculate total jobs processed
         total_jobs = sum(
             w.metrics.jobsProcessed for w in self.components.workers.values()
         )
 
-        # Stop workers
         for worker in self.components.workers.values():
             await worker.stop()
 
-        # Cancel worker tasks
         for task in self._worker_tasks:
             task.cancel()
 
-        # Cancel API task
         if self._api_task:
             self._api_task.cancel()
 
-        # Wait for tasks to complete
         all_tasks = self._worker_tasks + ([self._api_task] if self._api_task else [])
         if all_tasks:
             try:
@@ -96,7 +87,6 @@ class ApplicationLifecycle:
             except asyncio.CancelledError:
                 pass
 
-        # Publish stop event
         try:
             await self.components.publisher.publish(
                 WorkerStopped(
@@ -109,7 +99,6 @@ class ApplicationLifecycle:
         except Exception as e:
             logger.warning("failed_to_publish_stop_event", error=str(e))
 
-        # Close Redis connection
         await self.components.redis.close()
         self.components.api.set_redis_health(False)
 
@@ -145,11 +134,9 @@ class ApplicationLifecycle:
     async def _wait_for_shutdown(self) -> None:
         """Wait for shutdown signal or task completion."""
         if sys.platform == "win32":
-            # On Windows, just wait for tasks to complete
             all_tasks = self._worker_tasks + ([self._api_task] if self._api_task else [])
             await asyncio.gather(*all_tasks)
         else:
-            # On Unix, also watch for shutdown event
             done, pending = await asyncio.wait(
                 [
                     asyncio.create_task(self._shutdown_event.wait()),

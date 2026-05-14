@@ -84,16 +84,18 @@ class TestCreateWorkers:
 
         workers = create_workers(redis, publisher, test_settings)
 
-        assert len(workers) == 3
+        assert len(workers) == 4
         assert "trace" in workers
         assert "alignment" in workers
         assert "analysis" in workers
+        assert "phylogeny" in workers
 
     def test_creates_no_workers_when_disabled(self, test_settings):
         """Test no workers created when disabled."""
         test_settings.trace_worker_enabled = False
         test_settings.alignment_worker_enabled = False
         test_settings.analysis_worker_enabled = False
+        test_settings.phylogeny_worker_enabled = False
 
         redis = create_redis(test_settings)
         publisher = create_publisher(redis, test_settings)
@@ -111,10 +113,11 @@ class TestCreateWorkers:
 
         workers = create_workers(redis, publisher, test_settings)
 
-        assert len(workers) == 2
+        assert len(workers) == 3
         assert "trace" in workers
         assert "alignment" not in workers
         assert "analysis" in workers
+        assert "phylogeny" in workers
 
 
 class TestCreateApi:
@@ -147,7 +150,7 @@ class TestBootstrap:
         """Test bootstrap registers workers with API."""
         components = bootstrap(test_settings)
 
-        assert len(components.api.workers) == 3
+        assert len(components.api.workers) == 4
 
     def test_bootstrap_default_settings(self, monkeypatch, temp_dir):
         """Test bootstrap with default settings."""

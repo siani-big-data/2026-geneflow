@@ -48,6 +48,7 @@ class AnalysisType(str, Enum):
     TRANSLATION = "translation"
     ORF = "orf"
     RESTRICTION = "restriction"
+    PHYLOGENY = "phylogeny"
 
 
 class JobStatus(str, Enum):
@@ -66,11 +67,6 @@ class WorkerStatus(str, Enum):
     RUNNING = "running"
     STOPPING = "stopping"
     STOPPED = "stopped"
-
-
-# =============================================================================
-# Domain Models
-# =============================================================================
 
 
 @dataclass
@@ -153,7 +149,7 @@ class QualityMetrics:
     gcContent: float
     length: int
     ambiguousCount: int = 0
-    snr: Optional[float] = None  # Signal-to-Noise Ratio (requires chromatogram)
+    snr: Optional[float] = None
 
     def to_dict(self) -> dict:
         """Serialize to dictionary."""
@@ -406,7 +402,7 @@ class Variant:
     position: int
     referenceBase: str
     alternateBase: str
-    variantType: str  # "snp", "insertion", "deletion"
+    variantType: str
     quality: Optional[float] = None
 
     def to_dict(self) -> dict:
@@ -468,11 +464,6 @@ class ParsedTrace:
             else None,
             metadata=data.get("metadata", {}),
         )
-
-
-# =============================================================================
-# Job Models
-# =============================================================================
 
 
 @dataclass
@@ -582,9 +573,45 @@ class AnalysisJob:
         )
 
 
-# =============================================================================
-# Worker Metrics
-# =============================================================================
+@dataclass
+class PhylogenyJob:
+    """Job for phylogenetic analysis."""
+
+    analysisId: str
+    alignmentId: str
+    alignedSequences: list[str]
+    labels: list[str]
+    distanceMethod: str = "jukes_cantor"
+    treeMethod: str = "neighbor_joining"
+    bootstrapReplicates: int = 0
+    options: dict = field(default_factory=dict)
+
+    def to_dict(self) -> dict:
+        """Serialize to dictionary."""
+        return {
+            "analysisId": self.analysisId,
+            "alignmentId": self.alignmentId,
+            "alignedSequences": self.alignedSequences,
+            "labels": self.labels,
+            "distanceMethod": self.distanceMethod,
+            "treeMethod": self.treeMethod,
+            "bootstrapReplicates": self.bootstrapReplicates,
+            "options": self.options,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "PhylogenyJob":
+        """Create from dictionary."""
+        return cls(
+            analysisId=data["analysisId"],
+            alignmentId=data["alignmentId"],
+            alignedSequences=data["alignedSequences"],
+            labels=data["labels"],
+            distanceMethod=data.get("distanceMethod", "jukes_cantor"),
+            treeMethod=data.get("treeMethod", "neighbor_joining"),
+            bootstrapReplicates=data.get("bootstrapReplicates", 0),
+            options=data.get("options", {}),
+        )
 
 
 @dataclass

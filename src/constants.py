@@ -2,165 +2,120 @@
 
 BASES = {"A", "C", "G", "T"}
 
-# =============================================================================
-# IUPAC Nucleotide Codes
-# =============================================================================
-
-# IUPAC ambiguity codes: code -> possible bases
 IUPAC_CODES: dict[str, set[str]] = {
     "A": {"A"},
     "C": {"C"},
     "G": {"G"},
     "T": {"T"},
-    "R": {"A", "G"},  # puRine
-    "Y": {"C", "T"},  # pYrimidine
-    "S": {"G", "C"},  # Strong (3 H-bonds)
-    "W": {"A", "T"},  # Weak (2 H-bonds)
-    "K": {"G", "T"},  # Keto
-    "M": {"A", "C"},  # aMino
-    "B": {"C", "G", "T"},  # not A
-    "D": {"A", "G", "T"},  # not C
-    "H": {"A", "C", "T"},  # not G
-    "V": {"A", "C", "G"},  # not T
-    "N": {"A", "C", "G", "T"},  # aNy
+    "R": {"A", "G"},
+    "Y": {"C", "T"},
+    "S": {"G", "C"},
+    "W": {"A", "T"},
+    "K": {"G", "T"},
+    "M": {"A", "C"},
+    "B": {"C", "G", "T"},
+    "D": {"A", "G", "T"},
+    "H": {"A", "C", "T"},
+    "V": {"A", "C", "G"},
+    "N": {"A", "C", "G", "T"},
 }
 
-# Reverse lookup: frozenset of bases -> IUPAC code
 BASES_TO_IUPAC: dict[frozenset[str], str] = {
     frozenset(bases): code for code, bases in IUPAC_CODES.items()
 }
 
 
-# =============================================================================
-# Complement
-# =============================================================================
-
-# DNA complement map
 COMPLEMENT: dict[str, str] = {
     "A": "T",
     "T": "A",
     "C": "G",
     "G": "C",
-    # IUPAC ambiguity codes
-    "R": "Y",  # A|G -> T|C
-    "Y": "R",  # C|T -> G|A
-    "S": "S",  # G|C -> C|G
-    "W": "W",  # A|T -> T|A
-    "K": "M",  # G|T -> C|A
-    "M": "K",  # A|C -> T|G
-    "B": "V",  # C|G|T -> G|C|A
-    "D": "H",  # A|G|T -> T|C|A
-    "H": "D",  # A|C|T -> T|G|A
-    "V": "B",  # A|C|G -> T|G|C
-    "N": "N",  # any -> any
+    "R": "Y",
+    "Y": "R",
+    "S": "S",
+    "W": "W",
+    "K": "M",
+    "M": "K",
+    "B": "V",
+    "D": "H",
+    "H": "D",
+    "V": "B",
+    "N": "N",
 }
 
 
-# =============================================================================
-# Codon Table (Standard Genetic Code)
-# =============================================================================
-
-# Standard codon table (NCBI transl_table=1)
 CODON_TABLE: dict[str, str] = {
-    # Phenylalanine (F)
     "TTT": "F",
     "TTC": "F",
-    # Leucine (L)
     "TTA": "L",
     "TTG": "L",
     "CTT": "L",
     "CTC": "L",
     "CTA": "L",
     "CTG": "L",
-    # Isoleucine (I)
     "ATT": "I",
     "ATC": "I",
     "ATA": "I",
-    # Methionine (M) - START
     "ATG": "M",
-    # Valine (V)
     "GTT": "V",
     "GTC": "V",
     "GTA": "V",
     "GTG": "V",
-    # Serine (S)
     "TCT": "S",
     "TCC": "S",
     "TCA": "S",
     "TCG": "S",
     "AGT": "S",
     "AGC": "S",
-    # Proline (P)
     "CCT": "P",
     "CCC": "P",
     "CCA": "P",
     "CCG": "P",
-    # Threonine (T)
     "ACT": "T",
     "ACC": "T",
     "ACA": "T",
     "ACG": "T",
-    # Alanine (A)
     "GCT": "A",
     "GCC": "A",
     "GCA": "A",
     "GCG": "A",
-    # Tyrosine (Y)
     "TAT": "Y",
     "TAC": "Y",
-    # STOP (*)
     "TAA": "*",
     "TAG": "*",
     "TGA": "*",
-    # Histidine (H)
     "CAT": "H",
     "CAC": "H",
-    # Glutamine (Q)
     "CAA": "Q",
     "CAG": "Q",
-    # Asparagine (N)
     "AAT": "N",
     "AAC": "N",
-    # Lysine (K)
     "AAA": "K",
     "AAG": "K",
-    # Aspartic acid (D)
     "GAT": "D",
     "GAC": "D",
-    # Glutamic acid (E)
     "GAA": "E",
     "GAG": "E",
-    # Cysteine (C)
     "TGT": "C",
     "TGC": "C",
-    # Tryptophan (W)
     "TGG": "W",
-    # Arginine (R)
     "CGT": "R",
     "CGC": "R",
     "CGA": "R",
     "CGG": "R",
     "AGA": "R",
     "AGG": "R",
-    # Glycine (G)
     "GGT": "G",
     "GGC": "G",
     "GGA": "G",
     "GGG": "G",
 }
 
-# Start codons
 START_CODONS = {"ATG"}
 
-# Stop codons
 STOP_CODONS = {"TAA", "TAG", "TGA"}
 
 
-# =============================================================================
-# Amino Acids
-# =============================================================================
-
-# Amino acid info: 1-letter -> (3-letter, full name, properties)
 AMINO_ACIDS: dict[str, tuple[str, str, str]] = {
     "A": ("Ala", "Alanine", "nonpolar"),
     "C": ("Cys", "Cysteine", "polar"),
@@ -185,49 +140,35 @@ AMINO_ACIDS: dict[str, tuple[str, str, str]] = {
     "*": ("***", "Stop", "stop"),
 }
 
-# 3-letter to 1-letter lookup
 THREE_TO_ONE: dict[str, str] = {v[0]: k for k, v in AMINO_ACIDS.items()}
 
-# =============================================================================
-# Restriction Enzymes
-# =============================================================================
 
-# Common restriction enzymes: name -> (recognition_sequence, cut_position, overhang_type)
-# cut_position is relative to the start of the recognition sequence (0-indexed)
-# overhang_type: "5'" = 5' overhang, "3'" = 3' overhang, "blunt" = blunt end
 RESTRICTION_ENZYMES: dict[str, tuple[str, int, str]] = {
-    # 6-cutters (common)
-    "EcoRI": ("GAATTC", 1, "5'"),  # G|AATTC
-    "BamHI": ("GGATCC", 1, "5'"),  # G|GATCC
-    "HindIII": ("AAGCTT", 1, "5'"),  # A|AGCTT
-    "XhoI": ("CTCGAG", 1, "5'"),  # C|TCGAG
-    "SalI": ("GTCGAC", 1, "5'"),  # G|TCGAC
-    "PstI": ("CTGCAG", 5, "3'"),  # CTGCA|G
-    "SphI": ("GCATGC", 5, "3'"),  # GCATG|C
-    "KpnI": ("GGTACC", 5, "3'"),  # GGTAC|C
-    "SacI": ("GAGCTC", 5, "3'"),  # GAGCT|C
-    "XbaI": ("TCTAGA", 1, "5'"),  # T|CTAGA
-    "NcoI": ("CCATGG", 1, "5'"),  # C|CATGG
-    "NdeI": ("CATATG", 2, "5'"),  # CA|TATG
-    "NotI": ("GCGGCCGC", 2, "5'"),  # GC|GGCCGC (8-cutter, rare)
-    "SmaI": ("CCCGGG", 3, "blunt"),  # CCC|GGG
-    "EcoRV": ("GATATC", 3, "blunt"),  # GAT|ATC
-    "HpaI": ("GTTAAC", 3, "blunt"),  # GTT|AAC
-    # 4-cutters (frequent)
-    "MspI": ("CCGG", 1, "5'"),  # C|CGG
-    "HaeIII": ("GGCC", 2, "blunt"),  # GG|CC
-    "AluI": ("AGCT", 2, "blunt"),  # AG|CT
-    "RsaI": ("GTAC", 2, "blunt"),  # GT|AC
-    "TaqI": ("TCGA", 1, "5'"),  # T|CGA
-    "Sau3AI": ("GATC", 0, "5'"),  # |GATC (cuts before)
-    "MboI": ("GATC", 0, "5'"),  # |GATC
-    "DpnI": ("GATC", 2, "blunt"),  # GA|TC (methylation-sensitive)
+    "EcoRI": ("GAATTC", 1, "5'"),
+    "BamHI": ("GGATCC", 1, "5'"),
+    "HindIII": ("AAGCTT", 1, "5'"),
+    "XhoI": ("CTCGAG", 1, "5'"),
+    "SalI": ("GTCGAC", 1, "5'"),
+    "PstI": ("CTGCAG", 5, "3'"),
+    "SphI": ("GCATGC", 5, "3'"),
+    "KpnI": ("GGTACC", 5, "3'"),
+    "SacI": ("GAGCTC", 5, "3'"),
+    "XbaI": ("TCTAGA", 1, "5'"),
+    "NcoI": ("CCATGG", 1, "5'"),
+    "NdeI": ("CATATG", 2, "5'"),
+    "NotI": ("GCGGCCGC", 2, "5'"),
+    "SmaI": ("CCCGGG", 3, "blunt"),
+    "EcoRV": ("GATATC", 3, "blunt"),
+    "HpaI": ("GTTAAC", 3, "blunt"),
+    "MspI": ("CCGG", 1, "5'"),
+    "HaeIII": ("GGCC", 2, "blunt"),
+    "AluI": ("AGCT", 2, "blunt"),
+    "RsaI": ("GTAC", 2, "blunt"),
+    "TaqI": ("TCGA", 1, "5'"),
+    "Sau3AI": ("GATC", 0, "5'"),
+    "MboI": ("GATC", 0, "5'"),
+    "DpnI": ("GATC", 2, "blunt"),
 }
-
-
-# =============================================================================
-# Utility Functions
-# =============================================================================
 
 
 def reverse_complement(sequence: str) -> str:
@@ -256,7 +197,7 @@ def translate(sequence: str, frame: int = 0) -> str:
 
     for i in range(frame, len(sequence) - 2, 3):
         codon = sequence[i : i + 3]
-        amino_acid = CODON_TABLE.get(codon, "X")  # X for unknown
+        amino_acid = CODON_TABLE.get(codon, "X")
         protein.append(amino_acid)
 
     return "".join(protein)
