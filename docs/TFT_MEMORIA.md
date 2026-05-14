@@ -215,11 +215,15 @@ El sistema utiliza Redis Streams como broker de mensajes, aprovechando las carac
 │  ├── fastapi>=0.115         API HTTP (health checks)                   │
 │  └── uvicorn>=0.32          Servidor ASGI                              │
 │                                                                         │
+│  STORAGE                                                                │
+│  └── minio>=7.2             Cliente S3-compatible (MinIO)              │
+│                                                                         │
 │  DEV                                                                    │
 │  ├── pytest>=8.3            Testing framework                          │
 │  ├── pytest-asyncio         Soporte para tests async                   │
-│  ├── pytest-cov             Coverage reporting                         │
-│  └── ruff>=0.8              Linter y formatter                         │
+│  ├── pytest-cov             Coverage reporting (line + branch)         │
+│  ├── ruff>=0.8              Linter y formatter                         │
+│  └── mypy>=1.13             Static type checker                        │
 │                                                                         │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
@@ -585,28 +589,92 @@ Abstracción para múltiples backends de almacenamiento:
 │                    │ + list(prefix)      │                              │
 │                    │ + health_check()    │                              │
 │                    └──────────┬──────────┘                              │
-│           ┌──────────────────┼──────────────────┐                       │
-│           │                  │                  │                       │
-│   ┌───────┴───────┐  ┌───────┴───────┐  ┌───────┴───────┐              │
-│   │    Local      │  │     HTTP      │  │   Supabase    │              │
-│   │   Provider    │  │   Provider    │  │   Provider    │              │
-│   ├───────────────┤  ├───────────────┤  ├───────────────┤              │
-│   │ Filesystem    │  │ Read-only     │  │ Cloud storage │              │
-│   │ Path traversal│  │ URL fetching  │  │ Signed URLs   │              │
-│   │ protection    │  │               │  │ Buckets       │              │
-│   └───────────────┘  └───────────────┘  └───────────────┘              │
+│       ┌──────────┬─────────────┼─────────────┬──────────┐               │
+│       │          │             │             │          │               │
+│   ┌───┴────┐ ┌───┴────┐  ┌─────┴─────┐ ┌─────┴────┐ ┌───┴────┐         │
+│   │ Local  │ │  HTTP  │  │ Supabase  │ │  MinIO   │ │ Memory │         │
+│   │Provider│ │Provider│  │ Provider  │ │ Provider │ │ (test) │         │
+│   ├────────┤ ├────────┤  ├───────────┤ ├──────────┤ ├────────┤         │
+│   │FS+path │ │Read-   │  │ Signed    │ │ S3-      │ │ In-mem │         │
+│   │traversal│ │only    │  │ URLs      │ │ compat   │ │ buffer │         │
+│   │protect │ │fetching│  │ Buckets   │ │ Buckets  │ │ fixt.  │         │
+│   └────────┘ └────────┘  └───────────┘ └──────────┘ └────────┘         │
 │                                                                         │
 │   ┌─────────────────────────────────────────────────────────────────┐  │
 │   │                      StorageFactory                              │  │
 │   │─────────────────────────────────────────────────────────────────│  │
 │   │  create(settings) → Provider                                     │  │
-│   │  create_local(path) → LocalStorageProvider                       │  │
-│   │  create_http(timeout) → HTTPStorageProvider                      │  │
-│   │  create_supabase(url, key, bucket) → SupabaseStorageProvider    │  │
+│   │  create_local(path)        → LocalStorageProvider                │  │
+│   │  create_http(timeout)      → HTTPStorageProvider                 │  │
+│   │  create_supabase(...)      → SupabaseStorageProvider             │  │
+│   │  create_minio(endpoint,...) → MinioStorageProvider               │  │
 │   └─────────────────────────────────────────────────────────────────┘  │
 │                                                                         │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+### 4.6 Phylogeny
+
+Módulo de análisis filogenético: cálculo de matrices de distancia entre
+secuencias, construcción de árboles y evaluación por bootstrap.
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                          PHYLOGENY MODULE                                │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│   ┌────────────────────┐    ┌────────────────────┐                     │
+│   │ DistanceCalculator │    │    TreeBuilder     │                     │
+│   ├────────────────────┤    ├────────────────────┤                     │
+│   │ + calculate(seqs)  │    │ + build(matrix)    │                     │
+│   │   → DistanceMatrix │    │   → PhylogeneticTree│                    │
+│   │                    │    │                    │                     │
+│   │ Métodos:           │    │ Métodos:           │                     │
+│   │ - p-distance       │    │ - UPGMA            │                     │
+│   │ - Jukes-Cantor     │    │ - Neighbor-Joining │                     │
+│   │ - Kimura-2P        │    │                    │                     │
+│   └─────────┬──────────┘    └─────────┬──────────┘                     │
+│             │                         │                                 │
+│             └───────────┬─────────────┘                                 │
+│                         ▼                                               │
+│              ┌──────────────────────┐                                   │
+│              │  BootstrapAnalyzer   │                                   │
+│              ├──────────────────────┤                                   │
+│              │ + run(seqs, n=100)   │                                   │
+│              │   → BootstrapResult  │                                   │
+│              │                      │                                   │
+│              │ Resampling con       │                                   │
+│              │ reemplazo + soporte  │                                   │
+│              │ por rama (%)         │                                   │
+│              └──────────┬───────────┘                                   │
+│                         │                                               │
+│                         ▼                                               │
+│              ┌──────────────────────┐                                   │
+│              │  PhylogenyAnalyzer   │  (façade)                         │
+│              ├──────────────────────┤                                   │
+│              │ Compone distancia +  │                                   │
+│              │ árbol + bootstrap en │                                   │
+│              │ un PhylogenyResult   │                                   │
+│              └──────────────────────┘                                   │
+│                                                                         │
+│   CONSUMO:                                                              │
+│   PhylogenyWorker escucha stream "jobs:phylogeny" y publica             │
+│   PhylogenyCompleted / PhylogenyFailed con el árbol en formato Newick.  │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+**Salida estandarizada (Newick):**
+
+```
+(((seq_a:0.12,seq_b:0.14):0.08,seq_c:0.21):0.0,seq_d:0.30);
+```
+
+Los nodos internos pueden anotarse con soporte bootstrap (porcentaje sobre
+N réplicas), permitiendo al frontend renderizar el árbol y resaltar ramas
+con baja confianza.
 
 ---
 
@@ -1020,19 +1088,29 @@ Abstracción para múltiples backends de almacenamiento:
 │                   ╱   Unit Tests   ╲   Mayoría, rápidos, aislados      │
 │                  ╱──────────────────╲                                   │
 │                                                                         │
-│  DISTRIBUCIÓN ACTUAL: 241 tests                                         │
+│  DISTRIBUCIÓN ACTUAL: 476 tests (1 skipped, <2s end-to-end)             │
 │  ┌────────────────────────────────────────────────────────────────┐    │
-│  │ test_models.py        ████████████░░░░░░░░░░░░░░░░  28 tests  │    │
-│  │ test_constants.py     █████░░░░░░░░░░░░░░░░░░░░░░░  12 tests  │    │
-│  │ test_parsers.py       ███████████████░░░░░░░░░░░░░  35 tests  │    │
-│  │ test_analyzers.py     █████████░░░░░░░░░░░░░░░░░░░  23 tests  │    │
-│  │ test_analyzers_adv.py ██████████████████░░░░░░░░░░  42 tests  │    │
-│  │ test_alignment.py     ████████████████░░░░░░░░░░░░  38 tests  │    │
-│  │ test_workers.py       ██████░░░░░░░░░░░░░░░░░░░░░░  16 tests  │    │
-│  │ test_storage.py       ███████░░░░░░░░░░░░░░░░░░░░░  18 tests  │    │
-│  │ test_api.py           █████░░░░░░░░░░░░░░░░░░░░░░░  12 tests  │    │
-│  │ test_bootstrap.py     █████░░░░░░░░░░░░░░░░░░░░░░░  12 tests  │    │
-│  │ test_lifecycle.py     ████░░░░░░░░░░░░░░░░░░░░░░░░  10 tests  │    │
+│  │ test_models.py             ███████░░░░░░░░░░░░░░░░  28 tests │    │
+│  │ test_constants.py          ███░░░░░░░░░░░░░░░░░░░░  12 tests │    │
+│  │ test_parsers.py            █████████░░░░░░░░░░░░░░  35 tests │    │
+│  │ test_scf_parser.py         ████░░░░░░░░░░░░░░░░░░░  14 tests │    │
+│  │ test_analyzers.py          ██████░░░░░░░░░░░░░░░░░  23 tests │    │
+│  │ test_analyzers_advanced.py ██████████░░░░░░░░░░░░░  42 tests │    │
+│  │ test_alignment.py          █████████░░░░░░░░░░░░░░  38 tests │    │
+│  │ test_workers.py            ████░░░░░░░░░░░░░░░░░░░  16 tests │    │
+│  │ test_workers_extended.py   ████░░░░░░░░░░░░░░░░░░░  15 tests │    │
+│  │ test_analysis_worker.py    ███░░░░░░░░░░░░░░░░░░░░  10 tests │    │
+│  │ test_storage.py            ████░░░░░░░░░░░░░░░░░░░  18 tests │    │
+│  │ test_storage_minio.py      ███░░░░░░░░░░░░░░░░░░░░  12 tests │    │
+│  │ test_storage_remote.py     ███░░░░░░░░░░░░░░░░░░░░  11 tests │    │
+│  │ test_events.py             █████░░░░░░░░░░░░░░░░░░  20 tests │    │
+│  │ test_publisher.py          ███░░░░░░░░░░░░░░░░░░░░  10 tests │    │
+│  │ test_api.py                ███░░░░░░░░░░░░░░░░░░░░  12 tests │    │
+│  │ test_bootstrap.py          ███░░░░░░░░░░░░░░░░░░░░  12 tests │    │
+│  │ test_lifecycle.py          ████░░░░░░░░░░░░░░░░░░░  16 tests │    │
+│  │ test_phylogeny.py          ████░░░░░░░░░░░░░░░░░░░  14 tests │    │
+│  │ test_coverage_boost.py     ████████████░░░░░░░░░░░  47 tests │    │
+│  │ test_coverage_boost_br.py  ███████████░░░░░░░░░░░░  43 tests │    │
 │  └────────────────────────────────────────────────────────────────┘    │
 │                                                                         │
 └─────────────────────────────────────────────────────────────────────────┘
@@ -1115,6 +1193,55 @@ def settings():
         local_storage_path="/tmp/test",
     )
 ```
+
+### 8.4 Cobertura de Código (Line + Branch)
+
+El proyecto mide cobertura **de línea** y **de rama** por separado, exigiendo
+ambos en el CI mediante un script propio (`scripts/coverage_summary.py`) que
+parsea el `coverage.json` generado por `coverage.py`.
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                      COBERTURA ACTUAL                                    │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  Lines    : 93.77 %  (3175 / 3386 sentencias)                          │
+│  Branches : 85.05 %  (677 / 796 ramas, 87 parciales)                   │
+│  Combined : 92.11 %                                                     │
+│                                                                         │
+│  Gates exigidos en CI:                                                  │
+│  ├── --min-line   = 80  (objetivo interno ≥ 90)                        │
+│  └── --min-branch = 70  (objetivo interno ≥ 85)                        │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+**Por qué medir rama separadamente:**
+
+La cobertura de línea ignora caminos no tomados en una condición. Una línea
+con `if cond:` cuenta como cubierta aunque sólo se haya probado el camino
+verdadero. La cobertura de rama exige ejercitar ambos caminos, exponiendo
+ramas falsas no probadas (manejo de errores, casos límite).
+
+**Configuración (`pyproject.toml`):**
+
+```toml
+[tool.coverage.run]
+branch = true
+source = ["src"]
+omit = ["src/main.py", "src/config.py", "src/*/proving.py"]
+
+[tool.coverage.report]
+show_missing = true
+exclude_lines = ["pragma: no cover", "if TYPE_CHECKING:", "@abstractmethod"]
+
+[tool.coverage.json]
+output = "coverage.json"
+```
+
+**Reporte amigable en CI:** el step de breakdown publica una tabla
+Markdown en `GITHUB_STEP_SUMMARY` para que cada PR muestre línea/rama en
+su check.
 
 ---
 
@@ -1223,22 +1350,42 @@ CMD ["python", "-m", "src.main"]
 │                        CI/CD PIPELINE                                    │
 ├─────────────────────────────────────────────────────────────────────────┤
 │                                                                         │
-│  TRIGGER: push to main/develop, pull request                           │
+│  TRIGGER: push a main/master/develop, pull request                      │
 │                                                                         │
 │  ┌─────────────────────────────────────────────────────────────────┐   │
 │  │                          CI WORKFLOW                             │   │
 │  │                                                                  │   │
-│  │  ┌────────┐    ┌────────┐    ┌────────┐    ┌────────┐          │   │
-│  │  │  Lint  │───►│  Test  │───►│ Build  │───►│Security│          │   │
-│  │  │        │    │        │    │ Docker │    │  Scan  │          │   │
-│  │  │ ruff   │    │ pytest │    │        │    │pip-aud │          │   │
-│  │  └────────┘    └────────┘    └────────┘    └────────┘          │   │
-│  │                     │                                            │   │
-│  │                     ▼                                            │   │
-│  │              ┌────────────┐                                      │   │
-│  │              │  Codecov   │                                      │   │
-│  │              │  Coverage  │                                      │   │
-│  │              └────────────┘                                      │   │
+│  │   ┌────────┐                                                     │   │
+│  │   │  Lint  │  ruff check                                         │   │
+│  │   └───┬────┘                                                     │   │
+│  │       │                                                          │   │
+│  │   ┌───┴────┐                                                     │   │
+│  │   │ Format │  ruff format --check                                │   │
+│  │   └───┬────┘                                                     │   │
+│  │       │                                                          │   │
+│  │   ┌───┴──────┐                                                   │   │
+│  │   │TypeCheck │  mypy src/   (baseline, continue-on-error)        │   │
+│  │   └───┬──────┘                                                   │   │
+│  │       │                                                          │   │
+│  │       ├────────────────────────────────┐                         │   │
+│  │       ▼                                ▼                         │   │
+│  │  ┌────────┐    ┌─────────────┐   ┌──────────┐                    │   │
+│  │  │  Test  │───►│  Coverage   │   │ Security │                    │   │
+│  │  │ pytest │    │  Breakdown  │   │ pip-audit│                    │   │
+│  │  │  +cov  │    │ line/branch │   │          │                    │   │
+│  │  └───┬────┘    │  + gates    │   └──────────┘                    │   │
+│  │      │         └──────┬──────┘                                   │   │
+│  │      ▼                ▼                                          │   │
+│  │ ┌─────────┐    ┌──────────────┐                                  │   │
+│  │ │ Codecov │    │ Artifacts:   │                                  │   │
+│  │ │ upload  │    │ coverage.xml │                                  │   │
+│  │ │         │    │ coverage.json│                                  │   │
+│  │ └────┬────┘    └──────────────┘                                  │   │
+│  │      ▼                                                           │   │
+│  │ ┌────────┐                                                       │   │
+│  │ │ Build  │  docker buildx (cache GHA)                            │   │
+│  │ │ Docker │                                                       │   │
+│  │ └────────┘                                                       │   │
 │  │                                                                  │   │
 │  └─────────────────────────────────────────────────────────────────┘   │
 │                              │                                          │
@@ -1257,6 +1404,34 @@ CMD ["python", "-m", "src.main"]
 │                                                                         │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+### 9.4 Quality Gates y Tooling
+
+El pipeline aplica **cinco puertas de calidad** que deben pasar antes de
+fusionar a `master`:
+
+| Gate          | Herramienta            | Comando                                  | Bloqueante |
+|---------------|------------------------|------------------------------------------|------------|
+| Lint          | `ruff check`           | `uv run ruff check src/ tests/`          | Sí         |
+| Format        | `ruff format --check`  | `uv run ruff format --check src/ tests/` | Sí         |
+| Type check    | `mypy`                 | `uv run mypy src/`                       | Baseline*  |
+| Tests         | `pytest --cov-branch`  | `uv run pytest --cov=src --cov-branch`   | Sí         |
+| Coverage      | `coverage_summary.py`  | `--min-line 80 --min-branch 70`          | Sí         |
+| Security      | `pip-audit`            | `uv run pip-audit`                       | Aviso      |
+
+*El type check arranca con `continue-on-error: true` mientras se sanean
+los 44 errores preexistentes; se endurece progresivamente.
+
+### 9.5 Docker Compose para Desarrollo Local
+
+Para reproducir las dependencias del worker en local se incluye un
+`docker-compose.yml` con Redis y MinIO, más un
+`docker-compose.override.yml` para parámetros específicos del entorno
+(puertos, credenciales, paths). Los desarrolladores arrancan todo con
+`docker compose up -d` y pueden ejecutar el worker en modo nativo
+apuntando a estos servicios.
 
 ---
 
@@ -1338,21 +1513,27 @@ CMD ["python", "-m", "src.main"]
 ├─────────────────────────────────────────────────────────────────────────┤
 │                                                                         │
 │  CÓDIGO                                                                 │
-│  ├── Líneas de código (src/):     ~4,500                               │
-│  ├── Líneas de tests:             ~2,800                               │
-│  ├── Archivos Python:             56                                    │
-│  └── Cobertura de tests:          ~90%                                 │
+│  ├── Líneas de código (src/):     ~6,200                               │
+│  ├── Líneas de tests:             ~5,800                               │
+│  ├── Archivos Python (src):       65                                    │
+│  ├── Cobertura de línea:          93.77 %                              │
+│  └── Cobertura de rama:           85.05 %                              │
 │                                                                         │
 │  TESTS                                                                  │
-│  ├── Total tests:                 241                                   │
-│  ├── Tests unitarios:             ~200                                  │
-│  ├── Tests de integración:        ~40                                   │
-│  └── Tiempo de ejecución:         <1s                                  │
+│  ├── Total tests:                 476 (1 skipped)                       │
+│  ├── Tests unitarios:             ~420                                  │
+│  ├── Tests de integración:        ~55                                   │
+│  └── Tiempo de ejecución:         <2 s                                  │
 │                                                                         │
 │  DEPENDENCIAS                                                           │
-│  ├── Producción:                  8                                     │
-│  ├── Desarrollo:                  4                                     │
-│  └── Vulnerabilidades conocidas:  0                                    │
+│  ├── Producción:                  10 (incl. minio)                      │
+│  ├── Desarrollo:                  5  (incl. mypy)                       │
+│  └── Vulnerabilidades conocidas:  0                                     │
+│                                                                         │
+│  CALIDAD                                                                │
+│  ├── ruff check / format:         ✓ All checks passed                  │
+│  ├── mypy baseline:               44 errores (gate no bloqueante)      │
+│  └── Quality gates en CI:         lint + format + typecheck + tests    │
 │                                                                         │
 │  DOCKER                                                                 │
 │  ├── Tamaño imagen:               ~250MB                               │
@@ -1403,14 +1584,6 @@ geneflow-analysis/
 │   │       ├── __init__.py
 │   │       └── health_response.py  # Pydantic response models
 │   │
-│   ├── parsers/
-│   │   ├── __init__.py
-│   │   ├── parser.py        # BaseParser ABC
-│   │   ├── ab1.py           # AB1Parser (BioPython)
-│   │   ├── scf.py           # SCFParser (BioPython)
-│   │   ├── fastq.py         # FASTQParser
-│   │   └── fasta.py         # FASTAParser
-│   │
 │   ├── analyzers/
 │   │   ├── __init__.py
 │   │   ├── analyzer.py      # BaseAnalyzer ABC
@@ -1430,40 +1603,75 @@ geneflow-analysis/
 │   │   ├── consensus.py     # ConsensusBuilder
 │   │   └── variants.py      # VariantDetector
 │   │
+│   ├── parsers/
+│   │   ├── __init__.py
+│   │   ├── parser.py        # BaseParser + ParserFactory
+│   │   ├── ab1.py           # AB1Parser (BioPython)
+│   │   ├── scf.py           # SCFParser (BioPython)
+│   │   ├── fastq.py         # FASTQParser
+│   │   ├── fasta.py         # FASTAParser
+│   │   └── synthetic_chromatogram.py  # Generador para tests
+│   │
+│   ├── phylogeny/           # NEW: análisis filogenético
+│   │   ├── __init__.py
+│   │   ├── analyzer.py      # PhylogenyAnalyzer (façade)
+│   │   ├── distance.py      # DistanceCalculator (p, JC, K2P)
+│   │   ├── tree.py          # TreeBuilder (UPGMA, NJ)
+│   │   └── bootstrap.py     # BootstrapAnalyzer
+│   │
 │   ├── workers/
 │   │   ├── __init__.py
 │   │   ├── base.py          # BaseWorker (consume loop)
 │   │   ├── trace.py         # TraceWorker
 │   │   ├── alignment.py     # AlignmentWorker
-│   │   └── analysis.py      # AnalysisWorker
+│   │   ├── analysis.py      # AnalysisWorker
+│   │   └── phylogeny.py     # NEW: PhylogenyWorker
 │   │
 │   ├── events/
 │   │   ├── __init__.py
 │   │   ├── events.py        # Event definitions
 │   │   └── publisher.py     # Redis Streams publisher
 │   │
-│   └── storage/
+│   ├── storage/
+│   │   ├── __init__.py
+│   │   ├── base.py          # BaseStorageProvider ABC
+│   │   ├── local.py         # LocalStorageProvider
+│   │   ├── http.py          # HTTPStorageProvider
+│   │   ├── supabase.py      # SupabaseStorageProvider
+│   │   ├── minio.py         # NEW: MinioStorageProvider (S3)
+│   │   └── factory.py       # StorageFactory
+│   │
+│   └── utils/               # NEW: utilidades transversales
 │       ├── __init__.py
-│       ├── base.py          # BaseStorageProvider ABC
-│       ├── local.py         # LocalStorageProvider
-│       ├── http.py          # HTTPStorageProvider
-│       ├── supabase.py      # SupabaseStorageProvider
-│       └── factory.py       # StorageFactory
+│       └── chunking.py      # Chunking de cromatogramas y trazas
 │
-├── tests/
+├── tests/                       # 476 tests, <2 s
 │   ├── __init__.py
-│   ├── conftest.py          # Shared fixtures
+│   ├── conftest.py              # Shared fixtures
 │   ├── test_models.py
 │   ├── test_constants.py
 │   ├── test_parsers.py
+│   ├── test_scf_parser.py
 │   ├── test_analyzers.py
 │   ├── test_analyzers_advanced.py
 │   ├── test_alignment.py
 │   ├── test_workers.py
+│   ├── test_workers_extended.py
+│   ├── test_analysis_worker.py
 │   ├── test_storage.py
+│   ├── test_storage_minio.py
+│   ├── test_storage_remote.py
+│   ├── test_events.py
+│   ├── test_publisher.py
 │   ├── test_api.py
-│   ├── test_bootstrap.py    # Tests para bootstrap module
-│   └── test_lifecycle.py    # Tests para lifecycle module
+│   ├── test_bootstrap.py
+│   ├── test_lifecycle.py
+│   ├── test_phylogeny.py
+│   ├── test_coverage_boost.py          # +47 tests (line coverage)
+│   └── test_coverage_boost_branches.py # +43 tests (branch coverage)
+│
+├── scripts/
+│   └── coverage_summary.py  # Reporte line/branch + gates en CI
 │
 ├── docs/
 │   ├── TFT_MEMORIA.md       # Este documento
@@ -1472,13 +1680,15 @@ geneflow-analysis/
 │
 ├── .github/
 │   ├── workflows/
-│   │   ├── ci.yml
+│   │   ├── ci.yml           # lint + format + typecheck + test + build + security
 │   │   ├── cd.yml
 │   │   └── release.yml
 │   ├── dependabot.yml
 │   └── CODEOWNERS
 │
-├── pyproject.toml
+├── docker-compose.yml          # Redis + MinIO para desarrollo
+├── docker-compose.override.yml # Overrides por entorno
+├── pyproject.toml              # mypy + coverage + ruff config
 ├── uv.lock
 ├── Dockerfile
 ├── README.md
