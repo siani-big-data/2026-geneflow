@@ -95,7 +95,6 @@ class BaseStorageProvider(ABC):
         Yields:
             Chunks of data
         """
-        # Default implementation: get all and yield
         data = await self.get(path)
         yield data
 

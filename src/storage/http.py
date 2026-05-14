@@ -18,7 +18,7 @@ class HTTPStorageProvider(BaseStorageProvider):
     def __init__(
         self,
         timeout: float = 30.0,
-        max_size: int = 100 * 1024 * 1024,  # 100MB default max
+        max_size: int = 100 * 1024 * 1024,
         headers: dict[str, str] | None = None,
     ):
         """
@@ -56,7 +56,6 @@ class HTTPStorageProvider(BaseStorageProvider):
                 response = await client.get(path, headers=self._headers)
                 response.raise_for_status()
 
-                # Check content length
                 content_length = response.headers.get("content-length")
                 if content_length and int(content_length) > self._max_size:
                     raise StorageError(

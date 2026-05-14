@@ -13,3 +13,12 @@ __all__ = [
     "SupabaseStorageProvider",
     "StorageFactory",
 ]
+
+
+def __getattr__(name: str):
+    """Lazy import for optional dependencies."""
+    if name == "MinIOStorageProvider":
+        from src.storage.minio import MinIOStorageProvider
+
+        return MinIOStorageProvider
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

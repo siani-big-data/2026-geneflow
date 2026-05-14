@@ -31,6 +31,22 @@ class StorageFactory:
         elif provider_type == "http":
             return HTTPStorageProvider()
 
+        elif provider_type == "minio":
+            if not settings.minio_access_key or not settings.minio_secret_key:
+                raise ValueError(
+                    "MinIO storage requires WORKER_MINIO_ACCESS_KEY and WORKER_MINIO_SECRET_KEY"
+                )
+
+            from src.storage.minio import MinIOStorageProvider
+
+            return MinIOStorageProvider(
+                endpoint=settings.minio_endpoint,
+                access_key=settings.minio_access_key,
+                secret_key=settings.minio_secret_key,
+                bucket=settings.minio_bucket,
+                secure=settings.minio_secure,
+            )
+
         elif provider_type == "supabase":
             if not settings.supabase_url or not settings.supabase_key:
                 raise ValueError(
@@ -58,6 +74,25 @@ class StorageFactory:
     ) -> HTTPStorageProvider:
         """Create HTTP storage provider."""
         return HTTPStorageProvider(timeout=timeout, headers=headers)
+
+    @staticmethod
+    def create_minio(
+        endpoint: str,
+        access_key: str,
+        secret_key: str,
+        bucket: str = "geneflow",
+        secure: bool = False,
+    ) -> "BaseStorageProvider":
+        """Create MinIO storage provider."""
+        from src.storage.minio import MinIOStorageProvider
+
+        return MinIOStorageProvider(
+            endpoint=endpoint,
+            access_key=access_key,
+            secret_key=secret_key,
+            bucket=bucket,
+            secure=secure,
+        )
 
     @staticmethod
     def create_supabase(

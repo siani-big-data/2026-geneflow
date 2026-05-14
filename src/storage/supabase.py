@@ -90,16 +90,13 @@ class SupabaseStorageProvider(BaseStorageProvider):
 
         try:
             async with httpx.AsyncClient(timeout=self._timeout) as client:
-                # Try to upload (will fail if exists)
                 response = await client.post(url, content=data, headers=headers)
 
                 if response.status_code == 400 and "already exists" in response.text.lower():
-                    # File exists, update it
                     response = await client.put(url, content=data, headers=headers)
 
                 response.raise_for_status()
 
-                # Return public URL
                 return f"{self._storage_url}/object/public/{self._bucket}/{path.lstrip('/')}"
 
         except httpx.HTTPStatusError as e:

@@ -36,11 +36,9 @@ class LocalStorageProvider(BaseStorageProvider):
 
     def _resolve_path(self, path: str) -> Path:
         """Resolve relative path to absolute path."""
-        # Normalize and prevent directory traversal
         clean_path = Path(path).as_posix().lstrip("/")
         full_path = self._base_path / clean_path
 
-        # Security check: ensure path is within base
         try:
             full_path.resolve().relative_to(self._base_path.resolve())
         except ValueError:
@@ -66,7 +64,6 @@ class LocalStorageProvider(BaseStorageProvider):
         full_path = self._resolve_path(path)
 
         try:
-            # Create parent directories
             full_path.parent.mkdir(parents=True, exist_ok=True)
 
             async with aiofiles.open(full_path, "wb") as f:
@@ -107,11 +104,9 @@ class LocalStorageProvider(BaseStorageProvider):
         results = []
 
         if search_path.is_file():
-            # Prefix is a file
             rel_path = search_path.relative_to(self._base_path)
             results.append(str(rel_path))
         else:
-            # Prefix is a directory
             for item in search_path.rglob("*"):
                 if item.is_file():
                     rel_path = item.relative_to(self._base_path)
