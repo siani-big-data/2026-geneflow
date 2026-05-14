@@ -39,10 +39,8 @@ class FASTQParser(BaseParser):
 
         sequence_str = str(record.seq).upper()
 
-        # Extract quality scores
         quality = list(record.letter_annotations.get("phred_quality", []))
 
-        # Create sequence object
         sequence = Sequence(
             id=trace_id,
             sequence=sequence_str,
@@ -51,7 +49,6 @@ class FASTQParser(BaseParser):
             description=record.description if record.description != record.id else None,
         )
 
-        # Calculate quality metrics
         quality_metrics = self._calculate_metrics(sequence_str, quality)
 
         return ParsedTrace(

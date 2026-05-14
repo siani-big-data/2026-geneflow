@@ -39,16 +39,14 @@ class FASTAParser(BaseParser):
 
         sequence_str = str(record.seq).upper()
 
-        # Create sequence object
         sequence = Sequence(
             id=trace_id,
             sequence=sequence_str,
-            quality=None,  # FASTA has no quality scores
+            quality=None,
             name=record.id,
             description=record.description if record.description != record.id else None,
         )
 
-        # Calculate quality metrics (no quality scores)
         quality_metrics = QualityMetrics(
             meanQuality=0.0,
             q20Percentage=0.0,

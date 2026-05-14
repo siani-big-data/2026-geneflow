@@ -35,35 +35,28 @@ class AB1Parser(BaseParser):
         except Exception as e:
             raise ValueError(f"Invalid AB1 file: {e}")
 
-        # Extract sequence
         sequence_str = str(record.seq)
 
-        # Extract quality scores (phred_quality)
         quality = None
         if "phred_quality" in record.letter_annotations:
             quality = list(record.letter_annotations["phred_quality"])
 
-        # Extract sample name
-        name = record.name or record.id
+        name = self._to_string(record.name) if record.name else (self._to_string(record.id) if record.id else None)
 
-        # Create sequence object
+        description = None
+        if record.description and record.description != "<unknown description>":
+            description = self._to_string(record.description)
+
         sequence = Sequence(
             id=trace_id,
             sequence=sequence_str,
             quality=quality,
             name=name,
-            description=(
-                record.description if record.description != "<unknown description>" else None
-            ),
+            description=description,
         )
 
-        # Extract chromatogram data from annotations
         chromatogram = self._extract_chromatogram(record)
-
-        # Calculate quality metrics
         quality_metrics = self._calculate_metrics(sequence_str, quality)
-
-        # Extract metadata
         metadata = self._extract_metadata(record)
 
         return ParsedTrace(
@@ -76,15 +69,13 @@ class AB1Parser(BaseParser):
         )
 
     def _extract_chromatogram(self, record) -> ChromatogramData | None:
-        """Extract chromatogram data from BioPython record."""
+        """Extract chromatogram data from BioPython record (DATA9=G, DATA10=A, DATA11=T, DATA12=C)."""
         try:
-            # BioPython stores raw ABIF data in annotations['abif_raw']
             abif_raw = record.annotations.get("abif_raw", {})
 
             if not abif_raw:
                 return None
 
-            # Standard ABI channel mapping: DATA9=G, DATA10=A, DATA11=T, DATA12=C
             trace_g = list(abif_raw.get("DATA9", []))
             trace_a = list(abif_raw.get("DATA10", []))
             trace_t = list(abif_raw.get("DATA11", []))
@@ -93,7 +84,6 @@ class AB1Parser(BaseParser):
             if not any([trace_g, trace_a, trace_t, trace_c]):
                 return None
 
-            # Get peak locations
             peak_locs = list(abif_raw.get("PLOC2", abif_raw.get("PLOC1", [])))
 
             return ChromatogramData(
@@ -138,7 +128,7 @@ class AB1Parser(BaseParser):
         annotations = record.annotations
 
         if "sample_well" in annotations:
-            metadata["sampleWell"] = annotations["sample_well"]
+            metadata["sampleWell"] = self._to_string(annotations["sample_well"])
 
         if "run_start" in annotations:
             metadata["runStart"] = str(annotations["run_start"])
@@ -147,9 +137,15 @@ class AB1Parser(BaseParser):
             metadata["runFinish"] = str(annotations["run_finish"])
 
         if "machine_model" in annotations:
-            metadata["machineModel"] = annotations["machine_model"]
+            metadata["machineModel"] = self._to_string(annotations["machine_model"])
 
         if record.name:
-            metadata["sampleName"] = record.name
+            metadata["sampleName"] = self._to_string(record.name)
 
         return metadata
+
+    def _to_string(self, value) -> str:
+        """Convert value to string, handling bytes."""
+        if isinstance(value, bytes):
+            return value.decode("utf-8", errors="replace")
+        return str(value)

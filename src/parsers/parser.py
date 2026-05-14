@@ -67,7 +67,6 @@ class ParserFactory:
     @classmethod
     def register(cls, parser_class: type) -> None:
         """Register a parser class."""
-        # Lazy import to avoid circular imports
         instance = parser_class()
         cls._parsers[instance.format] = parser_class
 
@@ -82,7 +81,6 @@ class ParserFactory:
         Returns:
             Parser instance for the format
         """
-        # Ensure parsers are registered
         cls._ensuREDACTED()
 
         if isinstance(format, str):
@@ -121,7 +119,6 @@ class ParserFactory:
         if cls._parsers:
             return
 
-        # Import and register parsers
         from src.parsers.ab1 import AB1Parser
         from src.parsers.fasta import FASTAParser
         from src.parsers.fastq import FASTQParser
