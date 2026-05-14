@@ -17,15 +17,10 @@ class ProfilesHandler(BaseHandler):
     def __init__(self, connection):
         super().__init__(connection)
         self._event_mappings = {
-            # Profile lifecycle
             "ProfileCreatedEvent": "handle_profile_created",
             "ProfileUpdatedEvent": "handle_profile_updated",
             "ProfilePhotoUpdatedEvent": "handle_photo_updated",
         }
-
-    # =========================================================================
-    # PROFILE CREATION
-    # =========================================================================
 
     async def handle_profile_created(self, payload: dict) -> None:
         """Handle ProfileCreatedEvent - Insert new profile."""
@@ -34,13 +29,11 @@ class ProfilesHandler(BaseHandler):
         first_name = payload.get("first_name") or payload.get("FirstName")
         occurred_at = payload.get("occurred_at") or payload.get("OccurredAt")
 
-        # Handle nested objects if present
         if isinstance(profile_id, dict):
             profile_id = profile_id.get("Value") or str(profile_id)
         if isinstance(user_id, dict):
             user_id = user_id.get("Value") or str(user_id)
 
-        # Parse timestamp if string
         if isinstance(occurred_at, str):
             occurred_at = datetime.fromisoformat(occurred_at.replace("Z", "+00:00"))
 
@@ -56,10 +49,6 @@ class ProfilesHandler(BaseHandler):
             occurred_at,
         )
 
-    # =========================================================================
-    # PROFILE UPDATES
-    # =========================================================================
-
     async def handle_profile_updated(self, payload: dict) -> None:
         """Handle ProfileUpdatedEvent - Update profile information.
 
@@ -74,12 +63,9 @@ class ProfilesHandler(BaseHandler):
         """
         profile_id = payload.get("profile_id") or payload.get("ProfileId")
 
-        # Handle nested objects if present
         if isinstance(profile_id, dict):
             profile_id = profile_id.get("Value") or str(profile_id)
 
-        # For now, just update the timestamp
-        # Extended fields should be added to the event if full projection is needed
         await self._connection.execute(
             """
             UPDATE profiles.profiles
@@ -94,7 +80,6 @@ class ProfilesHandler(BaseHandler):
         profile_id = payload.get("profile_id") or payload.get("ProfileId")
         photo_url = payload.get("photo_url") or payload.get("PhotoUrl")
 
-        # Handle nested objects if present
         if isinstance(profile_id, dict):
             profile_id = profile_id.get("Value") or str(profile_id)
 
@@ -107,10 +92,6 @@ class ProfilesHandler(BaseHandler):
             profile_id,
             photo_url,
         )
-
-    # =========================================================================
-    # REBUILD SUPPORT
-    # =========================================================================
 
     async def truncate(self) -> None:
         """Truncate all profile tables for rebuild."""

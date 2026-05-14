@@ -11,13 +11,11 @@ class PaymentsHandler(BaseHandler):
     def __init__(self, connection):
         super().__init__(connection)
         self._event_mappings = {
-            # Payment Method events
             "PaymentMethodAddedEvent": "insert_payment_method",
             "PaymentMethodRemovedEvent": "delete_payment_method",
             "PaymentMethodSetAsDefaultEvent": "set_default_payment_method",
             "PaymentMethodExpiredEvent": "update_payment_method_status",
             "PaymentMethodFailedEvent": "update_payment_method_status",
-            # Stripe Customer events
             "StripeCustomerCreatedEvent": "insert_stripe_customer",
         }
 
@@ -45,7 +43,6 @@ class PaymentsHandler(BaseHandler):
             payload.get("occurred_at"),
         )
 
-        # Log the event
         await self._log_event(
             payload.get("payment_method_id") or payload.get("id"),
             payload.get("user_id"),
@@ -62,7 +59,6 @@ class PaymentsHandler(BaseHandler):
             payment_method_id,
         )
 
-        # Log the event
         await self._log_event(
             payment_method_id,
             payload.get("user_id"),
@@ -75,7 +71,6 @@ class PaymentsHandler(BaseHandler):
         user_id = payload.get("user_id")
         payment_method_id = payload.get("payment_method_id") or payload.get("id")
 
-        # Unset current default
         await self._connection.execute(
             """UPDATE payments.payment_methods
             SET is_default = FALSE, modified_at = CURRENT_TIMESTAMP
@@ -83,7 +78,6 @@ class PaymentsHandler(BaseHandler):
             user_id,
         )
 
-        # Set new default
         await self._connection.execute(
             """UPDATE payments.payment_methods
             SET is_default = TRUE, modified_at = CURRENT_TIMESTAMP
@@ -91,7 +85,6 @@ class PaymentsHandler(BaseHandler):
             payment_method_id,
         )
 
-        # Log the event
         await self._log_event(
             payment_method_id,
             user_id,
@@ -112,14 +105,12 @@ class PaymentsHandler(BaseHandler):
             payment_method_id,
         )
 
-        # Determine event type from status
         event_type = "PaymentMethodStatusUpdated"
         if status == 2:
             event_type = "PaymentMethodExpired"
         elif status == 3:
             event_type = "PaymentMethodFailed"
 
-        # Log the event
         await self._log_event(
             payment_method_id,
             payload.get("user_id"),

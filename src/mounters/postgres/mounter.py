@@ -64,10 +64,8 @@ class PostgresMounter(BaseMounter):
         """Start the mounter - connect to PostgreSQL and initialize schemas."""
         await self._connection.connect()
 
-        # Initialize schemas
         await self._initialize_schemas()
 
-        # Initialize handlers
         self._handlers = {
             "users": UsersHandler(self._connection),
             "studies": StudiesHandler(self._connection),
@@ -107,14 +105,12 @@ class PostgresMounter(BaseMounter):
 
         for name, schema in schemas:
             try:
-                # Execute each statement in the schema separately
                 statements = [s.strip() for s in schema.split(";") if s.strip()]
                 for statement in statements:
                     if statement and not statement.startswith("--"):
                         try:
                             await self._connection.execute(statement)
                         except Exception as stmt_error:
-                            # Log but continue - table might already exist with different structure
                             logger.debug(
                                 "schema_statement_skipped",
                                 schema=name,
@@ -127,7 +123,6 @@ class PostgresMounter(BaseMounter):
                     schema=name,
                     error=str(e),
                 )
-                # Continue with next schema instead of raising
 
     async def handle_event(self, event: dict) -> None:
         """Handle an incoming event by routing to appropriate handler.
@@ -156,7 +151,6 @@ class PostgresMounter(BaseMounter):
             self._metrics["events_skipped"] += 1
             return
 
-        # Get the payload - it might be in 'data' field as JSON string or dict
         payload = event.get("data", {})
         if isinstance(payload, str):
             try:
@@ -166,7 +160,6 @@ class PostgresMounter(BaseMounter):
                 self._metrics["events_failed"] += 1
                 return
 
-        # Add metadata to payload for handlers
         payload["occurred_at"] = event.get("occurred_at")
         payload["event_id"] = event_id
 
