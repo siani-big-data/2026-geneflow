@@ -15,7 +15,6 @@ class PairwiseAligner(BaseAligner):
     Uses BioPython's PairwiseAligner for optimal global alignment.
     """
 
-    # Default scoring parameters
     DEFAULT_MATCH_SCORE = 2
     DEFAULT_MISMATCH_SCORE = -1
     DEFAULT_GAP_OPEN = -10
@@ -52,12 +51,10 @@ class PairwiseAligner(BaseAligner):
         self.validate_sequences(sequences, min_count=2)
 
         if len(sequences) > 2:
-            # Only use first two sequences for pairwise
             sequences = sequences[:2]
 
         seq1, seq2 = sequences[0].upper(), sequences[1].upper()
 
-        # Create BioPython aligner
         aligner = Align.PairwiseAligner()
         aligner.mode = "global"
         aligner.match_score = match_score
@@ -65,20 +62,16 @@ class PairwiseAligner(BaseAligner):
         aligner.open_gap_score = gap_open
         aligner.extend_gap_score = gap_extend
 
-        # Perform alignment
         alignments = aligner.align(seq1, seq2)
 
         if not alignments:
             raise ValueError("No alignment found")
 
-        # Get best alignment
         best = alignments[0]
         score = best.score
 
-        # Extract aligned sequences
         aligned_seqs = self._extract_aligned_sequences(best, seq1, seq2)
 
-        # Calculate statistics
         identity = self.calculate_identity(aligned_seqs)
         gaps = self.count_gaps(aligned_seqs)
 
@@ -95,15 +88,12 @@ class PairwiseAligner(BaseAligner):
 
     def _extract_aligned_sequences(self, alignment, seq1: str, seq2: str) -> list[str]:
         """Extract aligned sequences from BioPython alignment object."""
-        # BioPython format varies, try to extract sequences
         try:
-            # Try using alignment coordinates
             aligned1 = []
             aligned2 = []
 
             coords = alignment.coordinates
 
-            # Walk through alignment coordinates
             for i in range(len(coords[0]) - 1):
                 s1_start, s1_end = coords[0][i], coords[0][i + 1]
                 s2_start, s2_end = coords[1][i], coords[1][i + 1]
@@ -112,22 +102,18 @@ class PairwiseAligner(BaseAligner):
                 s2_len = s2_end - s2_start
 
                 if s1_len == s2_len:
-                    # Match/mismatch region
                     aligned1.append(seq1[s1_start:s1_end])
                     aligned2.append(seq2[s2_start:s2_end])
                 elif s1_len > 0 and s2_len == 0:
-                    # Gap in seq2
                     aligned1.append(seq1[s1_start:s1_end])
                     aligned2.append("-" * s1_len)
                 elif s2_len > 0 and s1_len == 0:
-                    # Gap in seq1
                     aligned1.append("-" * s2_len)
                     aligned2.append(seq2[s2_start:s2_end])
 
             return ["".join(aligned1), "".join(aligned2)]
 
         except Exception:
-            # Fallback: return original sequences (no gaps)
             return [seq1, seq2]
 
     def align_local(

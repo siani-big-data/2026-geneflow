@@ -47,10 +47,8 @@ class RestrictionAnalyzer(BaseAnalyzer):
 
         seq_str = sequence.sequence.upper()
 
-        # Build case-insensitive lookup
         enzyme_lookup = {name.upper(): name for name in RESTRICTION_ENZYMES.keys()}
 
-        # Use specified enzymes or all
         if enzymes:
             enzyme_list = []
             for e in enzymes:
@@ -68,13 +66,10 @@ class RestrictionAnalyzer(BaseAnalyzer):
             sites = self._find_enzyme_sites(seq_str, enzyme_name, enzyme_data)
             all_sites.extend(sites)
 
-        # Sort by position
         all_sites.sort(key=lambda s: s.position)
 
-        # Calculate fragment lengths
         fragments = self._calculate_fragments(seq_str, all_sites)
 
-        # Count unique enzymes with hits
         enzymes_with_sites = set(s.enzyme for s in all_sites)
 
         return RestrictionResult(
@@ -94,10 +89,8 @@ class RestrictionAnalyzer(BaseAnalyzer):
         """Find all cut sites for a specific enzyme."""
         sites = []
 
-        # Unpack tuple: (recognition_sequence, cut_position, overhang_type)
         recognition, cut_offset, overhang = enzyme_data
 
-        # Convert IUPAC recognition sequence to regex
         import re
 
         pattern = self._recognition_to_regex(recognition)
@@ -161,7 +154,6 @@ class RestrictionAnalyzer(BaseAnalyzer):
         if not sites:
             return [len(sequence)]
 
-        # Get unique cut positions
         cut_positions = sorted(set(s.cutPosition for s in sites))
 
         fragments = []
@@ -172,7 +164,6 @@ class RestrictionAnalyzer(BaseAnalyzer):
                 fragments.append(pos - prev_pos)
             prev_pos = pos
 
-        # Add final fragment
         if prev_pos < len(sequence):
             fragments.append(len(sequence) - prev_pos)
 
@@ -195,7 +186,6 @@ class RestrictionAnalyzer(BaseAnalyzer):
         """
         result = self.analyze(sequence, enzymes=enzymes)
 
-        # Count sites per enzyme
         enzyme_counts = {}
         for site in result.sites:
             enzyme_counts[site.enzyme] = enzyme_counts.get(site.enzyme, 0) + 1
@@ -236,7 +226,6 @@ class RestrictionAnalyzer(BaseAnalyzer):
                 "fragmentCount": len(result.fragmentLengths),
             }
 
-        # Count sites per enzyme
         sites_per_enzyme = {}
         for site in result.sites:
             sites_per_enzyme[site.enzyme] = sites_per_enzyme.get(site.enzyme, 0) + 1

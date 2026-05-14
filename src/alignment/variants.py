@@ -7,23 +7,23 @@ from enum import Enum
 class VariantType(str, Enum):
     """Type of sequence variant."""
 
-    SNP = "snp"  # Single nucleotide polymorphism
+    SNP = "snp"
     INSERTION = "insertion"
     DELETION = "deletion"
-    MNP = "mnp"  # Multiple nucleotide polymorphism
+    MNP = "mnp"
 
 
 @dataclass
 class Variant:
     """Represents a detected variant."""
 
-    position: int  # 0-based position in alignment
+    position: int
     type: VariantType
-    reference: str  # Reference base(s)
-    alternate: str  # Alternate base(s)
-    frequency: float  # Frequency of alternate allele
-    coverage: int  # Number of sequences at position
-    sequenceIndices: list[int] = field(default_factory=list)  # Which sequences have variant
+    reference: str
+    alternate: str
+    frequency: float
+    coverage: int
+    sequenceIndices: list[int] = field(default_factory=list)
 
 
 @dataclass
@@ -75,7 +75,6 @@ class VariantDetector:
                 deletionCount=0,
             )
 
-        # Validate sequences
         length = len(aligned_sequences[0])
         for seq in aligned_sequences:
             if len(seq) != length:
@@ -91,7 +90,6 @@ class VariantDetector:
         for i in range(length):
             ref_base = reference[i]
 
-            # Get all bases at this position (excluding reference)
             other_bases = []
             for j, seq in enumerate(aligned_sequences):
                 if j != reference_index:
@@ -101,7 +99,6 @@ class VariantDetector:
             if coverage < min_coverage:
                 continue
 
-            # Count alternate alleles
             alt_counts = {}
             for seq_idx, base in other_bases:
                 if base != ref_base:
@@ -110,7 +107,6 @@ class VariantDetector:
                     alt_counts[base]["count"] += 1
                     alt_counts[base]["indices"].append(seq_idx)
 
-            # Report variants
             for alt_base, data in alt_counts.items():
                 frequency = data["count"] / coverage
 
@@ -128,7 +124,6 @@ class VariantDetector:
                     variants.append(variant)
                     variant_positions.add(i)
 
-        # Count by type
         snp_count = sum(1 for v in variants if v.type == VariantType.SNP)
         ins_count = sum(1 for v in variants if v.type == VariantType.INSERTION)
         del_count = sum(1 for v in variants if v.type == VariantType.DELETION)
@@ -187,7 +182,6 @@ class VariantDetector:
         for i in range(length):
             ref_base = consensus[i].upper()
 
-            # Get all bases at this position
             all_bases = []
             for j, seq in enumerate(aligned_sequences):
                 if i < len(seq):
@@ -197,7 +191,6 @@ class VariantDetector:
             if coverage == 0:
                 continue
 
-            # Count variants
             alt_counts = {}
             for seq_idx, base in all_bases:
                 if base != ref_base:
@@ -256,9 +249,8 @@ class VariantDetector:
                 "tiTvRatio": None,
             }
 
-        # Count transitions vs transversions for SNPs
-        transitions = 0  # A<->G, C<->T (purine-purine or pyrimidine-pyrimidine)
-        transversions = 0  # Others
+        transitions = 0
+        transversions = 0
 
         transition_pairs = {("A", "G"), ("G", "A"), ("C", "T"), ("T", "C")}
 

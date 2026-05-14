@@ -61,7 +61,6 @@ class ConsensusBuilder:
                 method=method,
             )
 
-        # Validate all sequences have same length
         length = len(aligned_sequences[0])
         for seq in aligned_sequences:
             if len(seq) != length:
@@ -98,7 +97,6 @@ class ConsensusBuilder:
         Returns:
             Tuple of (base, frequency, coverage)
         """
-        # Filter out gaps for base counting
         bases = [b for b in column if b != "-"]
         coverage = len(bases)
 
@@ -108,12 +106,10 @@ class ConsensusBuilder:
         if not bases:
             return ("-", 0.0, 0)
 
-        # Count base frequencies
         base_counts = {}
         for base in bases:
             base_counts[base] = base_counts.get(base, 0) + 1
 
-        # Find most common base
         most_common = max(base_counts.keys(), key=lambda b: base_counts[b])
         frequency = base_counts[most_common] / len(bases)
 
@@ -127,13 +123,11 @@ class ConsensusBuilder:
                 return ("N", round(frequency, 3), coverage)
 
         elif method == ConsensusMethod.IUPAC:
-            # Get all bases that appear
             present_bases = set(bases)
 
             if len(present_bases) == 1:
                 return (most_common, 1.0, coverage)
 
-            # Use IUPAC code for ambiguity
             iupac = get_iupac_code(present_bases)
             return (iupac, round(frequency, 3), coverage)
 
@@ -205,20 +199,17 @@ class ConsensusBuilder:
                 conservation.append(0.0)
                 continue
 
-            # Calculate frequencies
             total = len(bases)
             freq = {}
             for base in bases:
                 freq[base] = freq.get(base, 0) + 1
 
-            # Shannon entropy
             entropy = 0.0
             for count in freq.values():
                 p = count / total
                 if p > 0:
                     entropy -= p * math.log2(p)
 
-            # Normalize: max entropy for 4 bases is log2(4) = 2
             max_entropy = math.log2(4)
             conservation_score = 1.0 - (entropy / max_entropy)
 

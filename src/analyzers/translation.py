@@ -51,21 +51,16 @@ class TranslationAnalyzer(BaseAnalyzer):
 
         seq_str = sequence.sequence.upper()
 
-        # Handle reverse frames
         if frame < 0:
             seq_str = self._reverse_complement(seq_str)
             frame = abs(frame)
 
-        # Translate (convert 1-indexed frame to 0-indexed for translate function)
         protein = translate(seq_str, frame=frame - 1)
 
-        # Count stop codons
         stop_count = protein.count("*")
 
-        # Find start codon positions (ATG -> M)
         start_positions = self._find_start_codons(seq_str, frame)
 
-        # Calculate amino acid composition
         composition = self._calculate_composition(protein)
 
         return TranslationResult(
@@ -103,7 +98,7 @@ class TranslationAnalyzer(BaseAnalyzer):
     def _find_start_codons(self, sequence: str, frame: int) -> list[int]:
         """Find positions of start codons (ATG)."""
         positions = []
-        start = frame - 1  # Convert 1-indexed to 0-indexed
+        start = frame - 1
 
         for i in range(start, len(sequence) - 2, 3):
             codon = sequence[i : i + 3]
@@ -117,7 +112,7 @@ class TranslationAnalyzer(BaseAnalyzer):
         composition = {}
 
         for aa in protein:
-            if aa != "*":  # Exclude stop codons
+            if aa != "*":
                 composition[aa] = composition.get(aa, 0) + 1
 
         return composition
@@ -143,10 +138,8 @@ class TranslationAnalyzer(BaseAnalyzer):
                 "properties": {},
             }
 
-        # Calculate percentages
         percentages = {aa: round(count / total * 100, 2) for aa, count in composition.items()}
 
-        # Calculate property-based groupings
         properties = {
             "hydrophobic": 0,
             "hydrophilic": 0,
@@ -169,7 +162,6 @@ class TranslationAnalyzer(BaseAnalyzer):
             if aa in aromatic:
                 properties["aromatic"] += count
 
-        # Convert to percentages
         for prop in properties:
             properties[prop] = round(properties[prop] / total * 100, 2)
 

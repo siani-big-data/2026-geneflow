@@ -27,9 +27,8 @@ class HeterozygoteAnalyzer(BaseAnalyzer):
     - Quality score patterns
     """
 
-    # Default thresholds
-    DEFAULT_MIN_RATIO = 0.3  # Secondary peak must be >= 30% of primary
-    DEFAULT_MAX_RATIO = 0.7  # Secondary peak must be <= 70% of primary
+    DEFAULT_MIN_RATIO = 0.3
+    DEFAULT_MAX_RATIO = 0.7
     DEFAULT_MIN_CONFIDENCE = 0.5
 
     @property
@@ -63,7 +62,6 @@ class HeterozygoteAnalyzer(BaseAnalyzer):
         calls = []
 
         if chromatogram:
-            # Use chromatogram peak analysis
             calls = self._detect_from_chromatogram(
                 sequence,
                 chromatogram,
@@ -72,7 +70,6 @@ class HeterozygoteAnalyzer(BaseAnalyzer):
                 min_confidence,
             )
         else:
-            # Fall back to IUPAC code detection
             calls = self._detect_from_iupac(sequence)
 
         total = len(sequence.sequence)
@@ -110,7 +107,6 @@ class HeterozygoteAnalyzer(BaseAnalyzer):
             if i >= len(sequence.sequence):
                 break
 
-            # Get peak heights at this position
             heights = {}
             for base, trace in traces.items():
                 if pos < len(trace):
@@ -118,7 +114,6 @@ class HeterozygoteAnalyzer(BaseAnalyzer):
                 else:
                     heights[base] = 0
 
-            # Sort by height
             sorted_bases = sorted(heights.items(), key=lambda x: x[1], reverse=True)
 
             if len(sorted_bases) < 2:
@@ -132,10 +127,7 @@ class HeterozygoteAnalyzer(BaseAnalyzer):
 
             ratio = secondary_height / primary_height
 
-            # Check if it's a heterozygote
             if min_ratio <= ratio <= max_ratio:
-                # Calculate confidence based on ratio proximity to 0.5
-                # Perfect heterozygote would have ratio = 1.0 (equal peaks)
                 confidence = 1.0 - abs(ratio - 0.5) * 2
 
                 if confidence >= min_confidence:
@@ -158,14 +150,13 @@ class HeterozygoteAnalyzer(BaseAnalyzer):
         """Detect heterozygotes from IUPAC ambiguity codes."""
         calls = []
 
-        # IUPAC codes that represent two bases
         iupac_pairs = {
-            "R": ("A", "G"),  # Purine
-            "Y": ("C", "T"),  # Pyrimidine
-            "S": ("G", "C"),  # Strong
-            "W": ("A", "T"),  # Weak
-            "K": ("G", "T"),  # Keto
-            "M": ("A", "C"),  # Amino
+            "R": ("A", "G"),
+            "Y": ("C", "T"),
+            "S": ("G", "C"),
+            "W": ("A", "T"),
+            "K": ("G", "T"),
+            "M": ("A", "C"),
         }
 
         for i, base in enumerate(sequence.sequence.upper()):
@@ -178,8 +169,8 @@ class HeterozygoteAnalyzer(BaseAnalyzer):
                         base1=base1,
                         base2=base2,
                         iupacCode=base,
-                        ratio=0.5,  # Assumed equal
-                        confidence=0.8,  # Moderate confidence from sequence
+                        ratio=0.5,
+                        confidence=0.8,
                     )
                 )
 
@@ -195,7 +186,6 @@ class HeterozygoteAnalyzer(BaseAnalyzer):
                 "iupacCodes": {},
             }
 
-        # Count IUPAC codes
         iupac_counts = {}
         for call in result.calls:
             code = call.iupacCode

@@ -34,18 +34,14 @@ class MultipleAligner(BaseAligner):
         """
         self.validate_sequences(sequences, min_count=2)
 
-        # Normalize sequences
         seqs = [s.upper() for s in sequences]
 
         if len(seqs) == 2:
-            # Just do pairwise
             pairwise = PairwiseAligner()
             return pairwise.align(seqs, alignment_id=alignment_id, **options)
 
-        # Progressive alignment
         aligned = self._progressive_align(seqs, **options)
 
-        # Calculate statistics
         identity = self._calculate_average_identity(aligned)
         gaps = self.count_gaps(aligned)
         score = self._calculate_score(aligned)
@@ -74,11 +70,9 @@ class MultipleAligner(BaseAligner):
 
         pairwise = PairwiseAligner()
 
-        # Start with first two sequences
         result = pairwise.align(sequences[:2], **options)
         aligned = list(result.alignedSequences)
 
-        # Add remaining sequences one by one
         for seq in sequences[2:]:
             aligned = self._add_sequence_to_alignment(aligned, seq, pairwise, **options)
 
@@ -88,14 +82,11 @@ class MultipleAligner(BaseAligner):
         self, aligned: list[str], new_seq: str, pairwise: PairwiseAligner, **options
     ) -> list[str]:
         """Add a new sequence to existing alignment."""
-        # Build consensus of current alignment
         consensus = self._build_simple_consensus(aligned)
 
-        # Align new sequence to consensus
         result = pairwise.align([consensus, new_seq], **options)
         aligned_consensus, aligned_new = result.alignedSequences
 
-        # Adjust existing sequences to match new gaps in consensus
         new_aligned = []
         for existing in aligned:
             adjusted = self._adjust_sequence(existing, consensus, aligned_consensus)
@@ -115,11 +106,9 @@ class MultipleAligner(BaseAligner):
 
         for i in range(length):
             bases = [seq[i] for seq in aligned if i < len(seq)]
-            # Remove gaps for consensus base
             non_gap_bases = [b for b in bases if b != "-"]
 
             if non_gap_bases:
-                # Most common base
                 consensus.append(max(set(non_gap_bases), key=non_gap_bases.count))
             else:
                 consensus.append("-")
@@ -136,7 +125,6 @@ class MultipleAligner(BaseAligner):
                 old_char = old_consensus[i]
 
                 if new_char == "-" and old_char != "-":
-                    # New gap inserted
                     result.append("-")
                 elif orig_idx < len(original):
                     result.append(original[orig_idx])
@@ -144,7 +132,6 @@ class MultipleAligner(BaseAligner):
                 else:
                     result.append("-")
             else:
-                # Past old consensus length
                 if new_char == "-":
                     result.append("-")
                 elif orig_idx < len(original):
@@ -184,7 +171,6 @@ class MultipleAligner(BaseAligner):
             non_gap = [b for b in column if b != "-"]
 
             if non_gap:
-                # Score based on conservation
                 most_common = max(set(non_gap), key=non_gap.count)
                 matches = non_gap.count(most_common)
                 score += matches / len(column)

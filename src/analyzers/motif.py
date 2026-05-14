@@ -29,24 +29,23 @@ class MotifAnalyzer(BaseAnalyzer):
     - Both strands search
     """
 
-    # IUPAC to regex mapping
     IUPAC_REGEX = {
         "A": "A",
         "C": "C",
         "G": "G",
         "T": "T",
         "U": "U",
-        "R": "[AG]",  # Purine
-        "Y": "[CT]",  # Pyrimidine
-        "S": "[GC]",  # Strong
-        "W": "[AT]",  # Weak
-        "K": "[GT]",  # Keto
-        "M": "[AC]",  # Amino
-        "B": "[CGT]",  # Not A
-        "D": "[AGT]",  # Not C
-        "H": "[ACT]",  # Not G
-        "V": "[ACG]",  # Not T
-        "N": "[ACGT]",  # Any
+        "R": "[AG]",
+        "Y": "[CT]",
+        "S": "[GC]",
+        "W": "[AT]",
+        "K": "[GT]",
+        "M": "[AC]",
+        "B": "[CGT]",
+        "D": "[AGT]",
+        "H": "[ACT]",
+        "V": "[ACG]",
+        "N": "[ACGT]",
     }
 
     @property
@@ -78,7 +77,6 @@ class MotifAnalyzer(BaseAnalyzer):
         if not pattern:
             raise ValueError("Pattern required for motif search")
 
-        # Convert IUPAC to regex if not already regex
         if use_regex:
             regex_pattern = pattern
         else:
@@ -87,19 +85,15 @@ class MotifAnalyzer(BaseAnalyzer):
         matches = []
         seq_str = sequence.sequence.upper()
 
-        # Search forward strand
         forward_matches = self._find_matches(seq_str, regex_pattern, pattern, "+")
         matches.extend(forward_matches)
 
-        # Search reverse complement if requested
         if search_complement:
             rev_comp = reverse_complement(seq_str)
             reverse_matches = self._find_matches(rev_comp, regex_pattern, pattern, "-")
 
-            # Adjust positions for reverse strand
             seq_len = len(seq_str)
             for match in reverse_matches:
-                # Convert position to forward strand coordinates
                 match.start = seq_len - match.end
                 match.end = seq_len - (match.start + len(match.matchedSequence))
 
@@ -120,7 +114,6 @@ class MotifAnalyzer(BaseAnalyzer):
             if char in self.IUPAC_REGEX:
                 regex_parts.append(self.IUPAC_REGEX[char])
             else:
-                # Keep as-is (might be regex metacharacter)
                 regex_parts.append(re.escape(char))
 
         return "".join(regex_parts)
@@ -206,8 +199,6 @@ class MotifAnalyzer(BaseAnalyzer):
         repeats = []
 
         for unit_len in range(min_unit_length, max_unit_length + 1):
-            # Build pattern for this unit length
-            # Match any unit repeated min_repeats or more times
             pattern = f"(([ACGT]{{{unit_len}}}))\\2{{{min_repeats - 1},}}"
 
             try:
@@ -232,7 +223,6 @@ class MotifAnalyzer(BaseAnalyzer):
             except re.error:
                 continue
 
-        # Sort by position
         repeats.sort(key=lambda x: x["start"])
 
         return repeats

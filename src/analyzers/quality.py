@@ -35,18 +35,14 @@ class QualityAnalyzer(BaseAnalyzer):
         seq_str = sequence.sequence.upper()
         quality = sequence.quality
 
-        # Calculate GC content
         gc = gc_content(seq_str)
 
-        # Count ambiguous bases (not A, C, G, T)
         ambiguous = sum(1 for b in seq_str if b not in "ACGT")
 
-        # Calculate SNR if chromatogram is available
         snr = None
         if chromatogram is not None:
             snr = self.calculate_snr(chromatogram)
 
-        # If no quality scores, return basic metrics
         if not quality:
             return QualityMetrics(
                 meanQuality=0.0,
@@ -58,7 +54,6 @@ class QualityAnalyzer(BaseAnalyzer):
                 snr=snr,
             )
 
-        # Calculate quality statistics
         mean_q = sum(quality) / len(quality)
         q20_count = sum(1 for q in quality if q >= 20)
         q30_count = sum(1 for q in quality if q >= 30)
@@ -98,7 +93,6 @@ class QualityAnalyzer(BaseAnalyzer):
         if not chromatogram.peakLocations:
             return 0.0
 
-        # Calculate signal: max intensity at each peak position
         peak_signals = []
         for peak_pos in chromatogram.peakLocations:
             if 0 <= peak_pos < len(traces[0]):
@@ -110,23 +104,18 @@ class QualityAnalyzer(BaseAnalyzer):
 
         mean_signal = sum(peak_signals) / len(peak_signals)
 
-        # Calculate noise: standard deviation of non-peak regions
-        # Sample points between peaks for noise estimation
         noise_values = []
         peak_set = set(chromatogram.peakLocations)
 
         for i in range(len(traces[0])):
-            # Skip peak positions and nearby (±2 positions)
             if any(abs(i - p) <= 2 for p in peak_set):
                 continue
-            # Get minimum value across channels (background)
             min_val = min(trace[i] for trace in traces)
             noise_values.append(min_val)
 
         if len(noise_values) < 2:
-            # Not enough noise samples, estimate from peak variation
             if len(peak_signals) < 2:
-                return mean_signal  # No noise reference
+                return mean_signal
             noise_std = math.sqrt(
                 sum((x - mean_signal) ** 2 for x in peak_signals) / len(peak_signals)
             )
@@ -220,7 +209,6 @@ class QualityAnalyzer(BaseAnalyzer):
                         )
                     start = None
 
-        # Handle region at end
         if start is not None:
             length = len(quality) - start
             if length >= min_length:

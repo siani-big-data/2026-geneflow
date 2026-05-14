@@ -26,11 +26,9 @@ class ORFAnalyzer(BaseAnalyzer):
     a stop codon (TAA, TAG, TGA).
     """
 
-    # Stop codons
     STOP_CODONS = {"TAA", "TAG", "TGA"}
     START_CODON = "ATG"
 
-    # Default minimum ORF length (in amino acids)
     DEFAULT_MIN_LENGTH = 30
 
     @property
@@ -71,7 +69,6 @@ class ORFAnalyzer(BaseAnalyzer):
             orfs = self._find_orfs_in_frame(seq_str, frame, min_length)
             all_orfs.extend(orfs)
 
-        # Sort by length (longest first)
         all_orfs.sort(key=lambda x: x.length, reverse=True)
 
         longest = all_orfs[0] if all_orfs else None
@@ -92,7 +89,6 @@ class ORFAnalyzer(BaseAnalyzer):
         """Find ORFs in a specific reading frame."""
         orfs = []
 
-        # Handle reverse frames
         if frame < 0:
             seq = self._reverse_complement(sequence)
             strand = "-"
@@ -102,32 +98,26 @@ class ORFAnalyzer(BaseAnalyzer):
             strand = "+"
             actual_frame = frame
 
-        # Start position based on frame
         start_offset = actual_frame - 1
         seq_len = len(seq)
 
-        # Track potential ORFs (start positions waiting for stop codon)
         open_orfs = []
 
         for i in range(start_offset, seq_len - 2, 3):
             codon = seq[i : i + 3]
 
             if codon == self.START_CODON:
-                # Start a new potential ORF
                 open_orfs.append(i)
 
             elif codon in self.STOP_CODONS:
-                # Close all open ORFs at this position
                 for start_pos in open_orfs:
-                    end_pos = i + 3  # Include stop codon
+                    end_pos = i + 3
                     orf_seq = seq[start_pos:end_pos]
                     protein = translate(orf_seq, frame=1)
 
-                    # Check minimum length (excluding stop codon)
-                    aa_length = len(protein) - 1  # -1 for stop codon
+                    aa_length = len(protein) - 1
 
                     if aa_length >= min_length:
-                        # Convert positions back for reverse strand
                         if strand == "-":
                             orig_start = len(sequence) - end_pos
                             orig_end = len(sequence) - start_pos
@@ -147,7 +137,6 @@ class ORFAnalyzer(BaseAnalyzer):
                             )
                         )
 
-                # Clear open ORFs after stop codon
                 open_orfs = []
 
         return orfs
@@ -181,7 +170,6 @@ class ORFAnalyzer(BaseAnalyzer):
                 "strandDistribution": {"+": 0, "-": 0},
             }
 
-        # Frame distribution
         frame_dist = {}
         strand_dist = {"+": 0, "-": 0}
 

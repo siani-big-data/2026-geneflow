@@ -7,10 +7,9 @@ from src.models import Sequence, TrimmingAlgorithm, TrimmingResult
 class TrimmingAnalyzer(BaseAnalyzer):
     """Analyzer for trimming low-quality ends from sequences."""
 
-    # Default parameters
     DEFAULT_QUALITY_THRESHOLD = 20
     DEFAULT_WINDOW_SIZE = 10
-    DEFAULT_MOTT_CUTOFF = 0.05  # Error probability cutoff
+    DEFAULT_MOTT_CUTOFF = 0.05
 
     @property
     def name(self) -> str:
@@ -65,15 +64,10 @@ class TrimmingAnalyzer(BaseAnalyzer):
         quality = sequence.quality
         seq_str = sequence.sequence
 
-        # Convert quality scores to error probabilities
-        # Phred: Q = -10 * log10(P), so P = 10^(-Q/10)
         error_probs = [10 ** (-q / 10) for q in quality]
 
-        # Calculate scores: cutoff - error_probability
         scores = [cutoff - p for p in error_probs]
 
-        # Find maximum scoring segment using Kadane-like algorithm
-        # Track cumulative score and best segment
         best_start = 0
         best_end = len(scores)
         best_score = float("-inf")
@@ -87,9 +81,7 @@ class TrimmingAnalyzer(BaseAnalyzer):
                     best_start = start
                     best_end = end + 1
 
-        # Handle case where no good segment found
         if best_score <= 0:
-            # Return empty trimmed sequence
             return TrimmingResult(
                 originalLength=len(seq_str),
                 trimmedLength=0,
@@ -136,7 +128,6 @@ class TrimmingAnalyzer(BaseAnalyzer):
         n = len(quality)
 
         if n < window_size:
-            # Sequence too short, check overall average
             avg = sum(quality) / n
             if avg >= threshold:
                 return TrimmingResult(
@@ -159,7 +150,6 @@ class TrimmingAnalyzer(BaseAnalyzer):
                     algorithm=TrimmingAlgorithm.SLIDING_WINDOW.value,
                 )
 
-        # Find start: first position where window average >= threshold
         trim_start = 0
         for i in range(n - window_size + 1):
             window = quality[i : i + window_size]
@@ -167,7 +157,6 @@ class TrimmingAnalyzer(BaseAnalyzer):
                 trim_start = i
                 break
         else:
-            # No good window found
             return TrimmingResult(
                 originalLength=n,
                 trimmedLength=0,
@@ -178,7 +167,6 @@ class TrimmingAnalyzer(BaseAnalyzer):
                 algorithm=TrimmingAlgorithm.SLIDING_WINDOW.value,
             )
 
-        # Find end: last position where window average >= threshold
         trim_end = n
         for i in range(n - window_size, -1, -1):
             window = quality[i : i + window_size]
@@ -186,7 +174,6 @@ class TrimmingAnalyzer(BaseAnalyzer):
                 trim_end = i + window_size
                 break
 
-        # Ensure valid range
         if trim_end <= trim_start:
             return TrimmingResult(
                 originalLength=n,
@@ -227,14 +214,12 @@ class TrimmingAnalyzer(BaseAnalyzer):
         seq_str = sequence.sequence
         n = len(quality)
 
-        # Find start: first position with quality >= threshold
         trim_start = 0
         for i, q in enumerate(quality):
             if q >= threshold:
                 trim_start = i
                 break
         else:
-            # All bases below threshold
             return TrimmingResult(
                 originalLength=n,
                 trimmedLength=0,
@@ -245,14 +230,12 @@ class TrimmingAnalyzer(BaseAnalyzer):
                 algorithm=TrimmingAlgorithm.QUALITY_THRESHOLD.value,
             )
 
-        # Find end: last position with quality >= threshold
         trim_end = n
         for i in range(n - 1, -1, -1):
             if quality[i] >= threshold:
                 trim_end = i + 1
                 break
 
-        # Ensure valid range
         if trim_end <= trim_start:
             return TrimmingResult(
                 originalLength=n,
