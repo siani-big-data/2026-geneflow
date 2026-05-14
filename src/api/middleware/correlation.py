@@ -20,12 +20,10 @@ class CorrelationIdMiddleware(BaseHTTPMiddleware):
         if not correlation_id:
             correlation_id = str(uuid.uuid4())
 
-        # Store in request state for access in handlers
         request.state.correlation_id = correlation_id
 
         response = await call_next(request)
 
-        # Add correlation ID to response headers
         response.headers[CORRELATION_ID_HEADER] = correlation_id
 
         return response

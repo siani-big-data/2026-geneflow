@@ -13,7 +13,6 @@ if TYPE_CHECKING:
 
 router = APIRouter(tags=["Health"])
 
-# These will be set by the API wrapper
 _workers: dict[str, "BaseWorker"] = {}
 _redis_healthy: bool = False
 
@@ -52,7 +51,6 @@ async def health_check() -> HealthResponse:
     for name, worker in _workers.items():
         workers_status[name] = worker.status.value
 
-    # Determine overall status
     if not _workers:
         overall_status = "degraded"
     elif all(w.status == WorkerStatus.RUNNING for w in _workers.values()):

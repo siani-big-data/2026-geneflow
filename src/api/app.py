@@ -16,15 +16,13 @@ def create_app() -> FastAPI:
         title="GeneFlow Analysis Worker",
         description="Bioinformatics analysis worker for GeneFlow platform",
         version="2.0.0",
-        docs_url=None,  # Disable docs in production
+        docs_url=None,
         redoc_url=None,
     )
 
-    # Add middleware (order matters - first added is outermost)
     app.add_middleware(RequestLoggingMiddleware)
     app.add_middleware(CorrelationIdMiddleware)
 
-    # Include routers
     app.include_router(health_router)
 
     return app

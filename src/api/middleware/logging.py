@@ -18,16 +18,12 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         """Process request and log details."""
         start_time = time.perf_counter()
 
-        # Get correlation ID if available
         correlation_id = getattr(request.state, "correlation_id", None)
 
-        # Process request
         response = await call_next(request)
 
-        # Calculate duration
         duration_ms = (time.perf_counter() - start_time) * 1000
 
-        # Log request details (skip health checks for cleaner logs)
         if not request.url.path.startswith("/health") and request.url.path not in (
             "/ready",
             "/live",
