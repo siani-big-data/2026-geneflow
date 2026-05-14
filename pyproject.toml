@@ -14,6 +14,7 @@ dependencies = [
     "httpx>=0.28.0",
     "aiofiles>=24.1.0",
     "biopython>=1.84",
+    "minio>=7.2.0",
 ]
 
 [dependency-groups]
@@ -22,6 +23,7 @@ dev = [
     "pytest-asyncio>=0.24.0",
     "pytest-cov>=6.0.0",
     "ruff>=0.8.0",
+    "mypy>=1.13.0",
 ]
 
 [project.scripts]
@@ -41,6 +43,18 @@ line-length = 100
 [tool.ruff.lint]
 select = ["E", "F", "I", "W"]
 
+[tool.mypy]
+python_version = "3.12"
+ignoREDACTED = true
+follow_imports = "silent"
+warn_unused_ignores = true
+warn_redundant_casts = true
+exclude = [
+    "src/main.py",
+    "src/config.py",
+    "src/.*/proving\\.py",
+]
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
@@ -48,3 +62,34 @@ python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "-v --tb=short"
+
+[tool.coverage.run]
+branch = true
+source = ["src"]
+omit = [
+    "src/main.py",
+    "src/config.py",
+    "src/alignment/proving.py",
+    "src/analyzers/proving.py",
+    "src/storage/proving.py",
+    "src/workers/proving.py",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+precision = 2
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
+]
+
+[tool.coverage.json]
+output = "coverage.json"
+pretty_print = true
+
+[tool.coverage.xml]
+output = "coverage.xml"
