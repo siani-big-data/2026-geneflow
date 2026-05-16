@@ -345,6 +345,355 @@ ANALYSIS_TOOLS = [
 ]
 
 # =============================================================================
+# Bioinformatics Tools (Phase 1 — parsing, alignment, translation)
+# =============================================================================
+
+BIOINFORMATICS_TOOLS = [
+    {
+        "name": "parse_trace_file",
+        "description": (
+            "Parsea un fichero de traza Sanger (AB1/SCF) y devuelve secuencia, "
+            "scores Phred y métricas de calidad. Opcionalmente incluye las señales "
+            "del cromatograma (DATA9-DATA12 = G,A,T,C)."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "content_b64": {
+                    "type": "string",
+                    "description": "Contenido del fichero AB1 en base64",
+                },
+                "trace_id": {
+                    "type": "string",
+                    "description": "Identificador opcional para la traza",
+                },
+                "include_chromatogram": {
+                    "type": "boolean",
+                    "description": "Si true, retorna también las señales (default: false)",
+                },
+            },
+            "required": ["content_b64"],
+        },
+    },
+    {
+        "name": "parse_fasta",
+        "description": (
+            "Parsea texto FASTA. Por defecto devuelve la primera secuencia; "
+            "con all=true devuelve todas las secuencias."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "content": {"type": "string", "description": "Texto FASTA"},
+                "trace_id": {"type": "string"},
+                "all": {"type": "boolean", "description": "Devolver todas las secuencias"},
+            },
+            "required": ["content"],
+        },
+    },
+    {
+        "name": "parse_fastq",
+        "description": (
+            "Parsea texto FASTQ y devuelve secuencia(s) con scores de calidad."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "content": {"type": "string", "description": "Texto FASTQ"},
+                "trace_id": {"type": "string"},
+                "all": {"type": "boolean"},
+            },
+            "required": ["content"],
+        },
+    },
+    {
+        "name": "align_pairwise",
+        "description": (
+            "Alineamiento pareado global (Needleman-Wunsch) o local (Smith-Waterman) "
+            "entre dos secuencias usando BioPython. Retorna alineamiento, score, "
+            "%identidad y gaps."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "seq1": {"type": "string", "description": "Primera secuencia"},
+                "seq2": {"type": "string", "description": "Segunda secuencia"},
+                "mode": {
+                    "type": "string",
+                    "enum": ["global", "local"],
+                    "description": "Modo de alineamiento (default: global)",
+                },
+                "match": {"type": "number", "description": "Score match (default: 2)"},
+                "mismatch": {"type": "number", "description": "Score mismatch (default: -1)"},
+                "gap_open": {"type": "number", "description": "Penalización gap open (default: -10)"},
+                "gap_extend": {"type": "number", "description": "Penalización gap extend (default: -0.5)"},
+            },
+            "required": ["seq1", "seq2"],
+        },
+    },
+    {
+        "name": "align_multiple",
+        "description": (
+            "Alineamiento múltiple progresivo de 3 o más secuencias. "
+            "Retorna alineamiento, identidad media y gaps totales."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "sequences": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Lista de secuencias a alinear",
+                },
+            },
+            "required": ["sequences"],
+        },
+    },
+    {
+        "name": "build_consensus",
+        "description": (
+            "Construye una secuencia consenso a partir de un alineamiento. "
+            "Métodos: majority, threshold, iupac (códigos de ambigüedad)."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "aligned_sequences": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Secuencias alineadas (misma longitud)",
+                },
+                "method": {
+                    "type": "string",
+                    "enum": ["majority", "threshold", "iupac"],
+                    "description": "Método de consenso (default: majority)",
+                },
+                "threshold": {
+                    "type": "number",
+                    "description": "Frecuencia mínima para método threshold (0-1)",
+                },
+                "min_coverage": {
+                    "type": "integer",
+                    "description": "Cobertura mínima por posición (default: 1)",
+                },
+            },
+            "required": ["aligned_sequences"],
+        },
+    },
+    {
+        "name": "translate_sequence",
+        "description": (
+            "Traduce ADN a proteína en un marco concreto (1/2/3/-1/-2/-3) o "
+            "en los seis marcos si all_frames=true. Reporta ATG, codones stop y "
+            "composición aminoacídica."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "sequence": {"type": "string", "description": "Secuencia de ADN"},
+                "frame": {"type": "integer", "description": "Marco (default: 1)"},
+                "all_frames": {"type": "boolean", "description": "Traducir los 6 marcos"},
+            },
+            "required": ["sequence"],
+        },
+    },
+    {
+        "name": "reverse_complement",
+        "description": "Devuelve la complementaria reversa de una secuencia de ADN.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "sequence": {"type": "string", "description": "Secuencia de ADN"},
+            },
+            "required": ["sequence"],
+        },
+    },
+]
+
+
+# =============================================================================
+# Variant + Functional Tools (Phase 2)
+# =============================================================================
+
+VARIANT_TOOLS = [
+    {
+        "name": "detect_variants_from_alignment",
+        "description": (
+            "Detecta SNPs, inserciones y deleciones a partir de un alineamiento "
+            "múltiple ya construido. Devuelve un reporte tipo VCF con posiciones "
+            "1-based, tipo de variante, frecuencia y cobertura por columna."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "aligned_sequences": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Secuencias alineadas (misma longitud, con '-' como gap)",
+                },
+                "reference_index": {
+                    "type": "integer",
+                    "description": "Índice de la secuencia de referencia (default: 0)",
+                },
+                "min_frequency": {
+                    "type": "number",
+                    "description": "Frecuencia mínima (0-1) para reportar una variante (default: 0)",
+                },
+                "min_coverage": {
+                    "type": "integer",
+                    "description": "Cobertura mínima por posición (default: 1)",
+                },
+            },
+            "required": ["aligned_sequences"],
+        },
+    },
+    {
+        "name": "predict_functional_impact",
+        "description": (
+            "Predice el impacto funcional de una variante codificante usando la API "
+            "REST de Ensembl VEP. Devuelve scores SIFT y PolyPhen-2, consecuencias "
+            "biológicas (missense, stop_gained, etc.), cambio aminoacídico y "
+            "símbolo del gen. Acepta HGVS o coordenada genómica."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "hgvs": {
+                    "type": "string",
+                    "description": "Notación HGVS, p.ej. 'ENST00000366667:c.803C>T'",
+                },
+                "region": {
+                    "type": "string",
+                    "description": "Coordenada genómica, p.ej. '9:22125504-22125504:1'",
+                },
+                "allele": {
+                    "type": "string",
+                    "description": "Alelo alternativo cuando se usa 'region'",
+                },
+                "species": {
+                    "type": "string",
+                    "description": "Especie (default: human)",
+                },
+            },
+        },
+    },
+]
+
+
+# =============================================================================
+# Phylogeny Tools (Phase 3)
+# =============================================================================
+
+PHYLOGENY_TOOLS = [
+    {
+        "name": "compute_distance_matrix",
+        "description": (
+            "Calcula la matriz de distancias evolutivas pareadas entre secuencias "
+            "alineadas. Métodos: p-distance (proporción de diferencias), "
+            "jukes_cantor (corrección por sustituciones múltiples) y kimura_2p "
+            "(distingue transiciones/transversiones)."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "aligned_sequences": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Secuencias alineadas de igual longitud",
+                },
+                "labels": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Etiquetas de las secuencias (opcional)",
+                },
+                "method": {
+                    "type": "string",
+                    "enum": ["p_distance", "jukes_cantor", "kimura_2p"],
+                    "description": "Método de distancia (default: jukes_cantor)",
+                },
+            },
+            "required": ["aligned_sequences"],
+        },
+    },
+    {
+        "name": "build_phylogenetic_tree",
+        "description": (
+            "Construye un árbol filogenético a partir de secuencias alineadas. "
+            "Algoritmos: NJ (Neighbor-Joining, sin asumir reloj molecular) y "
+            "UPGMA (ultramétrico). Devuelve el árbol en formato Newick y como "
+            "estructura jerárquica."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "aligned_sequences": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Secuencias alineadas",
+                },
+                "labels": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Etiquetas de las secuencias (opcional)",
+                },
+                "distance_method": {
+                    "type": "string",
+                    "enum": ["p_distance", "jukes_cantor", "kimura_2p"],
+                    "description": "Método de distancia (default: jukes_cantor)",
+                },
+                "tree_method": {
+                    "type": "string",
+                    "enum": ["nj", "upgma"],
+                    "description": "Algoritmo del árbol (default: nj)",
+                },
+            },
+            "required": ["aligned_sequences"],
+        },
+    },
+    {
+        "name": "bootstrap_tree",
+        "description": (
+            "Calcula soporte por bootstrap para un árbol filogenético, "
+            "remuestreando columnas del alineamiento. Devuelve el árbol "
+            "original y un mapa de soporte (0-100%) para cada clado interno."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "aligned_sequences": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Secuencias alineadas (mínimo 3)",
+                },
+                "labels": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Etiquetas de las secuencias (opcional)",
+                },
+                "replicates": {
+                    "type": "integer",
+                    "description": "Réplicas bootstrap (10-500, default: 100)",
+                },
+                "distance_method": {
+                    "type": "string",
+                    "enum": ["p_distance", "jukes_cantor", "kimura_2p"],
+                },
+                "tree_method": {
+                    "type": "string",
+                    "enum": ["nj", "upgma"],
+                },
+                "seed": {
+                    "type": "integer",
+                    "description": "Semilla aleatoria para reproducibilidad",
+                },
+            },
+            "required": ["aligned_sequences"],
+        },
+    },
+]
+
+
+# =============================================================================
 # External Database Tools
 # =============================================================================
 
@@ -412,14 +761,83 @@ EXTERNAL_TOOLS = [
 ]
 
 
+# =============================================================================
+# External Database Tools — Phase 2 (live API integrations)
+# =============================================================================
+
+EXTERNAL_PHASE2_TOOLS = [
+    {
+        "name": "lookup_interpro",
+        "description": (
+            "Consulta la API de EBI InterPro para obtener los dominios, familias y "
+            "sitios funcionales de una proteína a partir de su accession UniProt "
+            "(p.ej. 'P38398' para BRCA1). Devuelve los hits con nombre, tipo, "
+            "GO terms y localización en la proteína."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "accession": {
+                    "type": "string",
+                    "description": "Accession UniProt (p.ej. P38398)",
+                },
+            },
+            "required": ["accession"],
+        },
+    },
+    {
+        "name": "search_pubmed",
+        "description": (
+            "Busca artículos en PubMed mediante las E-utilities de NCBI. "
+            "Devuelve PMID, título, autores, revista, año y DOI de los mejores hits. "
+            "Útil para sustanciar interpretaciones de variantes o anotaciones."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "Consulta libre de PubMed (p.ej. 'BRCA1 variant pathogenicity')",
+                },
+                "max_results": {
+                    "type": "integer",
+                    "description": "Número máximo de resultados (1-50, default: 10)",
+                },
+                "email": {
+                    "type": "string",
+                    "description": "Email de contacto (recomendado por NCBI)",
+                },
+            },
+            "required": ["query"],
+        },
+    },
+]
+
+
 def get_tools_for_api() -> list[dict[str, Any]]:
     """Get all tools formatted for Claude API."""
-    return AGENT_TOOLS + ML_TOOLS
+    return (
+        AGENT_TOOLS
+        + ML_TOOLS
+        + BIOINFORMATICS_TOOLS
+        + VARIANT_TOOLS
+        + PHYLOGENY_TOOLS
+        + EXTERNAL_PHASE2_TOOLS
+    )
 
 
 def get_all_tools() -> list[dict[str, Any]]:
     """Get all available tools including analysis and external."""
-    return AGENT_TOOLS + ML_TOOLS + ANALYSIS_TOOLS + EXTERNAL_TOOLS
+    return (
+        AGENT_TOOLS
+        + ML_TOOLS
+        + ANALYSIS_TOOLS
+        + BIOINFORMATICS_TOOLS
+        + VARIANT_TOOLS
+        + PHYLOGENY_TOOLS
+        + EXTERNAL_TOOLS
+        + EXTERNAL_PHASE2_TOOLS
+    )
 
 
 def get_tool_names() -> list[str]:
@@ -438,3 +856,51 @@ def get_tool_by_name(name: str) -> dict[str, Any] | None:
         if tool["name"] == name:
             return tool
     return None
+
+
+# =============================================================================
+# Schema conversion (Anthropic <-> OpenAI / Ollama)
+# =============================================================================
+#
+# Our canonical tool definitions follow the Anthropic shape:
+#     { "name", "description", "input_schema": {...} }
+#
+# OpenAI-compatible APIs (DeepSeek, Ollama, OpenAI, vLLM with function calling)
+# require:
+#     { "type": "function",
+#       "function": { "name", "description", "parameters": {...} } }
+#
+# The two are otherwise identical (JSON Schema for parameters).
+
+
+def _to_openai_tool(tool: dict[str, Any]) -> dict[str, Any]:
+    """Convert one Anthropic-shaped tool to OpenAI function-tool format."""
+    return {
+        "type": "function",
+        "function": {
+            "name": tool["name"],
+            "description": tool.get("description", ""),
+            "parameters": tool.get("input_schema") or {"type": "object", "properties": {}},
+        },
+    }
+
+
+def get_tools_for_openai() -> list[dict[str, Any]]:
+    """Get all API-exposed tools formatted for OpenAI-compatible providers
+    (DeepSeek, Ollama, OpenAI, vLLM).
+    """
+    return [_to_openai_tool(t) for t in get_tools_for_api()]
+
+
+def get_tools_for_provider(provider: str) -> list[dict[str, Any]]:
+    """Return the tool catalog formatted for the given LLM provider.
+
+    Args:
+        provider: "claude" | "deepseek" | "ollama" | "openai"
+    """
+    p = provider.lower()
+    if p == "claude":
+        return get_tools_for_api()
+    if p in ("deepseek", "ollama", "openai"):
+        return get_tools_for_openai()
+    raise ValueError(f"Unknown LLM provider: {provider}")

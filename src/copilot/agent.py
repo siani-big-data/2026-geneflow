@@ -17,6 +17,13 @@ from src.config import Settings
 from src.models import AnalysisResult
 
 from .ai_service import GeneFlowAIService, initialize_ai_service
+from .handlers import alignment as h_alignment
+from .handlers import external as h_external
+from .handlers import functional as h_functional
+from .handlers import parsing as h_parsing
+from .handlers import phylogeny as h_phylogeny
+from .handlers import translation as h_translation
+from .handlers import variants as h_variants
 from .tools import get_tools_for_api
 
 logger = structlog.get_logger()
@@ -66,27 +73,39 @@ class MolecularBiologyAgent:
     """
 
     SYSTEM_PROMPT = """Eres un experto en biología molecular y bioinformática, \
-especializado en análisis de secuenciación Sanger.
+especializado en análisis de secuenciación Sanger y de secuencias en general.
 
 Tu rol es ayudar a investigadores a interpretar resultados de secuenciación:
-- Análisis de calidad de secuencias
+- Parseo de ficheros (AB1, SCF, FASTA, FASTQ)
+- Control de calidad y recorte
+- Alineamiento pareado y múltiple, construcción de consenso fwd/rev
 - Identificación de organismos mediante BLAST o clasificación por ML
 - Detección e interpretación de variantes
-- Anotación de características genómicas
+- Anotación de características genómicas (ORFs, motivos, restricción)
+- Traducción a proteína y análisis del marco abierto
 
-Tienes acceso a herramientas para:
-1. Consultar datos de trazas y análisis previos
-2. Ejecutar búsquedas BLAST en NCBI
-3. Clasificar taxonómicamente secuencias (modelo de red neuronal)
-4. Detectar posiciones heterocigotas en cromatogramas
-5. Predecir puntos óptimos de recorte por calidad
-6. Clasificar calidad por posición
+Catálogo de herramientas agrupado por workflow:
 
-Modelos de ML disponibles:
-- TaxonomyClassifier: Clasifica secuencias desde reino hasta género
-- HeterozygoteClassifier: Detecta posiciones con doble pico (SNPs)
-- TrimmingPredictor: Recomienda puntos de recorte
-- QualityClassifier: Clasifica calidad en bins Q10-Q50+
+[Datos] get_trace_analysis, get_quality_assessment
+[Parsing] parse_trace_file, parse_fasta, parse_fastq
+[QC y trimming] analyze_quality, classify_quality_ml, predict_trim_points
+[Cromatograma] detect_heterozygotes, analyze_trace_ml
+[Alineamiento] align_pairwise, align_multiple, build_consensus
+[Secuencia] translate_sequence, reverse_complement, find_orfs, scan_motifs,
+            calculate_gc_content, find_restriction_sites, compaREDACTED
+[Identificación] search_blast, classify_taxonomy, lookup_ncbi_taxonomy
+[Variantes] detect_variants_from_alignment, explain_variant,
+            predict_functional_impact (Ensembl VEP — SIFT/PolyPhen)
+[Filogenia] compute_distance_matrix (p-dist/JC/K2P),
+            build_phylogenetic_tree (NJ/UPGMA, Newick),
+            bootstrap_tree (soporte por remuestreo)
+[Externas] lookup_interpro (dominios proteicos), search_pubmed (literatura)
+
+Modelos de ML propios (versiones en checkpoints/):
+- TaxonomyClassifier (CNN multi-cabeza + RF): reino → género
+- HeterozygoteClassifier: detecta doble-pico en cromatogramas
+- TrimmingPredictor: recomienda puntos de recorte 5'/3'
+- QualityClassifier: bins Q10–Q50+ por posición
 
 Directrices:
 - Responde siempre en español
@@ -94,8 +113,16 @@ Directrices:
 - Cuando uses una herramienta, explica brevemente por qué
 - Si los datos son insuficientes para una conclusión, indícalo
 - Sugiere análisis adicionales cuando sea apropiado
-- Usa nomenclatura estándar (HGVS para variantes, etc.)
+- Usa nomenclatura estándar (HGVS para variantes, IUPAC para consenso)
 - Indica el nivel de confianza de las predicciones de ML
+- Prefiere herramientas locales (parsers/alineamiento/ML) antes que externas
+  (BLAST, ClinVar, Ensembl) si el resultado es equivalente
+- Para Sanger fwd/rev: parse_trace_file (x2) → align_pairwise → build_consensus
+  con method=iupac → classify_taxonomy/search_blast
+- Para detectar variantes en un panel: align_multiple → detect_variants_from_alignment
+  → predict_functional_impact (HGVS) → lookup_interpro/search_pubmed para sustanciar
+- Para filogenia: align_multiple → build_phylogenetic_tree (NJ + Jukes-Cantor por
+  defecto) → bootstrap_tree (≥100 réplicas) si se necesitan valores de soporte
 
 Contexto actual del usuario:
 {context}"""
@@ -128,6 +155,24 @@ Contexto actual del usuario:
             "predict_trim_points": self._handle_predict_trim_points,
             "classify_quality_ml": self._handle_classify_quality_ml,
             "analyze_trace_ml": self._handle_analyze_trace_ml,
+            # Phase 1 — parsing / alignment / translation (BioPython-backed)
+            "parse_trace_file": h_parsing.parse_trace_file,
+            "parse_fasta": h_parsing.parse_fasta,
+            "parse_fastq": h_parsing.parse_fastq,
+            "align_pairwise": h_alignment.align_pairwise,
+            "align_multiple": h_alignment.align_multiple,
+            "build_consensus": h_alignment.build_consensus,
+            "translate_sequence": h_translation.translate_sequence,
+            "reverse_complement": h_translation.reverse_complement,
+            # Phase 2 — variants / functional impact / external databases
+            "detect_variants_from_alignment": h_variants.detect_variants_from_alignment,
+            "predict_functional_impact": h_functional.predict_functional_impact,
+            "lookup_interpro": h_external.lookup_interpro,
+            "search_pubmed": h_external.search_pubmed,
+            # Phase 3 — phylogeny (distance + NJ/UPGMA + bootstrap)
+            "compute_distance_matrix": h_phylogeny.compute_distance_matrix,
+            "build_phylogenetic_tree": h_phylogeny.build_phylogenetic_tree,
+            "bootstrap_tree": h_phylogeny.bootstrap_tree,
         }
 
         if settings.claude_api_key:
