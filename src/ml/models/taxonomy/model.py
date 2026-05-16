@@ -49,30 +49,33 @@ def encode_sequence(sequence: str, max_length: int = 2000) -> torch.Tensor:
 
 @dataclass
 class TaxonomyConfig(ModelConfig):
-    """Configuration for TaxonomyClassifier."""
+    """Configuration for TaxonomyClassifier (lightweight version).
+
+    Reduced architecture:
+    - 3 conv blocks (64→128→256) instead of 6
+    - 4-head attention instead of 8
+    - Smaller embedding (64 instead of 128)
+    - Simpler heads (1 hidden layer instead of 2)
+    """
 
     name: str = "TaxonomyClassifier"
-    version: str = "1.0.0"
+    version: str = "2.0.0"  # Lightweight version
 
-    # Sequence model
+    # Sequence model (reduced)
     vocab_size: int = 5  # A, T, C, G, N
-    embedding_dim: int = 128
-    hidden_channels: int = 256
-    num_conv_layers: int = 6
+    embedding_dim: int = 64  # Reduced from 128
     kernel_size: int = 7
     max_seq_length: int = 2000
-    dropout: float = 0.3
+    dropout: float = 0.2  # Slightly lower
 
-    # Feature model
-    num_features: int = 101  # 21 basic + 16 dinuc + 64 trinuc
-    featuREDACTED: int = 256
-    num_featuREDACTED: int = 3
+    # Feature model (reduced)
+    num_features: int = 101  # 21 basic + 16 dinuc + 64 trinuc (or 357 with tetramers)
 
     # Fusion
-    fusion_dim: int = 512
+    fusion_dim: int = 256  # Reduced from 512
 
     # Classification heads
-    head_hidden_dim: int = 256
+    head_hidden_dim: int = 128  # Reduced from 256
     num_classes_per_level: dict[str, int] = field(default_factory=dict)
     class_labels_per_level: dict[str, list[str]] = field(default_factory=dict)
 
@@ -83,30 +86,31 @@ class TaxonomyConfig(ModelConfig):
     # Training
     learning_rate: float = 1e-3
     weight_decay: float = 1e-4
-    batch_size: int = 32
+    batch_size: int = 64  # Can be larger with smaller model
     max_epochs: int = 100
     warmup_epochs: int = 5
 
 
 class ConvBlock(nn.Module):
-    """Convolutional block with residual connection."""
+    """Conv block with residual: Conv + BN + ReLU + Conv + BN + residual."""
 
     def __init__(
         self,
         in_channels: int,
         out_channels: int,
-        kernel_size: int,
+        kernel_size: int = 7,
         dropout: float = 0.1,
     ):
         super().__init__()
         padding = kernel_size // 2
 
         self.conv1 = nn.Conv1d(in_channels, out_channels, kernel_size, padding=padding)
-        self.conv2 = nn.Conv1d(out_channels, out_channels, kernel_size, padding=padding)
         self.bn1 = nn.BatchNorm1d(out_channels)
+        self.conv2 = nn.Conv1d(out_channels, out_channels, kernel_size, padding=padding)
         self.bn2 = nn.BatchNorm1d(out_channels)
         self.dropout = nn.Dropout(dropout)
 
+        # Residual projection if dimensions change
         self.residual = (
             nn.Conv1d(in_channels, out_channels, 1)
             if in_channels != out_channels
@@ -115,102 +119,101 @@ class ConvBlock(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         residual = self.residual(x)
-
-        x = self.conv1(x)
-        x = self.bn1(x)
-        x = F.gelu(x)
+        x = F.relu(self.bn1(self.conv1(x)))
         x = self.dropout(x)
-
-        x = self.conv2(x)
-        x = self.bn2(x)
-        x = x + residual
-        x = F.gelu(x)
-
-        return x
+        x = self.bn2(self.conv2(x))
+        return F.relu(x + residual)
 
 
 class SequenceEncoder(nn.Module):
-    """Enhanced sequence encoder with attention."""
+    """Lightweight CNN + Attention encoder.
+
+    Architecture:
+    - Embedding (vocab=5 → embed_dim)
+    - 3 ConvBlocks with pooling (64 → 128 → 256)
+    - Light attention (4 heads)
+    - Global avg+max pooling
+    """
 
     def __init__(self, config: TaxonomyConfig):
         super().__init__()
+
+        embed_dim = config.embedding_dim  # Default: 64
 
         self.embedding = nn.Embedding(
             config.vocab_size,
-            config.embedding_dim,
+            embed_dim,
             padding_idx=4,
         )
 
-        layers = []
-        in_channels = config.embedding_dim
+        # 3 conv blocks: embed → 64 → 128 → 256
+        self.conv1 = ConvBlock(embed_dim, 64, config.kernel_size, config.dropout)
+        self.pool1 = nn.MaxPool1d(2)
+        self.conv2 = ConvBlock(64, 128, config.kernel_size, config.dropout)
+        self.pool2 = nn.MaxPool1d(2)
+        self.conv3 = ConvBlock(128, 256, config.kernel_size, config.dropout)
+        self.pool3 = nn.MaxPool1d(2)
 
-        for i in range(config.num_conv_layers):
-            out_channels = config.hidden_channels * (2 ** min(i, 2))
-            layers.append(
-                ConvBlock(in_channels, out_channels, config.kernel_size, config.dropout)
-            )
-            in_channels = out_channels
-            if (i + 1) % 2 == 0:
-                layers.append(nn.MaxPool1d(2))
-
-        self.conv_layers = nn.Sequential(*layers)
-        self.output_dim = in_channels
-
+        # Light attention: 4 heads instead of 8
         self.attention = nn.MultiheadAttention(
-            embed_dim=in_channels,
-            num_heads=8,
+            embed_dim=256,
+            num_heads=4,
             dropout=config.dropout,
             batch_first=True,
         )
-        self.attention_norm = nn.LayerNorm(in_channels)
+        self.attn_norm = nn.LayerNorm(256)
 
-        self.pool = nn.AdaptiveAvgPool1d(1)
+        # Output: avg + max pooling concatenated
+        self.output_dim = 256 * 2  # 512
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        # Embedding: (batch, seq) → (batch, seq, embed)
         x = self.embedding(x)
+        x = x.transpose(1, 2)  # → (batch, embed, seq)
+
+        # Conv blocks with pooling
+        x = self.pool1(self.conv1(x))
+        x = self.pool2(self.conv2(x))
+        x = self.pool3(self.conv3(x))
+
+        # Attention: (batch, channels, seq) → (batch, seq, channels)
         x = x.transpose(1, 2)
+        attn_out, _ = self.attention(x, x, x)
+        x = self.attn_norm(x + attn_out)
+        x = x.transpose(1, 2)  # → (batch, channels, seq)
 
-        x = self.conv_layers(x)
+        # Global pooling
+        avg_pool = F.adaptive_avg_pool1d(x, 1).squeeze(-1)
+        max_pool = F.adaptive_max_pool1d(x, 1).squeeze(-1)
 
-        x_att = x.transpose(1, 2)
-        att_out, _ = self.attention(x_att, x_att, x_att)
-        x_att = self.attention_norm(x_att + att_out)
-        x = x_att.transpose(1, 2)
-
-        x = self.pool(x).squeeze(-1)
-
-        return x
+        return torch.cat([avg_pool, max_pool], dim=-1)
 
 
 class FeatureEncoder(nn.Module):
-    """Feature encoder with residual connections."""
+    """Lightweight MLP for k-mer features: 2 layers."""
 
     def __init__(self, config: TaxonomyConfig):
         super().__init__()
 
-        self.input_norm = nn.BatchNorm1d(config.num_features)
-
-        layers = []
-        in_dim = config.num_features
-
-        for i in range(config.num_featuREDACTED):
-            out_dim = config.featuREDACTED
-            layers.append(nn.Linear(in_dim, out_dim))
-            layers.append(nn.BatchNorm1d(out_dim))
-            layers.append(nn.GELU())
-            layers.append(nn.Dropout(config.dropout))
-            in_dim = out_dim
-
-        self.layers = nn.Sequential(*layers)
-        self.output_dim = config.featuREDACTED
+        self.net = nn.Sequential(
+            nn.BatchNorm1d(config.num_features),
+            nn.Linear(config.num_features, 256),
+            nn.ReLU(),
+            nn.Dropout(config.dropout),
+            nn.Linear(256, 128),
+            nn.ReLU(),
+        )
+        self.output_dim = 128
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.input_norm(x)
-        return self.layers(x)
+        return self.net(x)
 
 
 class HierarchicalClassificationHead(nn.Module):
-    """Classification head for a single taxonomic level with context from parent."""
+    """Classification head with parent conditioning (simplified).
+
+    Takes parent level probabilities as additional input for hierarchical consistency.
+    """
 
     def __init__(
         self,
@@ -226,15 +229,10 @@ class HierarchicalClassificationHead(nn.Module):
 
         self.head = nn.Sequential(
             nn.Linear(total_in, hidden_dim),
-            nn.BatchNorm1d(hidden_dim),
-            nn.GELU(),
+            nn.ReLU(),
             nn.Dropout(dropout),
-            nn.Linear(hidden_dim, hidden_dim // 2),
-            nn.GELU(),
-            nn.Dropout(dropout),
-            nn.Linear(hidden_dim // 2, num_classes),
+            nn.Linear(hidden_dim, num_classes),
         )
-
         self.parent_classes = parent_classes
 
     def forward(
@@ -271,16 +269,13 @@ class TaxonomyClassifier(BaseModel):
         self.sequence_encoder = SequenceEncoder(config)
         self.featuREDACTED = FeatureEncoder(config)
 
-        # Fusion
+        # Fusion (simplified: single layer)
         fusion_input = self.sequence_encoder.output_dim + self.featuREDACTED.output_dim
         self.fusion = nn.Sequential(
             nn.Linear(fusion_input, config.fusion_dim),
             nn.BatchNorm1d(config.fusion_dim),
-            nn.GELU(),
+            nn.ReLU(),
             nn.Dropout(config.dropout),
-            nn.Linear(config.fusion_dim, config.fusion_dim),
-            nn.BatchNorm1d(config.fusion_dim),
-            nn.GELU(),
         )
 
         # Determine active levels
@@ -499,14 +494,10 @@ class TaxonomyClassifier(BaseModel):
                 "version": self.config.version,
                 "vocab_size": self.config.vocab_size,
                 "embedding_dim": self.config.embedding_dim,
-                "hidden_channels": self.config.hidden_channels,
-                "num_conv_layers": self.config.num_conv_layers,
                 "kernel_size": self.config.kernel_size,
                 "max_seq_length": self.config.max_seq_length,
                 "dropout": self.config.dropout,
                 "num_features": self.config.num_features,
-                "featuREDACTED": self.config.featuREDACTED,
-                "num_featuREDACTED": self.config.num_featuREDACTED,
                 "fusion_dim": self.config.fusion_dim,
                 "head_hidden_dim": self.config.head_hidden_dim,
                 "num_classes_per_level": self.config.num_classes_per_level,

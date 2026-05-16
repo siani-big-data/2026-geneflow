@@ -31,9 +31,10 @@ class SequenceFeatures:
     gc_skew: float  # (G - C) / (G + C)
     at_skew: float  # (A - T) / (A + T)
 
-    # K-mer features (16 dinucleotides + 64 trinucleotides = 80 features)
+    # K-mer features (16 di + 64 tri + 256 tetra = 336 features)
     dinucleotide_freq: dict[str, float]
     trinucleotide_freq: dict[str, float]
+    tetranucleotide_freq: dict[str, float] | None  # 4-mers for better taxonomy
 
     # Complexity metrics (3 features)
     sequence_entropy: float  # Shannon entropy
@@ -55,12 +56,18 @@ class SequenceFeatures:
     gc_min: float
     gc_max: float
 
-    def to_array(self, include_kmers: bool = True, include_codons: bool = False) -> np.ndarray:
+    def to_array(
+        self,
+        include_kmers: bool = True,
+        include_codons: bool = False,
+        include_tetramers: bool = False,
+    ) -> np.ndarray:
         """Convert features to numpy array for model input.
 
         Args:
             include_kmers: Include dinucleotide and trinucleotide frequencies
             include_codons: Include codon frequencies (if available)
+            include_tetramers: Include tetranucleotide frequencies (256 features)
 
         Returns:
             Feature array
@@ -103,6 +110,11 @@ class SequenceFeatures:
             for kmer in sorted(self.trinucleotide_freq.keys()):
                 features.append(self.trinucleotide_freq[kmer])
 
+        if include_tetramers and self.tetranucleotide_freq:
+            # Add tetranucleotide frequencies (256 features)
+            for kmer in sorted(self.tetranucleotide_freq.keys()):
+                features.append(self.tetranucleotide_freq[kmer])
+
         if include_codons and self.codon_freq:
             for codon in sorted(self.codon_freq.keys()):
                 features.append(self.codon_freq[codon])
@@ -110,7 +122,11 @@ class SequenceFeatures:
         return np.array(features, dtype=np.float32)
 
     @staticmethod
-    def featuREDACTED(include_kmers: bool = True, include_codons: bool = False) -> list[str]:
+    def featuREDACTED(
+        include_kmers: bool = True,
+        include_codons: bool = False,
+        include_tetramers: bool = False,
+    ) -> list[str]:
         """Get feature names in array order."""
         names = [
             "gc_content",
@@ -136,8 +152,9 @@ class SequenceFeatures:
             "gc_max",
         ]
 
+        nucleotides = ["A", "T", "C", "G"]
+
         if include_kmers:
-            nucleotides = ["A", "T", "C", "G"]
             for n1 in nucleotides:
                 for n2 in nucleotides:
                     names.append(f"di_{n1}{n2}")
@@ -145,6 +162,13 @@ class SequenceFeatures:
                 for n2 in nucleotides:
                     for n3 in nucleotides:
                         names.append(f"tri_{n1}{n2}{n3}")
+
+        if include_tetramers:
+            for n1 in nucleotides:
+                for n2 in nucleotides:
+                    for n3 in nucleotides:
+                        for n4 in nucleotides:
+                            names.append(f"tetra_{n1}{n2}{n3}{n4}")
 
         if include_codons:
             for n1 in nucleotides:
@@ -166,6 +190,7 @@ class SequenceFeatureExtractor:
         self,
         window_size: int = 100,
         compute_codons: bool = False,
+        compute_tetramers: bool = False,
         reading_frame: int = 0,
     ):
         """Initialize feature extractor.
@@ -173,15 +198,18 @@ class SequenceFeatureExtractor:
         Args:
             window_size: Window size for windowed statistics
             compute_codons: Whether to compute codon frequencies
+            compute_tetramers: Whether to compute tetranucleotide (4-mer) frequencies
             reading_frame: Reading frame for codon analysis (0, 1, or 2)
         """
         self.window_size = window_size
         self.compute_codons = compute_codons
+        self.compute_tetramers = compute_tetramers
         self.reading_frame = reading_frame
 
         # Pre-generate all possible kmers
         self._dinucleotides = self._generate_kmers(2)
         self._trinucleotides = self._generate_kmers(3)
+        self._tetranucleotides = self._generate_kmers(4) if compute_tetramers else None
         self._codons = self._trinucleotides if compute_codons else None
 
     def _generate_kmers(self, k: int) -> list[str]:
@@ -234,6 +262,9 @@ class SequenceFeatureExtractor:
         # K-mer frequencies
         dinuc_freq = self._compute_kmer_freq(seq_clean, 2, self._dinucleotides)
         trinuc_freq = self._compute_kmer_freq(seq_clean, 3, self._trinucleotides)
+        tetranuc_freq = None
+        if self.compute_tetramers:
+            tetranuc_freq = self._compute_kmer_freq(seq_clean, 4, self._tetranucleotides)
 
         # Complexity metrics
         sequence_entropy = self._compute_entropy(seq_clean)
@@ -267,6 +298,7 @@ class SequenceFeatureExtractor:
             at_skew=at_skew,
             dinucleotide_freq=dinuc_freq,
             trinucleotide_freq=trinuc_freq,
+            tetranucleotide_freq=tetranuc_freq,
             sequence_entropy=sequence_entropy,
             linguistic_complexity=linguistic_complexity,
             compression_ratio=compression_ratio,
@@ -404,6 +436,11 @@ class SequenceFeatureExtractor:
             at_skew=0.0,
             dinucleotide_freq={k: 0.0 for k in self._dinucleotides},
             trinucleotide_freq={k: 0.0 for k in self._trinucleotides},
+            tetranucleotide_freq=(
+                {k: 0.0 for k in self._tetranucleotides}
+                if self._tetranucleotides
+                else None
+            ),
             sequence_entropy=0.0,
             linguistic_complexity=0.0,
             compression_ratio=0.0,
@@ -428,7 +465,10 @@ class SequenceFeatureExtractor:
             Array of shape (n_sequences, n_features)
         """
         features = [
-            self.extract(seq).to_array(include_codons=self.compute_codons)
+            self.extract(seq).to_array(
+                include_codons=self.compute_codons,
+                include_tetramers=self.compute_tetramers,
+            )
             for seq in sequences
         ]
         return np.stack(features)
