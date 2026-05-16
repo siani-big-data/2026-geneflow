@@ -78,7 +78,13 @@ from src.ml.datasets.features.sequence_features import (  # noqa: E402
 # =============================================================================
 
 def load_sequence(fasta_path: Path) -> str:
-    """Load sequence from FASTA file."""
+    """Load first sequence from FASTA file."""
+    sequences = load_sequences(fasta_path)
+    return sequences[0] if sequences else ""
+
+
+def load_sequences(fasta_path: Path) -> list[str]:
+    """Load all sequences from FASTA file."""
     try:
         if fasta_path.suffix == ".gz":
             with gzip.open(fasta_path, "rt") as f:
@@ -87,16 +93,24 @@ def load_sequence(fasta_path: Path) -> str:
             with open(fasta_path, "r") as f:
                 lines = f.readlines()
     except Exception:
-        return ""
+        return []
 
-    sequence_parts = []
+    sequences = []
+    current_seq = []
+
     for line in lines:
         line = line.strip()
         if line.startswith(">"):
-            continue
-        sequence_parts.append(line)
+            if current_seq:
+                sequences.append("".join(current_seq))
+                current_seq = []
+        else:
+            current_seq.append(line)
 
-    return "".join(sequence_parts)
+    if current_seq:
+        sequences.append("".join(current_seq))
+
+    return sequences
 
 
 # Kingdom normalization map
@@ -131,6 +145,7 @@ def load_samples(
     level: str,
     max_samples: int = 0,
     min_seq_length: int = 100,
+    expand_sequences: bool = False,
 ) -> list[dict]:
     """Load samples from curated datalake.
 
@@ -139,6 +154,7 @@ def load_samples(
         level: Taxonomy level (kingdom, phylum, class, order, family, genus)
         max_samples: Maximum samples to load (0 = unlimited)
         min_seq_length: Minimum sequence length
+        expand_sequences: If True, create one sample per sequence in FASTA
 
     Returns:
         List of sample dictionaries
@@ -149,7 +165,10 @@ def load_samples(
     json_files = list(data_dir.rglob("*.json"))
     print(f"Found {len(json_files)} metadata files")
 
-    for json_path in json_files:
+    for i, json_path in enumerate(json_files):
+        if (i + 1) % 10000 == 0:
+            print(f"  Scanning {i + 1}/{len(json_files)} files...")
+
         try:
             with open(json_path, "r") as f:
                 metadata = json.load(f)
@@ -179,18 +198,32 @@ def load_samples(
             if not fasta_path.exists():
                 continue
 
-        # Check sequence length
-        total_length = metadata.get("total_length", 0)
-        if total_length < min_seq_length:
-            continue
+        if expand_sequences:
+            # Load all sequences from FASTA
+            sequences = load_sequences(fasta_path)
+            for seq in sequences:
+                if len(seq) >= min_seq_length:
+                    samples.append({
+                        "sequence": seq,
+                        "label": label,
+                        "taxonomy": taxonomy,
+                    })
+                    class_counts[label] = class_counts.get(label, 0) + 1
 
-        samples.append({
-            "fasta_path": fasta_path,
-            "label": label,
-            "taxonomy": taxonomy,
-        })
+                    if max_samples > 0 and len(samples) >= max_samples:
+                        break
+        else:
+            # Check sequence length
+            total_length = metadata.get("total_length", 0)
+            if total_length < min_seq_length:
+                continue
 
-        class_counts[label] = class_counts.get(label, 0) + 1
+            samples.append({
+                "fasta_path": fasta_path,
+                "label": label,
+                "taxonomy": taxonomy,
+            })
+            class_counts[label] = class_counts.get(label, 0) + 1
 
         if max_samples > 0 and len(samples) >= max_samples:
             break
@@ -204,18 +237,25 @@ def load_samples(
     return samples
 
 
-def get_cache_path(data_dir: Path, level: str, include_kmers: bool) -> Path:
+def get_cache_path(
+    data_dir: Path,
+    level: str,
+    include_kmers: bool,
+    include_tetramers: bool = False,
+) -> Path:
     """Get cache file path for extracted features."""
     cache_dir = Path("checkpoints/taxonomy_rf/cache")
     cache_dir.mkdir(parents=True, exist_ok=True)
     kmers_str = "kmers" if include_kmers else "nokmers"
-    return cache_dir / f"features_{level}_{kmers_str}.npz"
+    tetra_str = "_tetra" if include_tetramers else ""
+    return cache_dir / f"features_{level}_{kmers_str}{tetra_str}.npz"
 
 
 def extract_features(
     samples: list[dict],
     extractor: SequenceFeatureExtractor,
     include_kmers: bool = True,
+    include_tetramers: bool = False,
     cache_path: Path | None = None,
 ) -> tuple[np.ndarray, np.ndarray, list[str], dict[str, int]]:
     """Extract features from all samples.
@@ -253,13 +293,22 @@ def extract_features(
             rate = (i + 1) / elapsed
             print(f"  Processed {i + 1}/{len(samples)} ({rate:.1f} seq/s)")
 
-        sequence = load_sequence(sample["fasta_path"])
+        # Get sequence (either pre-loaded or from file)
+        if "sequence" in sample:
+            sequence = sample["sequence"]
+        else:
+            sequence = load_sequence(sample["fasta_path"])
+
         if len(sequence) < 100:
             continue
 
         # Extract features
         feat = extractor.extract(sequence)
-        feat_array = feat.to_array(include_kmers=include_kmers, include_codons=False)
+        feat_array = feat.to_array(
+            include_kmers=include_kmers,
+            include_codons=False,
+            include_tetramers=include_tetramers,
+        )
 
         features_list.append(feat_array)
         labels_list.append(class_to_idx[sample["label"]])
@@ -339,19 +388,31 @@ def train_random_forest(
         backend = "xgboost_gpu"
         print(f"  Backend: XGBoost (GPU: {GPU_NAME})")
 
-        # XGBoost Random Forest mode
+        # Compute sample weights for class balancing
+        class_counts = np.bincount(y_train)
+        total = len(y_train)
+        n_classes = len(class_counts)
+        class_weights = total / (n_classes * class_counts)
+        sample_weights = class_weights[y_train]
+        print(f"  Using sample weights for class balancing")
+
+        # XGBoost Random Forest mode with improved params
         clf = xgb.XGBRFClassifier(
             n_estimators=n_estimators,
-            max_depth=max_depth if max_depth else 6,
+            max_depth=max_depth if max_depth else 12,  # Deeper trees
             min_child_weight=min_samples_leaf,
             random_state=random_state,
             tree_method="hist",
             device="cuda",
             n_jobs=-1,
             verbosity=1,
+            colsample_bynode=0.8,  # Feature sampling per split
+            subsample=0.8,  # Row sampling per tree
+            reg_alpha=0.1,  # L1 regularization
+            reg_lambda=1.0,  # L2 regularization
         )
 
-        clf.fit(X_train, y_train)
+        clf.fit(X_train, y_train, sample_weight=sample_weights)
 
     else:
         backend = "sklearn_cpu"
@@ -498,8 +559,8 @@ def parse_args():
     parser.add_argument(
         "--n-estimators",
         type=int,
-        default=100,
-        help="Number of trees in the forest",
+        default=300,
+        help="Number of trees in the forest (default: 300)",
     )
     parser.add_argument(
         "--max-depth",
@@ -519,6 +580,11 @@ def parse_args():
         help="Exclude k-mer features (use only basic features)",
     )
     parser.add_argument(
+        "--tetramers",
+        action="stoREDACTED",
+        help="Include 4-mer (tetranucleotide) features (+256 features)",
+    )
+    parser.add_argument(
         "--no-cache",
         action="stoREDACTED",
         help="Force re-extraction of features (ignore cache)",
@@ -534,6 +600,11 @@ def parse_args():
         type=int,
         default=42,
         help="Random seed",
+    )
+    parser.add_argument(
+        "--expand-sequences",
+        action="stoREDACTED",
+        help="Use all sequences from FASTAs (not just one per file)",
     )
     parser.add_argument(
         "--cpu",
@@ -578,6 +649,7 @@ def main():
     print(f"Data directory: {args.data_dir}")
     print(f"Classification level: {args.level}")
     print(f"Include k-mers: {not args.no_kmers}")
+    print(f"Include 4-mers: {args.tetramers}")
     print(f"Validation ratio: {args.val_ratio}")
 
     # Set random seed
@@ -593,6 +665,7 @@ def main():
         data_dir,
         level=args.level,
         max_samples=args.max_samples,
+        expand_sequences=args.expand_sequences,
     )
 
     if len(samples) < 10:
@@ -600,17 +673,28 @@ def main():
         return 1
 
     # Initialize feature extractor
+    include_kmers = not args.no_kmers
+    include_tetramers = args.tetramers
+
     extractor = SequenceFeatureExtractor(
         window_size=100,
         compute_codons=False,
+        compute_tetramers=include_tetramers,
     )
 
     # Extract features (with caching)
-    include_kmers = not args.no_kmers
-    cache_path = None if args.no_cache else get_cache_path(data_dir, args.level, include_kmers)
+    cache_path = None
+    if not args.no_cache:
+        cache_path = get_cache_path(
+            data_dir, args.level, include_kmers, include_tetramers
+        )
 
     X, y, class_names, class_to_idx = extract_features(
-        samples, extractor, include_kmers=include_kmers, cache_path=cache_path
+        samples,
+        extractor,
+        include_kmers=include_kmers,
+        include_tetramers=include_tetramers,
+        cache_path=cache_path,
     )
 
     print(f"\nDataset shape: {X.shape}")

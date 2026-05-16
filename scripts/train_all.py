@@ -10,21 +10,32 @@ from datetime import datetime
 
 MODELS = [
     {
-        "name": "Quality Enhanced",
+        "name": "Quality Classifier",
         "cmd": [
-            "uv", "run", "python", "scripts/train_quality_precomputed.py",
-            "--data", "datalake/datasets/quality_enhanced",
-            "--epochs", "200",
+            "uv", "run", "python", "scripts/train_quality_classifier.py",
+            "--data-dir", "datalake/datasets/quality_context",
+            "--checkpoint-dir", "checkpoints/quality_classifier",
+            "--epochs", "300",
             "--patience", "50",
         ],
     },
     {
-        "name": "Taxonomy Hierarchical",
+        "name": "Taxonomy CNN",
         "cmd": [
-            "uv", "run", "python", "scripts/train_taxonomy_hierarchical.py",
-            "--dataset-dir", "datalake/datasets/taxonomy",
-            "--checkpoint-dir", "checkpoints/taxonomy",
+            "uv", "run", "python", "scripts/train_taxonomy.py",
+            "--data-dir", "datalake/curated",
+            "--levels", "kingdom",
+            "--output-dir", "checkpoints/taxonomy_cnn",
             "--epochs", "200",
+        ],
+    },
+    {
+        "name": "Taxonomy RF",
+        "cmd": [
+            "uv", "run", "python", "scripts/train_taxonomy_rf.py",
+            "--data-dir", "datalake/curated",
+            "--level", "kingdom",
+            "--checkpoint-dir", "checkpoints/taxonomy_rf",
         ],
     },
 ]
