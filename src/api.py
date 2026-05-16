@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from typing import Any, Optional
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from src.models import ServiceStatus
@@ -87,6 +88,36 @@ class AgentAskResponse(BaseModel):
     error: bool = False
 
 
+class LlmAskRequest(BaseModel):
+    """Request for provider-agnostic LLM agent ask endpoint."""
+
+    question: str
+    contextId: Optional[str] = None
+    provider: Optional[str] = None  # "claude" | "deepseek" | "ollama"
+
+
+class LlmToolCallInfo(BaseModel):
+    """Summary of a tool call performed by the agent."""
+
+    iteration: int
+    name: str
+    arguments: Any = None
+    result: Any = None
+
+
+class LlmAskResponse(BaseModel):
+    """Response from provider-agnostic LLM agent ask endpoint."""
+
+    answer: str
+    contextId: str
+    provider: str
+    model: str
+    iterations: int = 0
+    toolCalls: list[LlmToolCallInfo] = []
+    metrics: dict = {}
+    error: bool = False
+
+
 # =============================================================================
 # Global State (set by main.py)
 # =============================================================================
@@ -100,6 +131,14 @@ _chat_handler: Any = None
 _report_generator: Any = None
 _blast_client: Any = None
 _agent: Any = None
+
+# LLM (provider-agnostic) agent registry.
+#   _llm_agents:        { provider_name -> LLMAgent }
+#   _llm_default:       provider name to use when request omits it
+#   _llm_contexts:      { contextId -> LLMAgentContext }   (in-memory, ephemeral)
+_llm_agents: dict[str, Any] = {}
+_llm_default: str = ""
+_llm_contexts: dict[str, Any] = {}
 
 
 # =============================================================================
@@ -115,6 +154,19 @@ def create_app() -> FastAPI:
         version="1.0.0",
         docs_url="/docs" if True else None,  # Enable in dev
         redoc_url=None,
+    )
+
+    # CORS — allow the Next.js dev frontend (and other local origins) to
+    # call /llm/* from the browser. Tighten this for prod.
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+        ],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
     )
 
     # =========================================================================
@@ -323,6 +375,130 @@ def create_app() -> FastAPI:
         return {"tools": tools}
 
     # =========================================================================
+    # LLM Endpoints (Provider-agnostic agent: Claude / DeepSeek / Ollama)
+    # =========================================================================
+
+    @app.post("/llm/ask", response_model=LlmAskResponse)
+    async def llm_ask(request: LlmAskRequest) -> LlmAskResponse:
+        """
+        Ask a question to the provider-agnostic Molecular Biology Agent.
+
+        Selects an :class:`LLMAgent` by ``provider`` (claude / deepseek /
+        ollama). Falls back to the default provider configured at startup
+        when ``provider`` is omitted.
+
+        Contexts are stored in memory and indexed by ``contextId``. Omit it
+        to start a fresh conversation; the server will mint a new id.
+        """
+        from src.copilot.llm_agent import LLMAgentContext
+
+        if not _llm_agents:
+            raise HTTPException(
+                status_code=503,
+                detail="No LLM providers initialized",
+            )
+
+        provider = (request.provider or _llm_default or "").lower()
+        agent = _llm_agents.get(provider)
+        if agent is None:
+            available = sorted(_llm_agents.keys())
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"Provider '{provider}' not available. "
+                    f"Configured providers: {available}"
+                ),
+            )
+
+        # Resolve / create conversation context
+        context_id = request.contextId or _new_context_id()
+        ctx = _llm_contexts.get(context_id)
+        if ctx is None:
+            ctx = LLMAgentContext()
+            _llm_contexts[context_id] = ctx
+
+        try:
+            result = await agent.ask(request.question, context=ctx)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+        return LlmAskResponse(
+            answer=result.get("answer", ""),
+            contextId=context_id,
+            provider=provider,
+            model=agent._client.model_name,
+            iterations=result.get("iterations", 0),
+            toolCalls=[LlmToolCallInfo(**tc) for tc in result.get("toolCalls", [])],
+            metrics=result.get("metrics", {}),
+            error=False,
+        )
+
+    @app.get("/llm/providers")
+    async def llm_list_providers() -> dict:
+        """List configured LLM providers and their status."""
+        providers = []
+        for name, agent in _llm_agents.items():
+            client = agent._client
+            providers.append(
+                {
+                    "provider": name,
+                    "model": client.model_name,
+                    "available": client.is_available,
+                    "isDefault": name == _llm_default,
+                    "metrics": client.get_metrics(),
+                }
+            )
+        return {
+            "providers": providers,
+            "default": _llm_default,
+        }
+
+    @app.get("/llm/status")
+    async def llm_status() -> dict:
+        """Aggregate status across all configured LLM providers."""
+        return {
+            "available": bool(_llm_agents),
+            "default": _llm_default,
+            "providers": list(_llm_agents.keys()),
+            "activeContexts": len(_llm_contexts),
+        }
+
+    @app.get("/llm/tools")
+    async def llm_list_tools() -> dict:
+        """List the OpenAI-schema tools the generic agent exposes."""
+        from src.copilot.tools import get_tools_for_openai
+
+        tools = get_tools_for_openai()
+        return {
+            "count": len(tools),
+            "tools": [
+                {
+                    "name": t["function"]["name"],
+                    "description": t["function"].get("description", ""),
+                }
+                for t in tools
+            ],
+        }
+
+    @app.get("/llm/contexts")
+    async def llm_list_contexts() -> dict:
+        """List active LLM agent contexts (ids and message counts)."""
+        return {
+            "contexts": [
+                {"contextId": cid, "messageCount": len(ctx.messages)}
+                for cid, ctx in _llm_contexts.items()
+            ]
+        }
+
+    @app.delete("/llm/contexts/{context_id}")
+    async def llm_delete_context(context_id: str) -> dict:
+        """Delete an LLM agent context."""
+        if context_id not in _llm_contexts:
+            raise HTTPException(status_code=404, detail="Context not found")
+        del _llm_contexts[context_id]
+        return {"deleted": True, "contextId": context_id}
+
+    # =========================================================================
     # BLAST Endpoints
     # =========================================================================
 
@@ -474,6 +650,31 @@ def set_agent(agent: Any) -> None:
     """Set molecular biology agent instance."""
     global _agent
     _agent = agent
+
+
+def register_llm_agent(provider: str, agent: Any, is_default: bool = False) -> None:
+    """Register a provider-agnostic :class:`LLMAgent` under ``provider``.
+
+    When ``is_default`` is True the provider also becomes the fallback used
+    when a request to ``/llm/ask`` omits the provider field.
+    """
+    global _llm_default
+    _llm_agents[provider.lower()] = agent
+    if is_default or not _llm_default:
+        _llm_default = provider.lower()
+
+
+def set_llm_default(provider: str) -> None:
+    """Override the default LLM provider for /llm/ask."""
+    global _llm_default
+    _llm_default = provider.lower()
+
+
+def _new_context_id() -> str:
+    """Generate a fresh contextId for a new /llm/ask conversation."""
+    import uuid
+
+    return f"ctx_{uuid.uuid4().hex[:12]}"
 
 
 # Create app instance

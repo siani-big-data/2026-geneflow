@@ -11,10 +11,12 @@ from redis.asyncio import Redis
 
 from src.api import (
     app,
+    register_llm_agent,
     set_agent,
     set_blast_client,
     set_chat_handler,
     set_claude_configured,
+    set_llm_default,
     set_metrics,
     set_redis_health,
     set_report_generator,
@@ -23,6 +25,9 @@ from src.api import (
 from src.blast import BlastClient
 from src.config import settings
 from src.copilot import ChatHandler, ClaudeClient, MolecularBiologyAgent, ReportGenerator
+from src.copilot.llm.base import LLMProvider
+from src.copilot.llm.factory import create_llm_client, register_client
+from src.copilot.llm_agent import LLMAgent
 from src.events import EventBusConsumer, EventBusPublisher
 from src.models import AnalysisResult, ServiceMetrics, ServiceStatus
 
@@ -61,6 +66,7 @@ class AIService:
         self._chat_handler: ChatHandler | None = None
         self._report_generator: ReportGenerator | None = None
         self._agent: MolecularBiologyAgent | None = None
+        self._llm_agents: dict[str, LLMAgent] = {}
         self._metrics = ServiceMetrics()
         self._shutdown_event = asyncio.Event()
         # Cache for analysis results (trace_id -> AnalysisResult)
@@ -126,11 +132,17 @@ class AIService:
             available=self._agent.is_available,
         )
 
+        # Initialize provider-agnostic LLM agents (Claude / DeepSeek / Ollama)
+        self._init_llm_agents()
+
         # Start consumer if eventbus enabled
         if settings.eventbus_enabled:
-            self._consumer = EventBusConsumer(self._redis, settings)
-            self._consumer.register_handler("trace.processed", self._handle_trace_processed)
-            self._consumer.register_handler("alignment.completed", self._handle_alignment_completed)
+            self._consumer = EventBusConsumer(
+                self._redis,
+                settings,
+                on_trace_processed=self._handle_trace_processed,
+                on_alignment_completed=self._handle_alignment_completed,
+            )
             self._consumer_task = asyncio.create_task(self._consumer.start())
             logger.info("eventbus_consumer_started")
 
@@ -186,6 +198,96 @@ class AIService:
     def update_metrics(self) -> None:
         """Update metrics in API."""
         set_metrics(self._metrics.to_dict())
+
+    def _init_llm_agents(self) -> None:
+        """Build LLMAgents for every configured provider and register them.
+
+        - Claude:   requires ``claude_api_key``
+        - DeepSeek: requires ``deepseek_api_key``
+        - Ollama:   always attempted (local, no key required)
+
+        The provider in ``settings.llm_provider`` becomes the default used
+        when ``/llm/ask`` is called without an explicit provider.
+        """
+        candidates: list[tuple[LLMProvider, dict]] = []
+
+        if settings.claude_api_key:
+            candidates.append(
+                (
+                    LLMProvider.CLAUDE,
+                    {
+                        "api_key": settings.claude_api_key,
+                        "model": settings.claude_model,
+                    },
+                )
+            )
+
+        if settings.deepseek_api_key:
+            candidates.append(
+                (
+                    LLMProvider.DEEPSEEK,
+                    {
+                        "api_key": settings.deepseek_api_key,
+                        "model": settings.deepseek_model,
+                        "base_url": settings.deepseek_base_url,
+                    },
+                )
+            )
+
+        # Ollama is local — always try, will simply be unreachable at chat-time
+        # if the daemon isn't running.
+        candidates.append(
+            (
+                LLMProvider.OLLAMA,
+                {
+                    "api_key": "",
+                    "model": settings.ollama_model,
+                    "base_url": settings.ollama_base_url,
+                    "timeout": settings.ollama_timeout,
+                },
+            )
+        )
+
+        default_provider = (settings.llm_provider or "").lower()
+
+        for provider, kwargs in candidates:
+            try:
+                client = create_llm_client(provider=provider, **kwargs)
+            except Exception as e:
+                logger.warning(
+                    "llm_client_init_failed",
+                    provider=provider.value,
+                    error=str(e),
+                )
+                continue
+
+            register_client(client)
+            agent = LLMAgent(client=client)
+            self._llm_agents[provider.value] = agent
+            register_llm_agent(
+                provider.value,
+                agent,
+                is_default=(provider.value == default_provider),
+            )
+            logger.info(
+                "llm_agent_registered",
+                provider=provider.value,
+                model=client.model_name,
+            )
+
+        # Make sure the default provider exists; if not, fall back to any
+        # provider we actually managed to register.
+        if self._llm_agents:
+            if default_provider not in self._llm_agents:
+                fallback = next(iter(self._llm_agents))
+                set_llm_default(fallback)
+                logger.info(
+                    "llm_default_fallback",
+                    requested=default_provider,
+                    using=fallback,
+                )
+        else:
+            logger.warning("no_llm_agents_registered")
 
     async def _handle_trace_processed(self, event: dict) -> None:
         """Handle TraceProcessed events from geneflow-datalake."""
