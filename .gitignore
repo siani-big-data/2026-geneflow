@@ -36,3 +36,8 @@ Thumbs.db
 
 # Ruff
 .ruff_cache/
+
+# Generated artifacts
+checkpoints/
+harvest_state.json
+reorganize.log
