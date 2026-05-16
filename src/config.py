@@ -38,6 +38,11 @@ class Settings(BaseSettings):
     deepseek_model: str = "deepseek-chat"
     deepseek_base_url: str = "https://api.deepseek.com/v1"
 
+    # Ollama (local, OpenAI-compatible). No API key required.
+    ollama_base_url: str = "http://localhost:11434/v1"
+    ollama_model: str = "qwen2.5:32b-instruct"
+    ollama_timeout: float = 180.0
+
     # NCBI BLAST
     blast_email: str = ""
     blast_api_key: str = ""

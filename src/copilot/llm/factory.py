@@ -7,6 +7,7 @@ import structlog
 from .base import LLMClient, LLMProvider
 from .claude import ClaudeClient
 from .deepseek import DeepSeekClient
+from .ollama import OllamaClient
 
 logger = structlog.get_logger()
 
@@ -36,6 +37,9 @@ def create_llm_client(
         return ClaudeClient(api_key=api_key, model=model)
     elif provider == LLMProvider.DEEPSEEK:
         return DeepSeekClient(api_key=api_key, model=model, **kwargs)
+    elif provider == LLMProvider.OLLAMA:
+        # api_key is optional for Ollama (local). Pass through base_url/timeout via kwargs.
+        return OllamaClient(api_key=api_key, model=model, **kwargs)
     else:
         raise ValueError(f"Unsupported LLM provider: {provider}")
 

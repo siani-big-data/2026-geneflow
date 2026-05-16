@@ -111,15 +111,33 @@ class DeepSeekClient(LLMClient):
             self._total_input_tokens += input_tokens
             self._total_output_tokens += output_tokens
 
-            # Parse tool calls if present
+            # Parse tool calls if present. DeepSeek occasionally returns
+            # arguments as malformed JSON (truncated, unescaped newlines in
+            # long sequences, etc.); we degrade gracefully instead of
+            # crashing the whole request.
             tool_calls = []
             if "tool_calls" in message and message["tool_calls"]:
                 for tc in message["tool_calls"]:
+                    raw_args = tc["function"].get("arguments") or "{}"
+                    try:
+                        parsed_args = json.loads(raw_args)
+                    except json.JSONDecodeError as je:
+                        logger.warning(
+                            "deepseek_tool_args_invalid_json",
+                            tool=tc["function"].get("name"),
+                            error=str(je),
+                            raw_preview=raw_args[:200],
+                            raw_length=len(raw_args),
+                        )
+                        parsed_args = {
+                            "_parse_error": str(je),
+                            "_raw_preview": raw_args[:500],
+                        }
                     tool_calls.append(
                         ToolCall(
                             id=tc["id"],
                             name=tc["function"]["name"],
-                            arguments=json.loads(tc["function"]["arguments"]),
+                            arguments=parsed_args,
                         )
                     )
 

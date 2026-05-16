@@ -12,6 +12,7 @@ class LLMProvider(str, Enum):
     CLAUDE = "claude"
     DEEPSEEK = "deepseek"
     OPENAI = "openai"  # Future: GPT-4, etc.
+    OLLAMA = "ollama"  # Local OpenAI-compatible (Qwen, Llama, Mistral, ...)
 
 
 @dataclass
