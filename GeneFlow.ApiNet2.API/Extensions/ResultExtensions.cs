@@ -44,7 +44,7 @@ public static class ResultExtensions
             ErrorType.Validation => Results.BadRequest(apiError),
             ErrorType.Conflict => Results.Conflict(apiError),
             ErrorType.Unauthorized => Results.Unauthorized(),
-            ErrorType.Forbidden => Results.Forbid(),
+            ErrorType.Forbidden => Results.Json(apiError, statusCode: StatusCodes.Status403Forbidden),
             _ => Results.BadRequest(apiError)
         };
     }

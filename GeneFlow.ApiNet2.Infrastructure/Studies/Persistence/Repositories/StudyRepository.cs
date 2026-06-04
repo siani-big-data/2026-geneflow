@@ -321,6 +321,15 @@ public sealed class StudyRepository : IStudyRepository
         return Convert.ToInt32(result);
     }
 
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<string>> GetVisibleStudyIdsForUserAsync(
+        UserId userId,
+        CancellationToken cancellationToken = default)
+    {
+        var ids = await GetStudyIdsByMemberAsync(userId.ToString(), cancellationToken);
+        return ids;
+    }
+
     private async Task<List<string>> GetStudyIdsByMemberAsync(
         string userId,
         CancellationToken cancellationToken)

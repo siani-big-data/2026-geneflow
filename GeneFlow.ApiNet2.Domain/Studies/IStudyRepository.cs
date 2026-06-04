@@ -27,6 +27,15 @@ public interface IStudyRepository
         ResearchField? researchField = null,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Returns the full list of study IDs where the user is a member and the study
+    /// is not soft-deleted. Intended for cross-cutting features that need to
+    /// scope reads by visibility (e.g. the activity feed), not for end-user UI.
+    /// </summary>
+    Task<IReadOnlyList<string>> GetVisibleStudyIdsForUserAsync(
+        UserId userId,
+        CancellationToken cancellationToken = default);
+
     // Public (published) studies
     Task<PagedList<Study>> GetPublishedAsync(
         int pageNumber,

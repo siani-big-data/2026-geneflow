@@ -3,6 +3,7 @@ using GeneFlow.ApiNet2.Application.Behaviors;
 using GeneFlow.ApiNet2.Application.Identity.Interfaces;
 using GeneFlow.ApiNet2.Application.Identity.Services;
 using GeneFlow.ApiNet2.Application.PaymentMethods.Interfaces;
+using GeneFlow.ApiNet2.Domain.Activity;
 using GeneFlow.ApiNet2.Domain.Identity;
 using GeneFlow.ApiNet2.Domain.PaymentMethods;
 using GeneFlow.ApiNet2.Domain.Plans;
@@ -11,6 +12,9 @@ using GeneFlow.ApiNet2.Domain.Studies;
 using GeneFlow.ApiNet2.Domain.Subscriptions;
 using GeneFlow.ApiNet2.Domain.Pipelines;
 using GeneFlow.ApiNet2.Domain.Traces;
+using GeneFlow.ApiNet2.Infrastructure.Activity.Persistence.Context;
+using GeneFlow.ApiNet2.Infrastructure.Activity.Persistence.Repositories;
+using GeneFlow.ApiNet2.Infrastructure.Activity.Projection;
 using GeneFlow.ApiNet2.Infrastructure.Analysis;
 using GeneFlow.ApiNet2.Infrastructure.Analysis.Repositories;
 using GeneFlow.ApiNet2.Infrastructure.Events;
@@ -210,6 +214,20 @@ public static class DependencyInjection
         services.AddScoped<IPipelineExecutionRepository, PipelineExecutionRepository>();
         services.AddScoped<IPipelineUnitOfWork, PipelineUnitOfWork>();
 
+        // Activity DbContext
+        services.AddDbContext<ActivityContext>(options =>
+            options.UseNpgsql(connectionString, npgsqlOptions =>
+            {
+                npgsqlOptions.MigrationsAssembly(typeof(ActivityContext).Assembly.FullName);
+                npgsqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: DbMaxRetryCount,
+                    maxRetryDelay: DbMaxRetryDelay,
+                    errorCodesToAdd: null);
+            }));
+
+        // Activity Repositories
+        services.AddScoped<IActivityEventRepository, ActivityEventRepository>();
+
         // PaymentMethods DbContext
         services.AddDbContext<PaymentMethodContext>(options =>
             options.UseNpgsql(connectionString, npgsqlOptions =>
@@ -323,6 +341,11 @@ public static class DependencyInjection
 
         // Analysis event processor (consumes events from Python Analysis worker)
         services.AddHostedService<AnalysisEventProcessor>();
+
+        // Activity projector: projects every domain event published on the bus into
+        // a feed-ready ActivityEvent row.
+        services.AddSingleton<IActivityEventProjector, ConventionActivityEventProjector>();
+        services.AddHostedService<ActivityProjectionWorker>();
 
         // SSE fan-out: in-memory broker + background consumer that pushes
         // analysis completion events to connected browser EventSources.

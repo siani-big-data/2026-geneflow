@@ -37,7 +37,11 @@ if (app.Environment.IsDevelopment())
 
 app.UseCorrelationId();
 app.UseExceptionHandler();
-app.UseHttpsRedirection();
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 app.UseCors();
 
 // Serve static files from storage folder (profile photos, etc.)

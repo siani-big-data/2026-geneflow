@@ -34,22 +34,36 @@ public abstract class RepositoryTestBase : IAsyncLifetime
             _schemasCreated = true;
         }
 
-        // Initialize Respawner for database cleanup
+        // Hook: subclasses can apply EF Core migrations or call EnsureCreatedAsync()
+        // here so Respawn finds real tables before it builds the deletion graph.
+        await PrepareSchemaAsync();
+
+        // Initialize Respawner for database cleanup. Respawn's string overload
+        // only works with SqlConnection, so we must hand it an open NpgsqlConnection.
+        await using var connection = new NpgsqlConnection(PostgresFixture.ConnectionString);
+        await connection.OpenAsync();
         _respawner = await Respawner.CreateAsync(
-            PostgresFixture.ConnectionString,
+            connection,
             new RespawnerOptions
             {
                 DbAdapter = DbAdapter.Postgres,
-                SchemasToInclude = ["identity", "studies", "traces", "pipelines", "public"]
+                SchemasToInclude = ["identity", "studies", "traces", "pipelines", "activity", "public"]
             });
     }
 
+    /// <summary>
+    /// Subclasses override this to create tables (via EF migrations or
+    /// <c>EnsureCreatedAsync</c>) before Respawn captures the deletion graph.
+    /// </summary>
+    protected virtual Task PrepareSchemaAsync() => Task.CompletedTask;
+
     public virtual async Task DisposeAsync()
     {
-        // Reset database to clean state
         if (_respawner != null)
         {
-            await _respawner.ResetAsync(PostgresFixture.ConnectionString);
+            await using var connection = new NpgsqlConnection(PostgresFixture.ConnectionString);
+            await connection.OpenAsync();
+            await _respawner.ResetAsync(connection);
         }
     }
 
@@ -57,7 +71,9 @@ public abstract class RepositoryTestBase : IAsyncLifetime
     {
         if (_respawner != null)
         {
-            await _respawner.ResetAsync(PostgresFixture.ConnectionString);
+            await using var connection = new NpgsqlConnection(PostgresFixture.ConnectionString);
+            await connection.OpenAsync();
+            await _respawner.ResetAsync(connection);
         }
     }
 
@@ -72,6 +88,7 @@ public abstract class RepositoryTestBase : IAsyncLifetime
             CREATE SCHEMA IF NOT EXISTS studies;
             CREATE SCHEMA IF NOT EXISTS traces;
             CREATE SCHEMA IF NOT EXISTS pipelines;
+            CREATE SCHEMA IF NOT EXISTS activity;
             """;
         await command.ExecuteNonQueryAsync();
     }
