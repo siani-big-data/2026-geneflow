@@ -31,9 +31,12 @@ public sealed class OrgMemberEndpoints : IEndpoint
             .Produces<IReadOnlyList<OrgMemberResponse>>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound);
 
-        // Frontend uses PATCH for role change; we accept both PATCH and PUT
-        // to be lenient with any in-flight clients.
-        group.MapMethods("/{userId}", new[] { "PATCH", "PUT" }, ChangeRole)
+        // Frontend uses PATCH for role change. We intentionally do NOT use
+        // MapMethods(["PATCH","PUT"]) here: combining multiple HTTP verbs on
+        // a single endpoint with .WithOpenApi() crashes the ASP.NET Core 8
+        // OpenAPI generator with "Sequence contains more than one element"
+        // at startup.
+        group.MapPatch("/{userId}", ChangeRole)
             .WithName("Orgs_ChangeMemberRole")
             .WithSummary("Change a member's role")
             .Produces(StatusCodes.Status204NoContent)
