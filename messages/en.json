@@ -2361,22 +2361,5 @@
       "open": "to open",
       "close": "to close"
     }
-  },
-  "feed": {
-    "title": "Feed",
-    "subtitle": "Activity from people you follow and studies you watch.",
-    "loadMore": "Load more",
-    "loadingMore": "Loading…",
-    "error": "Could not load your feed. Please try again.",
-    "empty": {
-      "title": "Your feed is quiet",
-      "description": "Follow researchers and watch studies to see their activity here."
-    },
-    "reason": {
-      "self": "You",
-      "follow": "Follow",
-      "watch": "Watching",
-      "other": "Activity"
-    }
   }
 }

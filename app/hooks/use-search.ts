@@ -6,7 +6,6 @@ import type {
   CursorPaged,
   ExploreItem,
   ExploreParams,
-  FeedItem,
   GlobalSearchParams,
   SearchHit,
   SearchObjectType,
@@ -22,8 +21,6 @@ export const searchKeys = {
     [...searchKeys.all, "featured", limit ?? null] as const,
   recent: (type?: SearchObjectType, pageSize?: number) =>
     [...searchKeys.all, "recent", type ?? null, pageSize ?? null] as const,
-  feed: (pageSize?: number) =>
-    [...searchKeys.all, "feed", pageSize ?? null] as const,
 };
 
 // ============= GLOBAL SEARCH =============
@@ -66,17 +63,6 @@ export function useRecent(params: ExploreParams = {}) {
     queryKey: searchKeys.recent(params.type, params.pageSize),
     queryFn: ({ pageParam }) =>
       searchService.recent({ ...params, cursor: pageParam as string | undefined }),
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (last) => last.nextCursor ?? undefined,
-  });
-}
-
-// ============= FEED =============
-export function useFeed(pageSize = 20) {
-  return useInfiniteQuery<CursorPaged<FeedItem>>({
-    queryKey: searchKeys.feed(pageSize),
-    queryFn: ({ pageParam }) =>
-      searchService.feed({ cursor: pageParam as string | undefined, pageSize }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (last) => last.nextCursor ?? undefined,
   });
