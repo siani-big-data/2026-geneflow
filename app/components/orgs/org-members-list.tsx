@@ -4,7 +4,14 @@ import * as React from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Loader2, Trash2 } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage, Badge, Button } from "@/components/ui";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+  Badge,
+  Button,
+  ConfirmDialog,
+} from "@/components/ui";
 import {
   useChangeOrgMemberRole,
   useRemoveOrgMember,
@@ -100,13 +107,25 @@ export function OrgMembersList({ org, members }: OrgMembersListProps) {
 
   const ownerCount = members.filter((m) => m.role === "Owner").length;
 
+  const [pendingRemoveUserId, setPendingRemoveUserId] = React.useState<
+    string | null
+  >(null);
+
   const handleChangeRole = (userId: string, role: OrgRole) => {
     changeRole.mutate({ userId, role });
   };
 
   const handleRemove = (userId: string) => {
-    if (!confirm(t("confirmRemove"))) return;
-    removeMember.mutate(userId);
+    setPendingRemoveUserId(userId);
+  };
+
+  const confirmRemove = async () => {
+    if (!pendingRemoveUserId) return;
+    try {
+      await removeMember.mutateAsync(pendingRemoveUserId);
+    } finally {
+      setPendingRemoveUserId(null);
+    }
   };
 
   if (members.length === 0) {
@@ -118,6 +137,7 @@ export function OrgMembersList({ org, members }: OrgMembersListProps) {
   }
 
   return (
+    <>
     <div className="overflow-hidden rounded-lg border border-border bg-card">
       <table className="w-full text-sm">
         <thead className="border-b border-border bg-muted/30 text-left text-xs uppercase tracking-wide text-muted-foreground">
@@ -196,5 +216,17 @@ export function OrgMembersList({ org, members }: OrgMembersListProps) {
         </tbody>
       </table>
     </div>
+    <ConfirmDialog
+      open={pendingRemoveUserId !== null}
+      onOpenChange={(next) => {
+        if (!next) setPendingRemoveUserId(null);
+      }}
+      title={t("confirmRemove")}
+      variant="destructive"
+      confirmLabel={tCommon("remove")}
+      loading={removeMember.isPending}
+      onConfirm={confirmRemove}
+    />
+    </>
   );
 }

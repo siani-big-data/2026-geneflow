@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui";
 import {
   useCreateComment,
   useEditComment,
@@ -35,6 +36,16 @@ export function CommentThread({
   const deleteComment = useDeleteComment(discussionId);
 
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+
+  const confirmDelete = async () => {
+    if (!pendingDeleteId) return;
+    try {
+      await deleteComment.mutateAsync(pendingDeleteId);
+    } finally {
+      setPendingDeleteId(null);
+    }
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -114,11 +125,7 @@ export function CommentThread({
                       type="button"
                       size="icon"
                       variant="ghost"
-                      onClick={() => {
-                        if (confirm(t("actions.confirmDelete"))) {
-                          deleteComment.mutate(c.id);
-                        }
-                      }}
+                      onClick={() => setPendingDeleteId(c.id)}
                       aria-label={t("actions.delete")}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -147,6 +154,16 @@ export function CommentThread({
           {t("locked")}
         </p>
       )}
+      <ConfirmDialog
+        open={pendingDeleteId !== null}
+        onOpenChange={(next) => {
+          if (!next) setPendingDeleteId(null);
+        }}
+        title={t("actions.confirmDelete")}
+        variant="destructive"
+        loading={deleteComment.isPending}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }

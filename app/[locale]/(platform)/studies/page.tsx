@@ -24,7 +24,7 @@ import {
   Star,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui";
+import { Button, NoticeDialog, type NoticeVariant } from "@/components/ui";
 import {
   Dialog,
   DialogContent,
@@ -86,6 +86,14 @@ export default function StudiesPage() {
   const [archiveStudyOpen, setArchiveStudyOpen] = useState(false);
   const [selectedStudy, setSelectedStudy] = useState<StudySummary | null>(null);
 
+  // Notice modal (replaces window.alert for success / error feedback).
+  const [notice, setNotice] = useState<{
+    title: string;
+    variant: NoticeVariant;
+  } | null>(null);
+  const showNotice = (title: string, variant: NoticeVariant = "info") =>
+    setNotice({ title, variant });
+
   // Form state for new study
   const [newStudyForm, setNewStudyForm] = useState<CreateStudyInput>({
     title: "",
@@ -131,7 +139,7 @@ export default function StudiesPage() {
       router.push(`/studies/${duplicated.id}`);
     } catch (err) {
       console.error("Failed to duplicate study:", err);
-      alert(t("actions.duplicateFailed") || "Failed to duplicate study");
+      showNotice(t("actions.duplicateFailed") || "Failed to duplicate study", "error");
     }
   };
 
@@ -139,9 +147,9 @@ export default function StudiesPage() {
     const url = `${window.location.origin}/studies/${study.id}`;
     try {
       await navigator.clipboard.writeText(url);
-      alert(t("actions.linkCopied") || "Link copied to clipboard");
+      showNotice(t("actions.linkCopied") || "Link copied to clipboard", "success");
     } catch {
-      alert(t("actions.copyFailed") || "Failed to copy link");
+      showNotice(t("actions.copyFailed") || "Failed to copy link", "error");
     }
   };
 
@@ -155,7 +163,7 @@ export default function StudiesPage() {
         setSelectedStudy(null);
       } catch (err) {
         console.error("Failed to archive study:", err);
-        alert(t("actions.archiveFailed") || "Failed to archive study");
+        showNotice(t("actions.archiveFailed") || "Failed to archive study", "error");
       } finally {
         setIsArchiving(false);
       }
@@ -859,6 +867,15 @@ export default function StudiesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <NoticeDialog
+        open={notice !== null}
+        onOpenChange={(next) => {
+          if (!next) setNotice(null);
+        }}
+        title={notice?.title ?? ""}
+        variant={notice?.variant ?? "info"}
+      />
     </div>
   );
 }
