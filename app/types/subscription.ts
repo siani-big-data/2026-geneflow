@@ -45,6 +45,12 @@ export type SubscriptionStatus =
 
 export type BillingCycle = "Monthly" | "Yearly";
 
+// Backend billing cycle IDs
+export const BillingCycleId = {
+  Monthly: 1,
+  Yearly: 2,
+} as const;
+
 export interface SubscriptionPeriod {
   startDate: string;
   endDate: string;
@@ -85,7 +91,7 @@ export interface SubscriptionSummary {
 
 export interface CreateSubscriptionRequest {
   planId: string;
-  billingCycleId: string;
+  billingCycleId: number;
   startWithTrial?: boolean;
 }
 
@@ -95,5 +101,5 @@ export interface CancelSubscriptionRequest {
 
 export interface ChangePlanRequest {
   newPlanId: string;
-  billingCycleId: string;
+  billingCycleId: number;
 }

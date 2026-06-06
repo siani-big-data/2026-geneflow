@@ -43,6 +43,7 @@ import { TraceProcessingSubscriber } from "@/components/traces/trace-processing-
 import { StarButton } from "@/components/social/star-button";
 import { PinStudyButton } from "@/components/social/pin-study-button";
 import { FollowButton } from "@/components/social/follow-button";
+import { ReadmeSection } from "@/components/studies/readme-section";
 import { useAuthStore } from "@/stores/auth-store";
 import {
   Dialog,
@@ -592,6 +593,13 @@ export default function StudyDetailPage() {
                 )}
               </div>
             </div>
+
+            {/* README */}
+            <ReadmeSection
+              studyId={studyId}
+              readmeMarkdown={study.readmeMarkdown}
+              canEdit={study.currentUserPermissions.canEditStudy}
+            />
           </div>
         )}
 

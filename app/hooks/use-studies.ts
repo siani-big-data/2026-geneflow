@@ -44,10 +44,10 @@ export function usePublicStudies(
 /**
  * Fetch featured studies.
  */
-export function useFeaturedStudies(page = 1, pageSize = 10) {
+export function useFeaturedStudies(limit = 10) {
   return useQuery({
-    queryKey: ["studies", "featured", page, pageSize],
-    queryFn: () => studiesService.getFeatured(page, pageSize),
+    queryKey: ["studies", "featured", limit],
+    queryFn: () => studiesService.getFeatured(limit),
   });
 }
 
@@ -122,6 +122,42 @@ export function useDeleteStudy() {
 }
 
 /**
+ * Duplicate a study.
+ */
+export function useDuplicateStudy() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (studyId: string) => studiesService.duplicate(studyId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["studies"] });
+    },
+  });
+}
+
+/**
+ * Export the study as a ZIP archive. Triggers a browser download via a
+ * temporary anchor element. No cache invalidation — export is read-only.
+ */
+export function useExportStudy() {
+  return useMutation({
+    mutationFn: async (studyId: string) => {
+      const { blob, filename } = await studiesService.exportStudy(studyId);
+      // Browser download via transient <a download>.
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      return { filename };
+    },
+  });
+}
+
+/**
  * Change study status.
  */
 export function useChangeStudyStatus(studyId: string) {
@@ -147,6 +183,30 @@ export function useUpdateStudySettings(studyId: string) {
     mutationFn: (settings: UpdateStudySettingsInput) =>
       studiesService.updateSettings(studyId, settings),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["study", studyId] });
+    },
+  });
+}
+
+/**
+ * Update the study README markdown.
+ * Pass `null` to clear it.
+ */
+export function useUpdateReadme(studyId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (markdown: string | null) =>
+      studiesService.updateReadme(studyId, markdown),
+    onSuccess: (study) => {
+      // Merge the updated README into the cached study so we preserve
+      // permission/membership fields that the readme endpoint does not return,
+      // then refetch in the background to stay authoritative.
+      queryClient.setQueryData<typeof study>(["study", studyId], (old) =>
+        old
+          ? { ...old, readmeMarkdown: study.readmeMarkdown }
+          : study,
+      );
       queryClient.invalidateQueries({ queryKey: ["study", studyId] });
     },
   });

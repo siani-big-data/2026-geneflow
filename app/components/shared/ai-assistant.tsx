@@ -1,14 +1,36 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Sparkles, X, Send, ChevronRight, Loader2 } from "lucide-react";
+import { Sparkles, X, Send, ChevronRight, Loader2, Wrench } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
+import { aiService, AiServiceError } from "@/services/ai.service";
+import type {
+  LlmProvider,
+  LlmToolCallInfo,
+  TraceContext,
+} from "@/services/ai.service";
+import {profileService} from "@/services";
+import {useAuthStore} from "@/stores/auth-store";
+
+/** localStorage key + bounds for the resizable panel width. */
+const PANEL_WIDTH_KEY = "geneflow:ai-assistant:width";
+const DEFAULT_WIDTH = 460;
+const MIN_WIDTH = 320;
+const MAX_WIDTH = 1100;
+
+const clampWidth = (n: number): number =>
+  Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, Math.round(n)));
 
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
+  toolCalls?: LlmToolCallInfo[];
+  iterations?: number;
+  isError?: boolean;
 }
 
 interface AIAssistantProps {
@@ -18,6 +40,15 @@ interface AIAssistantProps {
   contextTitle: string;
   contextId: string;
   permanent?: boolean;
+  /**
+   * When provided (typically for `contextType === "trace"`) the parsed
+   * sequence + quality + metadata are injected as a structured preamble
+   * in front of the first user question so the agent can analyse it
+   * with the registered tools.
+   */
+  traceContext?: TraceContext | null;
+  /** Force a specific LLM provider (claude / deepseek / ollama). */
+  provider?: LlmProvider;
 }
 
 export function AIAssistant({
@@ -27,19 +58,87 @@ export function AIAssistant({
   contextTitle,
   contextId,
   permanent,
+  traceContext,
+  provider,
 }: AIAssistantProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
       role: "assistant",
-      content: `I'm your research assistant for this ${contextType}. I can help you understand your data, suggest quality improvements, interpret results, and guide you through analysis workflows. What would you like to know?`,
+      content:
+        contextType === "trace" && traceContext
+          ? `Hola — soy tu asistente de biología molecular. Tengo cargada la traza "${
+              traceContext.name || traceContext.traceId
+            }" (${traceContext.length} bp). Puedo analizar calidad, traducir, alinear, detectar variantes, buscar motifs, construir filogenias y más. ¿Qué quieres saber?`
+          : `I'm your research assistant for this ${contextType}. I can help you understand your data, suggest quality improvements, interpret results, and guide you through analysis workflows. What would you like to know?`,
       timestamp: new Date(),
     },
   ]);
   const [input, setInput] = useState("");
   const [isThinking, setIsThinking] = useState(false);
+  /** Conversation id minted by the backend on the first response. */
+  const [serverContextId, setServerContextId] = useState<string | null>(null);
+  /** Whether the trace preamble has already been sent for this conversation. */
+  const traceContextSentRef = useRef(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  /** Panel width (resizable by dragging the left edge). Persisted in
+   *  localStorage so it survives reloads. */
+  const [panelWidth, setPanelWidth] = useState<number>(DEFAULT_WIDTH);
+  const [isResizing, setIsResizing] = useState(false);
+
+  const { user, profile } = useAuthStore();
+
+  const displayName = profile?.fullName || user?.username || "User";
+  const initials = profile?.initials || displayName.charAt(0).toUpperCase();
+  const photoUrl = profileService.resolveStorageUrl(
+      profile?.photoThumbnailUrl || profile?.photoUrl
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const stored = window.localStorage.getItem(PANEL_WIDTH_KEY);
+    const parsed = stored ? parseInt(stored, 10) : NaN;
+    if (Number.isFinite(parsed)) {
+      setPanelWidth(clampWidth(parsed));
+    }
+  }, []);
+
+  const startResize = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+
+    let lastWidth = panelWidth;
+    const onMove = (ev: MouseEvent) => {
+      // Panel is anchored to the right edge of the viewport, so width =
+      // distance from the cursor to that edge.
+      lastWidth = clampWidth(window.innerWidth - ev.clientX);
+      setPanelWidth(lastWidth);
+    };
+    const onUp = () => {
+      setIsResizing(false);
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      try {
+        window.localStorage.setItem(PANEL_WIDTH_KEY, String(lastWidth));
+      } catch {
+        // ignore storage failures (private mode, etc.)
+      }
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  };
+
+  // Persist width whenever it changes (handles double-click reset too)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(PANEL_WIDTH_KEY, String(panelWidth));
+    } catch {
+      // ignore
+    }
+  }, [panelWidth]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -63,10 +162,10 @@ export function AIAssistant({
   ];
 
   const traceSuggestions = [
-    "Analyze the quality of this trace",
-    "Identify regions that need trimming",
-    "Explain the quality score",
-    "Compare with similar traces",
+    "Analiza la calidad de esta traza y resume las métricas clave",
+    "Tradúcela en el marco 1 y dime si hay codones de stop prematuros",
+    "Saca el reverse-complement de los primeros 100 bp",
+    "¿Qué taxonomía sugieren estas bases (16S)?",
   ];
 
   const suggestions = contextType === "study" ? studySuggestions : traceSuggestions;
@@ -74,10 +173,11 @@ export function AIAssistant({
   const handleSendMessage = async () => {
     if (!input.trim() || isThinking) return;
 
+    const question = input;
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
-      content: input,
+      content: question,
       timestamp: new Date(),
     };
 
@@ -85,17 +185,53 @@ export function AIAssistant({
     setInput("");
     setIsThinking(true);
 
-    // Simulate AI response
-    setTimeout(() => {
+    // Only inject the trace context the FIRST time we hit the backend
+    // for this conversation. Subsequent calls reuse the server-side
+    // context via contextId.
+    const includeTrace =
+      contextType === "trace" &&
+      !!traceContext &&
+      !traceContextSentRef.current;
+
+    try {
+      const resp = await aiService.ask({
+        question,
+        contextId: serverContextId ?? undefined,
+        provider,
+        traceContext: includeTrace ? traceContext : null,
+      });
+
+      if (includeTrace) traceContextSentRef.current = true;
+      if (resp.contextId) setServerContextId(resp.contextId);
+
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: getContextualResponse(input, contextType),
+        content: resp.answer || "(sin respuesta)",
         timestamp: new Date(),
+        toolCalls: resp.toolCalls,
+        iterations: resp.iterations,
+        isError: !!resp.error,
       };
       setMessages((prev) => [...prev, assistantMessage]);
+    } catch (err) {
+      const detail =
+        err instanceof AiServiceError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : String(err);
+      const errMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: `Error al consultar el agente: ${detail}`,
+        timestamp: new Date(),
+        isError: true,
+      };
+      setMessages((prev) => [...prev, errMessage]);
+    } finally {
       setIsThinking(false);
-    }, 1500);
+    }
   };
 
   const handleSuggestionClick = (suggestion: string) => {
@@ -115,13 +251,50 @@ export function AIAssistant({
   return (
     <div
       className={cn(
-        "fixed bottom-0 right-0 top-0 z-50 flex w-full transform flex-col border-l border-border bg-card shadow-2xl transition-transform duration-300 ease-in-out sm:w-[400px]",
-        isOpen ? "translate-x-0" : "translate-x-full"
+        "fixed bottom-0 right-0 top-0 z-50 flex max-w-full transform flex-col border-l border-border bg-card shadow-2xl transition-transform duration-300 ease-in-out",
+        isOpen ? "translate-x-0" : "translate-x-full",
+        isResizing && "select-none transition-none"
       )}
+      style={{ width: `${panelWidth}px` }}
       role="dialog"
       aria-labelledby="ai-assistant-title"
       aria-modal="true"
     >
+      {/* Resize handle — drag the left edge to grow/shrink the panel */}
+      <div
+        onMouseDown={startResize}
+        onDoubleClick={() => setPanelWidth(DEFAULT_WIDTH)}
+        className={cn(
+          "group absolute left-0 top-0 z-20 flex h-full w-2 -translate-x-1/2 cursor-col-resize items-center justify-center",
+          "hover:bg-teal/20",
+          isResizing && "bg-teal/30"
+        )}
+        title="Arrastra para redimensionar · Doble click para resetear"
+        aria-label="Resize panel"
+        role="separator"
+        aria-orientation="vertical"
+      >
+        {/* Vertical guide line */}
+        <div
+          className={cn(
+            "absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-border transition-colors",
+            "group-hover:bg-teal",
+            isResizing && "bg-teal"
+          )}
+        />
+        {/* Grip pill — always faintly visible, brighter on hover/drag */}
+        <div
+          className={cn(
+            "relative flex h-14 w-1.5 flex-col items-center justify-center gap-0.5 rounded-full border border-border bg-card shadow-sm transition-all",
+            "group-hover:h-16 group-hover:border-teal/60 group-hover:bg-teal/10 group-hover:shadow-md",
+            isResizing && "h-16 border-teal bg-teal/20"
+          )}
+        >
+          <span className="h-1 w-1 rounded-full bg-muted-foreground group-hover:bg-teal" />
+          <span className="h-1 w-1 rounded-full bg-muted-foreground group-hover:bg-teal" />
+          <span className="h-1 w-1 rounded-full bg-muted-foreground group-hover:bg-teal" />
+        </div>
+      </div>
       {/* Header */}
       <div className="flex flex-shrink-0 items-center justify-between border-b border-border bg-muted/30 px-5 py-4">
         <div className="flex items-center gap-3">
@@ -169,10 +342,80 @@ export function AIAssistant({
                 "max-w-[85%]",
                 message.role === "user"
                   ? "rounded-2xl rounded-tr-md bg-teal px-4 py-2.5 text-white"
-                  : "rounded-2xl rounded-tl-md border border-border bg-muted/50 px-4 py-2.5 text-foreground"
+                  : message.isError
+                    ? "rounded-2xl rounded-tl-md border border-destructive/40 bg-destructive/10 px-4 py-2.5 text-foreground"
+                    : "rounded-2xl rounded-tl-md border border-border bg-muted/50 px-4 py-2.5 text-foreground"
               )}
             >
-              <p className="text-sm leading-relaxed">{message.content}</p>
+              {message.role === "user" ? (
+                <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                  {message.content}
+                </p>
+              ) : (
+                <div
+                  className={cn(
+                    "text-sm leading-relaxed",
+                    // typographic styles: headings, lists, tables, code, links
+                    "[&_h1]:mb-2 [&_h1]:mt-3 [&_h1]:text-base [&_h1]:font-semibold",
+                    "[&_h2]:mb-1.5 [&_h2]:mt-2.5 [&_h2]:text-[15px] [&_h2]:font-semibold",
+                    "[&_h3]:mb-1 [&_h3]:mt-2 [&_h3]:text-sm [&_h3]:font-semibold",
+                    "[&_h4]:mb-1 [&_h4]:mt-2 [&_h4]:text-sm [&_h4]:font-semibold",
+                    "[&_p]:my-1.5",
+                    "[&_ul]:my-1.5 [&_ul]:list-disc [&_ul]:pl-5",
+                    "[&_ol]:my-1.5 [&_ol]:list-decimal [&_ol]:pl-5",
+                    "[&_li]:my-0.5",
+                    "[&_strong]:font-semibold",
+                    "[&_em]:italic",
+                    "[&_hr]:my-3 [&_hr]:border-border",
+                    "[&_blockquote]:my-2 [&_blockquote]:border-l-2 [&_blockquote]:border-teal [&_blockquote]:pl-3 [&_blockquote]:italic [&_blockquote]:text-muted-foreground",
+                    "[&_a]:text-teal [&_a]:underline [&_a]:underline-offset-2 hover:[&_a]:opacity-80",
+                    "[&_code]:rounded [&_code]:bg-muted [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[12px]",
+                    "[&_pre]:my-2 [&_pre]:overflow-x-auto [&_pre]:rounded-md [&_pre]:border [&_pre]:border-border [&_pre]:bg-muted [&_pre]:p-2 [&_pre]:font-mono [&_pre]:text-[12px]",
+                    "[&_pREDACTED]:bg-transparent [&_pREDACTED]:p-0",
+                    // tables (GFM)
+                    "[&_table]:my-2 [&_table]:w-full [&_table]:border-collapse [&_table]:overflow-hidden [&_table]:rounded-md [&_table]:border [&_table]:border-border [&_table]:text-[12px]",
+                    "[&_thead]:bg-muted/60",
+                    "[&_th]:border [&_th]:border-border [&_th]:px-2 [&_th]:py-1 [&_th]:text-left [&_th]:font-semibold",
+                    "[&_td]:border [&_td]:border-border [&_td]:px-2 [&_td]:py-1 [&_td]:align-top",
+                    "[&_tr:nth-child(even)]:bg-muted/30"
+                  )}
+                >
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {message.content}
+                  </ReactMarkdown>
+                </div>
+              )}
+
+              {message.toolCalls && message.toolCalls.length > 0 && (
+                <details className="mt-2 text-[11px]">
+                  <summary className="flex cursor-pointer items-center gap-1 text-muted-foreground hover:text-foreground">
+                    <Wrench className="h-3 w-3" />
+                    {message.toolCalls.length} tool call
+                    {message.toolCalls.length === 1 ? "" : "s"}
+                    {typeof message.iterations === "number"
+                      ? ` · ${message.iterations} iter`
+                      : ""}
+                  </summary>
+                  <ul className="mt-1 space-y-1 pl-4">
+                    {message.toolCalls.map((tc, idx) => (
+                      <li
+                        key={`${tc.iteration}-${idx}-${tc.name}`}
+                        className="font-mono text-muted-foreground"
+                      >
+                        <span className="text-teal">{tc.name}</span>
+                        <span>(</span>
+                        <span className="break-all">
+                          {typeof tc.arguments === "string"
+                            ? tc.arguments
+                            : JSON.stringify(tc.arguments)}
+                        </span>
+                        <span>)</span>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              )}
+
               <span
                 className={cn(
                   "mt-1.5 block text-[10px]",
@@ -186,9 +429,17 @@ export function AIAssistant({
               </span>
             </div>
             {message.role === "user" && (
-              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-deep to-teal text-xs font-semibold text-white">
-                SM
-              </div>
+                photoUrl ? (
+                    <img
+                        src={photoUrl}
+                        alt={displayName}
+                        className="h-8 w-8 flex-shrink-0 rounded-full object-cover"
+                    />
+                ) : (
+                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-deep to-teal text-xs font-semibold text-white">
+                      {initials}
+                    </div>
+                )
             )}
           </div>
         ))}
@@ -280,36 +531,5 @@ export function AIAssistant({
   );
 }
 
-function getContextualResponse(userInput: string, contextType: "study" | "trace"): string {
-  const input = userInput.toLowerCase();
-
-  if (contextType === "study") {
-    if (input.includes("quality") || input.includes("metrics")) {
-      return "Based on the current study data, I've analyzed 1,247 samples across 24 sequencing runs. Overall quality is high with 94% of samples passing QC thresholds. The average Phred quality score is 38.2, and coverage depth is consistent at 120x. I notice 76 samples (6%) have quality scores below Q30 in specific regions—would you like me to identify which samples need attention?";
-    }
-    if (input.includes("issues") || input.includes("problems")) {
-      return "I've identified 76 samples with quality concerns: 42 have low coverage in specific genomic regions, 28 show elevated error rates in homopolymer regions, and 6 have potential contamination indicators. The most affected samples are in sequencing batch SB-2026-03. I can generate a detailed report or suggest resequencing candidates if you'd like.";
-    }
-    if (input.includes("next steps") || input.includes("analysis")) {
-      return "Based on your study design and current data quality, I recommend the following workflow: 1) Run variant calling on the 1,171 high-quality samples, 2) Generate a QC report for the flagged samples to decide on resequencing, 3) Perform initial association analysis on complete sample set, 4) Review coverage uniformity across target regions. Would you like me to help set up any of these pipelines?";
-    }
-    if (input.includes("collaboration") || input.includes("team")) {
-      return "Your study currently has 12 active collaborators across 3 institutions. Dr. James Wong has been most active recently, uploading 124 new traces in the past week. There are 3 pending analysis results that haven't been reviewed by co-investigators. Would you like me to summarize recent team activity or help you share specific findings?";
-    }
-  } else {
-    if (input.includes("quality") || input.includes("analyze")) {
-      return "This trace shows excellent overall quality with a Phred score of Q42 (99.994% base call accuracy). The signal is strong and clear across most of the sequence, with well-defined peaks and minimal background noise. However, I notice the quality degrades slightly after position 650, which is normal for Sanger sequencing. The heterozygous variant at position 342 is well-supported with clear double peaks.";
-    }
-    if (input.includes("trim") || input.includes("regions")) {
-      return "I recommend trimming the first 25 bases and everything after position 680. The initial bases show typical sequence startup artifacts with mixed signals, while the tail region has declining quality scores below Q20. The core region (bases 26-680) maintains excellent quality throughout. Would you like me to suggest specific coordinates for your trimming pipeline?";
-    }
-    if (input.includes("score") || input.includes("explain")) {
-      return "The quality score represents base-calling confidence using Phred scaling, where Q30 = 99.9% accuracy and Q40 = 99.99% accuracy. Your trace averages Q42, which is excellent for downstream analysis. The score is calculated from peak spacing, height ratios, background noise, and signal resolution. The slight dip around position 520 is likely due to a GC-rich region causing secondary structure—this is expected and doesn't affect reliability.";
-    }
-    if (input.includes("compare") || input.includes("similar")) {
-      return "Compared to other traces in this study, this sample ranks in the top 15% for quality. The average study trace has Q38, while this one achieves Q42. Peak resolution is 12% better than the median, and the usable read length (655bp) exceeds 78% of samples. This trace is an excellent candidate for variant calling and should produce highly reliable results.";
-    }
-  }
-
-  return `I understand you're asking about "${userInput}". While I'm analyzing your ${contextType} data, I can help you with quality assessment, data interpretation, workflow suggestions, and actionable insights. Could you provide more specific details about what aspect you'd like me to focus on?`;
-}
+// (mock response generator removed — answers now come from the AI backend
+// via aiService.ask)

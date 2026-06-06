@@ -14,7 +14,7 @@ import type { ApiError, RefreshTokenResponse } from "@/types";
 // CONFIGURATION
 // =============================================================================
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5286";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5145";
 console.log("[API Client] Using API URL:", API_BASE_URL);
 
 // Token storage keys
@@ -315,6 +315,51 @@ export const api = {
     }
     // Note: Don't set Content-Type for FormData - browser sets it with boundary
 
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method: "POST",
+      headers,
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.json().catch(() => null);
+      throw ApiClientError.fromResponse(response.status, errorBody);
+    }
+
+    if (response.status === 204) {
+      return undefined as T;
+    }
+
+    return response.json();
+  },
+
+  /**
+   * Post FormData (multipart/form-data) with multiple fields.
+   * @param endpoint - API endpoint
+   * @param formData - FormData object with all fields
+   */
+  postForm: async <T>(endpoint: string, formData: FormData): Promise<T> => {
+    // Ensure valid token
+    const tokenValid = await ensureValidToken();
+    if (!tokenValid) {
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("auth:logout"));
+      }
+      throw new ApiClientError({
+        message: "Session expired. Please log in again.",
+        code: "SESSION_EXPIRED",
+        status: 401,
+      });
+    }
+
+    const headers: HeadersInit = {};
+    const accessToken = tokenStorage.getAccessToken();
+    if (accessToken) {
+      headers["Authorization"] = `Bearer ${accessToken}`;
+    }
+    // Note: Don't set Content-Type for FormData - browser sets it with boundary
+
+    console.log("[API Client] Posting FormData to:", `${API_BASE_URL}${endpoint}`);
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: "POST",
       headers,

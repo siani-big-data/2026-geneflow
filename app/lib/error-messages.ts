@@ -49,6 +49,30 @@ const errorMessages: Record<string, ErrorInfo> = {
   },
 
   // =============================================================================
+  // PASSWORD COMPLEXITY ERRORS
+  // =============================================================================
+  "User.PasswordTooShort": {
+    title: "Password too short",
+    message: "Password must be at least 8 characters long.",
+  },
+  "User.PasswordTooLong": {
+    title: "Password too long",
+    message: "Password must not exceed 100 characters.",
+  },
+  "User.PasswordRequiresUppercase": {
+    title: "Password needs uppercase",
+    message: "Password must contain at least one uppercase letter.",
+  },
+  "User.PasswordRequiresLowercase": {
+    title: "Password needs lowercase",
+    message: "Password must contain at least one lowercase letter.",
+  },
+  "User.PasswordRequiresDigit": {
+    title: "Password needs number",
+    message: "Password must contain at least one number.",
+  },
+
+  // =============================================================================
   // LOGIN ERRORS
   // =============================================================================
   "User.InvalidCredentials": {
@@ -99,6 +123,10 @@ const errorMessages: Record<string, ErrorInfo> = {
   "User.TwoFactorCodeAlreadyUsed": {
     title: "Code already used",
     message: "This verification code has already been used. Please request a new one.",
+  },
+  "User.TwoFactorSetupExpired": {
+    title: "Setup expired",
+    message: "Two-factor setup has expired. Please start the setup process again.",
   },
   "User.TwoFactorRequired": {
     title: "Verification required",
@@ -186,6 +214,126 @@ const errorMessages: Record<string, ErrorInfo> = {
   "OAuth.ProviderNotLinked": {
     title: "Not linked",
     message: "This provider is not linked to your account.",
+  },
+
+  // =============================================================================
+  // PROFILE ERRORS
+  // =============================================================================
+  "Profile.NotFound": {
+    title: "Profile not found",
+    message: "The profile you're looking for doesn't exist.",
+  },
+  "Profile.AlreadyExists": {
+    title: "Profile exists",
+    message: "You already have a profile. You can update it instead.",
+  },
+  "Profile.FirstNameRequired": {
+    title: "First name required",
+    message: "Please enter your first name.",
+  },
+  "Profile.FirstNameTooShort": {
+    title: "First name too short",
+    message: "First name must be at least 1 character.",
+  },
+  "Profile.FirstNameTooLong": {
+    title: "First name too long",
+    message: "First name cannot exceed 100 characters.",
+  },
+  "Profile.FirstNameInvalidFormat": {
+    title: "Invalid first name",
+    message: "First name can only contain letters, spaces, hyphens, and apostrophes.",
+  },
+  "Profile.LastNameTooShort": {
+    title: "Last name too short",
+    message: "Last name must be at least 2 characters.",
+  },
+  "Profile.LastNameTooLong": {
+    title: "Last name too long",
+    message: "Last name cannot exceed 100 characters.",
+  },
+  "Profile.LastNameInvalidFormat": {
+    title: "Invalid last name",
+    message: "Last name can only contain letters, spaces, hyphens, and apostrophes.",
+  },
+  "Profile.BioTooShort": {
+    title: "Bio too short",
+    message: "Bio must be at least 10 characters if provided.",
+  },
+  "Profile.BioTooLong": {
+    title: "Bio too long",
+    message: "Bio cannot exceed 500 characters.",
+  },
+  "Profile.LocationTooShort": {
+    title: "Location too short",
+    message: "Location must be at least 2 characters if provided.",
+  },
+  "Profile.LocationTooLong": {
+    title: "Location too long",
+    message: "Location cannot exceed 200 characters.",
+  },
+  "Profile.ProfessionalRoleTooShort": {
+    title: "Role too short",
+    message: "Professional role must be at least 2 characters if provided.",
+  },
+  "Profile.ProfessionalRoleTooLong": {
+    title: "Role too long",
+    message: "Professional role cannot exceed 100 characters.",
+  },
+  "Profile.InstitutionNameTooShort": {
+    title: "Institution name too short",
+    message: "Institution name must be at least 2 characters if provided.",
+  },
+  "Profile.InstitutionNameTooLong": {
+    title: "Institution name too long",
+    message: "Institution name cannot exceed 200 characters.",
+  },
+  "Profile.InstitutionDepartmentTooShort": {
+    title: "Department too short",
+    message: "Department must be at least 2 characters if provided.",
+  },
+  "Profile.InstitutionDepartmentTooLong": {
+    title: "Department too long",
+    message: "Department name cannot exceed 200 characters.",
+  },
+  "Profile.OrcidIdInvalidFormat": {
+    title: "Invalid ORCID",
+    message: "ORCID must be in format 0000-0000-0000-0000.",
+  },
+  "Profile.WebsiteInvalidFormat": {
+    title: "Invalid website",
+    message: "Please enter a valid URL (e.g., https://example.com).",
+  },
+  "Profile.WebsiteTooLong": {
+    title: "URL too long",
+    message: "Website URL cannot exceed 500 characters.",
+  },
+  "Profile.PhotoUrlInvalidFormat": {
+    title: "Invalid photo URL",
+    message: "Photo URL must be a valid URL.",
+  },
+  "Profile.PhotoUrlTooLong": {
+    title: "Photo URL too long",
+    message: "Photo URL cannot exceed the maximum length.",
+  },
+  "Profile.PhotoSizeExceedsLimit": {
+    title: "Photo too large",
+    message: "Photo size cannot exceed 10 MB.",
+  },
+  "Profile.InvalidResearchField": {
+    title: "Invalid research field",
+    message: "Please select a valid research field.",
+  },
+  "Profile.InvalidPhotoFormat": {
+    title: "Unsupported format",
+    message: "Photo format not supported. Use JPEG, PNG, GIF, or WebP.",
+  },
+  "Profile.PhotoTooLarge": {
+    title: "Photo too large",
+    message: "Photo size cannot exceed 10 MB.",
+  },
+  "Profile.InvalidPhotoData": {
+    title: "Invalid photo",
+    message: "The photo data is invalid or corrupted. Please try another image.",
   },
 
   // =============================================================================

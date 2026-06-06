@@ -41,7 +41,7 @@ const testimonials = [
   },
   {
     quote:
-      "The pipeline orchestration is incredibly intuitive. We went from manual processing to automated workflows in a week.",
+      "The study management is incredibly intuitive. We went from scattered data to organized workflows in a week.",
     author: "Dr. Marcus Williams",
     role: "Bioinformatics Lead",
     institution: "Broad Institute",
@@ -211,9 +211,13 @@ export default function LandingPage() {
         <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-teal text-white">
-                <Dna className="h-5 w-5" />
-              </div>
+              <Image
+                src="/logo.png"
+                alt="GeneFlow"
+                width={40}
+                height={40}
+                className="rounded-lg object-contain"
+              />
               <span className="text-xl font-bold">GeneFlow</span>
             </div>
 
@@ -685,9 +689,13 @@ export default function LandingPage() {
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4 mb-12">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal text-white">
-                  <Dna className="h-4 w-4" />
-                </div>
+                <Image
+                  src="/logo.png"
+                  alt="GeneFlow"
+                  width={36}
+                  height={36}
+                  className="rounded-lg object-contain"
+                />
                 <span className="text-lg font-bold">GeneFlow</span>
               </div>
               <p className="text-sm text-muted-foreground mb-4">

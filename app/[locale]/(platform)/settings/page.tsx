@@ -2,9 +2,9 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import { Link } from "@/lib/navigation";
+import { Link, useRouter } from "@/lib/navigation";
 import { PageHeader } from "@/components/layout";
-import { Button, Switch } from "@/components/ui";
+import { Button } from "@/components/ui";
 import {
   Dialog,
   DialogContent,
@@ -16,65 +16,47 @@ import {
 import {
   User,
   Shield,
-  Bell,
-  Palette,
   CreditCard,
-  Users,
   Save,
   Camera,
   Mail,
   Lock,
   Globe,
-  Smartphone,
-  Download,
-  Key,
   ArrowRight,
-  Sun,
-  Moon,
-  Monitor,
   Upload,
-  Laptop,
-  MapPin,
-  Clock,
   AlertTriangle,
   Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TwoFactorSetup, ExternalLogins } from "@/components/auth";
 import { profileService } from "@/services/profile.service";
-import { subscriptionService, planService, paymentService } from "@/services";
+import { subscriptionService, planService, paymentService, authService } from "@/services";
 import { useAuthStore } from "@/stores/auth-store";
+import { useTranslatedResearchFields } from "@/hooks";
 import type { Profile, UpdateProfileRequest, UpdateResearchIdentifiersRequest, Subscription, Plan, PaymentMethod } from "@/types";
-import { RESEARCH_FIELDS } from "@/types/profile";
 
-type SettingsSection = "account" | "security" | "notifications" | "preferences" | "billing" | "collaboration";
+type SettingsSection = "account" | "security" | "billing";
 
 const sections = [
   { id: "account" as const, nameKey: "account", icon: User },
   { id: "security" as const, nameKey: "security", icon: Shield },
-  { id: "notifications" as const, nameKey: "notifications", icon: Bell },
-  { id: "preferences" as const, nameKey: "preferences", icon: Palette },
   { id: "billing" as const, nameKey: "billing", icon: CreditCard },
-  { id: "collaboration" as const, nameKey: "collaboration", icon: Users },
 ];
-
-const mockSessions = [
-  { id: "1", device: "Chrome on MacOS", location: "Stanford, CA", lastActive: "Active now", current: true },
-  { id: "2", device: "Safari on iPhone", location: "San Francisco, CA", lastActive: "2 hours ago", current: false },
-  { id: "3", device: "Firefox on Windows", location: "New York, NY", lastActive: "1 day ago", current: false },
-];
-
-const mockBlockedUsers: { id: string; name: string; email: string; blockedAt: string }[] = [];
 
 export default function SettingsPage() {
   const t = useTranslations("settings");
   const tCommon = useTranslations("common");
-  const { user } = useAuthStore();
+  const router = useRouter();
+  const { user, logout } = useAuthStore();
+  const { fields: researchFields } = useTranslatedResearchFields();
 
   // Profile state
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [profileSaveSuccess, setProfileSaveSuccess] = useState(false);
+  const [isSavingIdentifiers, setIsSavingIdentifiers] = useState(false);
+  const [identifiersSaveSuccess, setIdentifiersSaveSuccess] = useState(false);
 
   // Subscription state
   const [subscription, setSubscription] = useState<Subscription | null>(null);
@@ -99,28 +81,34 @@ export default function SettingsPage() {
   });
 
   const [activeSection, setActiveSection] = useState<SettingsSection>("account");
-  const [emailNotifications, setEmailNotifications] = useState(true);
-  const [studyUpdates, setStudyUpdates] = useState(true);
-  const [analysisComplete, setAnalysisComplete] = useState(true);
-  const [teamInvites, setTeamInvites] = useState(true);
-  const [weeklyDigest, setWeeklyDigest] = useState(false);
-  const [marketingEmails, setMarketingEmails] = useState(false);
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
-  const [sessionTimeout, setSessionTimeout] = useState(true);
-  const [autoCollabApproval, setAutoCollabApproval] = useState(false);
-  const [selectedTheme, setSelectedTheme] = useState<"light" | "dark" | "system">("light");
+
+  // Password change state
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
 
   // Modal states
   const [uploadPhotoOpen, setUploadPhotoOpen] = useState(false);
-  const [sessionsOpen, setSessionsOpen] = useState(false);
-  const [dataExportOpen, setDataExportOpen] = useState(false);
-  const [blockedUsersOpen, setBlockedUsersOpen] = useState(false);
   const [deactivateOpen, setDeactivateOpen] = useState(false);
   const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [isRemovingPhoto, setIsRemovingPhoto] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+
+  // Account management state
+  const [isDeactivating, setIsDeactivating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   // Fetch profile data
   const fetchProfile = useCallback(async () => {
@@ -180,29 +168,29 @@ export default function SettingsPage() {
 
   const handleSaveChanges = async () => {
     try {
-      setIsSaving(true);
+      setIsSavingProfile(true);
       const updatedProfile = await profileService.updateProfile(formData);
       setProfile(updatedProfile);
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 2000);
+      setProfileSaveSuccess(true);
+      setTimeout(() => setProfileSaveSuccess(false), 2000);
     } catch (err) {
       console.error("Failed to save profile:", err);
     } finally {
-      setIsSaving(false);
+      setIsSavingProfile(false);
     }
   };
 
   const handleSaveIdentifiers = async () => {
     try {
-      setIsSaving(true);
+      setIsSavingIdentifiers(true);
       const updatedProfile = await profileService.updateResearchIdentifiers(identifiersData);
       setProfile(updatedProfile);
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 2000);
+      setIdentifiersSaveSuccess(true);
+      setTimeout(() => setIdentifiersSaveSuccess(false), 2000);
     } catch (err) {
       console.error("Failed to save identifiers:", err);
     } finally {
-      setIsSaving(false);
+      setIsSavingIdentifiers(false);
     }
   };
 
@@ -213,27 +201,107 @@ export default function SettingsPage() {
     }
   };
 
-  const handleUploadPhoto = () => {
-    if (selectedPhoto) {
-      console.log("Uploading photo:", selectedPhoto.name);
+  const handleUploadPhoto = async () => {
+    if (!selectedPhoto) return;
+
+    try {
+      setIsUploadingPhoto(true);
+      setPhotoError(null);
+      const updatedProfile = await profileService.uploadProfilePhoto(selectedPhoto);
+      setProfile(updatedProfile);
       setUploadPhotoOpen(false);
       setSelectedPhoto(null);
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      setPhotoError(error.message || t("account.photoUploadError"));
+    } finally {
+      setIsUploadingPhoto(false);
     }
   };
 
-  const handleRemovePhoto = () => {
-    console.log("Removing photo");
+  const handleRemovePhoto = async () => {
+    try {
+      setIsRemovingPhoto(true);
+      await profileService.deleteProfilePhoto();
+      setProfile(prev => prev ? { ...prev, photoUrl: null, photoThumbnailUrl: null } : null);
+    } catch (err) {
+      console.error("Failed to remove photo:", err);
+    } finally {
+      setIsRemovingPhoto(false);
+    }
   };
 
-  const handleRequestDataExport = () => {
-    console.log("Requesting data export");
-    setDataExportOpen(false);
+  const handleChangePassword = async () => {
+    setPasswordError(null);
+    setPasswordSuccess(false);
+
+    // Validate passwords match
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setPasswordError(t("security.passwordsDoNotMatch"));
+      return;
+    }
+
+    // Validate password length
+    if (passwordData.newPassword.length < 8) {
+      setPasswordError(t("security.passwordTooShort"));
+      return;
+    }
+
+    try {
+      setIsChangingPassword(true);
+      await authService.changePassword({
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+      });
+      setPasswordSuccess(true);
+      setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      setTimeout(() => setPasswordSuccess(false), 3000);
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      setPasswordError(error.message || t("security.changePasswordError"));
+    } finally {
+      setIsChangingPassword(false);
+    }
   };
 
-  const handleEndSession = (sessionId: string) => {
-    console.log("Ending session:", sessionId);
+  const handleCancelPasswordChange = () => {
+    setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+    setPasswordError(null);
   };
 
+  const handleDeactivateAccount = async () => {
+    try {
+      setIsDeactivating(true);
+      await authService.deactivateAccount();
+      await logout();
+      router.push("/login");
+    } catch (err) {
+      console.error("Failed to deactivate account:", err);
+    } finally {
+      setIsDeactivating(false);
+      setDeactivateOpen(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== "DELETE") {
+      setDeleteError(t("dialogs.deleteAccount.confirmError"));
+      return;
+    }
+
+    try {
+      setIsDeleting(true);
+      setDeleteError(null);
+      await authService.deleteAccount(deleteConfirmText);
+      await logout();
+      router.push("/login");
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      setDeleteError(error.message || t("dialogs.deleteAccount.error"));
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -286,7 +354,7 @@ export default function SettingsPage() {
                       <div className="group relative">
                         {profile?.photoUrl ? (
                           <img
-                            src={profile.photoThumbnailUrl || profile.photoUrl}
+                            src={profileService.resolveStorageUrl(profile.photoThumbnailUrl || profile.photoUrl) || undefined}
                             alt={profile.fullName}
                             className="h-20 w-20 rounded-xl object-cover shadow-sm"
                           />
@@ -313,12 +381,16 @@ export default function SettingsPage() {
                           >
                             {t("account.uploadNew")}
                           </button>
-                          <button
-                            onClick={handleRemovePhoto}
-                            className="px-3 py-1.5 text-xs font-medium text-muted-foreground transition-all hover:text-foreground"
-                          >
-                            {t("account.remove")}
-                          </button>
+                          {profile?.photoUrl && (
+                            <button
+                              onClick={handleRemovePhoto}
+                              disabled={isRemovingPhoto}
+                              className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-muted-foreground transition-all hover:text-foreground disabled:opacity-50"
+                            >
+                              {isRemovingPhoto && <Loader2 className="h-3 w-3 animate-spin" />}
+                              {t("account.remove")}
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -405,8 +477,8 @@ export default function SettingsPage() {
                           onChange={(e) => setFormData({ ...formData, researchField: e.target.value || null })}
                           className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
                         >
-                          <option value="">Select a field...</option>
-                          {RESEARCH_FIELDS.map((field) => (
+                          <option value="">{t("account.selectField")}</option>
+                          {researchFields.map((field) => (
                             <option key={field.id} value={field.name}>
                               {field.label}
                             </option>
@@ -429,16 +501,16 @@ export default function SettingsPage() {
                     </div>
 
                     <div className="mt-6 flex items-center justify-end gap-3 border-t border-border pt-6">
-                      <Button variant="ghost" onClick={fetchProfile} disabled={isSaving}>
+                      <Button variant="ghost" onClick={fetchProfile} disabled={isSavingProfile}>
                         {tCommon("cancel")}
                       </Button>
-                      <Button onClick={handleSaveChanges} disabled={isSaving}>
-                        {isSaving ? (
+                      <Button onClick={handleSaveChanges} disabled={isSavingProfile}>
+                        {isSavingProfile ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
                           <Save className="h-4 w-4" />
                         )}
-                        {saveSuccess ? t("account.saved") : t("account.saveChanges")}
+                        {profileSaveSuccess ? t("account.saved") : t("account.saveChanges")}
                       </Button>
                     </div>
                   </div>
@@ -477,13 +549,13 @@ export default function SettingsPage() {
                       </div>
                     </div>
                     <div className="mt-6 flex items-center justify-end border-t border-border pt-6">
-                      <Button onClick={handleSaveIdentifiers} disabled={isSaving}>
-                        {isSaving ? (
+                      <Button onClick={handleSaveIdentifiers} disabled={isSavingIdentifiers}>
+                        {isSavingIdentifiers ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
                           <Save className="h-4 w-4" />
                         )}
-                        {t("account.saveChanges")}
+                        {identifiersSaveSuccess ? t("account.saved") : t("account.saveChanges")}
                       </Button>
                     </div>
                   </div>
@@ -530,56 +602,83 @@ export default function SettingsPage() {
           {/* Security Section */}
           {activeSection === "security" && (
             <>
-              <div className="rounded-xl border border-border bg-card p-6">
-                <h2 className="mb-5 text-lg font-semibold text-foreground">{t("security.password")}</h2>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label htmlFor="current-password" className="text-sm font-medium text-foreground">
-                      {t("security.currentPassword")}
-                    </label>
-                    <div className="relative">
-                      <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <input
-                        id="current-password"
-                        type="password"
-                        className="w-full rounded-lg border border-border bg-background py-2.5 pl-10 pr-3.5 text-sm text-foreground transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
-                      />
+              {/* Password Change - Only show for users with password (not OAuth-only) */}
+              {user?.hasPassword && (
+                <div className="rounded-xl border border-border bg-card p-6">
+                  <h2 className="mb-5 text-lg font-semibold text-foreground">{t("security.password")}</h2>
+                  <div className="space-y-4">
+                    {passwordError && (
+                      <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-500">
+                        {passwordError}
+                      </div>
+                    )}
+                    {passwordSuccess && (
+                      <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-500">
+                        {t("security.passwordChanged")}
+                      </div>
+                    )}
+                    <div className="space-y-2">
+                      <label htmlFor="current-password" className="text-sm font-medium text-foreground">
+                        {t("security.currentPassword")}
+                      </label>
+                      <div className="relative">
+                        <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <input
+                          id="current-password"
+                          type="password"
+                          value={passwordData.currentPassword}
+                          onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                          placeholder="••••••••"
+                          className="w-full rounded-lg border border-border bg-background py-2.5 pl-10 pr-3.5 text-sm text-foreground placeholder:text-muted-foreground/50 transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label htmlFor="new-password" className="text-sm font-medium text-foreground">
+                        {t("security.newPassword")}
+                      </label>
+                      <div className="relative">
+                        <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <input
+                          id="new-password"
+                          type="password"
+                          value={passwordData.newPassword}
+                          onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                          placeholder="••••••••"
+                          className="w-full rounded-lg border border-border bg-background py-2.5 pl-10 pr-3.5 text-sm text-foreground placeholder:text-muted-foreground/50 transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label htmlFor="confirm-password" className="text-sm font-medium text-foreground">
+                        {t("security.confirmPassword")}
+                      </label>
+                      <div className="relative">
+                        <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <input
+                          id="confirm-password"
+                          type="password"
+                          value={passwordData.confirmPassword}
+                          onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                          placeholder="••••••••"
+                          className="w-full rounded-lg border border-border bg-background py-2.5 pl-10 pr-3.5 text-sm text-foreground placeholder:text-muted-foreground/50 transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
+                        />
+                      </div>
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <label htmlFor="new-password" className="text-sm font-medium text-foreground">
-                      {t("security.newPassword")}
-                    </label>
-                    <div className="relative">
-                      <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <input
-                        id="new-password"
-                        type="password"
-                        className="w-full rounded-lg border border-border bg-background py-2.5 pl-10 pr-3.5 text-sm text-foreground transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <label htmlFor="confirm-password" className="text-sm font-medium text-foreground">
-                      {t("security.confirmPassword")}
-                    </label>
-                    <div className="relative">
-                      <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <input
-                        id="confirm-password"
-                        type="password"
-                        className="w-full rounded-lg border border-border bg-background py-2.5 pl-10 pr-3.5 text-sm text-foreground transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
-                      />
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-6 flex items-center justify-end gap-3 border-t border-border pt-6">
-                  <Button variant="ghost">{tCommon("cancel")}</Button>
-                  <Button onClick={handleSaveChanges}>
-                    {saveSuccess ? t("security.updated") : t("security.updatePassword")}
+                  <div className="mt-6 flex items-center justify-end gap-3 border-t border-border pt-6">
+                    <Button variant="ghost" onClick={handleCancelPasswordChange} disabled={isChangingPassword}>
+                      {tCommon("cancel")}
+                    </Button>
+                  <Button onClick={handleChangePassword} disabled={isChangingPassword}>
+                    {isChangingPassword ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : null}
+                    {passwordSuccess ? t("security.updated") : t("security.updatePassword")}
                   </Button>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <TwoFactorSetup
                 isEnabled={twoFactorEnabled}
@@ -587,221 +686,6 @@ export default function SettingsPage() {
               />
 
               <ExternalLogins />
-
-              <div className="rounded-xl border border-border bg-card p-6">
-                <h2 className="mb-4 text-lg font-semibold text-foreground">{t("security.securityOptions")}</h2>
-                <div className="space-y-4">
-                  <div className="flex items-start justify-between py-3">
-                    <div className="flex-1">
-                      <h3 className="mb-1 text-sm font-medium text-foreground">{t("security.sessionTimeout")}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {t("security.sessionTimeoutDesc")}
-                      </p>
-                    </div>
-                    <Switch checked={sessionTimeout} onCheckedChange={setSessionTimeout} />
-                  </div>
-                  <div className="border-t border-border pt-3">
-                    <button
-                      onClick={() => setSessionsOpen(true)}
-                      className="flex items-center gap-2 text-sm font-medium text-foreground transition-colors hover:text-teal"
-                    >
-                      <Key className="h-4 w-4" />
-                      {t("security.viewActiveSessions")}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* Notifications Section */}
-          {activeSection === "notifications" && (
-            <>
-              <div className="rounded-xl border border-border bg-card p-6">
-                <h2 className="mb-5 text-lg font-semibold text-foreground">{t("notifications.emailNotifications")}</h2>
-                <div className="space-y-5">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="mb-1 text-sm font-medium text-foreground">{t("notifications.enableEmail")}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {t("notifications.enableEmailDesc")}
-                      </p>
-                    </div>
-                    <Switch checked={emailNotifications} onCheckedChange={setEmailNotifications} />
-                  </div>
-
-                  {emailNotifications && (
-                    <div className="space-y-4 border-l-2 border-border pl-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h3 className="mb-1 text-sm font-medium text-foreground">{t("notifications.studyUpdates")}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {t("notifications.studyUpdatesDesc")}
-                          </p>
-                        </div>
-                        <Switch checked={studyUpdates} onCheckedChange={setStudyUpdates} />
-                      </div>
-
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h3 className="mb-1 text-sm font-medium text-foreground">{t("notifications.analysisCompletion")}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {t("notifications.analysisCompletionDesc")}
-                          </p>
-                        </div>
-                        <Switch checked={analysisComplete} onCheckedChange={setAnalysisComplete} />
-                      </div>
-
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h3 className="mb-1 text-sm font-medium text-foreground">{t("notifications.teamInvitations")}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {t("notifications.teamInvitationsDesc")}
-                          </p>
-                        </div>
-                        <Switch checked={teamInvites} onCheckedChange={setTeamInvites} />
-                      </div>
-
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h3 className="mb-1 text-sm font-medium text-foreground">{t("notifications.weeklyDigest")}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {t("notifications.weeklyDigestDesc")}
-                          </p>
-                        </div>
-                        <Switch checked={weeklyDigest} onCheckedChange={setWeeklyDigest} />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-border bg-card p-6">
-                <h2 className="mb-5 text-lg font-semibold text-foreground">{t("notifications.marketing")}</h2>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h3 className="mb-1 text-sm font-medium text-foreground">{t("notifications.productUpdates")}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {t("notifications.productUpdatesDesc")}
-                    </p>
-                  </div>
-                  <Switch checked={marketingEmails} onCheckedChange={setMarketingEmails} />
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* Preferences Section */}
-          {activeSection === "preferences" && (
-            <>
-              <div className="rounded-xl border border-border bg-card p-6">
-                <h2 className="mb-5 text-lg font-semibold text-foreground">{t("preferences.appearance")}</h2>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">{t("preferences.theme")}</label>
-                    <div className="grid grid-cols-3 gap-3">
-                      <button
-                        onClick={() => setSelectedTheme("light")}
-                        className={cn(
-                          "rounded-lg border-2 bg-background p-4 text-left transition-all hover:bg-muted/20",
-                          selectedTheme === "light" ? "border-teal" : "border-border"
-                        )}
-                      >
-                        <div className="mb-2 flex items-center gap-2">
-                          <Sun className="h-4 w-4 text-amber-500" />
-                          <span className="text-sm font-medium text-foreground">{t("preferences.light")}</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground">{t("preferences.lightDesc")}</p>
-                      </button>
-                      <button
-                        onClick={() => setSelectedTheme("dark")}
-                        className={cn(
-                          "rounded-lg border-2 bg-background p-4 text-left transition-all hover:bg-muted/20",
-                          selectedTheme === "dark" ? "border-teal" : "border-border"
-                        )}
-                      >
-                        <div className="mb-2 flex items-center gap-2">
-                          <Moon className="h-4 w-4 text-violet-500" />
-                          <span className="text-sm font-medium text-foreground">{t("preferences.dark")}</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground">{t("preferences.darkDesc")}</p>
-                      </button>
-                      <button
-                        onClick={() => setSelectedTheme("system")}
-                        className={cn(
-                          "rounded-lg border-2 bg-background p-4 text-left transition-all hover:bg-muted/20",
-                          selectedTheme === "system" ? "border-teal" : "border-border"
-                        )}
-                      >
-                        <div className="mb-2 flex items-center gap-2">
-                          <Monitor className="h-4 w-4 text-blue-500" />
-                          <span className="text-sm font-medium text-foreground">{t("preferences.system")}</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground">{t("preferences.systemDesc")}</p>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-border bg-card p-6">
-                <h2 className="mb-5 text-lg font-semibold text-foreground">{t("preferences.dataDisplay")}</h2>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label htmlFor="timezone" className="text-sm font-medium text-foreground">
-                      {t("preferences.timezone")}
-                    </label>
-                    <select
-                      id="timezone"
-                      className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
-                    >
-                      <option>Pacific Time (PT)</option>
-                      <option>Eastern Time (ET)</option>
-                      <option>Central Time (CT)</option>
-                      <option>Mountain Time (MT)</option>
-                      <option>UTC</option>
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <label htmlFor="date-format" className="text-sm font-medium text-foreground">
-                      {t("preferences.dateFormat")}
-                    </label>
-                    <select
-                      id="date-format"
-                      className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
-                    >
-                      <option>MM/DD/YYYY</option>
-                      <option>DD/MM/YYYY</option>
-                      <option>YYYY-MM-DD</option>
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <label htmlFor="items-per-page" className="text-sm font-medium text-foreground">
-                      {t("preferences.itemsPerPage")}
-                    </label>
-                    <select
-                      id="items-per-page"
-                      className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
-                    >
-                      <option>10</option>
-                      <option>25</option>
-                      <option>50</option>
-                      <option>100</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-border bg-card p-6">
-                <h2 className="mb-5 text-lg font-semibold text-foreground">{t("preferences.dataExport")}</h2>
-                <p className="mb-4 text-sm text-muted-foreground">
-                  {t("preferences.dataExportDesc")}
-                </p>
-                <Button variant="outline" onClick={() => setDataExportOpen(true)}>
-                  <Download className="h-4 w-4" />
-                  {t("preferences.requestExport")}
-                </Button>
-              </div>
             </>
           )}
 
@@ -873,86 +757,6 @@ export default function SettingsPage() {
             </>
           )}
 
-          {/* Collaboration Section */}
-          {activeSection === "collaboration" && (
-            <>
-              <div className="rounded-xl border border-border bg-card p-6">
-                <h2 className="mb-5 text-lg font-semibold text-foreground">{t("collaboration.settings")}</h2>
-                <div className="space-y-5">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="mb-1 text-sm font-medium text-foreground">{t("collaboration.autoApprove")}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {t("collaboration.autoApproveDesc")}
-                      </p>
-                    </div>
-                    <Switch checked={autoCollabApproval} onCheckedChange={setAutoCollabApproval} />
-                  </div>
-
-                  <div className="border-t border-border pt-4">
-                    <div className="space-y-2">
-                      <label htmlFor="default-role" className="text-sm font-medium text-foreground">
-                        {t("collaboration.defaultRole")}
-                      </label>
-                      <select
-                        id="default-role"
-                        className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
-                      >
-                        <option>{t("collaboration.roles.viewerReadOnly")}</option>
-                        <option>{t("collaboration.roles.collaborator")}</option>
-                        <option>{t("collaboration.roles.researchScientist")}</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-border bg-card p-6">
-                <h2 className="mb-5 text-lg font-semibold text-foreground">{t("collaboration.visibility")}</h2>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label htmlFor="profile-visibility" className="text-sm font-medium text-foreground">
-                      {t("collaboration.profileVisibility")}
-                    </label>
-                    <select
-                      id="profile-visibility"
-                      className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
-                    >
-                      <option>{t("collaboration.profileOptions.public")}</option>
-                      <option>{t("collaboration.profileOptions.institutionOnly")}</option>
-                      <option>{t("collaboration.profileOptions.private")}</option>
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <label htmlFor="study-visibility" className="text-sm font-medium text-foreground">
-                      {t("collaboration.studyVisibility")}
-                    </label>
-                    <select
-                      id="study-visibility"
-                      className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
-                    >
-                      <option>{t("collaboration.studyOptions.private")}</option>
-                      <option>{t("collaboration.studyOptions.institution")}</option>
-                      <option>{t("collaboration.studyOptions.public")}</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-border bg-card p-6">
-                <h2 className="mb-4 text-lg font-semibold text-foreground">{t("collaboration.blockedUsers")}</h2>
-                <p className="mb-4 text-sm text-muted-foreground">
-                  {t("collaboration.blockedUsersDesc")}
-                </p>
-                <button
-                  onClick={() => setBlockedUsersOpen(true)}
-                  className="text-sm font-medium text-foreground transition-colors hover:text-teal"
-                >
-                  {t("collaboration.viewBlocked")} ({mockBlockedUsers.length})
-                </button>
-              </div>
-            </>
-          )}
         </div>
       </div>
 
@@ -990,159 +794,30 @@ export default function SettingsPage() {
               )}
             </div>
           </div>
+          {photoError && (
+            <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-500">
+              {photoError}
+            </div>
+          )}
           <DialogFooter>
             <button
               onClick={() => {
                 setSelectedPhoto(null);
+                setPhotoError(null);
                 setUploadPhotoOpen(false);
               }}
-              className="rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-muted"
+              disabled={isUploadingPhoto}
+              className="rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-muted disabled:opacity-50"
             >
               {tCommon("cancel")}
             </button>
             <button
               onClick={handleUploadPhoto}
-              disabled={!selectedPhoto}
-              className="rounded-lg bg-teal px-4 py-2.5 text-sm font-medium text-white hover:bg-teal/90 disabled:opacity-50"
+              disabled={!selectedPhoto || isUploadingPhoto}
+              className="flex items-center gap-2 rounded-lg bg-teal px-4 py-2.5 text-sm font-medium text-white hover:bg-teal/90 disabled:opacity-50"
             >
+              {isUploadingPhoto && <Loader2 className="h-4 w-4 animate-spin" />}
               {t("dialogs.uploadPhoto.upload")}
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Active Sessions Dialog */}
-      <Dialog open={sessionsOpen} onOpenChange={setSessionsOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>{t("dialogs.sessions.title")}</DialogTitle>
-            <DialogDescription>
-              {t("dialogs.sessions.description")}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3 py-4">
-            {mockSessions.map((session) => (
-              <div
-                key={session.id}
-                className="flex items-center justify-between rounded-lg border border-border p-4"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="rounded-lg bg-muted p-2">
-                    <Laptop className="h-4 w-4 text-foreground" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{session.device}</p>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <MapPin className="h-3 w-3" />
-                      {session.location}
-                      <span>•</span>
-                      <Clock className="h-3 w-3" />
-                      {session.lastActive}
-                    </div>
-                  </div>
-                </div>
-                {session.current ? (
-                  <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-500">
-                    {t("dialogs.sessions.current")}
-                  </span>
-                ) : (
-                  <button
-                    onClick={() => handleEndSession(session.id)}
-                    className="text-xs font-medium text-red-500 hover:text-red-500/80"
-                  >
-                    {t("dialogs.sessions.endSession")}
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-          <DialogFooter>
-            <button
-              onClick={() => setSessionsOpen(false)}
-              className="rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-muted"
-            >
-              {t("dialogs.sessions.done")}
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Data Export Dialog */}
-      <Dialog open={dataExportOpen} onOpenChange={setDataExportOpen}>
-        <DialogContent className="sm:max-w-[420px]">
-          <DialogHeader>
-            <DialogTitle>{t("dialogs.dataExport.title")}</DialogTitle>
-            <DialogDescription>
-              {t("dialogs.dataExport.description")}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <div className="rounded-lg border border-border bg-muted/30 p-4">
-              <p className="text-sm text-muted-foreground">
-                {t("dialogs.dataExport.includesTitle")}
-              </p>
-              <ul className="mt-2 space-y-1 text-sm text-foreground">
-                <li>• {t("dialogs.dataExport.profileInfo")}</li>
-                <li>• {t("dialogs.dataExport.studyData")}</li>
-                <li>• {t("dialogs.dataExport.analysisResults")}</li>
-                <li>• {t("dialogs.dataExport.activityLogs")}</li>
-              </ul>
-            </div>
-          </div>
-          <DialogFooter>
-            <button
-              onClick={() => setDataExportOpen(false)}
-              className="rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-muted"
-            >
-              {tCommon("cancel")}
-            </button>
-            <button
-              onClick={handleRequestDataExport}
-              className="rounded-lg bg-teal px-4 py-2.5 text-sm font-medium text-white hover:bg-teal/90"
-            >
-              {t("dialogs.dataExport.requestExport")}
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Blocked Users Dialog */}
-      <Dialog open={blockedUsersOpen} onOpenChange={setBlockedUsersOpen}>
-        <DialogContent className="sm:max-w-[420px]">
-          <DialogHeader>
-            <DialogTitle>{t("dialogs.blockedUsers.title")}</DialogTitle>
-            <DialogDescription>
-              {t("dialogs.blockedUsers.description")}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            {mockBlockedUsers.length === 0 ? (
-              <div className="text-center py-8">
-                <Users className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">
-                  {t("dialogs.blockedUsers.noBlockedUsers")}
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {mockBlockedUsers.map((user) => (
-                  <div key={user.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div>
-                      <p className="font-medium">{user.name}</p>
-                      <p className="text-xs text-muted-foreground">{user.email}</p>
-                    </div>
-                    <button className="text-xs text-teal hover:text-teal/80">{t("dialogs.blockedUsers.unblock")}</button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <button
-              onClick={() => setBlockedUsersOpen(false)}
-              className="rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-muted"
-            >
-              {t("dialogs.blockedUsers.done")}
             </button>
           </DialogFooter>
         </DialogContent>
@@ -1168,17 +843,17 @@ export default function SettingsPage() {
           <DialogFooter>
             <button
               onClick={() => setDeactivateOpen(false)}
-              className="rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-muted"
+              disabled={isDeactivating}
+              className="rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-muted disabled:opacity-50"
             >
               {tCommon("cancel")}
             </button>
             <button
-              onClick={() => {
-                console.log("Deactivating account");
-                setDeactivateOpen(false);
-              }}
-              className="rounded-lg border border-red-500 px-4 py-2.5 text-sm font-medium text-red-500 hover:bg-red-500/10"
+              onClick={handleDeactivateAccount}
+              disabled={isDeactivating}
+              className="flex items-center gap-2 rounded-lg border border-red-500 px-4 py-2.5 text-sm font-medium text-red-500 hover:bg-red-500/10 disabled:opacity-50"
             >
+              {isDeactivating && <Loader2 className="h-4 w-4 animate-spin" />}
               {t("dialogs.deactivate.confirm")}
             </button>
           </DialogFooter>
@@ -1213,26 +888,37 @@ export default function SettingsPage() {
                 </label>
                 <input
                   type="text"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
                   className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm"
                   placeholder={t("dialogs.deleteAccount.confirmPlaceholder")}
                 />
               </div>
+              {deleteError && (
+                <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-500">
+                  {deleteError}
+                </div>
+              )}
             </div>
           </div>
           <DialogFooter>
             <button
-              onClick={() => setDeleteAccountOpen(false)}
-              className="rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-muted"
+              onClick={() => {
+                setDeleteAccountOpen(false);
+                setDeleteConfirmText("");
+                setDeleteError(null);
+              }}
+              disabled={isDeleting}
+              className="rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-muted disabled:opacity-50"
             >
               {tCommon("cancel")}
             </button>
             <button
-              onClick={() => {
-                console.log("Deleting account");
-                setDeleteAccountOpen(false);
-              }}
-              className="rounded-lg bg-red-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-500/90"
+              onClick={handleDeleteAccount}
+              disabled={isDeleting || deleteConfirmText !== "DELETE"}
+              className="flex items-center gap-2 rounded-lg bg-red-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-500/90 disabled:opacity-50"
             >
+              {isDeleting && <Loader2 className="h-4 w-4 animate-spin" />}
               {t("dialogs.deleteAccount.confirm")}
             </button>
           </DialogFooter>

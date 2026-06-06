@@ -10,20 +10,22 @@ const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
 // GitHub OAuth configuration
 const GITHUB_CLIENT_ID = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID || "";
 
-// Get redirect URI with current locale
+// Get redirect URI (fixed URL without locale for GitHub OAuth compatibility)
 function getGitHubRedirectUri(): string {
   if (typeof window === "undefined") return "";
 
-  // Extract locale from current path (e.g., /es/login -> es)
-  const pathParts = window.location.pathname.split("/");
-  const locale = pathParts[1] || "en"; // Default to 'en' if no locale
-
-  return `${window.location.origin}/${locale}/auth/callback/github`;
+  // Use a fixed callback URL - GitHub only allows one exact callback URL
+  return `${window.location.origin}/auth/callback/github`;
 }
 
 /**
  * Initialize Google Identity Services and trigger sign-in.
- * Returns the ID token on success.
+ * Returns the access token on success.
+ *
+ * Note: We use the oauth2 popup flow directly instead of One Tap because:
+ * 1. One Tap can be silently blocked by browser settings
+ * 2. Fallback to popup from One Tap callback causes popup blockers to trigger
+ * 3. Direct popup from user click is more reliable
  */
 export async function signInWithGoogle(): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -38,50 +40,53 @@ export async function signInWithGoogle(): Promise<string> {
       script.src = "https://accounts.google.com/gsi/client";
       script.async = true;
       script.defer = true;
-      script.onload = () => initializeGoogleSignIn(resolve, reject);
+      script.onload = () => triggerGooglePopupSignIn(resolve, reject);
       script.onerror = () => reject(new Error("Failed to load Google Identity Services"));
       document.body.appendChild(script);
     } else {
-      initializeGoogleSignIn(resolve, reject);
+      triggerGooglePopupSignIn(resolve, reject);
     }
   });
 }
 
-function initializeGoogleSignIn(
+/**
+ * Trigger Google OAuth popup directly.
+ * This must be called synchronously from a user click to avoid popup blockers.
+ */
+function triggerGooglePopupSignIn(
   resolve: (token: string) => void,
   reject: (error: Error) => void
 ) {
   try {
-    window.google.accounts.id.initialize({
+    // Use the oauth2 token client for popup-based flow
+    const client = window.google.accounts.oauth2.initTokenClient({
       client_id: GOOGLE_CLIENT_ID,
-      callback: (response: { credential: string }) => {
-        if (response.credential) {
-          resolve(response.credential);
+      scope: "email profile openid",
+      callback: (tokenResponse: { access_token?: string; error?: string; error_description?: string }) => {
+        if (tokenResponse.error) {
+          // Handle user cancellation gracefully
+          if (tokenResponse.error === "access_denied" || tokenResponse.error === "popup_closed_by_user") {
+            reject(new Error("Authentication cancelled"));
+          } else {
+            reject(new Error(tokenResponse.error_description || tokenResponse.error || "Failed to get Google access token"));
+          }
+        } else if (tokenResponse.access_token) {
+          resolve(tokenResponse.access_token);
         } else {
-          reject(new Error("No credential received from Google"));
+          reject(new Error("No access token received from Google"));
         }
       },
-      auto_select: false,
-      cancel_on_tap_outside: true,
+      error_callback: (error: { type: string; message?: string }) => {
+        if (error.type === "popup_closed" || error.type === "popup_failed_to_open") {
+          reject(new Error("Authentication cancelled"));
+        } else {
+          reject(new Error(error.message || "Google sign-in failed"));
+        }
+      },
     });
 
-    // Trigger the One Tap prompt
-    window.google.accounts.id.prompt((notification: { isNotDisplayed: () => boolean; isSkippedMoment: () => boolean }) => {
-      if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-        // Fall back to popup
-        window.google.accounts.oauth2.initTokenClient({
-          client_id: GOOGLE_CLIENT_ID,
-          scope: "email profile openid",
-          callback: (tokenResponse: { access_token?: string; error?: string }) => {
-            if (tokenResponse.access_token) {
-              resolve(tokenResponse.access_token);
-            } else {
-              reject(new Error(tokenResponse.error || "Failed to get Google access token"));
-            }
-          },
-        }).requestAccessToken();
-      }
-    });
+    // Request access token - this opens the popup
+    client.requestAccessToken();
   } catch (error) {
     reject(error instanceof Error ? error : new Error("Google sign-in failed"));
   }
@@ -183,7 +188,8 @@ declare global {
           initTokenClient: (config: {
             client_id: string;
             scope: string;
-            callback: (response: { access_token?: string; error?: string }) => void;
+            callback: (response: { access_token?: string; error?: string; error_description?: string }) => void;
+            error_callback?: (error: { type: string; message?: string }) => void;
           }) => { requestAccessToken: () => void };
         };
       };

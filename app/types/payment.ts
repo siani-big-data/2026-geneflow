@@ -24,7 +24,27 @@ export type CardBrand =
 export type PaymentMethodStatus = "Active" | "Expired" | "Failed";
 
 // =============================================================================
-// RESPONSE TYPES
+// API RESPONSE TYPES (from backend)
+// =============================================================================
+
+/** Raw response from the backend API */
+export interface PaymentMethodApiResponse {
+  id: string;
+  brand: string;
+  last4: string;
+  expiryMonth: number;
+  expiryYear: number;
+  isDefault: boolean;
+  createdAt: string;
+}
+
+/** Setup intent response from backend */
+export interface SetupIntentApiResponse {
+  clientSecret: string;
+}
+
+// =============================================================================
+// FRONTEND TYPES (used by components)
 // =============================================================================
 
 export interface CardDetails {
@@ -44,14 +64,10 @@ export interface BillingAddress {
 
 export interface PaymentMethod {
   id: string;
-  userId: string;
   card: CardDetails;
-  billingAddress: BillingAddress | null;
-  status: PaymentMethodStatus;
   isDefault: boolean;
   canCharge: boolean;
   createdAt: string;
-  modifiedAt: string | null;
 }
 
 export interface PaymentMethodSummary {
@@ -65,7 +81,61 @@ export interface PaymentMethodSummary {
 
 export interface SetupIntent {
   clientSecret: string;
-  setupIntentId: string;
+}
+
+// =============================================================================
+// HELPER FUNCTIONS
+// =============================================================================
+
+/** Format expiration date as MM/YY */
+export function formatExpiration(month: number, year: number): string {
+  const monthStr = month.toString().padStart(2, "0");
+  const yearStr = year.toString().slice(-2);
+  return `${monthStr}/${yearStr}`;
+}
+
+/** Check if card is expired */
+export function isCardExpired(month: number, year: number): boolean {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+  return year < currentYear || (year === currentYear && month < currentMonth);
+}
+
+/** Transform API response to PaymentMethodSummary */
+export function toPaymentMethodSummary(
+  response: PaymentMethodApiResponse
+): PaymentMethodSummary {
+  return {
+    id: response.id,
+    cardLast4: response.last4,
+    cardBrand: response.brand,
+    formattedExpiration: formatExpiration(response.expiryMonth, response.expiryYear),
+    isDefault: response.isDefault,
+    canCharge: !isCardExpired(response.expiryMonth, response.expiryYear),
+  };
+}
+
+/** Transform API response to full PaymentMethod */
+export function toPaymentMethod(
+  response: PaymentMethodApiResponse
+): PaymentMethod {
+  const expired = isCardExpired(response.expiryMonth, response.expiryYear);
+  return {
+    id: response.id,
+    card: {
+      last4: response.last4,
+      brand: response.brand,
+      expMonth: response.expiryMonth,
+      expYear: response.expiryYear,
+      formattedExpiration: formatExpiration(response.expiryMonth, response.expiryYear),
+      displayName: `${response.brand.toUpperCase()} ****${response.last4}`,
+      isExpired: expired,
+    },
+    isDefault: response.isDefault,
+    canCharge: !expired,
+    createdAt: response.createdAt,
+  };
 }
 
 // =============================================================================

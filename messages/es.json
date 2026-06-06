@@ -34,6 +34,7 @@
     "of": "de",
     "items": "elementos",
     "retry": "Reintentar",
+    "viewAll": "Ver Todo",
     "status": {
       "draft": "Borrador",
       "active": "Activo",
@@ -54,6 +55,26 @@
       "expired": "Expirado",
       "accepted": "Aceptado",
       "declined": "Rechazado"
+    },
+    "researchFields": {
+      "Genomics": "Genómica",
+      "Proteomics": "Proteómica",
+      "Transcriptomics": "Transcriptómica",
+      "Bioinformatics": "Bioinformática",
+      "MolecularBiology": "Biología Molecular",
+      "CellBiology": "Biología Celular",
+      "Genetics": "Genética",
+      "Biochemistry": "Bioquímica",
+      "Microbiology": "Microbiología",
+      "Immunology": "Inmunología",
+      "Neuroscience": "Neurociencia",
+      "PlantBiology": "Biología Vegetal",
+      "MarineBiology": "Biología Marina",
+      "Ecology": "Ecología",
+      "EvolutionaryBiology": "Biología Evolutiva",
+      "ComputationalBiology": "Biología Computacional",
+      "SyntheticBiology": "Biología Sintética",
+      "Other": "Otro"
     }
   },
   "navigation": {
@@ -68,6 +89,91 @@
     "logout": "Cerrar sesión",
     "expandSidebar": "Expandir barra lateral",
     "collapseSidebar": "Colapsar barra lateral"
+  },
+  "activity": {
+    "title": "Mi actividad",
+    "description": "Eventos recientes de tus estudios, trazas y pipelines.",
+    "locale": "es",
+    "loadMore": "Cargar más",
+    "endOfFeed": "Eso es toda tu actividad reciente.",
+    "retry": "Reintentar",
+    "refresh": "Actualizar",
+    "error": "No hemos podido cargar tu actividad. Inténtalo de nuevo.",
+    "inStudy": "en el estudio",
+    "empty": {
+      "title": "Aún no hay actividad",
+      "description": "Crea un estudio o sube una traza para empezar a ver eventos aquí."
+    },
+    "studyTimeline": {
+      "title": "Cronología del estudio",
+      "description": "Eventos cronológicos de este estudio (actividad de miembros y pública).",
+      "empty": {
+        "title": "Aún no hay actividad en este estudio",
+        "description": "Las acciones sobre este estudio — subidas de trazas, nuevos miembros, ejecuciones de pipelines — aparecerán aquí."
+      }
+    },
+    "verbs": {
+      "Created": "creó",
+      "Updated": "actualizó",
+      "Deleted": "eliminó",
+      "Uploaded": "subió",
+      "Started": "inició",
+      "Completed": "completó",
+      "Failed": "falló",
+      "Cancelled": "canceló",
+      "Joined": "se unió a",
+      "Left": "dejó",
+      "Invited": "invitó a",
+      "Published": "publicó",
+      "Archived": "archivó",
+      "Registered": "se registró",
+      "Applied": "aplicó",
+      "Undone": "deshizo",
+      "Requested": "solicitó"
+    },
+    "objects": {
+      "Study": "un estudio",
+      "Trace": "una traza",
+      "Pipeline": "un pipeline",
+      "PipelineExecution": "una ejecución de pipeline",
+      "Profile": "un perfil",
+      "User": "un usuario",
+      "Annotation": "una anotación",
+      "SequenceEdit": "una edición de secuencia",
+      "TraceTrim": "un recorte",
+      "Analysis": "un análisis",
+      "Alignment": "un alineamiento",
+      "Member": "un miembro",
+      "Comment": "un comentario",
+      "Subscription": "una suscripción",
+      "Plan": "un plan"
+    }
+  },
+  "invitations": {
+    "trayTitle": "Invitaciones",
+    "trayAriaLabel": "Abrir invitaciones",
+    "trayBadge": "{count, plural, one {# invitación pendiente} other {# invitaciones pendientes}}",
+    "loading": "Cargando invitaciones…",
+    "empty": "No tienes invitaciones pendientes.",
+    "loadError": "No se pudieron cargar tus invitaciones.",
+    "card": {
+      "invitedBy": "Invitado por {name}",
+      "role": "{role}",
+      "expires": "Caduca {date}",
+      "expired": "Caducada"
+    },
+    "actions": {
+      "accept": "Aceptar",
+      "accepting": "Aceptando…",
+      "decline": "Rechazar",
+      "declining": "Rechazando…"
+    },
+    "feedback": {
+      "accepted": "Te has unido a {study}.",
+      "declined": "Invitación rechazada.",
+      "acceptError": "No se pudo aceptar la invitación.",
+      "declineError": "No se pudo rechazar la invitación."
+    }
   },
   "header": {
     "searchPlaceholder": "Buscar estudios, muestras o análisis...",
@@ -110,7 +216,24 @@
     "agreeToTerms": "Acepto los",
     "termsOfService": "Términos de Servicio",
     "privacyPolicy": "Política de Privacidad",
-    "resetPassword": "Restablecer contraseña",
+    "resetPassword": {
+      "title": "Crear Nueva Contraseña",
+      "description": "Ingresa tu nueva contraseña a continuación.",
+      "newPassword": "Nueva Contraseña",
+      "newPasswordPlaceholder": "Ingresa tu nueva contraseña",
+      "confirmPassword": "Confirmar Nueva Contraseña",
+      "confirmPasswordPlaceholder": "Confirma tu nueva contraseña",
+      "resetButton": "Restablecer Contraseña",
+      "resetting": "Restableciendo...",
+      "successTitle": "Contraseña Restablecida",
+      "successDescription": "Tu contraseña ha sido restablecida. Ahora puedes iniciar sesión con tu nueva contraseña.",
+      "invalidToken": "Token de restablecimiento inválido o faltante",
+      "tokenExpired": "Este enlace de restablecimiento ha expirado. Por favor solicita uno nuevo.",
+      "error": "Error al restablecer la contraseña. Por favor intenta de nuevo.",
+      "invalidLinkTitle": "Enlace Inválido",
+      "invalidLinkDescription": "Este enlace de restablecimiento de contraseña es inválido o ha expirado.",
+      "requestNewLink": "Solicitar Nuevo Enlace"
+    },
     "resetPasswordDescription": "Ingresa tu correo electrónico y te enviaremos instrucciones para restablecer tu contraseña.",
     "sendResetLink": "Enviar enlace de restablecimiento",
     "sendingResetLink": "Enviando...",
@@ -122,13 +245,32 @@
     "verifying": "Verificando...",
     "resendCode": "Reenviar código",
     "codeSentSuccess": "Código de verificación enviado exitosamente",
+    "registrationSuccess": {
+      "title": "Revisa tu correo",
+      "subtitle": "Hemos enviado un enlace de verificación a",
+      "description": "Por favor, haz clic en el enlace del correo para activar tu cuenta. El enlace expirará en 24 horas.",
+      "backToLogin": "Volver al inicio de sesión",
+      "didntReceive": "¿No recibiste el correo?",
+      "resendVerification": "Reenviar correo de verificación",
+      "resending": "Enviando...",
+      "resent": "¡Correo enviado!",
+      "checkSpam": "Revisa tu carpeta de spam si no lo ves en tu bandeja de entrada.",
+      "wrongEmail": "¿Correo incorrecto?",
+      "tryAgain": "Registrarse de nuevo"
+    },
     "validation": {
       "emailRequired": "Por favor ingresa una dirección de correo válida",
       "passwordRequired": "La contraseña debe tener al menos 8 caracteres",
       "passwordsMatch": "Las contraseñas deben coincidir",
+      "passwordsMustMatch": "Las contraseñas no coinciden",
       "nameRequired": "Por favor ingresa tu nombre",
       "termsRequired": "Debes aceptar los términos y condiciones",
-      "invalidCode": "Por favor ingresa un código válido de 6 dígitos"
+      "invalidCode": "Por favor ingresa un código válido de 6 dígitos",
+      "passwordRequirements": "La contraseña debe contener:",
+      "minLength": "Al menos 8 caracteres",
+      "uppercase": "Una letra mayúscula",
+      "lowercase": "Una letra minúscula",
+      "number": "Un número"
     }
   },
   "dashboard": {
@@ -150,6 +292,22 @@
       "tracesProcessed": "Trazas Procesadas",
       "qualityScore": "Puntuación de Calidad"
     },
+    "pipelinesShortcut": {
+      "title": "Pipelines de análisis",
+      "description": "Crea, configura y ejecuta pipelines en tus estudios.",
+      "action": "Ver pipelines"
+    },
+    "recentPipelines": {
+      "title": "Pipelines recientes",
+      "description": "Últimas ejecuciones en tus estudios",
+      "viewAll": "Ver todos",
+      "empty": {
+        "title": "Sin ejecuciones aún",
+        "description": "Cuando ejecutes un pipeline aparecerá aquí."
+      },
+      "steps": "{completed}/{total} pasos",
+      "duration": "{seconds}s"
+    },
     "recentStudies": {
       "title": "Estudios Recientes",
       "description": "Estudios de secuenciación activos y actualizados recientemente",
@@ -158,7 +316,15 @@
       "traces": "Trazas",
       "quality": "Calidad",
       "updated": "Actualizado",
-      "progress": "Progreso"
+      "progress": "Progreso",
+      "members": "Miembros",
+      "field": "Campo",
+      "views": "Vistas",
+      "empty": {
+        "title": "Sin estudios aún",
+        "description": "Crea tu primer estudio para comenzar a analizar datos de secuenciación.",
+        "createFirst": "Crear Estudio"
+      }
     },
     "pipelines": {
       "title": "Pipelines de Procesamiento",
@@ -184,6 +350,7 @@
       "minutesAgo": "hace {count} minutos",
       "hourAgo": "hace 1 hora",
       "hoursAgo": "hace {count} horas",
+      "daysAgo": "hace {count} días",
       "minAgo": "hace {count} min"
     }
   },
@@ -213,8 +380,13 @@
       "viewDetails": "Ver Detalles",
       "editStudy": "Editar Estudio",
       "duplicate": "Duplicar",
+      "duplicateFailed": "Error al duplicar el estudio",
       "share": "Compartir",
+      "linkCopied": "Enlace copiado al portapapeles",
+      "copyFailed": "Error al copiar el enlace",
       "archive": "Archivar",
+      "studyArchived": "Estudio archivado exitosamente",
+      "archiveFailed": "Error al archivar el estudio",
       "delete": "Eliminar"
     },
     "export": {
@@ -231,6 +403,11 @@
       "title": "Eliminar Estudio",
       "description": "¿Estás seguro de que deseas eliminar \"{name}\"? Esta acción no se puede deshacer.",
       "confirm": "Eliminar Estudio"
+    },
+    "archive": {
+      "title": "Archivar Estudio",
+      "description": "¿Estás seguro de que deseas archivar \"{name}\"? Podrás restaurarlo más tarde desde los estudios archivados.",
+      "confirm": "Archivar Estudio"
     },
     "create": {
       "title": "Crear Nuevo Estudio",
@@ -281,17 +458,43 @@
     },
     "papers": {
       "title": "Artículos Científicos",
-      "description": "Artículos asociados a este estudio",
+      "description": "{count, plural, =0 {No hay artículos asociados a este estudio} =1 {1 artículo asociado a este estudio} other {# artículos asociados a este estudio}}",
       "addPaper": "Agregar Artículo",
-      "noPapers": "No hay artículos agregados",
-      "paperTitle": "Título",
-      "authors": "Autores",
-      "doi": "DOI",
-      "journal": "Revista",
-      "year": "Año",
-      "abstract": "Resumen",
-      "download": "Descargar PDF",
-      "remove": "Eliminar Artículo"
+      "addFirstPaper": "Agregar tu primer artículo",
+      "noPapers": "No hay artículos agregados. Añade referencias a artículos científicos relevantes.",
+      "loadError": "Error al cargar los artículos",
+      "form": {
+        "title": "Título",
+        "titlePlaceholder": "Ingresa el título del artículo",
+        "authors": "Autores",
+        "authorsPlaceholder": "ej., García J, López M, Martínez K",
+        "doi": "DOI",
+        "doiPlaceholder": "ej., 10.1234/ejemplo.2024",
+        "journal": "Revista",
+        "journalPlaceholder": "ej., Nature Genetics",
+        "year": "Año de Publicación",
+        "yearPlaceholder": "ej., 2024",
+        "abstract": "Resumen",
+        "abstractPlaceholder": "Ingresa el resumen del artículo (opcional)"
+      },
+      "validation": {
+        "titleRequired": "El título del artículo es requerido",
+        "titleTooLong": "El título debe tener 500 caracteres o menos",
+        "authorsTooLong": "Los autores deben tener 1000 caracteres o menos",
+        "doiTooLong": "El DOI debe tener 100 caracteres o menos",
+        "abstractTooLong": "El resumen debe tener 5000 caracteres o menos",
+        "journalTooLong": "El nombre de la revista debe tener 200 caracteres o menos",
+        "invalidYear": "Por favor ingresa un año de publicación válido"
+      },
+      "addPaperDialog": {
+        "title": "Agregar Artículo",
+        "description": "Añade una referencia a un artículo científico relacionado con este estudio.",
+        "submit": "Agregar Artículo"
+      },
+      "deleteDialog": {
+        "title": "Eliminar Artículo",
+        "description": "¿Estás seguro de que deseas eliminar \"{title}\"? Esta acción no se puede deshacer."
+      }
     },
     "stars": {
       "star": "Favorito",
@@ -342,13 +545,24 @@
       "tabs": {
         "overview": "Resumen",
         "traces": "Trazas",
+        "pipelines": "Pipelines",
+        "papers": "Artículos",
+        "timeline": "Cronología",
         "analysis": "Análisis",
         "team": "Equipo",
         "settings": "Configuración"
       },
+      "pipelines": {
+        "comingSoon": "Próximamente",
+        "comingSoonDescription": "Los pipelines de análisis automatizado están en desarrollo. Pronto podrás crear flujos de trabajo personalizados para procesar tus trazas automáticamente."
+      },
       "visibility": {
         "private": "Privado",
         "public": "Público"
+      },
+      "publicView": {
+        "banner": "Estás viendo este estudio como visitante público. Inicia sesión y solicita acceso para colaborar.",
+        "readOnly": "Este contenido es de solo lectura para visitantes públicos."
       },
       "stats": {
         "totalSamples": "Total de Muestras",
@@ -358,6 +572,8 @@
         "qualityScore": "Puntuación de Calidad",
         "excellentQuality": "Calidad excelente",
         "teamMembers": "Miembros del Equipo",
+        "papersList": "Publicaciones",
+        "associatedPapers": "Publicaciones asociadas",
         "activeCollaborators": "Colaboradores activos"
       },
       "overview": {
@@ -389,19 +605,128 @@
         "title": "Trazas de Cromatogramas",
         "description": "Todas las trazas de secuenciación para este estudio",
         "uploadTraces": "Subir Trazas",
-        "traceId": "ID de Traza",
-        "sampleId": "ID de Muestra",
-        "quality": "Calidad",
-        "length": "Longitud",
-        "uploaded": "Subido",
-        "by": "Por"
+        "searchPlaceholder": "Buscar trazas por nombre...",
+        "stats": {
+          "total": "Total",
+          "processed": "Procesadas",
+          "processing": "Procesando",
+          "pending": "Pendientes",
+          "failed": "Fallidas",
+          "archived": "Archivadas"
+        },
+        "filters": {
+          "allStatuses": "Todos los Estados",
+          "uploaded": "Subidas",
+          "processing": "Procesando",
+          "processed": "Procesadas",
+          "failed": "Fallidas"
+        },
+        "noTraces": "Sin trazas aún",
+        "noTracesDesc": "Sube tu primer archivo de traza para comenzar.",
+        "uploadFirst": "Subir Trazas",
+        "table": {
+          "name": "Nombre",
+          "format": "Formato",
+          "size": "Tamaño",
+          "status": "Estado",
+          "quality": "Calidad",
+          "uploaded": "Subido"
+        },
+        "actions": {
+          "view": "Ver Traza",
+          "retry": "Reintentar Procesamiento",
+          "delete": "Eliminar Traza"
+        },
+        "showing": "Mostrando {from}-{to} de {total}",
+        "previous": "Anterior",
+        "next": "Siguiente"
       },
       "analysis": {
-        "title": "Pipelines de Análisis",
-        "description": "Ejecutar y gestionar flujos de trabajo de análisis",
-        "newAnalysis": "Nuevo Análisis",
-        "variants": "Variantes",
-        "viewDetails": "Ver Detalles"
+        "title": "Herramientas de Análisis",
+        "description": "Ejecuta análisis en tus trazas procesadas",
+        "selectTrace": "Selecciona una traza para analizar",
+        "selectTraces": "Selecciona trazas para alinear",
+        "noProcessedTraces": "No hay trazas procesadas disponibles",
+        "noProcessedTracesDesc": "Procesa algunas trazas primero para ejecutar análisis.",
+        "runAnalysis": "Ejecutar Análisis",
+        "analyzing": "Analizando...",
+        "analysisRequested": "Análisis solicitado exitosamente",
+        "analysisError": "Error al solicitar análisis",
+        "tools": {
+          "trimming": {
+            "title": "Recorte de Secuencia",
+            "description": "Recorta extremos de baja calidad de tu secuencia",
+            "algorithm": "Algoritmo",
+            "algorithms": {
+              "modified_mott": "Mott Modificado",
+              "window": "Ventana Deslizante",
+              "adaptive": "Adaptativo"
+            },
+            "qualityThreshold": "Umbral de Calidad",
+            "windowSize": "Tamaño de Ventana"
+          },
+          "heterozygote": {
+            "title": "Detección de Heterocigotos",
+            "description": "Detecta posiciones heterocigotas en el cromatograma",
+            "secondaryPeakThreshold": "Umbral de Pico Secundario",
+            "minQuality": "Calidad Mínima"
+          },
+          "motif": {
+            "title": "Búsqueda de Motivos",
+            "description": "Busca patrones en tu secuencia",
+            "pattern": "Patrón de Búsqueda",
+            "patternPlaceholder": "ej., GAATTC o regex",
+            "searchComplement": "Buscar en cadena complementaria",
+            "useRegex": "Usar expresión regular"
+          },
+          "translation": {
+            "title": "Traducción de Secuencia",
+            "description": "Traduce ADN a secuencia de proteína",
+            "readingFrame": "Marco de Lectura",
+            "geneticCode": "Código Genético",
+            "geneticCodes": {
+              "1": "Estándar",
+              "2": "Mitocondrial de Vertebrados",
+              "3": "Mitocondrial de Levadura",
+              "4": "Mitocondrial de Mohos/Protozoarios",
+              "5": "Mitocondrial de Invertebrados"
+            }
+          },
+          "orf": {
+            "title": "Detección de ORF",
+            "description": "Encuentra marcos de lectura abiertos",
+            "minLength": "Longitud Mínima (codones)",
+            "startCodons": "Codones de Inicio",
+            "stopCodons": "Codones de Parada"
+          },
+          "restriction": {
+            "title": "Análisis de Restricción",
+            "description": "Encuentra sitios de corte de enzimas de restricción",
+            "enzymes": "Enzimas",
+            "enzymesPlaceholder": "ej., EcoRI, BamHI, HindIII",
+            "enzymesHelp": "Lista separada por comas, o déjalo vacío para todas las enzimas comunes"
+          },
+          "alignment": {
+            "title": "Alineamiento de Secuencias",
+            "description": "Alinea múltiples secuencias",
+            "type": "Tipo de Alineamiento",
+            "types": {
+              "pairwise": "Por Pares",
+              "multiple": "Múltiple"
+            },
+            "buildConsensus": "Construir secuencia consenso",
+            "consensusMethod": "Método de Consenso",
+            "consensusMethods": {
+              "majority": "Mayoría",
+              "threshold": "Umbral"
+            },
+            "scoring": "Parámetros de Puntuación",
+            "matchScore": "Puntuación de Coincidencia",
+            "mismatchPenalty": "Penalización de Desajuste",
+            "gapPenalty": "Penalización de Gap",
+            "minTwoTraces": "Selecciona al menos 2 trazas para el alineamiento"
+          }
+        }
       },
       "team": {
         "title": "Miembros del Equipo",
@@ -446,15 +771,21 @@
           "description": "Elige el formato para exportar.",
           "pdfReport": "Informe PDF",
           "csvData": "Datos CSV",
-          "jsonFormat": "Formato JSON"
+          "jsonFormat": "Formato JSON",
+          "action": "Exportar estudio",
+          "exporting": "Exportando…",
+          "success": "Exportación lista",
+          "error": "Error al exportar",
+          "notMember": "Solo los miembros pueden exportar este estudio"
         },
         "uploadTraces": {
           "title": "Subir Trazas",
-          "description": "Sube nuevos archivos de trazas de secuenciación.",
-          "dropzone": "Haz clic para subir o arrastra y suelta",
-          "fileTypes": "Archivos ABI, SCF o FASTA (máx 50MB)",
+          "description": "Sube nuevos archivos de trazas de secuenciación para análisis.",
+          "dropzone": "Arrastra y suelta archivos aquí, o haz clic para explorar",
+          "formats": "Soportados: AB1, ABI, FASTA, FASTQ, SEQ, SCF (máx 50MB)",
+          "browse": "Explorar Archivos",
           "cancel": "Cancelar",
-          "upload": "Subir"
+          "upload": "Subir {count} archivo(s)"
         },
         "inviteMember": {
           "title": "Invitar Miembro del Equipo",
@@ -567,6 +898,13 @@
       "processed": "Procesada",
       "failed": "Fallida"
     },
+    "processing": {
+      "notifications": {
+        "completed": "Procesamiento de traza completado",
+        "failed": "Falló el procesamiento de la traza",
+        "failedWithReason": "Falló el procesamiento de la traza: {reason}"
+      }
+    },
     "actions": {
       "view": "Ver traza",
       "download": "Descargar traza",
@@ -596,8 +934,11 @@
       "exportStarted": "Exportando trazas a CSV..."
     },
     "detail": {
-      "backToTraces": "Volver a Trazas",
+      "backToStudy": "Volver al Estudio",
       "searchTraces": "Buscar trazas...",
+      "traceSelector": {
+        "label": "Cambiar a otra traza de este estudio"
+      },
       "stats": {
         "length": "Longitud",
         "quality": "Calidad",
@@ -612,12 +953,16 @@
         "zoomOut": "Alejar",
         "resetZoom": "Restablecer Zoom",
         "quality": "Calidad",
+        "reverseComplement": "Complemento inverso (3' ↔ 5')",
         "trim": "Recortar",
         "annotate": "Anotar",
         "copy": "Copiar",
         "copied": "¡Copiado!",
         "copySequence": "Copiar Secuencia",
-        "exportFasta": "Exportar FASTA"
+        "exportFasta": "Exportar FASTA",
+        "compareStrands": "Comparar hebras",
+        "topStrand": "Hebra superior",
+        "bottomStrand": "Hebra inferior (complemento inverso)"
       },
       "aiAssistant": "Asistente IA",
       "openAiAssistant": "Abrir Asistente IA",
@@ -625,17 +970,197 @@
       "notifications": {
         "preparingExport": "Preparando exportación..."
       }
+    },
+    "analysis": {
+      "title": "Análisis",
+      "close": "Cerrar",
+      "run": "Ejecutar",
+      "rerun": "Re-ejecutar",
+      "expand": "Ver detalles",
+      "collapse": "Ocultar detalles",
+      "showLayer": "Mostrar capa en el cromatograma",
+      "hideLayer": "Ocultar capa en el cromatograma",
+      "copy": "Copiar",
+      "emptyTitle": "Sin resultados aún",
+      "emptyDescription": "Ejecuta el análisis para ver los resultados aquí.",
+      "status": {
+        "ready": "Listo",
+        "notRun": "Sin ejecutar"
+      },
+      "summary": {
+        "trimming": "{original} → {trimmed} bp",
+        "heterozygote": "{count} posiciones heterocigotas",
+        "motif": "{count} coincidencias",
+        "translation": "{length} aa",
+        "orf": "{count} ORFs (más largo {longest} bp)",
+        "restriction": "{enzymes} enzimas, {sites} sitios"
+      },
+      "tabs": {
+        "trimming": "Recorte",
+        "heterozygote": "Heterocigoto",
+        "motif": "Motivo",
+        "translation": "Traducción",
+        "orf": "ORF",
+        "restriction": "Restricción"
+      },
+      "notifications": {
+        "queued": "Encolado",
+        "done": "Listo",
+        "timeout": "El análisis tardó demasiado, inténtalo de nuevo",
+        "error": "Falló la ejecución del análisis",
+        "copied": "Copiado al portapapeles",
+        "failed": "El análisis de {type} falló",
+        "failedWithReason": "El análisis de {type} falló: {error}",
+        "complete": {
+          "trimming": "Recorte completado",
+          "heterozygote": "Detección de heterocigotos completada",
+          "motif": "Búsqueda de motivos completada",
+          "translation": "Traducción completada",
+          "orf": "Detección de ORF completada",
+          "restriction": "Análisis de restricción completado"
+        }
+      },
+      "trimming": {
+        "algorithm": "Algoritmo",
+        "qualityThreshold": "Umbral de calidad",
+        "windowSize": "Tamaño de ventana",
+        "originalLength": "Longitud original",
+        "trimmedLength": "Longitud recortada",
+        "trimRange": "Rango de recorte",
+        "preview": "Secuencia recortada",
+        "start": "Inicio",
+        "end": "Fin"
+      },
+      "heterozygote": {
+        "secondaryPeakThreshold": "Umbral de pico secundario",
+        "minQuality": "Calidad mínima",
+        "callsFound": "{count} posiciones",
+        "noCalls": "No se detectaron heterocigotos.",
+        "position": "Posición",
+        "primary": "Primaria",
+        "secondary": "Secundaria",
+        "ratio": "Relación",
+        "preview": "Primeras {count} de {total} posiciones"
+      },
+      "motif": {
+        "pattern": "Patrón",
+        "searchComplement": "Buscar complemento",
+        "useRegex": "Usar regex",
+        "matches": "{count} coincidencias",
+        "noMatches": "Sin coincidencias.",
+        "patternRequired": "El patrón es obligatorio",
+        "start": "Inicio",
+        "end": "Fin",
+        "strand": "Hebra",
+        "matchedSequence": "Coincidencia",
+        "previewPattern": "Patrón"
+      },
+      "translation": {
+        "frame": "Marco",
+        "geneticCode": "Código genético",
+        "protein": "Secuencia proteica",
+        "proteinLength": "{count} aa",
+        "stopCodons": "{count} stops",
+        "composition": "Composición de aminoácidos"
+      },
+      "orf": {
+        "minLength": "Longitud mínima (bp)",
+        "startCodons": "Codones de inicio",
+        "stopCodons": "Codones de parada",
+        "totalOrfs": "{count} ORFs",
+        "longestLength": "Más largo: {length} bp",
+        "noOrfs": "No se detectaron ORFs.",
+        "start": "Inicio",
+        "end": "Fin",
+        "frame": "Marco",
+        "strand": "Hebra",
+        "length": "Longitud",
+        "previewTop": "Top {count} ORFs"
+      },
+      "restriction": {
+        "enzymes": "Enzimas",
+        "enzymesHint": "Separadas por comas, ej. EcoRI,BamHI",
+        "totalSites": "{count} sitios",
+        "enzymeCount": "{count} enzimas",
+        "noSites": "No se detectaron sitios de restricción.",
+        "enzyme": "Enzima",
+        "position": "Posición",
+        "cutPosition": "Corte",
+        "recognition": "Reconocimiento"
+      }
     }
   },
   "pipelines": {
     "title": "Monitor de Pipelines",
     "description": "Monitoreo en tiempo real de pipelines de procesamiento de datos",
+    "selectStudy": "Selecciona un estudio para gestionar sus pipelines:",
+    "noStudies": "Aún no tienes estudios",
+    "noStudiesDesc": "Crea o únete a un estudio para empezar a configurar pipelines de análisis.",
+    "goToStudies": "Ir a estudios",
+    "noDescription": "Sin descripción",
     "refresh": "Actualizar",
     "refreshing": "Actualizando...",
     "newPipeline": "Nuevo Pipeline",
+    "noPipelines": "No hay pipelines aún",
+    "noPipelinesDesc": "Crea tu primer pipeline para automatizar flujos de análisis de trazas.",
+    "createFirst": "Crea tu primer pipeline",
+    "selectPipeline": "Selecciona un pipeline para ver detalles",
+    "steps": "pasos",
+    "enabled": "Habilitado",
+    "disabled": "Deshabilitado",
+    "noDescription": "Sin descripción",
+    "activate": "Activar",
+    "deactivate": "Desactivar",
+    "execute": {
+      "title": "Ejecutar Pipeline",
+      "description": "Selecciona una traza para ejecutar este pipeline.",
+      "selectTrace": "Seleccionar Traza",
+      "selectTracePlaceholder": "Elige una traza...",
+      "noProcessedTraces": "No hay trazas procesadas disponibles",
+      "run": "Ejecutar"
+    },
+    "archive": "Archivar",
+    "pipelineSteps": "Pasos del Pipeline",
+    "addStepLabel": "Agregar Paso",
+    "stepConfig": {
+      "title": "Configuración",
+      "algorithm": "Algoritmo",
+      "cutoff": "Umbral de Calidad",
+      "minRatio": "Ratio Mínimo",
+      "maxRatio": "Ratio Máximo",
+      "pattern": "Patrón de Búsqueda",
+      "searchComplement": "Buscar complemento reverso",
+      "frame": "Marco de Lectura",
+      "minLength": "Longitud Mínima (bp)",
+      "enzymes": "Enzimas de Restricción",
+      "enzymesSeparator": "Separe múltiples enzimas con comas"
+    },
+    "noSteps": "No hay pasos configurados",
+    "addFirstStep": "Agrega el primer paso a este pipeline",
+    "recentExecutions": "Ejecuciones Recientes",
+    "executionOn": "Ejecución en {traceName}",
+    "noExecutions": "Sin ejecuciones aún",
+    "runFirstExecution": "Ejecuta este pipeline en una traza para ver resultados",
+    "executions": {
+      "notifications": {
+        "started": "Ejecución de pipeline iniciada",
+        "stepCompleted": "Paso completado: {stepType}",
+        "completed": "Ejecución de pipeline completada",
+        "failed": "Falló la ejecución del pipeline",
+        "failedWithReason": "Falló la ejecución del pipeline: {reason}"
+      }
+    },
     "metrics": {
       "active": "Activos",
       "runningPipelines": "Pipelines ejecutándose",
+      "pending": "Pendientes",
+      "queuedPipelines": "En cola de ejecución",
+      "total": "Total",
+      "totalPipelines": "Total de pipelines",
+      "completed": "Completados",
+      "completedPipelines": "Pipelines completados",
+      "failed": "Fallidos",
+      "failedPipelines": "Pipelines fallidos",
       "cpuUtilization": "Utilización de CPU",
       "memoryUsage": "Uso de memoria",
       "samplesProcessed": "Muestras procesadas",
@@ -652,11 +1177,24 @@
     },
     "activePipelines": {
       "title": "Pipelines Activos",
-      "description": "Trabajos de procesamiento en ejecución y en cola"
+      "description": "Trabajos de procesamiento en ejecución y en cola",
+      "empty": "No hay pipelines activos en este momento"
+    },
+    "comingSoon": {
+      "title": "Pipelines Próximamente",
+      "description": "Estamos trabajando para traerte potentes capacidades de procesamiento por lotes. Pronto podrás ejecutar alineamientos, búsquedas BLAST y más en múltiples trazas a la vez.",
+      "features": {
+        "alignment": "Alineamiento de Secuencias",
+        "blast": "Búsqueda BLAST",
+        "annotation": "Anotación",
+        "qualityCheck": "Control de Calidad"
+      }
     },
     "table": {
       "study": "Estudio",
       "samples": "Muestras",
+      "traces": "Trazas",
+      "type": "Tipo",
       "started": "Iniciado",
       "eta": "ETA",
       "cpu": "CPU",
@@ -669,8 +1207,12 @@
       "retry": "Reintentar pipeline"
     },
     "create": {
-      "title": "Crear Nuevo Pipeline",
-      "description": "Configura un nuevo pipeline de procesamiento de datos para tu estudio.",
+      "title": "Crear Pipeline",
+      "description": "Crea un nuevo pipeline de análisis para este estudio.",
+      "name": "Nombre del Pipeline",
+      "namePlaceholder": "ej., Pipeline de Análisis de Calidad",
+      "descriptionLabel": "Descripción",
+      "descriptionPlaceholder": "Describe qué hace este pipeline...",
       "pipelineName": "Nombre del Pipeline",
       "pipelineNamePlaceholder": "ej., Pipeline de Control de Calidad",
       "pipelineType": "Tipo de Pipeline",
@@ -693,6 +1235,49 @@
       "onErrorOnly": "Solo en Error",
       "none": "Ninguna",
       "submit": "Crear Pipeline"
+    },
+    "edit": {
+      "title": "Editar Pipeline",
+      "description": "Actualizar nombre y descripción del pipeline.",
+      "save": "Guardar Cambios"
+    },
+    "delete": {
+      "title": "Eliminar Pipeline",
+      "description": "¿Estás seguro de que deseas eliminar este pipeline? Esta acción no se puede deshacer.",
+      "confirm": "Eliminar Pipeline"
+    },
+    "addStep": {
+      "title": "Agregar Paso",
+      "description": "Selecciona un tipo de análisis para agregar a este pipeline.",
+      "add": "Agregar Paso"
+    },
+    "stepTypes": {
+      "quality": "Análisis de Calidad",
+      "qualityDesc": "Analiza puntuaciones de calidad de secuencia",
+      "trimming": "Recorte de Secuencia",
+      "trimmingDesc": "Recorta extremos de baja calidad de las secuencias",
+      "heterozygote": "Detección de Heterocigotos",
+      "heterozygoteDesc": "Detecta posiciones heterocigotas",
+      "motif": "Búsqueda de Motivos",
+      "motifDesc": "Busca patrones en la secuencia",
+      "translation": "Traducción",
+      "translationDesc": "Traduce ADN a secuencia de proteína",
+      "orf": "Detección de ORF",
+      "orfDesc": "Encuentra marcos de lectura abiertos",
+      "restriction": "Análisis de Restricción",
+      "restrictionDesc": "Encuentra sitios de corte de enzimas de restricción"
+    },
+    "status": {
+      "draft": "Borrador",
+      "active": "Activo",
+      "archived": "Archivado"
+    },
+    "executionStatus": {
+      "pending": "Pendiente",
+      "running": "Ejecutando",
+      "completed": "Completado",
+      "failed": "Fallido",
+      "cancelled": "Cancelado"
     },
     "time": {
       "minAgo": "{count} min atrás",
@@ -720,10 +1305,13 @@
       "firstName": "Nombre",
       "lastName": "Apellido",
       "emailAddress": "Correo Electrónico",
+      "emailReadOnly": "Dirección de correo no editable",
       "role": "Rol",
       "institution": "Institución",
       "bio": "Biografía",
       "researchIdentifiers": "Identificadores de Investigación",
+      "researchField": "Campo de investigación",
+      "selectField": "Seleccionar campo...",
       "orcid": "ORCID iD",
       "website": "Sitio Web",
       "dangerZone": "Zona de Peligro",
@@ -733,7 +1321,8 @@
       "deleteAccount": "Eliminar Cuenta",
       "deleteDesc": "Elimina permanentemente tu cuenta y todos los datos asociados. Esta acción no se puede deshacer.",
       "saveChanges": "Guardar Cambios",
-      "saved": "¡Guardado!"
+      "saved": "¡Guardado!",
+      "photoUploadError": "Error al subir la foto. Por favor, inténtalo de nuevo."
     },
     "security": {
       "password": "Contraseña",
@@ -742,6 +1331,11 @@
       "confirmPassword": "Confirmar Nueva Contraseña",
       "updatePassword": "Actualizar Contraseña",
       "updated": "¡Actualizado!",
+      "passwordChanged": "¡Contraseña cambiada correctamente!",
+      "passwordsDoNotMatch": "Las contraseñas nuevas no coinciden",
+      "passwordTooShort": "La contraseña debe tener al menos 8 caracteres",
+      "changePasswordError": "Error al cambiar la contraseña. Por favor, inténtalo de nuevo.",
+      "noPasswordOAuth": "Esta cuenta usa inicio de sesión externo (Google/GitHub) y no tiene contraseña establecida.",
       "twoFactor": "Autenticación de Dos Factores",
       "enable2FA": "Habilitar 2FA",
       "active": "Activo",
@@ -870,9 +1464,11 @@
         "warningProfile": "Tu perfil y configuración de cuenta",
         "warningStudies": "Todos los estudios que posees",
         "warningTraces": "Todas las trazas subidas y resultados de análisis",
-        "confirmLabel": "Escribe \"ELIMINAR\" para confirmar",
-        "confirmPlaceholder": "ELIMINAR",
-        "confirm": "Eliminar Cuenta"
+        "confirmLabel": "Escribe \"DELETE\" para confirmar",
+        "confirmPlaceholder": "DELETE",
+        "confirm": "Eliminar Cuenta",
+        "confirmError": "Por favor escribe DELETE para confirmar",
+        "error": "Error al eliminar la cuenta. Por favor, inténtalo de nuevo."
       },
       "remove2FA": {
         "title": "Eliminar Autenticación de Dos Factores",
@@ -977,6 +1573,8 @@
       "title": "Mis Estudios",
       "description": "Estudios que lideras o en los que contribuyes",
       "samples": "muestras",
+      "traces": "trazas",
+      "members": "miembros",
       "noStudies": "Sin estudios aún",
       "roles": {
         "principalInvestigator": "Investigador Principal",
@@ -987,7 +1585,11 @@
     "recentActivity": {
       "title": "Actividad Reciente",
       "viewAll": "Ver Toda la Actividad",
-      "noActivity": "Sin actividad reciente"
+      "noActivity": "Sin actividad reciente",
+      "lastActive": "Última Actividad",
+      "studiesOwned": "estudios propios",
+      "studiesCollaborating": "colaborando",
+      "tracesProcessed": "trazas procesadas"
     },
     "quickActions": {
       "title": "Acciones Rápidas",
@@ -1004,6 +1606,7 @@
         "role": "Rol",
         "institution": "Institución",
         "researchField": "Campo de Investigación",
+        "selectField": "Seleccionar campo...",
         "location": "Ubicación",
         "saveChanges": "Guardar Cambios"
       },
@@ -1121,12 +1724,12 @@
         }
       },
       "pipelines": {
-        "title": "Alineamientos",
+        "title": "Pipelines",
         "topics": {
-          "runPipelines": "Creando alineamientos de secuencias",
-          "understandResults": "Entendiendo resultados de alineamiento",
-          "qcMetrics": "Métricas de control de calidad",
-          "exportData": "Exportando datos de alineamiento"
+          "runPipelines": "Ejecutando pipelines de análisis sobre trazas",
+          "understandResults": "Entendiendo los resultados de ejecución",
+          "qcMetrics": "Configurando pasos de calidad, trimming y motivo",
+          "exportData": "Exportando resultados e informes por paso"
         }
       },
       "collaboration": {
@@ -1200,8 +1803,8 @@
           "answer": "GeneFlow admite: AB1 (.ab1) - Archivos de cromatogramas Applied Biosystems con datos de calidad completos. SCF (.scf) - Standard Chromatogram Format. FASTQ (.fastq, .fq) - Secuencias con puntuaciones de calidad. FASTA (.fasta, .fa) - Archivos solo de secuencia. El tamaño máximo es 50MB por traza."
         },
         "availablePipelines": {
-          "question": "¿Qué tipos de alineamientos puedo crear?",
-          "answer": "GeneFlow admite tres tipos de alineamiento: Pairwise - Comparar exactamente 2 secuencias. Múltiple - Alinear 3 o más secuencias simultáneamente. Referencia - Alinear secuencias contra una secuencia de referencia. Todos los alineamientos generan secuencias consenso y detectan variantes/SNPs."
+          "question": "¿Qué pasos de pipeline están disponibles?",
+          "answer": "Un pipeline encadena pasos de análisis que se ejecutan sobre una traza: Calidad (puntuación de calidad por base), Trimming (recorte de extremos de baja calidad), Heterocigoto (detección de doble pico), Motivo (búsqueda de un motivo de ADN, opcionalmente en la cadena complementaria), Traducción (traducción de codones en un marco elegido), ORF (detección de marcos abiertos de lectura) y Restricción (búsqueda de sitios de enzimas de restricción). Los pasos se ejecutan en orden y el progreso se transmite en tiempo real."
         },
         "inviteTeam": {
           "question": "¿Cuáles son los diferentes roles del equipo?",
@@ -1561,5 +2164,63 @@
     "goHome": "Ir al inicio",
     "somethingWentWrong": "Algo salió mal",
     "tryAgain": "Intentar de nuevo"
+  },
+  "subscriptionLimit": {
+    "title": "Límite del plan alcanzado",
+    "viewPlans": "Ver planes",
+    "close": "Cerrar",
+    "codes": {
+      "NoActiveSubscription": {
+        "title": "Sin suscripción activa",
+        "description": "Necesitas una suscripción activa para realizar esta acción. Elige un plan para continuar."
+      },
+      "StudyLimitReached": {
+        "title": "Límite de estudios alcanzado",
+        "description": "Has alcanzado el número máximo de estudios incluidos en tu plan actual. Mejora tu plan para crear más estudios."
+      },
+      "TraceLimitReached": {
+        "title": "Límite de trazas alcanzado",
+        "description": "Has alcanzado el número máximo de trazas incluidas en tu plan actual. Mejora tu plan para subir más trazas."
+      },
+      "MemberLimitReached": {
+        "title": "Límite de miembros alcanzado",
+        "description": "Has alcanzado el número máximo de miembros por estudio incluidos en tu plan actual. Mejora tu plan para invitar a más personas."
+      }
+    }
+  },
+  "follows": {
+    "follow": "Seguir",
+    "unfollow": "Dejar de seguir",
+    "following": "Siguiendo",
+    "followers": "Seguidores",
+    "empty": "Aún no hay usuarios.",
+    "followersCount": "{count} seguidores",
+    "followingCount": "{count} siguiendo"
+  },
+  "pinned": {
+    "pin": "Fijar",
+    "unpin": "Desfijar",
+    "pinned": "Fijado",
+    "title": "Estudios fijados",
+    "emptyOwner": "Aún no has fijado ningún estudio. Fija hasta {max} para destacarlos en tu perfil.",
+    "emptyOther": "Este usuario aún no ha fijado ningún estudio.",
+    "limitHint": "{count} de {max} fijados.",
+    "atLimitHint": "Puedes fijar como máximo {max} estudios. Desfija uno para añadir otro."
+  },
+  "organization": {
+    "readme": {
+      "title": "README",
+      "add": "Añadir README",
+      "edit": "Editar",
+      "save": "Guardar",
+      "saving": "Guardando...",
+      "cancel": "Cancelar",
+      "empty": "Aún no hay README. Añade uno para presentar este estudio.",
+      "placeholder": "Describe tu estudio usando Markdown — objetivos, métodos, conjuntos de datos, colaboradores...",
+      "editTab": "Editar",
+      "previewTab": "Vista previa",
+      "emptyPreview": "Nada que mostrar.",
+      "saveError": "No se pudo guardar el README."
+    }
   }
 }

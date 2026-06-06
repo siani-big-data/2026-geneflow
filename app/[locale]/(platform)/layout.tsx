@@ -3,6 +3,7 @@
 import { Sidebar, Header } from "@/components/layout";
 import { SkipLink } from "@/components/shared";
 import { AuthGuard } from "@/components/auth";
+import { SubscriptionLimitDialog } from "@/components/subscription/subscription-limit-dialog";
 import { useUIStore } from "@/stores/ui-store";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +32,7 @@ export default function PlatformLayout({
           </main>
         </div>
       </div>
+      <SubscriptionLimitDialog />
     </AuthGuard>
   );
 }

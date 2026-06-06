@@ -17,7 +17,7 @@ type StatusType =
   | "cancelled";
 
 interface StatusBadgeProps {
-  status: StatusType;
+  status: string; // Accepts any case, will be normalized internally
   className?: string;
 }
 
@@ -39,11 +39,13 @@ const statusVariants: Record<
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {
   const t = useTranslations("common");
-  const variant = statusVariants[status];
+  // Normalize status to lowercase for translation lookup
+  const normalizedStatus = status.toLowerCase() as StatusType;
+  const variant = statusVariants[normalizedStatus] || "secondary";
 
   return (
     <Badge variant={variant} className={cn(className)}>
-      {t(`status.${status}`)}
+      {t(`status.${normalizedStatus}`)}
     </Badge>
   );
 }

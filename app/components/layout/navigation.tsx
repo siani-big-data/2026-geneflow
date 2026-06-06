@@ -2,7 +2,6 @@ import {
   LayoutDashboard,
   Globe,
   Beaker,
-  Waves,
   Activity,
   Settings,
   HelpCircle,
@@ -20,7 +19,6 @@ export const mainNavigation: NavItem[] = [
   { nameKey: "dashboard", href: "/dashboard", icon: LayoutDashboard },
   { nameKey: "discover", href: "/discover", icon: Globe },
   { nameKey: "studies", href: "/studies", icon: Beaker },
-  { nameKey: "traces", href: "/traces", icon: Waves },
   { nameKey: "pipelines", href: "/pipelines", icon: Activity },
 ];
 

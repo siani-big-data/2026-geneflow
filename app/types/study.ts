@@ -36,6 +36,32 @@ export interface StudyMetrics {
 }
 
 // =============================================================================
+// CURRENT USER PERMISSIONS
+// =============================================================================
+
+/** Current user's permissions within a study */
+export interface CurrentUserPermissions {
+  /** Whether the current user is a member of the study */
+  isMember: boolean;
+  /** The user's role ID (null if not a member) */
+  roleId: StudyRoleId | null;
+  /** The user's role name (null if not a member) */
+  roleName: StudyRole | null;
+  /** Can manage members (invite, remove, change roles) */
+  canManageMembers: boolean;
+  /** Can edit study metadata (title, description, etc.) */
+  canEditStudy: boolean;
+  /** Can edit study content (traces, annotations, etc.) */
+  canEditContent: boolean;
+  /** Can change study status (draft, active, published, etc.) */
+  canChangeStatus: boolean;
+  /** Can delete the study */
+  canDeleteStudy: boolean;
+  /** Can transfer ownership to another member */
+  canTransferOwnership: boolean;
+}
+
+// =============================================================================
 // STUDY MEMBER
 // =============================================================================
 
@@ -85,12 +111,14 @@ export interface Study {
   statusName: StudyStatus;
   institution?: string;
   principalInvestigator?: string;
+  readmeMarkdown?: string;
   isFeatured: boolean;
   settings: StudySettings;
   metrics: StudyMetrics;
   tags: string[];
   members: StudyMember[];
   papers: StudyPaper[];
+  currentUserPermissions: CurrentUserPermissions;
   createdAt: string;
   modifiedAt?: string;
 }
@@ -170,6 +198,10 @@ export interface UpdateStudySettingsInput {
   allowPublicComments?: boolean;
   allowDataDownload?: boolean;
   requireApprovalToJoin?: boolean;
+}
+
+export interface UpdateReadmeInput {
+  markdown: string | null;
 }
 
 export interface AddStudyMemberInput {

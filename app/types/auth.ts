@@ -34,6 +34,11 @@ export interface ResetPasswordRequest {
   newPassword: string;
 }
 
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
 export interface TwoFactorVerifyRequest {
   code: string;
 }
@@ -58,6 +63,7 @@ export interface AuthUser {
   username: string;
   emailVerified: boolean;
   twoFactorEnabled: boolean;
+  hasPassword: boolean;
   roles: string[];
   createdAt: string;
 }
@@ -85,8 +91,8 @@ export interface TwoFactorSetupResponse {
 }
 
 export interface ConfirmTwoFactorSetupRequest {
-  secret: string;
   code: string;
+  // Note: secret is stored server-side and not sent by client for security
 }
 
 // =============================================================================

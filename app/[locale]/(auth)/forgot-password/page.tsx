@@ -6,10 +6,10 @@ import { Link } from "@/lib/navigation";
 import { AlertCircle, Loader2, Mail, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
+import { authService } from "@/services";
 
 export default function ForgotPasswordPage() {
   const t = useTranslations("auth");
-  const tCommon = useTranslations("common");
   // Form state
   const [email, setEmail] = useState("");
 
@@ -33,12 +33,16 @@ export default function ForgotPasswordPage() {
 
     setIsLoading(true);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    // Simulate success
-    setIsLoading(false);
-    setEmailSent(true);
+    try {
+      await authService.requestPasswordReset({ email });
+      setEmailSent(true);
+    } catch (err) {
+      // Always show success to prevent email enumeration
+      // Backend also returns success even if email doesn't exist
+      setEmailSent(true);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (emailSent) {

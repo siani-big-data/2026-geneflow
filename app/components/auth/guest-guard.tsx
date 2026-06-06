@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "@/lib/navigation";
 import { useAuthStore } from "@/stores/auth-store";
 import { Loader2 } from "lucide-react";
@@ -12,28 +12,32 @@ interface GuestGuardProps {
 /**
  * GuestGuard component that protects auth routes (login, register).
  *
- * - Shows loading spinner while checking auth state
+ * - Shows loading spinner only during initial auth check
  * - Redirects to dashboard if already authenticated
  * - Renders children if not authenticated (guest)
+ *
+ * IMPORTANT: Does NOT unmount children during login/register operations
+ * to preserve component state (like registrationSuccess).
  */
 export function GuestGuard({ children }: GuestGuardProps) {
   const router = useRouter();
   const { isAuthenticated, isLoading, initialize } = useAuthStore();
+  const [initialized, setInitialized] = useState(false);
 
   // Initialize auth state on mount
   useEffect(() => {
-    initialize();
+    initialize().then(() => setInitialized(true));
   }, [initialize]);
 
   // Redirect to dashboard if already authenticated
   useEffect(() => {
-    if (!isLoading && isAuthenticated) {
+    if (initialized && isAuthenticated) {
       router.push("/dashboard");
     }
-  }, [isLoading, isAuthenticated, router]);
+  }, [initialized, isAuthenticated, router]);
 
-  // Show loading state while checking authentication
-  if (isLoading) {
+  // Show loading state only during initial auth check
+  if (!initialized) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
         <div className="flex flex-col items-center gap-4">

@@ -201,6 +201,41 @@
   }
 }
 
+/*
+ * Shared scrollbar styling.
+ *
+ * The default browser scrollbar is heavy and breaks the visual rhythm of
+ * panels with internal scroll (activity feed, sidebar, notifications tray,
+ * AI assistant, analysis layers...). This utility renders a thin, subtle
+ * track that follows the design tokens (`--muted-foreground`, `--border`)
+ * so it works in both light and dark mode without per-component overrides.
+ *
+ * Usage: add `class="scrollbar-styled"` next to `overflow-y-auto`.
+ */
+@layer utilities {
+  .scrollbar-styled {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--muted-foreground) 30%, transparent) transparent;
+  }
+  .scrollbar-styled::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .scrollbar-styled::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-styled::-webkit-scrollbar-thumb {
+    background-color: color-mix(in srgb, var(--muted-foreground) 25%, transparent);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  .scrollbar-styled::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(in srgb, var(--muted-foreground) 50%, transparent);
+    background-clip: padding-box;
+  }
+}
+
 /* 3D Landing page animations */
 @keyframes float {
   0%, 100% {

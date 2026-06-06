@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/lib/navigation";
 import { useRouter } from "@/lib/navigation";
-import { Eye, EyeOff, Loader2, Mail, Check, X } from "lucide-react";
+import { Eye, EyeOff, Loader2, Mail, Check, X, CheckCircle2, RefreshCw, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth-store";
@@ -13,6 +13,12 @@ import { ApiClientError } from "@/lib/api-client";
 import { ErrorAlert } from "@/components/auth/ErrorAlert";
 import { getErrorInfo, extractErrorCode, type ErrorInfo } from "@/lib/error-messages";
 import { signInWithGoogle, signInWithGitHub } from "@/lib/oauth";
+import {
+  USERNAME_RULES,
+  EMAIL_RULES,
+  PASSWORD_RULES,
+  validatePassword,
+} from "@/lib/validation";
 
 export default function RegisterPage() {
   const t = useTranslations("auth");
@@ -47,18 +53,23 @@ export default function RegisterPage() {
     }
   }, [username, email, password, confirmPassword]);
 
-  const usernameValid = username.length >= 3 && /^[a-zA-Z0-9]+$/.test(username);
-  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const usernameValid =
+    username.length >= USERNAME_RULES.MIN_LENGTH &&
+    username.length <= USERNAME_RULES.MAX_LENGTH &&
+    USERNAME_RULES.PATTERN.test(username);
+  const emailValid =
+    email.length <= EMAIL_RULES.MAX_LENGTH && EMAIL_RULES.PATTERN.test(email);
   const passwordsMatch = password === confirmPassword && confirmPassword.length > 0;
 
+  const passwordValidation = validatePassword(password);
   const passwordRequirements = [
-    { label: "At least 8 characters", valid: password.length >= 8 },
-    { label: "Contains uppercase letter", valid: /[A-Z]/.test(password) },
-    { label: "Contains lowercase letter", valid: /[a-z]/.test(password) },
-    { label: "Contains a number", valid: /\d/.test(password) },
+    { label: `At least ${PASSWORD_RULES.MIN_LENGTH} characters`, valid: passwordValidation.requirements.minLength },
+    { label: "Contains uppercase letter", valid: passwordValidation.requirements.hasUppercase },
+    { label: "Contains lowercase letter", valid: passwordValidation.requirements.hasLowercase },
+    { label: "Contains a number", valid: passwordValidation.requirements.hasNumber },
   ];
 
-  const passwordValid = passwordRequirements.every((req) => req.valid);
+  const passwordValid = passwordValidation.valid;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,9 +83,13 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
-      await register({ email, username, password });
+      console.log("[Register] Starting registration...");
+      const result = await register({ email, username, password });
+      console.log("[Register] Registration successful:", result);
       setRegistrationSuccess(true);
+      console.log("[Register] registrationSuccess set to true");
     } catch (err) {
+      console.error("[Register] Registration failed:", err);
       if (err instanceof ApiClientError) {
         const errorInfo = getErrorInfo(err.code, err.message);
         setError(errorInfo);
@@ -89,13 +104,31 @@ export default function RegisterPage() {
     }
   };
 
-  const handleResendVerification = async () => {
+  const [resendState, setResendState] = useState<"idle" | "sending" | "sent">("idle");
+
+  const handleResendVerification = useCallback(async () => {
+    if (resendState === "sending" || resendState === "sent") return;
+
+    setResendState("sending");
     try {
       await authService.resendVerificationEmail(email);
+      setResendState("sent");
+      // Reset to idle after 5 seconds so user can resend again if needed
+      setTimeout(() => setResendState("idle"), 5000);
     } catch {
-      // Silently fail
+      setResendState("idle");
     }
-  };
+  }, [email, resendState]);
+
+  const handleBackToRegister = useCallback(() => {
+    setRegistrationSuccess(false);
+    setEmail("");
+    setPassword("");
+    setConfirmPassword("");
+    setUsername("");
+    setAcceptTerms(false);
+    setSubmitted(false);
+  }, []);
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
@@ -145,26 +178,96 @@ export default function RegisterPage() {
 
   const effectiveLoading = isLoading || authLoading;
 
+  console.log("[Register] Render - registrationSuccess:", registrationSuccess);
+
   if (registrationSuccess) {
+    console.log("[Register] Rendering success screen!");
     return (
       <div className="text-center">
-        <div className="flex items-center justify-center w-16 h-16 mx-auto mb-6 rounded-full bg-blue-500/10">
-          <Mail className="h-8 w-8 text-blue-500" />
+        {/* Success Icon with Animation */}
+        <div className="relative flex items-center justify-center w-20 h-20 mx-auto mb-6">
+          <div className="absolute inset-0 rounded-full bg-teal/20 animate-ping opacity-75" />
+          <div className="relative flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-teal/20 to-teal/10 border border-teal/30">
+            <Mail className="h-10 w-10 text-teal" />
+          </div>
         </div>
-        <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">
-          Check your email
+
+        {/* Title */}
+        <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100 mb-3">
+          {t("registrationSuccess.title")}
         </h1>
-        <p className="text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">
-          We&apos;ve sent a verification link to <strong className="text-slate-700 dark:text-slate-200">{email}</strong>.
-          Please click the link to activate your account.
+
+        {/* Email Display */}
+        <p className="text-slate-500 dark:text-slate-400 mb-2">
+          {t("registrationSuccess.subtitle")}
         </p>
+        <p className="font-semibold text-slate-800 dark:text-slate-200 mb-4 px-4 py-2 bg-slate-100 dark:bg-slate-700/50 rounded-lg inline-block">
+          {email}
+        </p>
+
+        {/* Description */}
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 leading-relaxed max-w-sm mx-auto">
+          {t("registrationSuccess.description")}
+        </p>
+
+        {/* Check spam hint */}
+        <div className="flex items-center justify-center gap-2 text-xs text-slate-400 dark:text-slate-500 mb-8 px-4 py-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+          <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
+          <span>{t("registrationSuccess.checkSpam")}</span>
+        </div>
+
+        {/* Back to Login Button */}
         <Link href="/login">
-          <Button className="w-full h-12">Back to login</Button>
+          <Button className="w-full h-12 mb-4">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            {t("registrationSuccess.backToLogin")}
+          </Button>
         </Link>
-        <p className="mt-6 text-sm text-slate-500 dark:text-slate-400">
-          Didn&apos;t receive the email?{" "}
-          <button onClick={handleResendVerification} className="text-teal hover:underline">
-            Resend verification
+
+        {/* Resend Section */}
+        <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
+            {t("registrationSuccess.didntReceive")}
+          </p>
+          <button
+            onClick={handleResendVerification}
+            disabled={resendState !== "idle"}
+            className={cn(
+              "inline-flex items-center gap-2 text-sm font-medium transition-all duration-200",
+              resendState === "sent"
+                ? "text-green-600 dark:text-green-400"
+                : resendState === "sending"
+                  ? "text-slate-400 cursor-not-allowed"
+                  : "text-teal hover:text-teal-dark hover:underline"
+            )}
+          >
+            {resendState === "sending" ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                {t("registrationSuccess.resending")}
+              </>
+            ) : resendState === "sent" ? (
+              <>
+                <CheckCircle2 className="h-4 w-4" />
+                {t("registrationSuccess.resent")}
+              </>
+            ) : (
+              <>
+                <RefreshCw className="h-4 w-4" />
+                {t("registrationSuccess.resendVerification")}
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Wrong email link */}
+        <p className="mt-6 text-xs text-slate-400 dark:text-slate-500">
+          {t("registrationSuccess.wrongEmail")}{" "}
+          <button
+            onClick={handleBackToRegister}
+            className="text-teal hover:underline font-medium"
+          >
+            {t("registrationSuccess.tryAgain")}
           </button>
         </p>
       </div>

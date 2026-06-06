@@ -79,10 +79,7 @@ export function TwoFactorSetup({ isEnabled, onEnableChange }: TwoFactorSetupProp
     setError(null);
 
     try {
-      await authService.confirmTwoFactorSetup({
-        secret: setupData.secret,
-        code,
-      });
+      await authService.confirmTwoFactorSetup({ code });
       onEnableChange(true);
       setSetupOpen(false);
     } catch (err) {

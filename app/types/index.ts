@@ -8,33 +8,15 @@ export * from "./payment";
 export * from "./subscription";
 export * from "./usage";
 export * from "./dashboard";
+export * from "./analysis";
+export * from "./activity";
+export * from "./common";
 
+// Legacy compatibility - prefer PagedResponse from common.ts
 export interface PaginatedResponse<T> {
   data: T[];
   total: number;
   page: number;
   limit: number;
   totalPages: number;
-}
-
-export interface ApiError {
-  message: string;
-  code: string;
-  status: number;
-  details?: Record<string, string[]>;
-}
-
-export interface SelectOption {
-  value: string;
-  label: string;
-}
-
-export interface SortOption {
-  field: string;
-  direction: "asc" | "desc";
-}
-
-export interface DateRange {
-  from: Date;
-  to: Date;
 }

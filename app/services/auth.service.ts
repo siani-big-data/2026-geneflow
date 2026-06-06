@@ -20,6 +20,7 @@ import type {
   VerifyEmailRequest,
   RequestPasswordResetRequest,
   ResetPasswordRequest,
+  ChangePasswordRequest,
   TwoFactorVerifyRequest,
   TwoFactorSetupResponse,
   EnableTwoFactorRequest,
@@ -186,6 +187,14 @@ export const authService = {
     return api.post("/api/v1/auth/reset-password", data, { skipAuth: true });
   },
 
+  /**
+   * Change password for authenticated user.
+   * Requires current password for verification.
+   */
+  async changePassword(data: ChangePasswordRequest): Promise<void> {
+    return api.post("/api/v1/auth/change-password", data);
+  },
+
   // ===========================================================================
   // TWO-FACTOR AUTHENTICATION
   // ===========================================================================
@@ -280,6 +289,26 @@ export const authService = {
    */
   async getCurrentUser(): Promise<AuthUser> {
     return api.get<AuthUser>("/api/v1/users/me");
+  },
+
+  // ===========================================================================
+  // ACCOUNT MANAGEMENT
+  // ===========================================================================
+
+  /**
+   * Deactivate the current user's account.
+   * Account can be reactivated by logging in again.
+   */
+  async deactivateAccount(): Promise<void> {
+    return api.post("/api/v1/users/me/deactivate", {});
+  },
+
+  /**
+   * Permanently delete the current user's account.
+   * @param confirmationText - Must be "DELETE" to confirm deletion
+   */
+  async deleteAccount(confirmationText: string): Promise<void> {
+    return api.delete("/api/v1/users/me", { body: { confirmationText } });
   },
 
   /**

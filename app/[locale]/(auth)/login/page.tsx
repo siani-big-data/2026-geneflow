@@ -14,6 +14,7 @@ import { ApiClientError } from "@/lib/api-client";
 import { ErrorAlert } from "@/components/auth/ErrorAlert";
 import { getErrorInfo, extractErrorCode, type ErrorInfo } from "@/lib/error-messages";
 import { signInWithGoogle, signInWithGitHub } from "@/lib/oauth";
+import { EMAIL_RULES, PASSWORD_RULES, TWO_FACTOR_CODE_RULES } from "@/lib/validation";
 
 export default function LoginPage() {
   const t = useTranslations("auth");
@@ -53,9 +54,9 @@ export default function LoginPage() {
   const [codeSent, setCodeSent] = useState(false);
 
   // Validation
-  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const passwordValid = password.length >= 8;
-  const twoFactorCodeValid = /^\d{6}$/.test(twoFactorCode);
+  const emailValid = EMAIL_RULES.PATTERN.test(email);
+  const passwordValid = password.length >= PASSWORD_RULES.MIN_LENGTH;
+  const twoFactorCodeValid = TWO_FACTOR_CODE_RULES.PATTERN.test(twoFactorCode);
 
   // Redirect if already authenticated
   useEffect(() => {

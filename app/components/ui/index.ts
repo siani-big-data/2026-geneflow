@@ -44,3 +44,6 @@ export { Skeleton } from "./skeleton";
 export { Switch } from "./switch";
 export { Tabs, TabsList, TabsTrigger, TabsContent } from "./tabs";
 export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "./tooltip";
+export { Textarea, type TextareaProps } from "./textarea";
+export { Markdown, type MarkdownProps } from "./markdown";
+export { MarkdownEditor, type MarkdownEditorProps } from "./markdown-editor";

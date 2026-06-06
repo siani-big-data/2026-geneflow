@@ -58,14 +58,14 @@ export default function DiscoverPage() {
   const showFeatured =
     currentPage === 1 && !selectedFieldId && !searchQuery.trim();
   const { data: featuredStudiesData, isLoading: isLoadingFeatured } =
-    useFeaturedStudies(1, 3);
+    useFeaturedStudies(3);
 
   const publicStudies: StudySummary[] = publicStudiesData?.items ?? [];
   const totalCount = publicStudiesData?.totalCount ?? 0;
   const totalPages = Math.ceil(totalCount / itemsPerPage);
 
   const featuredStudies: StudySummary[] = showFeatured
-    ? (featuredStudiesData?.items ?? [])
+    ? (featuredStudiesData ?? [])
     : [];
 
   const isLoading = isLoadingPublic || (showFeatured && isLoadingFeatured);

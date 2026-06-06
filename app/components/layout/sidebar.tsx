@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { ChevronLeft, ChevronRight, User, LogOut } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -63,9 +64,13 @@ export function Sidebar() {
           )}
           aria-label="GeneFlow home"
         >
-          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-teal to-blue-deep">
-            <span className="font-semibold text-white">GF</span>
-          </div>
+          <Image
+            src="/logo.png"
+            alt="GeneFlow"
+            width={40}
+            height={40}
+            className="flex-shrink-0 rounded-lg object-contain"
+          />
           <div
             className={cn(
               "flex flex-col overflow-hidden whitespace-nowrap transition-all duration-300 ease-out",

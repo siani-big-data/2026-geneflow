@@ -58,10 +58,17 @@ export function PaymentMethodList({
     );
   }
 
+  // Payment methods endpoint not yet implemented - show coming soon
   if (error) {
     return (
-      <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-center text-sm text-destructive">
-        Failed to load payment methods. Please try again.
+      <div className="rounded-lg border border-dashed border-border p-6 text-center">
+        <CreditCard className="mx-auto h-8 w-8 text-muted-foreground" />
+        <h3 className="mt-3 text-sm font-medium text-foreground">
+          Payment Methods
+        </h3>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Coming soon. Free plan active.
+        </p>
       </div>
     );
   }

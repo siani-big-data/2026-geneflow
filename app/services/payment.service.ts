@@ -13,7 +13,10 @@ import type {
   PaymentMethodSummary,
   SetupIntent,
   AddPaymentMethodRequest,
+  PaymentMethodApiResponse,
+  SetupIntentApiResponse,
 } from "@/types";
+import { toPaymentMethod, toPaymentMethodSummary } from "@/types";
 
 export const paymentService = {
   // ===========================================================================
@@ -25,7 +28,10 @@ export const paymentService = {
    * Returns a clientSecret for use with Stripe.js confirmCardSetup().
    */
   async createSetupIntent(): Promise<SetupIntent> {
-    return api.get<SetupIntent>("/api/v1/payment-methods/setup-intent");
+    const response = await api.get<SetupIntentApiResponse>(
+      "/api/v1/payment-methods/setup-intent"
+    );
+    return { clientSecret: response.clientSecret };
   },
 
   // ===========================================================================
@@ -36,7 +42,10 @@ export const paymentService = {
    * Get all payment methods for the current user.
    */
   async getAll(): Promise<PaymentMethodSummary[]> {
-    return api.get<PaymentMethodSummary[]>("/api/v1/payment-methods");
+    const response = await api.get<PaymentMethodApiResponse[]>(
+      "/api/v1/payment-methods"
+    );
+    return response.map(toPaymentMethodSummary);
   },
 
   /**
@@ -45,7 +54,10 @@ export const paymentService = {
    */
   async getDefault(): Promise<PaymentMethod | null> {
     try {
-      return await api.get<PaymentMethod>("/api/v1/payment-methods/default");
+      const response = await api.get<PaymentMethodApiResponse>(
+        "/api/v1/payment-methods/default"
+      );
+      return toPaymentMethod(response);
     } catch (error) {
       // 404 means no default payment method
       if ((error as { status?: number }).status === 404) {
@@ -62,7 +74,11 @@ export const paymentService = {
    * @param data - The Stripe paymentMethodId and whether to set as default
    */
   async add(data: AddPaymentMethodRequest): Promise<PaymentMethod> {
-    return api.post<PaymentMethod>("/api/v1/payment-methods", data);
+    const response = await api.post<PaymentMethodApiResponse>(
+      "/api/v1/payment-methods",
+      data
+    );
+    return toPaymentMethod(response);
   },
 
   /**

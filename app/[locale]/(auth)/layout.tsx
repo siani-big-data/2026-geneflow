@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Dna, ArrowLeft, Moon, Sun } from "lucide-react";
+import { ArrowLeft, Moon, Sun } from "lucide-react";
 import { useTheme } from "@/providers";
 import { GuestGuard } from "@/components/auth";
 import {useTranslations} from "next-intl";
@@ -72,9 +72,13 @@ export default function AuthLayout({
         {/* Footer */}
         <footer className="p-6 text-center text-sm text-slate-500 dark:text-slate-400">
           <div className="flex items-center justify-center gap-2 mb-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded bg-teal text-white">
-              <Dna className="h-3.5 w-3.5" />
-            </div>
+            <Image
+              src="/logo.png"
+              alt="GeneFlow"
+              width={28}
+              height={28}
+              className="rounded object-contain"
+            />
             <span className="font-semibold text-slate-700 dark:text-slate-200">GeneFlow</span>
           </div>
           <p>&copy; {new Date().getFullYear()} GeneFlow. All rights reserved.</p>

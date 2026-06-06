@@ -7,3 +7,5 @@ export { dashboardService } from "./dashboard.service";
 export { paymentService } from "./payment.service";
 export { planService, subscriptionService } from "./subscription.service";
 export { usageService } from "./usage.service";
+export { analysisService } from "./analysis.service";
+export { activityService } from "./activity.service";

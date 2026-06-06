@@ -33,7 +33,16 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable}`}
       suppressHydrationWarning
     >
-      <body className="min-h-screen bg-background font-sans antialiased">
+      {/*
+        `suppressHydrationWarning` is set because browser extensions such as
+        ColorZilla (`cz-shortcut-listen`) and Grammarly mutate <body> after
+        the server payload arrives, producing a benign hydration mismatch
+        we don't control and can't fix in our own tree.
+      */}
+      <body
+        className="min-h-screen bg-background font-sans antialiased"
+        suppressHydrationWarning
+      >
         <ThemeProvider defaultTheme="system" storageKey="geneflow-theme">
           <QueryProvider>
             <TooltipProvider>

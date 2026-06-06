@@ -2,8 +2,8 @@
 // DASHBOARD TYPES - Aligned with GeneFlow.ApiNet Backend API
 // =============================================================================
 
-/** Study statistics for dashboard */
-export interface StudyStats {
+/** Study count statistics for dashboard overview */
+export interface DashboardStudyStats {
   totalCount: number;
   activeCount: number;
   draftCount: number;
@@ -39,8 +39,8 @@ export interface RecentStudy {
 }
 
 /** Dashboard statistics response */
-export interface DashboardStats {
-  studies: StudyStats;
+export interface DashboardOverview {
+  studies: DashboardStudyStats;
   traces: TraceStats;
   alignments: AlignmentStats;
   recentStudies: RecentStudy[];

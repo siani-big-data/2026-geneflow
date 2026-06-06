@@ -4,7 +4,27 @@
  * Connects to GeneFlow.ApiNet2 backend API for study management.
  */
 
-import { api } from "@/lib/api-client";
+import { api, tokenStorage } from "@/lib/api-client";
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5145";
+
+/**
+ * Parses an RFC 6266 / RFC 5987 Content-Disposition header to extract the
+ * file name. Handles both `filename="..."` and `filename*=UTF-8''...`.
+ */
+function parseContentDispositionFilename(header: string | null): string | null {
+  if (!header) return null;
+  const utf8Match = /filename\*=(?:UTF-8'')?([^;]+)/i.exec(header);
+  if (utf8Match) {
+    try {
+      return decodeURIComponent(utf8Match[1].trim().replace(/^"|"$/g, ""));
+    } catch {
+      // fall through
+    }
+  }
+  const asciiMatch = /filename="?([^";]+)"?/i.exec(header);
+  return asciiMatch ? asciiMatch[1].trim() : null;
+}
 import type {
   Study,
   StudySummary,
@@ -21,21 +41,8 @@ import type {
   AddStudyPaperInput,
   SendInvitationInput,
   ResearchField,
+  PagedResponse,
 } from "@/types";
-
-// =============================================================================
-// API RESPONSE TYPES
-// =============================================================================
-
-interface PagedResponse<T> {
-  items: T[];
-  pageNumber: number;
-  pageSize: number;
-  totalCount: number;
-  totalPages: number;
-  hasPreviousPage: boolean;
-  hasNextPage: boolean;
-}
 
 // =============================================================================
 // STUDY CRUD OPERATIONS
@@ -73,8 +80,8 @@ export const studiesService = {
   /**
    * Change study status.
    */
-  async changeStatus(studyId: string, statusId: number): Promise<Study> {
-    return api.patch<Study>(`/api/v1/studies/${studyId}/status`, { statusId });
+  async changeStatus(studyId: string, newStatusId: number): Promise<Study> {
+    return api.patch<Study>(`/api/v1/studies/${studyId}/status`, { newStatusId });
   },
 
   /**
@@ -85,6 +92,57 @@ export const studiesService = {
     settings: UpdateStudySettingsInput
   ): Promise<Study> {
     return api.patch<Study>(`/api/v1/studies/${studyId}/settings`, settings);
+  },
+
+  /**
+   * Update the study README markdown.
+   * Pass `null` to clear it.
+   */
+  async updateReadme(studyId: string, markdown: string | null): Promise<Study> {
+    return api.put<Study>(`/api/v1/studies/${studyId}/readme`, { markdown });
+  },
+
+  /**
+   * Duplicate a study.
+   * Creates a copy with the current user as owner.
+   */
+  async duplicate(studyId: string): Promise<Study> {
+    return api.post<Study>(`/api/v1/studies/${studyId}/duplicate`, {});
+  },
+
+  /**
+   * Export a study as a ZIP archive (metadata + traces + papers + members).
+   * Returns the binary blob plus the filename advertised by the server via
+   * Content-Disposition. Falls back to a generated name when absent.
+   */
+  async exportStudy(
+    studyId: string,
+  ): Promise<{ blob: Blob; filename: string }> {
+    const accessToken = tokenStorage.getAccessToken();
+    const response = await fetch(
+      `${API_BASE_URL}/api/v1/studies/${studyId}/export`,
+      {
+        method: "GET",
+        credentials: "include",
+        headers: accessToken
+          ? { Authorization: `Bearer ${accessToken}` }
+          : undefined,
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to export study (${response.status} ${response.statusText})`,
+      );
+    }
+
+    const blob = await response.blob();
+    const filename =
+      parseContentDispositionFilename(
+        response.headers.get("content-disposition"),
+      ) ?? `study-${studyId}.zip`;
+
+    return { blob, filename };
   },
 
   // ===========================================================================
@@ -131,15 +189,11 @@ export const studiesService = {
   /**
    * Get featured studies.
    */
-  async getFeatured(
-    pageNumber: number = 1,
-    pageSize: number = 10
-  ): Promise<PagedResponse<StudySummary>> {
+  async getFeatured(limit: number = 10): Promise<StudySummary[]> {
     const params = new URLSearchParams({
-      pageNumber: pageNumber.toString(),
-      pageSize: pageSize.toString(),
+      limit: limit.toString(),
     });
-    return api.get<PagedResponse<StudySummary>>(`/api/v1/studies/featured?${params}`);
+    return api.get<StudySummary[]>(`/api/v1/studies/featured?${params}`);
   },
 
   /**

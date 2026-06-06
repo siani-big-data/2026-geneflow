@@ -31,6 +31,7 @@ import {
 import { PaymentMethodList } from "@/components/payment";
 import { planService, subscriptionService, usageService } from "@/services";
 import type { Plan, Subscription, BillingCycle, BillingUsage } from "@/types";
+import { BillingCycleId } from "@/types";
 import { useAuthStore } from "@/stores/auth-store";
 
 export default function BillingPage() {
@@ -121,13 +122,21 @@ export default function BillingPage() {
     try {
       const newSubscription = await subscriptionService.changePlan({
         newPlanId: selectedPlanId,
-        billingCycleId: selectedBillingCycle,
+        billingCycleId: BillingCycleId[selectedBillingCycle],
       });
       setSubscription(newSubscription);
 
       // Update current plan
       const plan = plans.find((p) => p.id === newSubscription.planId);
       setCurrentPlan(plan || null);
+
+      // Refresh billing usage to get updated limits from new plan
+      try {
+        const updatedUsage = await usageService.getBillingUsage();
+        setBillingUsage(updatedUsage);
+      } catch (usageErr) {
+        console.error("Failed to refresh usage data:", usageErr);
+      }
 
       setChangePlanOpen(false);
       setSelectedPlanId(null);

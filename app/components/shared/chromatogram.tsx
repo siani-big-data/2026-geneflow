@@ -57,12 +57,67 @@ export interface ChromatogramData {
   };
 }
 
+export interface ChromatogramAnnotation {
+  id: string;
+  label: string;
+  startPosition: number;
+  endPosition: number;
+  color?: string;
+  type?: string;
+}
+
+export interface ChromatogramTrimRegion {
+  id: string;
+  startPosition: number;
+  endPosition: number;
+  trimEnd: "FivePrime" | "ThreePrime" | string;
+  isActive: boolean;
+}
+
+export interface ChromatogramMotifMatch {
+  /** 1-based start position on the sequence */
+  start: number;
+  /** 1-based inclusive end position on the sequence */
+  end: number;
+  /** Optional matched substring, used only for tooltip purposes */
+  matchedSequence?: string;
+  /** Optional strand indicator for the marker color */
+  strand?: "+" | "-" | string;
+}
+
+export interface ChromatogramRestrictionSite {
+  /** Enzyme name shown as a label */
+  enzyme: string;
+  /** 1-based recognition site start */
+  position: number;
+  /** 1-based cut position. Falls back to `position` when missing. */
+  cutPosition?: number;
+  recognitionSequence?: string;
+}
+
 interface ChromatogramProps {
   data?: ChromatogramData;
   className?: string;
+  style?: React.CSSProperties;
   onControlsReady?: (controls: ChromatogramControls) => void;
   onStatsReady?: (stats: ChromatogramStats) => void;
   hideHeader?: boolean;
+  annotations?: ChromatogramAnnotation[];
+  onAnnotationClick?: (annotation: ChromatogramAnnotation) => void;
+  /** Active trim regions to overlay on the chromatogram */
+  trims?: ChromatogramTrimRegion[];
+  /** If true, completely hides trimmed regions instead of showing overlay */
+  hideTrimmedRegions?: boolean;
+  /** Motif matches rendered as highlighted regions over the peak area */
+  motifMatches?: ChromatogramMotifMatch[];
+  /** Restriction sites rendered as vertical lines + enzyme labels */
+  restrictionSites?: ChromatogramRestrictionSite[];
+  /** Toggle motif overlay rendering */
+  showMotifs?: boolean;
+  /** Toggle restriction overlay rendering */
+  showRestriction?: boolean;
+  /** Compact mode: lowers min-height and hides search/legend bars so the panel can shrink */
+  compact?: boolean;
 }
 
 // Colors for each nucleotide
@@ -93,46 +148,8 @@ const SCROLLBAR_HEIGHT = 12;
 const QUALITY_AREA_HEIGHT = 35;
 const SEQUENCE_AREA_HEIGHT = 20;
 
-// Generate mock data for demo purposes - memoized outside component
-function generateMockData(length: number = 800): ChromatogramData {
-  const bases = ["A", "T", "G", "C"];
-  let sequence = "";
-  const quality: number[] = [];
-  const peaks = {
-    A: [] as number[],
-    T: [] as number[],
-    G: [] as number[],
-    C: [] as number[],
-  };
 
-  for (let i = 0; i < length; i++) {
-    const rand = Math.random();
-    let base: string;
-
-    if (rand < 0.26) base = "A";
-    else if (rand < 0.52) base = "T";
-    else if (rand < 0.76) base = "G";
-    else base = "C";
-
-    sequence += base;
-
-    const positionFactor = 1 - (Math.abs(i - length / 2) / (length / 2)) * 0.3;
-    const baseQuality = Math.round((25 + Math.random() * 15) * positionFactor);
-    quality.push(Math.min(40, Math.max(5, baseQuality)));
-
-    const mainPeakHeight = 0.6 + Math.random() * 0.4;
-    const noise = () => Math.random() * 0.12;
-
-    peaks.A.push(base === "A" ? mainPeakHeight : noise());
-    peaks.T.push(base === "T" ? mainPeakHeight : noise());
-    peaks.G.push(base === "G" ? mainPeakHeight : noise());
-    peaks.C.push(base === "C" ? mainPeakHeight : noise());
-  }
-
-  return { sequence, quality, peaks };
-}
-
-export function Chromatogram({ data: propData, className, onControlsReady, onStatsReady, hideHeader = false }: ChromatogramProps) {
+export function Chromatogram({ data: propData, className, style, onControlsReady, onStatsReady, hideHeader = false, annotations = [], onAnnotationClick, trims = [], hideTrimmedRegions = false, motifMatches = [], restrictionSites = [], showMotifs = true, showRestriction = true, compact = false }: ChromatogramProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -165,6 +182,13 @@ export function Chromatogram({ data: propData, className, onControlsReady, onSta
   const searchMatchesRef = useRef<number[]>([]);
   const searchQueryRef = useRef("");
   const currentMatchIndexRef = useRef(0);
+  const annotationsRef = useRef<ChromatogramAnnotation[]>([]);
+  const trimsRef = useRef<ChromatogramTrimRegion[]>([]);
+  const hideTrimmedRegionsRef = useRef(false);
+  const motifMatchesRef = useRef<ChromatogramMotifMatch[]>([]);
+  const restrictionSitesRef = useRef<ChromatogramRestrictionSite[]>([]);
+  const showMotifsRef = useRef(true);
+  const showRestrictionRef = useRef(true);
 
   // Animation frame ref for debouncing
   const rafIdRef = useRef<number>(0);
@@ -179,6 +203,13 @@ export function Chromatogram({ data: propData, className, onControlsReady, onSta
   useEffect(() => { searchMatchesRef.current = searchMatches; }, [searchMatches]);
   useEffect(() => { searchQueryRef.current = searchQuery; }, [searchQuery]);
   useEffect(() => { currentMatchIndexRef.current = currentMatchIndex; }, [currentMatchIndex]);
+  useEffect(() => { annotationsRef.current = annotations; }, [annotations]);
+  useEffect(() => { trimsRef.current = trims; }, [trims]);
+  useEffect(() => { hideTrimmedRegionsRef.current = hideTrimmedRegions; }, [hideTrimmedRegions]);
+  useEffect(() => { motifMatchesRef.current = motifMatches; }, [motifMatches]);
+  useEffect(() => { restrictionSitesRef.current = restrictionSites; }, [restrictionSites]);
+  useEffect(() => { showMotifsRef.current = showMotifs; }, [showMotifs]);
+  useEffect(() => { showRestrictionRef.current = showRestriction; }, [showRestriction]);
 
   // Computed values
   const sequenceLength = data?.sequence.length || 0;
@@ -206,11 +237,7 @@ export function Chromatogram({ data: propData, className, onControlsReady, onSta
 
   // Initialize data
   useEffect(() => {
-    if (propData) {
-      setData(propData);
-    } else {
-      setData(generateMockData(800));
-    }
+    setData(propData ?? null);
   }, [propData]);
 
   // Check dark mode
@@ -261,19 +288,21 @@ export function Chromatogram({ data: propData, className, onControlsReady, onSta
     const searchMatchesVal = searchMatchesRef.current;
     const searchQueryVal = searchQueryRef.current;
     const currentMatchIndexVal = currentMatchIndexRef.current;
+    const annotationsVal = annotationsRef.current;
 
     // Clear
     ctx.fillStyle = bgColor;
     ctx.fillRect(0, 0, width, height);
 
     const baseW = BASE_WIDTH * zoom;
+    const contentPadding = 10; // Left padding for content area
 
     // Calculate dynamic heights
     const dynPeakAreaHeight = Math.max(60, height - MINIMAP_HEIGHT - HEADER_HEIGHT - QUALITY_AREA_HEIGHT - SEQUENCE_AREA_HEIGHT - SCROLLBAR_HEIGHT - 10);
 
-    // Calculate visible range
+    // Calculate visible range (account for padding)
     const startBase = Math.floor(offset / baseW);
-    const endBase = Math.ceil((offset + width) / baseW);
+    const endBase = Math.ceil((offset + width - contentPadding * 2) / baseW);
 
     // Draw minimap
     const minimapWidth = width - 20;
@@ -327,7 +356,7 @@ export function Chromatogram({ data: propData, className, onControlsReady, onSta
 
     const step = zoom >= 2 ? 10 : zoom >= 1 ? 25 : 50;
     for (let i = 0; i < data.sequence.length; i += step) {
-      const x = i * baseW - offset;
+      const x = contentPadding + i * baseW - offset;
       if (x >= -baseW && x <= width + baseW) {
         ctx.fillText(String(i + 1), x + baseW / 2, peakY - 8);
       }
@@ -349,7 +378,7 @@ export function Chromatogram({ data: propData, className, onControlsReady, onSta
         const peakArray = data.peaks[base];
 
         for (let i = startIdx; i <= endIdx; i++) {
-          const x = i * baseW - offset + baseW / 2;
+          const x = contentPadding + i * baseW - offset + baseW / 2;
           const peakValue = peakArray[i] ?? 0;
           const pY = peakY + dynPeakAreaHeight - peakValue * dynPeakAreaHeight * 0.9;
 
@@ -357,7 +386,7 @@ export function Chromatogram({ data: propData, className, onControlsReady, onSta
             ctx.moveTo(x, pY);
             started = true;
           } else {
-            const prevX = (i - 1) * baseW - offset + baseW / 2;
+            const prevX = contentPadding + (i - 1) * baseW - offset + baseW / 2;
             const prevPeakValue = peakArray[i - 1] ?? 0;
             const prevY = peakY + dynPeakAreaHeight - prevPeakValue * dynPeakAreaHeight * 0.9;
             const cpX = (prevX + x) / 2;
@@ -373,7 +402,7 @@ export function Chromatogram({ data: propData, className, onControlsReady, onSta
         for (let i = startBase; i <= Math.min(endBase, data.quality.length - 1); i++) {
           if (i < 0) continue;
 
-          const x = i * baseW - offset;
+          const x = contentPadding + i * baseW - offset;
           const q = data.quality[i];
           const barHeight = (Math.min(q, 60) / 60) * QUALITY_AREA_HEIGHT;
 
@@ -399,7 +428,7 @@ export function Chromatogram({ data: propData, className, onControlsReady, onSta
         for (let i = startBase; i <= Math.min(endBase, data.sequence.length - 1); i++) {
           if (i < 0) continue;
 
-          const x = i * baseW - offset + baseW / 2;
+          const x = contentPadding + i * baseW - offset + baseW / 2;
           const base = data.sequence[i];
 
           ctx.fillStyle = colors[base] || colors["N"];
@@ -414,7 +443,7 @@ export function Chromatogram({ data: propData, className, onControlsReady, onSta
       for (let i = startBase; i <= Math.min(endBase, data.sequence.length - 1); i++) {
         if (i < 0) continue;
 
-        const x = i * baseW - offset;
+        const x = contentPadding + i * baseW - offset;
         const base = data.sequence[i];
 
         ctx.fillStyle = colors[base] || colors["N"];
@@ -436,7 +465,7 @@ export function Chromatogram({ data: propData, className, onControlsReady, onSta
 
       for (let i = 0; i < searchMatchesVal.length; i++) {
         const matchStart = searchMatchesVal[i];
-        const matchX = matchStart * baseW - offset;
+        const matchX = contentPadding + matchStart * baseW - offset;
         const matchWidth = queryLength * baseW;
 
         if (matchX + matchWidth < 0 || matchX > width) continue;
@@ -452,9 +481,203 @@ export function Chromatogram({ data: propData, className, onControlsReady, onSta
       }
     }
 
+    // Draw annotation markers
+    if (annotationsVal.length > 0) {
+      const annotationTrackY = sequenceY + 25; // Below the sequence
+      const annotationHeight = 6;
+
+      for (const annotation of annotationsVal) {
+        const startPos = annotation.startPosition - 1; // Convert to 0-based
+        const endPos = annotation.endPosition - 1;
+        const annotX = contentPadding + startPos * baseW - offset;
+        const annotWidth = Math.max(baseW, (endPos - startPos + 1) * baseW);
+
+        // Skip if not visible
+        if (annotX + annotWidth < 0 || annotX > width) continue;
+
+        const color = annotation.color || "#14b8a6";
+
+        // Draw annotation bar
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 0.7;
+        ctx.beginPath();
+        ctx.roundRect(annotX, annotationTrackY, annotWidth, annotationHeight, 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+
+        // Draw annotation label if zoomed in enough
+        if (zoom >= 1 && annotWidth > 20) {
+          ctx.font = "bold 9px sans-serif";
+          ctx.fillStyle = textColor;
+          ctx.textAlign = "left";
+          ctx.textBaseline = "top";
+          const labelX = Math.max(annotX + 3, contentPadding);
+          ctx.fillText(annotation.label, labelX, annotationTrackY + annotationHeight + 2);
+        }
+
+        // Draw marker triangle on minimap
+        const minimapPos = minimapX + (startPos / data.sequence.length) * minimapWidth;
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(minimapPos, minimapY + MINIMAP_HEIGHT - 8);
+        ctx.lineTo(minimapPos - 3, minimapY + MINIMAP_HEIGHT - 3);
+        ctx.lineTo(minimapPos + 3, minimapY + MINIMAP_HEIGHT - 3);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+
+    // Draw motif match highlights
+    const motifMatchesVal = motifMatchesRef.current;
+    const showMotifsVal = showMotifsRef.current;
+    if (showMotifsVal && motifMatchesVal.length > 0) {
+      for (const match of motifMatchesVal) {
+        const startPos = match.start - 1; // 1-based -> 0-based
+        const endPos = match.end - 1;
+        const matchX = contentPadding + startPos * baseW - offset;
+        const matchWidth = Math.max(baseW, (endPos - startPos + 1) * baseW);
+
+        if (matchX + matchWidth < 0 || matchX > width) continue;
+
+        const isReverse = match.strand === "-";
+        const fillColor = isReverse
+          ? "rgba(168, 85, 247, 0.18)" // purple for reverse strand
+          : "rgba(236, 72, 153, 0.18)"; // pink for forward strand
+        const strokeColor = isReverse ? "#a855f7" : "#ec4899";
+
+        ctx.fillStyle = fillColor;
+        ctx.fillRect(matchX, peakY, matchWidth, dynPeakAreaHeight);
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(matchX, peakY, matchWidth, dynPeakAreaHeight);
+
+        // Minimap marker
+        const minimapPos = minimapX + (startPos / data.sequence.length) * minimapWidth;
+        const minimapW = Math.max(2, ((endPos - startPos + 1) / data.sequence.length) * minimapWidth);
+        ctx.fillStyle = strokeColor;
+        ctx.globalAlpha = 0.6;
+        ctx.fillRect(minimapPos, minimapY + MINIMAP_HEIGHT - 14, minimapW, 3);
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    // Draw restriction enzyme cut sites
+    const restrictionSitesVal = restrictionSitesRef.current;
+    const showRestrictionVal = showRestrictionRef.current;
+    if (showRestrictionVal && restrictionSitesVal.length > 0) {
+      ctx.font = "bold 10px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "alphabetic";
+
+      for (const site of restrictionSitesVal) {
+        const cutPos = (site.cutPosition ?? site.position) - 1; // 1-based -> 0-based
+        const cutX = contentPadding + cutPos * baseW - offset + baseW / 2;
+
+        if (cutX < 0 || cutX > width) continue;
+
+        // Vertical cut line
+        ctx.strokeStyle = "#0ea5e9"; // sky blue
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([2, 3]);
+        ctx.beginPath();
+        ctx.moveTo(cutX, peakY);
+        ctx.lineTo(cutX, sequenceY + 12);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Enzyme label background + text above the peaks
+        const labelText = site.enzyme;
+        const labelMetrics = ctx.measureText(labelText);
+        const labelW = labelMetrics.width + 8;
+        const labelH = 14;
+        const labelX = Math.min(width - labelW - 2, Math.max(2, cutX - labelW / 2));
+        const labelY = peakY - 2;
+
+        ctx.fillStyle = "#0ea5e9";
+        ctx.globalAlpha = 0.95;
+        ctx.beginPath();
+        ctx.roundRect(labelX, labelY - labelH, labelW, labelH, 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+
+        ctx.fillStyle = "#ffffff";
+        ctx.fillText(labelText, labelX + labelW / 2, labelY - 3);
+
+        // Minimap tick
+        const minimapTickX = minimapX + (cutPos / data.sequence.length) * minimapWidth;
+        ctx.strokeStyle = "#0ea5e9";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(minimapTickX, minimapY);
+        ctx.lineTo(minimapTickX, minimapY + MINIMAP_HEIGHT - 10);
+        ctx.stroke();
+      }
+    }
+
+    // Draw trim overlays
+    const trimsVal = trimsRef.current;
+    const hideTrimmedVal = hideTrimmedRegionsRef.current;
+    if (trimsVal.length > 0) {
+      for (const trim of trimsVal) {
+        if (!trim.isActive) continue;
+
+        const trimStartPos = trim.startPosition; // 0-based
+        const trimEndPos = trim.endPosition; // exclusive
+        const trimX = contentPadding + trimStartPos * baseW - offset;
+        const trimWidth = (trimEndPos - trimStartPos) * baseW;
+
+        // Skip if not visible
+        if (trimX + trimWidth < 0 || trimX > width) continue;
+
+        // Draw semi-transparent overlay on trimmed region
+        ctx.fillStyle = isDark ? "rgba(0, 0, 0, 0.6)" : "rgba(128, 128, 128, 0.5)";
+        ctx.fillRect(trimX, peakY - 10, trimWidth, height - peakY - SCROLLBAR_HEIGHT);
+
+        // Draw trim boundary lines
+        ctx.strokeStyle = "#ef4444"; // red
+        ctx.lineWidth = 2;
+        ctx.setLineDash([4, 4]);
+
+        // Start line
+        if (trimX >= 0 && trimX <= width) {
+          ctx.beginPath();
+          ctx.moveTo(trimX, peakY - 10);
+          ctx.lineTo(trimX, height - SCROLLBAR_HEIGHT - 10);
+          ctx.stroke();
+        }
+
+        // End line
+        const endX = trimX + trimWidth;
+        if (endX >= 0 && endX <= width) {
+          ctx.beginPath();
+          ctx.moveTo(endX, peakY - 10);
+          ctx.lineTo(endX, height - SCROLLBAR_HEIGHT - 10);
+          ctx.stroke();
+        }
+
+        ctx.setLineDash([]);
+
+        // Draw trim label
+        const labelText = trim.trimEnd === "FivePrime" ? "5' Trim" : "3' Trim";
+        ctx.font = "bold 11px sans-serif";
+        ctx.fillStyle = "#ef4444";
+        ctx.textAlign = "center";
+        const labelX = Math.max(trimX + trimWidth / 2, trimX + 30);
+        if (labelX > 0 && labelX < width) {
+          ctx.fillText(labelText, labelX, peakY + 15);
+        }
+
+        // Draw trim marker on minimap
+        const minimapTrimStart = minimapX + (trimStartPos / data.sequence.length) * minimapWidth;
+        const minimapTrimWidth = ((trimEndPos - trimStartPos) / data.sequence.length) * minimapWidth;
+        ctx.fillStyle = "rgba(239, 68, 68, 0.4)"; // red overlay
+        ctx.fillRect(minimapTrimStart, minimapY, Math.max(2, minimapTrimWidth), MINIMAP_HEIGHT - 10);
+      }
+    }
+
     // Draw hover info
     if (hoveredBaseVal !== null && hoveredBaseVal >= 0 && hoveredBaseVal < data.sequence.length) {
-      const x = hoveredBaseVal * baseW - offset + baseW / 2;
+      const x = contentPadding + hoveredBaseVal * baseW - offset + baseW / 2;
 
       ctx.strokeStyle = "rgba(59, 130, 246, 0.5)";
       ctx.lineWidth = 1;
@@ -528,13 +751,17 @@ export function Chromatogram({ data: propData, className, onControlsReady, onSta
 
     if (width === 0 || height === 0) return;
 
-    // Only update if size actually changed
-    if (canvasSizeRef.current.width === width && canvasSizeRef.current.height === height) {
+    // Always update canvas dimensions to handle resize properly
+    const newWidth = Math.floor(width * dpr);
+    const newHeight = Math.floor(height * dpr);
+
+    // Check if size actually changed
+    if (canvas.width === newWidth && canvas.height === newHeight) {
       return;
     }
 
-    canvas.width = Math.floor(width * dpr);
-    canvas.height = Math.floor(height * dpr);
+    canvas.width = newWidth;
+    canvas.height = newHeight;
     canvas.style.width = `${width}px`;
     canvas.style.height = `${height}px`;
 
@@ -556,12 +783,30 @@ export function Chromatogram({ data: propData, className, onControlsReady, onSta
 
   // Setup resize observer - runs once
   useEffect(() => {
-    setupCanvas();
-    requestRender();
-
-    const observer = new ResizeObserver(() => {
+    // Wait for layout to be ready before initial setup
+    const initialSetup = () => {
       setupCanvas();
       requestRender();
+    };
+
+    // Use RAF + timeout to ensure layout is complete after page load/refresh
+    const timeoutId = setTimeout(() => {
+      requestAnimationFrame(initialSetup);
+    }, 50);
+
+    // Debounced resize handler to handle sidebar transitions smoothly
+    let resizeTimeout: NodeJS.Timeout;
+    const observer = new ResizeObserver(() => {
+      // Clear previous timeout to debounce rapid changes
+      clearTimeout(resizeTimeout);
+      // Immediate update
+      setupCanvas();
+      requestRender();
+      // Also update after transition completes (for sidebar animations)
+      resizeTimeout = setTimeout(() => {
+        setupCanvas();
+        requestRender();
+      }, 300);
     });
 
     if (containerRef.current) {
@@ -569,6 +814,8 @@ export function Chromatogram({ data: propData, className, onControlsReady, onSta
     }
 
     return () => {
+      clearTimeout(timeoutId);
+      clearTimeout(resizeTimeout);
       observer.disconnect();
       cancelAnimationFrame(rafIdRef.current);
     };
@@ -703,7 +950,8 @@ export function Chromatogram({ data: propData, className, onControlsReady, onSta
     } else if (y > peakY && y < height - SCROLLBAR_HEIGHT - 10) {
       canvas.style.cursor = "grab";
       const baseW = BASE_WIDTH * zoomLevelRef.current;
-      const baseIndex = Math.floor((x + scrollOffsetRef.current) / baseW);
+      const contentPadding = 10;
+      const baseIndex = Math.floor((x - contentPadding + scrollOffsetRef.current) / baseW);
       setHoveredBase(baseIndex);
     } else {
       canvas.style.cursor = "default";
@@ -970,8 +1218,21 @@ export function Chromatogram({ data: propData, className, onControlsReady, onSta
 
   const colors = isDarkMode ? BASE_COLORS_DARK : BASE_COLORS;
 
+  // Show empty state when no data is available
+  if (!data) {
+    return (
+      <div className={cn("flex h-full flex-col items-center justify-center gap-4", className)} style={style}>
+        <Activity className="h-16 w-16 text-muted-foreground/30" />
+        <div className="text-center">
+          <p className="text-lg font-medium text-muted-foreground">No sequence data available</p>
+          <p className="text-sm text-muted-foreground/70">Upload a trace file to view chromatogram data</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className={cn("flex h-full flex-col gap-2", className)}>
+    <div className={cn("flex h-full flex-col gap-2", className)} style={style}>
       {/* Header */}
       {!hideHeader && (
         <div className="flex flex-shrink-0 flex-wrap items-center justify-between gap-4">
@@ -1085,6 +1346,7 @@ export function Chromatogram({ data: propData, className, onControlsReady, onSta
       )}
 
       {/* Search Bar */}
+      {!compact && (
       <div className="flex flex-shrink-0 items-center gap-3 rounded-lg border border-border bg-background px-3 py-2">
         <div className="flex flex-1 items-center gap-2">
           <Search className="h-4 w-4 text-muted-foreground" />
@@ -1129,8 +1391,10 @@ export function Chromatogram({ data: propData, className, onControlsReady, onSta
           <span className="text-sm italic text-muted-foreground">No matches</span>
         )}
       </div>
+      )}
 
       {/* Legend */}
+      {!compact && (
       <div className="flex flex-shrink-0 items-center gap-4 rounded-lg bg-muted/30 px-3 py-2">
         {["A", "T", "G", "C"].map((base) => (
           <div key={base} className="flex items-center gap-1.5">
@@ -1145,11 +1409,16 @@ export function Chromatogram({ data: propData, className, onControlsReady, onSta
           Scroll to pan, Ctrl+Scroll to zoom
         </span>
       </div>
+      )}
 
       {/* Canvas */}
       <div
         ref={containerRef}
-        className="relative min-h-[120px] flex-1 overflow-hidden rounded-lg border border-border bg-background"
+        className={cn(
+          "relative flex-1 overflow-hidden rounded-lg border border-border bg-background",
+          compact ? "min-h-[180px]" : "min-h-[400px]",
+        )}
+        style={compact ? undefined : { height: 'calc(100% - 140px)' }}
       >
         <canvas
           ref={canvasRef}
