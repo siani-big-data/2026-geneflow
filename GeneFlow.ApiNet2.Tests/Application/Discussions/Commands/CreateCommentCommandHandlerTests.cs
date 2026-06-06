@@ -2,6 +2,9 @@ using GeneFlow.ApiNet2.Application.Discussions.Commands.CreateComment;
 using GeneFlow.ApiNet2.Domain.Discussions;
 using GeneFlow.ApiNet2.Domain.Discussions.Entities;
 using GeneFlow.ApiNet2.Domain.Identity;
+using GeneFlow.ApiNet2.Domain.Notifications;
+using GeneFlow.ApiNet2.Domain.Notifications.Entities;
+using GeneFlow.ApiNet2.Domain.Notifications.Enumerations;
 using GeneFlow.ApiNet2.Domain.Studies;
 
 namespace GeneFlow.ApiNet2.Tests.Application.Discussions.Commands;
@@ -11,12 +14,18 @@ public class CreateCommentCommandHandlerTests
     private readonly IDiscussionRepository _discussionRepo = Substitute.For<IDiscussionRepository>();
     private readonly ICommentRepository _commentRepo = Substitute.For<ICommentRepository>();
     private readonly IDiscussionUnitOfWork _uow = Substitute.For<IDiscussionUnitOfWork>();
+    private readonly IWatchRepository _watchRepo = Substitute.For<IWatchRepository>();
+    private readonly INotificationUnitOfWork _notificationUow = Substitute.For<INotificationUnitOfWork>();
     private readonly CreateCommentCommandHandler _handler;
 
     public CreateCommentCommandHandlerTests()
     {
         _uow.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(Task.FromResult(1));
-        _handler = new CreateCommentCommandHandler(_discussionRepo, _commentRepo, _uow);
+        _notificationUow.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(Task.FromResult(1));
+        _watchRepo.GetAsync(Arg.Any<UserId>(), Arg.Any<StudyId>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<Watch?>(null));
+        _handler = new CreateCommentCommandHandler(
+            _discussionRepo, _commentRepo, _uow, _watchRepo, _notificationUow);
     }
 
     private static Discussion BuildDiscussion(bool locked = false)
