@@ -1,4 +1,5 @@
 using GeneFlow.ApiNet2.Domain.Identity;
+using GeneFlow.ApiNet2.Domain.Orgs.Enumerations;
 using GeneFlow.ApiNet2.Domain.Studies.Entities;
 using GeneFlow.ApiNet2.Domain.Studies.Enumerations;
 using GeneFlow.ApiNet2.Domain.Studies.Events;
@@ -24,6 +25,14 @@ public sealed class Study : FullAuditableAggregateRoot<StudyId>
 
     #region Properties
     public UserId OwnerId { get; private set; } = null!;
+
+    /// <summary>
+    /// Whether this study's principal owner is a User or an Org. Defaults to
+    /// <see cref="StudyOwnerType.User"/>. When set to <see cref="StudyOwnerType.Org"/>
+    /// the <c>OwnerId</c> string-form identifies an Org rather than a User.
+    /// </summary>
+    public StudyOwnerType OwnerType { get; private set; } = StudyOwnerType.User;
+
     public StudyTitle Title { get; private set; } = null!;
     public StudyDescription Description { get; private set; } = null!;
     public ResearchField ResearchField { get; private set; } = null!;
@@ -64,6 +73,7 @@ public sealed class Study : FullAuditableAggregateRoot<StudyId>
         ResearchField researchField) : base(id)
     {
         OwnerId = ownerId;
+        OwnerType = StudyOwnerType.User;
         Title = title;
         Description = description;
         ResearchField = researchField;
@@ -295,6 +305,67 @@ public sealed class Study : FullAuditableAggregateRoot<StudyId>
         RaiseDomainEvent(new StudyOwnershipTransferredEvent(Id, previousOwnerId, newOwnerId));
 
         return Result.Success();
+    }
+
+    /// <summary>
+    /// Cross-aggregate transfer: changes the study's principal owner from a
+    /// User to an Org (or vice versa). The string form of the new owner id
+    /// is stored in <see cref="OwnerId"/>; the application layer is
+    /// responsible for verifying that the actor is allowed to do this and
+    /// that the new owner exists.
+    ///
+    /// Raises <see cref="Orgs.Events.StudyOwnershipTransferredEvent"/> so
+    /// projectors (search index, activity feed) can update.
+    /// </summary>
+    public Result TransferOwnership(StudyOwnerType newOwnerType, string newOwnerId)
+    {
+        if (string.IsNullOrWhiteSpace(newOwnerId))
+            return Result.Failure(Error.Validation(
+                "Study.OwnerIdRequired",
+                "New owner ID is required."));
+
+        var previousOwnerType = OwnerType;
+        var previousOwnerId = OwnerId.ToString();
+
+        OwnerType = newOwnerType;
+
+        // OwnerId is typed as UserId. When transferring to an Org we still
+        // need a valid UserId-shaped value here, so we re-parse using the
+        // numeric portion. The OwnerType discriminator is the source of
+        // truth for "what kind of id is this".
+        if (newOwnerType == StudyOwnerType.User)
+        {
+            OwnerId = UserId.Parse(newOwnerId);
+        }
+        else
+        {
+            // For Org-owned studies, OwnerId carries the org's numeric id
+            // but the prefix is still 'U' so EF round-trips cleanly. The
+            // string form for downstream consumers (events, DTOs) uses
+            // newOwnerId directly via the event.
+            var numeric = ExtractNumericId(newOwnerId);
+            OwnerId = new UserId(numeric);
+        }
+
+        RaiseDomainEvent(new Orgs.Events.StudyOwnershipTransferredEvent(
+            Id,
+            previousOwnerType,
+            previousOwnerId,
+            newOwnerType,
+            newOwnerId));
+
+        SetModified();
+        return Result.Success();
+    }
+
+    private static long ExtractNumericId(string prefixedId)
+    {
+        // Accept either a prefixed id (e.g. "O00000007") or a bare number.
+        if (string.IsNullOrEmpty(prefixedId))
+            return 0;
+
+        var span = char.IsLetter(prefixedId[0]) ? prefixedId.AsSpan(1) : prefixedId.AsSpan();
+        return long.TryParse(span, out var v) ? v : 0;
     }
 
     public StudyMember? GetMember(UserId userId) =>
