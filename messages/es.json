@@ -547,6 +547,7 @@
         "traces": "Trazas",
         "pipelines": "Pipelines",
         "papers": "Artículos",
+        "discussions": "Debates",
         "timeline": "Cronología",
         "analysis": "Análisis",
         "team": "Equipo",
@@ -2221,6 +2222,87 @@
       "previewTab": "Vista previa",
       "emptyPreview": "Nada que mostrar.",
       "saveError": "No se pudo guardar el README."
+    }
+  },
+  "discussions": {
+    "listTitle": "Debates",
+    "loadError": "No se pudieron cargar los debates.",
+    "retry": "Reintentar",
+    "empty": "Aún no hay debates. Inicia uno para empezar la conversación.",
+    "locked": "Bloqueado",
+    "back": "Volver",
+    "prev": "Anterior",
+    "next": "Siguiente",
+    "pageOf": "Página {page} de {total}",
+    "createdBy": "Iniciado por {name} el {date}",
+    "actions": {
+      "lock": "Bloquear",
+      "unlock": "Desbloquear"
+    },
+    "new": {
+      "title": "Nuevo debate",
+      "description": "Inicia una nueva conversación en este estudio.",
+      "titleLabel": "Título",
+      "titlePlaceholder": "¿De qué te gustaría hablar?",
+      "categoryLabel": "Categoría (opcional)",
+      "categoryPlaceholder": "p. ej. resultados, ideas, preguntas",
+      "cancel": "Cancelar",
+      "submit": "Crear"
+    },
+    "validation": {
+      "titleRequired": "El título es obligatorio.",
+      "unknown": "Algo salió mal."
+    }
+  },
+  "comments": {
+    "empty": "Aún no hay comentarios.",
+    "edited": "(editado)",
+    "deleted": "(comentario eliminado)",
+    "locked": "Este debate está bloqueado. No se pueden publicar nuevos comentarios.",
+    "actions": {
+      "edit": "Editar",
+      "delete": "Eliminar",
+      "confirmDelete": "¿Eliminar este comentario?"
+    },
+    "form": {
+      "placeholder": "Escribe un comentario…",
+      "submit": "Comentar",
+      "post": "Publicar",
+      "save": "Guardar",
+      "cancel": "Cancelar"
+    },
+    "validation": {
+      "bodyRequired": "El comentario no puede estar vacío."
+    }
+  },
+  "reactions": {
+    "addReaction": "Añadir reacción",
+    "toggle": "Alternar reacción {emoji}"
+  },
+  "notifications": {
+    "pageTitle": "Notificaciones",
+    "trayTitle": "Notificaciones",
+    "trayAriaLabel": "Abrir notificaciones",
+    "trayBadge": "{count, plural, one {# notificación sin leer} other {# notificaciones sin leer}}",
+    "loading": "Cargando notificaciones…",
+    "loadError": "No se pudieron cargar las notificaciones.",
+    "retry": "Reintentar",
+    "empty": "Estás al día.",
+    "markRead": "Marcar leída",
+    "markAllRead": "Marcar todas como leídas",
+    "seeAll": "Ver todas",
+    "prev": "Anterior",
+    "next": "Siguiente",
+    "pageOf": "Página {page} de {total}",
+    "filter": {
+      "unreadOnly": "Sólo sin leer"
+    }
+  },
+  "watch": {
+    "levels": {
+      "all": "Siguiendo",
+      "mentions": "Sólo menciones",
+      "none": "Desactivado"
     }
   }
 }

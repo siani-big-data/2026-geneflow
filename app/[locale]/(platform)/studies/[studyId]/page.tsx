@@ -33,11 +33,13 @@ import {
   Workflow,
   BookOpen,
   History,
+  MessageSquare,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AIAssistant } from "@/components/shared";
 import { PapersTab } from "@/components/studies/PapersTab";
 import { StudyTimelineTab } from "@/components/studies/study-timeline-tab";
+import { DiscussionsTab } from "@/components/discussions/discussions-tab";
 import { PipelinesTab } from "@/components/pipelines";
 import { TraceProcessingSubscriber } from "@/components/traces/trace-processing-subscriber";
 import { StarButton } from "@/components/social/star-button";
@@ -86,12 +88,13 @@ import type {
   TraceFilters,
 } from "@/types";
 
-const tabIds = ["overview", "traces", "pipelines", "papers", "timeline", "team", "settings"] as const;
+const tabIds = ["overview", "traces", "pipelines", "papers", "discussions", "timeline", "team", "settings"] as const;
 const tabIcons = {
   overview: Beaker,
   traces: FileText,
   pipelines: Workflow,
   papers: BookOpen,
+  discussions: MessageSquare,
   timeline: History,
   team: Users,
   settings: SettingsIcon,
@@ -1107,6 +1110,9 @@ export default function StudyDetailPage() {
             canEdit={canEditContent}
           />
         )}
+
+        {/* Discussions Tab — threaded discussions + comments + reactions */}
+        {activeTab === "discussions" && <DiscussionsTab studyId={studyId} />}
 
         {/* Timeline Tab — chronological feed of activity scoped to this study */}
         {activeTab === "timeline" && <StudyTimelineTab studyId={studyId} />}

@@ -547,6 +547,7 @@
         "traces": "Traces",
         "pipelines": "Pipelines",
         "papers": "Papers",
+        "discussions": "Discussions",
         "timeline": "Timeline",
         "analysis": "Analysis",
         "team": "Team",
@@ -2257,6 +2258,87 @@
       "previewTab": "Preview",
       "emptyPreview": "Nothing to preview.",
       "saveError": "Could not save README."
+    }
+  },
+  "discussions": {
+    "listTitle": "Discussions",
+    "loadError": "Could not load discussions.",
+    "retry": "Retry",
+    "empty": "No discussions yet. Start one to get the conversation going.",
+    "locked": "Locked",
+    "back": "Back",
+    "prev": "Previous",
+    "next": "Next",
+    "pageOf": "Page {page} of {total}",
+    "createdBy": "Started by {name} on {date}",
+    "actions": {
+      "lock": "Lock",
+      "unlock": "Unlock"
+    },
+    "new": {
+      "title": "New discussion",
+      "description": "Start a new threaded conversation in this study.",
+      "titleLabel": "Title",
+      "titlePlaceholder": "What would you like to discuss?",
+      "categoryLabel": "Category (optional)",
+      "categoryPlaceholder": "e.g. results, ideas, questions",
+      "cancel": "Cancel",
+      "submit": "Create"
+    },
+    "validation": {
+      "titleRequired": "Title is required.",
+      "unknown": "Something went wrong."
+    }
+  },
+  "comments": {
+    "empty": "No comments yet.",
+    "edited": "(edited)",
+    "deleted": "(comment deleted)",
+    "locked": "This discussion is locked. No new comments can be posted.",
+    "actions": {
+      "edit": "Edit",
+      "delete": "Delete",
+      "confirmDelete": "Delete this comment?"
+    },
+    "form": {
+      "placeholder": "Write a comment…",
+      "submit": "Comment",
+      "post": "Post",
+      "save": "Save",
+      "cancel": "Cancel"
+    },
+    "validation": {
+      "bodyRequired": "Comment cannot be empty."
+    }
+  },
+  "reactions": {
+    "addReaction": "Add reaction",
+    "toggle": "Toggle {emoji} reaction"
+  },
+  "notifications": {
+    "pageTitle": "Notifications",
+    "trayTitle": "Notifications",
+    "trayAriaLabel": "Open notifications",
+    "trayBadge": "{count, plural, one {# unread notification} other {# unread notifications}}",
+    "loading": "Loading notifications…",
+    "loadError": "Could not load notifications.",
+    "retry": "Retry",
+    "empty": "You're all caught up.",
+    "markRead": "Mark read",
+    "markAllRead": "Mark all read",
+    "seeAll": "See all",
+    "prev": "Previous",
+    "next": "Next",
+    "pageOf": "Page {page} of {total}",
+    "filter": {
+      "unreadOnly": "Unread only"
+    }
+  },
+  "watch": {
+    "levels": {
+      "all": "Watching",
+      "mentions": "Mentions only",
+      "none": "Off"
     }
   }
 }
