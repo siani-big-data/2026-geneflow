@@ -2,7 +2,10 @@ using Minio;
 using GeneFlow.ApiNet2.Application.Behaviors;
 using GeneFlow.ApiNet2.Application.Identity.Interfaces;
 using GeneFlow.ApiNet2.Application.Identity.Services;
+using GeneFlow.ApiNet2.Application.Notifications.SSE;
 using GeneFlow.ApiNet2.Application.PaymentMethods.Interfaces;
+using GeneFlow.ApiNet2.Domain.Discussions;
+using GeneFlow.ApiNet2.Domain.Notifications;
 using GeneFlow.ApiNet2.Domain.Activity;
 using GeneFlow.ApiNet2.Domain.Identity;
 using GeneFlow.ApiNet2.Domain.PaymentMethods;
@@ -13,6 +16,11 @@ using GeneFlow.ApiNet2.Domain.Subscriptions;
 using GeneFlow.ApiNet2.Domain.Pipelines;
 using GeneFlow.ApiNet2.Domain.Traces;
 using GeneFlow.ApiNet2.Infrastructure.Activity.Persistence.Context;
+using GeneFlow.ApiNet2.Infrastructure.Discussions.Persistence.Context;
+using GeneFlow.ApiNet2.Infrastructure.Discussions.Persistence.Repositories;
+using GeneFlow.ApiNet2.Infrastructure.Notifications.Persistence.Context;
+using GeneFlow.ApiNet2.Infrastructure.Notifications.Persistence.Repositories;
+using GeneFlow.ApiNet2.Infrastructure.Notifications.SSE;
 using GeneFlow.ApiNet2.Infrastructure.Activity.Persistence.Repositories;
 using GeneFlow.ApiNet2.Infrastructure.Activity.Projection;
 using GeneFlow.ApiNet2.Infrastructure.Analysis;
@@ -245,6 +253,39 @@ public static class DependencyInjection
         // Stripe Service
         services.AddSingleton<IStripeService, StripeService>();
 
+        // Discussions DbContext
+        services.AddDbContext<DiscussionContext>(options =>
+            options.UseNpgsql(connectionString, npgsqlOptions =>
+            {
+                npgsqlOptions.MigrationsAssembly(typeof(DiscussionContext).Assembly.FullName);
+                npgsqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: DbMaxRetryCount,
+                    maxRetryDelay: DbMaxRetryDelay,
+                    errorCodesToAdd: null);
+            }));
+
+        // Discussions Repositories
+        services.AddScoped<IDiscussionRepository, DiscussionRepository>();
+        services.AddScoped<ICommentRepository, CommentRepository>();
+        services.AddScoped<IReactionRepository, ReactionRepository>();
+        services.AddScoped<IDiscussionUnitOfWork, DiscussionUnitOfWork>();
+
+        // Notifications DbContext
+        services.AddDbContext<NotificationContext>(options =>
+            options.UseNpgsql(connectionString, npgsqlOptions =>
+            {
+                npgsqlOptions.MigrationsAssembly(typeof(NotificationContext).Assembly.FullName);
+                npgsqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: DbMaxRetryCount,
+                    maxRetryDelay: DbMaxRetryDelay,
+                    errorCodesToAdd: null);
+            }));
+
+        // Notifications Repositories
+        services.AddScoped<INotificationRepository, NotificationRepository>();
+        services.AddScoped<IWatchRepository, WatchRepository>();
+        services.AddScoped<INotificationUnitOfWork, NotificationUnitOfWork>();
+
         return services;
     }
 
@@ -351,6 +392,10 @@ public static class DependencyInjection
         // analysis completion events to connected browser EventSources.
         services.AddSingleton<Analysis.Sse.AnalysisEventBroker>();
         services.AddHostedService<Analysis.Sse.AnalysisSseBroadcaster>();
+
+        // Notifications SSE fan-out: per-user in-process pub/sub broker
+        // consumed directly by the WatchNotifier event handlers.
+        services.AddSingleton<INotificationEventBroker, NotificationEventBroker>();
 
         // SSE fan-out for trace processing transitions (Pending → Processing
         // → Ready/Failed). Independent consumer group on the "traces" stream.
