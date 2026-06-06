@@ -53,6 +53,19 @@ export interface OrgMember {
   joinedAt: string;
 }
 
+/**
+ * Lightweight projection returned by `GET /api/v1/me/orgs` — an org the
+ * current user belongs to, plus their role inside it. Distinct from `Org`
+ * (the full profile) so the type accurately reflects the API payload.
+ */
+export interface OrgMembership {
+  orgId: string;
+  handle: string;
+  name: string;
+  avatarUrl?: string | null;
+  role: OrgRole;
+}
+
 export interface OrgInvitation {
   token: string;
   orgHandle: string;

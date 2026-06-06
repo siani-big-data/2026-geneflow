@@ -60,7 +60,7 @@ export function OrgSwitcher({ className, compact = false }: OrgSwitcherProps) {
           type: "Org",
           handle: activeOrg.handle,
           displayName: activeOrg.name,
-          avatarUrl: activeOrg.avatarUrl,
+          avatarUrl: activeOrg.avatarUrl ?? undefined,
         }
       : personalOwner;
 
@@ -133,7 +133,7 @@ export function OrgSwitcher({ className, compact = false }: OrgSwitcherProps) {
                 activeContext.handle === org.handle;
               return (
                 <DropdownMenuItem
-                  key={org.id}
+                  key={org.orgId}
                   onClick={() => handleSelectOrg(org.handle)}
                   className="flex items-center gap-2"
                 >
@@ -142,7 +142,7 @@ export function OrgSwitcher({ className, compact = false }: OrgSwitcherProps) {
                       type: "Org",
                       handle: org.handle,
                       displayName: org.name,
-                      avatarUrl: org.avatarUrl,
+                      avatarUrl: org.avatarUrl ?? undefined,
                     }}
                     size={24}
                   />

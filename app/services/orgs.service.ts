@@ -8,6 +8,7 @@ import { api } from "@/lib/api-client";
 import type {
   Org,
   OrgMember,
+  OrgMembership,
   OrgRole,
   CreateOrgInput,
   ChangeOrgMemberRoleInput,
@@ -31,8 +32,8 @@ export const orgsService = {
   /**
    * List orgs the current user is a member of.
    */
-  async listMine(): Promise<Org[]> {
-    return api.get<Org[]>("/api/v1/me/orgs");
+  async listMine(): Promise<OrgMembership[]> {
+    return api.get<OrgMembership[]>("/api/v1/me/orgs");
   },
 
   /**

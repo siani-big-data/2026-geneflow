@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { orgsService } from "@/services";
 import { useRouter } from "@/lib/navigation";
-import type { CreateOrgInput, Org, OrgRole } from "@/types";
+import type { CreateOrgInput, Org, OrgMembership, OrgRole } from "@/types";
 
 // ============= QUERY KEYS =============
 export const orgsKeys = {
@@ -26,7 +26,7 @@ export function useOrg(handle: string) {
 
 /** Fetch the current user's orgs. */
 export function useMyOrgs() {
-  return useQuery<Org[]>({
+  return useQuery<OrgMembership[]>({
     queryKey: orgsKeys.mine(),
     queryFn: () => orgsService.listMine(),
   });

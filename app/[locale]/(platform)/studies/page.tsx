@@ -105,7 +105,7 @@ export default function StudiesPage() {
 
   // Only orgs the viewer can publish into (Owner / Admin).
   const ownableOrgs = myOrgs.filter(
-    (o) => o.myRole === "Owner" || o.myRole === "Admin",
+    (o) => o.role === "Owner" || o.role === "Admin",
   );
 
   // Mutations
@@ -739,7 +739,7 @@ export default function StudiesPage() {
               >
                 <option value="personal">Personal</option>
                 {ownableOrgs.map((o) => (
-                  <option key={o.id} value={`org:${o.handle}`}>
+                  <option key={o.orgId} value={`org:${o.handle}`}>
                     @{o.handle} — {o.name}
                   </option>
                 ))}
