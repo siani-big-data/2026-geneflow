@@ -2,6 +2,7 @@ using GeneFlow.ApiNet2.SharedKernel.Infrastructure;
 using GeneFlow.ApiNet2.Application.Studies.DTOs;
 using GeneFlow.ApiNet2.Application.Studies.Mappings;
 using GeneFlow.ApiNet2.Domain.Identity;
+using GeneFlow.ApiNet2.Domain.Orgs;
 using GeneFlow.ApiNet2.Domain.Studies;
 using GeneFlow.ApiNet2.Domain.Studies.Enumerations;
 using GeneFlow.ApiNet2.Domain.Studies.ValueObjects;
@@ -20,15 +21,18 @@ public sealed class CreateStudyCommandHandler
     private readonly IStudyRepository _studyRepository;
     private readonly IStudyUnitOfWork _unitOfWork;
     private readonly ISequenceGenerator _sequenceGenerator;
+    private readonly IOrgRepository _orgRepository;
 
     public CreateStudyCommandHandler(
         IStudyRepository studyRepository,
         IStudyUnitOfWork unitOfWork,
-        ISequenceGenerator sequenceGenerator)
+        ISequenceGenerator sequenceGenerator,
+        IOrgRepository orgRepository)
     {
         _studyRepository = studyRepository;
         _unitOfWork = unitOfWork;
         _sequenceGenerator = sequenceGenerator;
+        _orgRepository = orgRepository;
     }
 
     public async Task<Result<StudyDto>> Handle(
@@ -63,13 +67,42 @@ public sealed class CreateStudyCommandHandler
         var sequenceId = await _sequenceGenerator.NextAsync(StudyId.SequenceName, cancellationToken);
         var studyId = StudyId.FromSequence(sequenceId);
 
-        // Create study
-        var studyResult = Study.Create(
-            studyId,
-            userId,
-            titleResult.Value,
-            description,
-            researchField);
+        // Resolve owner: personal (User) or organisation (Org).
+        var isOrgOwned = string.Equals(request.OwnerType, "Org", StringComparison.OrdinalIgnoreCase);
+
+        Result<Study> studyResult;
+
+        if (isOrgOwned)
+        {
+            if (string.IsNullOrWhiteSpace(request.OwnerHandle))
+                return Result.Failure<StudyDto>(StudyErrors.OrgOwnerHandleRequired);
+
+            var org = await _orgRepository.GetByHandleAsync(request.OwnerHandle, cancellationToken);
+            if (org is null)
+                return Result.Failure<StudyDto>(StudyErrors.OrgOwnerNotFound);
+
+            // Caller must be Owner or Admin of the org to publish a study under it.
+            var member = org.GetMember(userId);
+            if (member is null || !member.Role.CanEditOrg)
+                return Result.Failure<StudyDto>(StudyErrors.OrgOwnerInsufficientRole);
+
+            studyResult = Study.CreateForOrg(
+                studyId,
+                org.Id,
+                userId,
+                titleResult.Value,
+                description,
+                researchField);
+        }
+        else
+        {
+            studyResult = Study.Create(
+                studyId,
+                userId,
+                titleResult.Value,
+                description,
+                researchField);
+        }
 
         if (studyResult.IsFailure)
             return Result.Failure<StudyDto>(studyResult.Error);

@@ -16,4 +16,8 @@ public sealed record CreateStudyCommand(
     int ResearchFieldId,
     string? Institution = null,
     string? PrincipalInvestigator = null,
-    IReadOnlyList<string>? Tags = null) : ICommand<Result<StudyDto>>, IRequireAuthentication, IRequiresStudyLimit;
+    IReadOnlyList<string>? Tags = null,
+    /// <summary>"User" (default) or "Org". When "Org", <see cref="OwnerHandle"/> is required.</summary>
+    string? OwnerType = null,
+    /// <summary>Handle of the Org that will own the study (when <see cref="OwnerType"/> = "Org").</summary>
+    string? OwnerHandle = null) : ICommand<Result<StudyDto>>, IRequireAuthentication, IRequiresStudyLimit;

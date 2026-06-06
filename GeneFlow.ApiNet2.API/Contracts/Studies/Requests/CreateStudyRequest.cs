@@ -32,4 +32,18 @@ public sealed record CreateStudyRequest
     /// <summary>Tags for the study (optional, max 10 tags).</summary>
     [MaxLength(10)]
     public List<string>? Tags { get; init; }
+
+    /// <summary>
+    /// Owner type. "User" (default) creates a personal study owned by the
+    /// caller; "Org" creates a study owned by the organisation identified by
+    /// <see cref="OwnerHandle"/>. The caller must be an Owner or Admin of
+    /// that organisation.
+    /// </summary>
+    public string? OwnerType { get; init; }
+
+    /// <summary>
+    /// Handle of the organisation that should own the study. Required when
+    /// <see cref="OwnerType"/> is "Org".
+    /// </summary>
+    public string? OwnerHandle { get; init; }
 }

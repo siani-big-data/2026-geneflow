@@ -283,7 +283,9 @@ public sealed class StudyEndpoints : IEndpoint
             request.ResearchFieldId,
             request.Institution,
             request.PrincipalInvestigator,
-            request.Tags);
+            request.Tags,
+            request.OwnerType,
+            request.OwnerHandle);
 
         var result = await sender.Send(command, cancellationToken);
 

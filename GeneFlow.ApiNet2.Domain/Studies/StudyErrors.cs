@@ -79,4 +79,15 @@ public static class StudyErrors
     public static readonly Error InvitationAlreadyExists = Error.Conflict("Study.InvitationAlreadyExists", "An invitation for this email already exists.");
     public static readonly Error UserAlreadyInvited = Error.Conflict("Study.UserAlreadyInvited", "User has already been invited to this study.");
     public static readonly Error CannotInviteMember = Error.Conflict("Study.CannotInviteMember", "User is already a member of this study.");
+
+    // Org-owner errors (when creating studies under an Organisation)
+    public static readonly Error OrgOwnerHandleRequired = Error.Validation(
+        "Study.OrgOwnerHandleRequired",
+        "An organisation handle is required when creating a study owned by an org.");
+    public static readonly Error OrgOwnerNotFound = Error.NotFound(
+        "Study.OrgOwnerNotFound",
+        "The organisation that should own this study was not found.");
+    public static readonly Error OrgOwnerInsufficientRole = Error.Forbidden(
+        "Study.OrgOwnerInsufficientRole",
+        "You must be an Owner or Admin of the organisation to create a study under it.");
 }

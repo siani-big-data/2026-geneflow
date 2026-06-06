@@ -1,4 +1,5 @@
 using GeneFlow.ApiNet2.Application.Studies.Commands.CreateStudy;
+using GeneFlow.ApiNet2.Domain.Orgs;
 using GeneFlow.ApiNet2.Domain.Studies;
 using GeneFlow.ApiNet2.Domain.Studies.Enumerations;
 using GeneFlow.ApiNet2.SharedKernel.Infrastructure;
@@ -13,6 +14,7 @@ public class CreateStudyCommandHandlerTests
     private readonly IStudyRepository _studyRepository = Substitute.For<IStudyRepository>();
     private readonly IStudyUnitOfWork _unitOfWork = Substitute.For<IStudyUnitOfWork>();
     private readonly ISequenceGenerator _sequenceGenerator = Substitute.For<ISequenceGenerator>();
+    private readonly IOrgRepository _orgRepository = Substitute.For<IOrgRepository>();
     private readonly CreateStudyCommandHandler _handler;
 
     public CreateStudyCommandHandlerTests()
@@ -28,7 +30,8 @@ public class CreateStudyCommandHandlerTests
         _handler = new CreateStudyCommandHandler(
             _studyRepository,
             _unitOfWork,
-            _sequenceGenerator);
+            _sequenceGenerator,
+            _orgRepository);
     }
 
     #region Success Cases

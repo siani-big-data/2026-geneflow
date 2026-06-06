@@ -107,6 +107,39 @@ public sealed class Study : FullAuditableAggregateRoot<StudyId>
 
         return study;
     }
+
+    /// <summary>
+    /// Creates a study owned by an Organisation. The <paramref name="creatorId"/>
+    /// is added as a Study Owner member so they retain edit rights through
+    /// <see cref="CanUserEdit"/>; the principal owner of the aggregate is the
+    /// Org (identified by the numeric portion of its id, with
+    /// <see cref="OwnerType"/> set to <see cref="StudyOwnerType.Org"/>).
+    ///
+    /// The application layer is responsible for verifying that
+    /// <paramref name="creatorId"/> is an Owner/Admin of the Org.
+    /// </summary>
+    public static Result<Study> CreateForOrg(
+        StudyId id,
+        Orgs.OrgId orgId,
+        UserId creatorId,
+        StudyTitle title,
+        StudyDescription description,
+        ResearchField researchField)
+    {
+        var study = new Study(id, creatorId, title, description, researchField);
+
+        // Re-stamp ownership: the principal is the org, not the creator.
+        study.OwnerType = StudyOwnerType.Org;
+        study.OwnerId = new UserId(orgId.Value);
+
+        study.RaiseDomainEvent(new StudyCreatedEvent(
+            study.Id,
+            study.Title.Value,
+            study.OwnerId,
+            study.ResearchField));
+
+        return study;
+    }
     #endregion
 
     #region Basic Info Management
