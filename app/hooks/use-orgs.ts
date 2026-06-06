@@ -11,6 +11,8 @@ export const orgsKeys = {
   mine: () => [...orgsKeys.all, "mine"] as const,
   detail: (handle: string) => [...orgsKeys.all, "detail", handle] as const,
   members: (handle: string) => [...orgsKeys.all, "members", handle] as const,
+  studies: (handle: string, page: number) =>
+    [...orgsKeys.all, "studies", handle, page] as const,
 };
 
 // ============= QUERIES =============
@@ -37,6 +39,19 @@ export function useOrgMembers(handle: string) {
   return useQuery({
     queryKey: orgsKeys.members(handle),
     queryFn: () => orgsService.listMembers(handle),
+    enabled: !!handle,
+  });
+}
+
+/** Fetch studies owned by an org (paged). */
+export function useOrgStudies(
+  handle: string,
+  pageNumber: number = 1,
+  pageSize: number = 20,
+) {
+  return useQuery({
+    queryKey: orgsKeys.studies(handle, pageNumber),
+    queryFn: () => orgsService.listStudies(handle, pageNumber, pageSize),
     enabled: !!handle,
   });
 }

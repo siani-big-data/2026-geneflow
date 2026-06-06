@@ -12,6 +12,8 @@ import type {
   OrgRole,
   CreateOrgInput,
   ChangeOrgMemberRoleInput,
+  Study,
+  PagedResponse,
 } from "@/types";
 
 export const orgsService = {
@@ -63,5 +65,23 @@ export const orgsService = {
    */
   async removeMember(handle: string, userId: string): Promise<void> {
     return api.delete<void>(`/api/v1/orgs/${handle}/members/${userId}`);
+  },
+
+  /**
+   * List studies owned by an organisation.
+   * Members see every non-deleted study; visitors see Published only.
+   */
+  async listStudies(
+    handle: string,
+    pageNumber: number = 1,
+    pageSize: number = 20,
+  ): Promise<PagedResponse<Study>> {
+    const params = new URLSearchParams({
+      pageNumber: pageNumber.toString(),
+      pageSize: pageSize.toString(),
+    });
+    return api.get<PagedResponse<Study>>(
+      `/api/v1/orgs/${handle}/studies?${params}`,
+    );
   },
 };
