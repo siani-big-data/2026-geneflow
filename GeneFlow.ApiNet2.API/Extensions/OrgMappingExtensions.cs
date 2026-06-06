@@ -45,5 +45,6 @@ public static class OrgMappingExtensions
         dto.Role,
         dto.Status,
         dto.CreatedAt,
-        dto.ExpiresAt);
+        dto.ExpiresAt,
+        dto.Token);
 }

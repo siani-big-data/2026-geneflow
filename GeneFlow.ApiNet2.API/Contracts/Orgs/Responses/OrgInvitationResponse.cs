@@ -12,4 +12,5 @@ public sealed record OrgInvitationResponse(
     string Role,
     string Status,
     DateTime CreatedAt,
-    DateTime ExpiresAt);
+    DateTime ExpiresAt,
+    string Token);

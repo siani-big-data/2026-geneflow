@@ -58,6 +58,7 @@ public static class OrgMappings
         Role = invitation.Role.Name,
         Status = invitation.Status.Name,
         CreatedAt = invitation.CreatedAt,
-        ExpiresAt = invitation.ExpiresAt
+        ExpiresAt = invitation.ExpiresAt,
+        Token = invitation.Token
     };
 }
