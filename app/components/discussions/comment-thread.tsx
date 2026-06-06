@@ -13,6 +13,7 @@ import { useAuthStore, selectUser } from "@/stores/auth-store";
 import type { Comment } from "@/types/discussions";
 import { CommentForm } from "./comment-form";
 import { ReactionsBar } from "./reactions-bar";
+import { UserChip } from "./user-chip";
 
 interface CommentThreadProps {
   discussionId: string;
@@ -54,9 +55,7 @@ export function CommentThread({
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span className="font-medium text-foreground">
-                      {c.authorId}
-                    </span>
+                    <UserChip userId={c.authorId} size={24} />
                     <span>{new Date(c.createdAt).toLocaleString()}</span>
                     {c.editedAt && (
                       <span className="italic">{t("edited")}</span>

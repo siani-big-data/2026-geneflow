@@ -8,6 +8,7 @@ import { Card } from "@/components/ui";
 import { useDiscussion, useLockDiscussion } from "@/hooks";
 import { useAuthStore, selectUser } from "@/stores/auth-store";
 import { CommentThread } from "./comment-thread";
+import { UserChip } from "./user-chip";
 
 interface DiscussionDetailProps {
   discussionId: string;
@@ -98,12 +99,12 @@ export function DiscussionDetail({
             </Badge>
           )}
         </div>
-        <p className="mt-1 text-xs text-muted-foreground">
-          {t("createdBy", {
-            name: data.authorId,
-            date: new Date(data.createdAt).toLocaleString(),
-          })}
-        </p>
+        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          <span>{t("createdByLabel")}</span>
+          <UserChip userId={data.authorId} size={24} />
+          <span aria-hidden>·</span>
+          <span>{new Date(data.createdAt).toLocaleString()}</span>
+        </div>
       </header>
 
       <CommentThread

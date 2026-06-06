@@ -2235,6 +2235,7 @@
     "next": "Siguiente",
     "pageOf": "Página {page} de {total}",
     "createdBy": "Iniciado por {name} el {date}",
+    "createdByLabel": "Iniciado por",
     "actions": {
       "lock": "Bloquear",
       "unlock": "Desbloquear"

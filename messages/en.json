@@ -2271,6 +2271,7 @@
     "next": "Next",
     "pageOf": "Page {page} of {total}",
     "createdBy": "Started by {name} on {date}",
+    "createdByLabel": "Started by",
     "actions": {
       "lock": "Lock",
       "unlock": "Unlock"
