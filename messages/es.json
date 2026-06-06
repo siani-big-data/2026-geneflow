@@ -2325,5 +2325,68 @@
       "open": "para abrir",
       "close": "para cerrar"
     }
+  },
+  "orgs": {
+    "create": {
+      "title": "Crear organización",
+      "handle": "Identificador",
+      "handleHelp": "Entre 2 y 39 letras minúsculas, números o guiones. Será la URL de tu organización.",
+      "name": "Nombre",
+      "nameHelp": "Un nombre legible para mostrar tu organización.",
+      "description": "Descripción",
+      "submit": "Crear organización",
+      "cancel": "Cancelar",
+      "errors": {
+        "handleTaken": "Ese identificador ya está en uso. Prueba con otro.",
+        "handleInvalid": "Usa entre 2 y 39 letras minúsculas, números o guiones."
+      }
+    },
+    "switcher": {
+      "personal": "Personal",
+      "label": "Cambiar de espacio",
+      "createNew": "Nueva organización"
+    },
+    "header": {
+      "overview": "Resumen",
+      "people": "Personas",
+      "settings": "Configuración",
+      "membersCount": "{count, plural, one {# miembro} other {# miembros}}"
+    },
+    "members": {
+      "title": "Miembros",
+      "columns": {
+        "user": "Usuario",
+        "role": "Rol",
+        "joined": "Se unió"
+      },
+      "invite": "Invitar miembro",
+      "empty": "Aún no hay miembros.",
+      "confirmRemove": "¿Quitar a esta persona de la organización?",
+      "lastOwnerError": "No puedes quitar al último propietario de una organización."
+    },
+    "invitations": {
+      "title": "Invitaciones",
+      "empty": "No tienes invitaciones pendientes.",
+      "accept": "Aceptar",
+      "decline": "Rechazar",
+      "expiresIn": "Expira",
+      "invitedBy": "Invitado por",
+      "invitedToOrg": "Invitación para unirse a",
+      "sentSuccess": "Invitación enviada",
+      "copyLink": "Copiar enlace",
+      "copied": "Copiado",
+      "banner": "Tienes invitaciones pendientes"
+    },
+    "transfer": {
+      "title": "Transferir propiedad",
+      "toOwner": "Transferir a",
+      "confirm": "Transferir",
+      "success": "Propiedad transferida."
+    },
+    "roles": {
+      "owner": "Propietario",
+      "admin": "Administrador",
+      "member": "Miembro"
+    }
   }
 }

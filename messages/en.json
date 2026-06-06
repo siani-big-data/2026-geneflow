@@ -2361,5 +2361,68 @@
       "open": "to open",
       "close": "to close"
     }
+  },
+  "orgs": {
+    "create": {
+      "title": "Create organization",
+      "handle": "Handle",
+      "handleHelp": "2–39 lowercase letters, numbers, and hyphens. This is your org's URL.",
+      "name": "Name",
+      "nameHelp": "A friendly display name for your organization.",
+      "description": "Description",
+      "submit": "Create organization",
+      "cancel": "Cancel",
+      "errors": {
+        "handleTaken": "That handle is already taken. Try another one.",
+        "handleInvalid": "Use 2–39 lowercase letters, numbers, or hyphens."
+      }
+    },
+    "switcher": {
+      "personal": "Personal",
+      "label": "Switch workspace",
+      "createNew": "New organization"
+    },
+    "header": {
+      "overview": "Overview",
+      "people": "People",
+      "settings": "Settings",
+      "membersCount": "{count, plural, one {# member} other {# members}}"
+    },
+    "members": {
+      "title": "Members",
+      "columns": {
+        "user": "User",
+        "role": "Role",
+        "joined": "Joined"
+      },
+      "invite": "Invite member",
+      "empty": "No members yet.",
+      "confirmRemove": "Remove this member from the organization?",
+      "lastOwnerError": "You cannot remove the last owner of an organization."
+    },
+    "invitations": {
+      "title": "Invitations",
+      "empty": "You have no pending invitations.",
+      "accept": "Accept",
+      "decline": "Decline",
+      "expiresIn": "Expires",
+      "invitedBy": "Invited by",
+      "invitedToOrg": "Invited to join",
+      "sentSuccess": "Invitation sent",
+      "copyLink": "Copy link",
+      "copied": "Copied",
+      "banner": "You have pending invitations"
+    },
+    "transfer": {
+      "title": "Transfer ownership",
+      "toOwner": "Transfer to",
+      "confirm": "Transfer",
+      "success": "Ownership transferred."
+    },
+    "roles": {
+      "owner": "Owner",
+      "admin": "Admin",
+      "member": "Member"
+    }
   }
 }
