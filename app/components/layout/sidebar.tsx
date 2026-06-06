@@ -16,6 +16,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui";
+import { OrgSwitcher } from "@/components/orgs";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -144,6 +145,11 @@ export function Sidebar() {
           return <React.Fragment key={item.nameKey}>{linkContent}</React.Fragment>;
         })}
       </nav>
+
+      {/* Active workspace context (personal / org) */}
+      <div className="flex-shrink-0 border-t border-border p-3">
+        <OrgSwitcher compact={sidebarCollapsed} />
+      </div>
 
       {/* Bottom Navigation */}
       <div className="flex-shrink-0 space-y-1 border-t border-border p-4">

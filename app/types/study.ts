@@ -183,6 +183,13 @@ export interface CreateStudyInput {
   institution?: string;
   principalInvestigator?: string;
   tags?: string[];
+  /**
+   * Optional owner selector (Phase 7 Orgs). When omitted the backend defaults
+   * to the requesting user. When provided, the study is created under the
+   * given owner.
+   */
+  ownerType?: "User" | "Org";
+  ownerHandle?: string;
 }
 
 export interface UpdateStudyInput {

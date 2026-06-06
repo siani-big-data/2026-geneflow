@@ -22,6 +22,7 @@ import {
   RecentPipelinesPanel,
   RecentStudiesPanel,
 } from "@/components/dashboard";
+import { InvitationsBanner } from "@/components/orgs";
 import type { DashboardStats } from "@/types";
 
 export default function DashboardPage() {
@@ -104,6 +105,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
+      <InvitationsBanner />
       <header className="flex items-start justify-between">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold text-foreground">

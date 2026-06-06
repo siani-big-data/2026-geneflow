@@ -49,10 +49,16 @@ import {
   useDuplicateStudy,
   useResearchFields,
 } from "@/hooks";
+import { useMyOrgs } from "@/hooks/use-orgs";
 import { studiesService } from "@/services";
 import { useRouter } from "@/lib/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import type { StudySummary, CreateStudyInput } from "@/types";
+
+/**
+ * Owner selector value. "personal" = current user, otherwise an org handle.
+ */
+type OwnerSelection = "personal" | { orgHandle: string };
 
 const statusOptions = [
   { value: "all", key: "allStatus" },
@@ -89,10 +95,18 @@ export default function StudiesPage() {
     tags: [],
   });
   const [tagsInput, setTagsInput] = useState("");
+  const [ownerSelection, setOwnerSelection] =
+    useState<OwnerSelection>("personal");
 
   // Queries
   const { data: studiesData, isLoading, error } = useMyStudies(currentPage, 6);
   const { data: researchFields } = useResearchFields();
+  const { data: myOrgs = [] } = useMyOrgs();
+
+  // Only orgs the viewer can publish into (Owner / Admin).
+  const ownableOrgs = myOrgs.filter(
+    (o) => o.myRole === "Owner" || o.myRole === "Admin",
+  );
 
   // Mutations
   const queryClient = useQueryClient();
@@ -162,8 +176,13 @@ export default function StudiesPage() {
 
   const handleCreateStudy = async () => {
     try {
+      const ownerFields =
+        ownerSelection === "personal"
+          ? {}
+          : { ownerType: "Org" as const, ownerHandle: ownerSelection.orgHandle };
       const input: CreateStudyInput = {
         ...newStudyForm,
+        ...ownerFields,
         tags: tagsInput.split(",").map((t) => t.trim()).filter(Boolean),
       };
       await createStudyMutation.mutateAsync(input);
@@ -176,6 +195,7 @@ export default function StudiesPage() {
         tags: [],
       });
       setTagsInput("");
+      setOwnerSelection("personal");
     } catch (err) {
       console.error("Failed to create study:", err);
     }
@@ -695,6 +715,37 @@ export default function StudiesPage() {
             <DialogDescription>{t("create.description")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-5 py-4">
+            {/* Owner selector — personal vs. an org where you can publish. */}
+            <div className="space-y-2">
+              <label htmlFor="study-owner" className="text-sm font-medium text-foreground">
+                Owner
+              </label>
+              <select
+                id="study-owner"
+                value={
+                  ownerSelection === "personal"
+                    ? "personal"
+                    : `org:${ownerSelection.orgHandle}`
+                }
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (v === "personal") {
+                    setOwnerSelection("personal");
+                  } else if (v.startsWith("org:")) {
+                    setOwnerSelection({ orgHandle: v.slice(4) });
+                  }
+                }}
+                className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground transition-all focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/10"
+              >
+                <option value="personal">Personal</option>
+                {ownableOrgs.map((o) => (
+                  <option key={o.id} value={`org:${o.handle}`}>
+                    @{o.handle} — {o.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div className="space-y-2">
               <label htmlFor="study-name" className="text-sm font-medium text-foreground">
                 {t("create.studyName")}
