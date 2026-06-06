@@ -5,7 +5,6 @@ import { useTranslations } from "next-intl";
 import { useTheme } from "@/providers";
 import { LocaleSwitcher } from "@/components/shared";
 import { NotificationsTray } from "./notifications-tray";
-import { NotificationsBell } from "./notifications-bell";
 
 export function Header() {
   const { theme, setTheme, resolvedTheme } = useTheme();
@@ -23,7 +22,6 @@ export function Header() {
     <header className="flex h-16 flex-shrink-0 items-center justify-end border-b border-border bg-card px-6">
       {/* Actions */}
       <div className="flex items-center gap-3">
-        <NotificationsBell />
         <NotificationsTray />
 
         <LocaleSwitcher />
