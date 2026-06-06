@@ -3,6 +3,7 @@ using GeneFlow.ApiNet2.API.Contracts.Activity.Responses;
 using GeneFlow.ApiNet2.API.Contracts.Common;
 using GeneFlow.ApiNet2.API.Extensions;
 using GeneFlow.ApiNet2.Application.Activity.Queries.GetMyActivityFeed;
+using GeneFlow.ApiNet2.Application.Activity.Queries.GetStudyTimeline;
 using GeneFlow.ApiNet2.Application.Identity.Interfaces;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -32,6 +33,19 @@ public sealed class ActivityEndpoints : IEndpoint
             .Produces<CursorPagedResponse<ActivityEventResponse>>(StatusCodes.Status200OK)
             .Produces<ApiError>(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status401Unauthorized);
+
+        group.MapGet("/studies/{studyId}", GetStudyTimeline)
+            .WithName("Activity_GetStudyTimeline")
+            .WithSummary("Get a study's activity timeline")
+            .WithDescription(
+                "Returns the timeline of activity events scoped to a single study "
+                + "(StudyMembers + Public visibility, ordered by OccurredAt DESC). "
+                + "Members can always read; non-members can only read when the study "
+                + "is public. Paginated with an opaque cursor.")
+            .Produces<CursorPagedResponse<ActivityEventResponse>>(StatusCodes.Status200OK)
+            .Produces<ApiError>(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden);
     }
 
     private static async Task<IResult> GetMyActivityFeed(
@@ -47,6 +61,26 @@ public sealed class ActivityEndpoints : IEndpoint
         var query = new GetMyActivityFeedQuery(
             currentUser.UserId.ToString()!,
             limit ?? GetMyActivityFeedQueryHandler.DefaultLimit,
+            cursor);
+
+        var result = await sender.Send(query, cancellationToken);
+
+        if (result.IsFailure)
+            return result.ToHttpResult();
+
+        return Results.Ok(result.Value.ToCursorPagedResponse(dto => dto.ToResponse()));
+    }
+
+    private static async Task<IResult> GetStudyTimeline(
+        [FromRoute] string studyId,
+        [FromQuery] int? limit,
+        [FromQuery] string? cursor,
+        [FromServices] ISender sender,
+        CancellationToken cancellationToken)
+    {
+        var query = new GetStudyTimelineQuery(
+            studyId,
+            limit ?? GetStudyTimelineQueryHandler.DefaultLimit,
             cursor);
 
         var result = await sender.Send(query, cancellationToken);
