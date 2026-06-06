@@ -386,4 +386,15 @@ public sealed class UserRepository : IUserRepository
 
         return PagedList<User>.Create(ordered, pageNumber, pageSize, totalCount);
     }
+
+    public async Task<IReadOnlyList<UserId>> GetFollowingIdsAsync(
+        UserId userId,
+        CancellationToken cancellationToken = default)
+    {
+        return await _context.UserFollows
+            .AsNoTracking()
+            .Where(f => f.FollowerId == userId)
+            .Select(f => f.FolloweeId)
+            .ToListAsync(cancellationToken);
+    }
 }

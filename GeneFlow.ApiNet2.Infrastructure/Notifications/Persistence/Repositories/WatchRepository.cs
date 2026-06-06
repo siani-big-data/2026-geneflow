@@ -37,6 +37,17 @@ public sealed class WatchRepository : IWatchRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<StudyId>> GetWatchedStudyIdsAsync(
+        UserId userId,
+        WatchLevel level,
+        CancellationToken cancellationToken = default)
+    {
+        return await _context.Watches
+            .Where(w => w.UserId == userId && w.Level == level)
+            .Select(w => w.StudyId)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task AddAsync(Watch watch, CancellationToken cancellationToken = default)
     {
         await _context.Watches.AddAsync(watch, cancellationToken);

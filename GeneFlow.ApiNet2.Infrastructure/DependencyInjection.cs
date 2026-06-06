@@ -11,6 +11,7 @@ using GeneFlow.ApiNet2.Domain.Identity;
 using GeneFlow.ApiNet2.Domain.PaymentMethods;
 using GeneFlow.ApiNet2.Domain.Plans;
 using GeneFlow.ApiNet2.Domain.Profiles;
+using GeneFlow.ApiNet2.Domain.Search;
 using GeneFlow.ApiNet2.Domain.Studies;
 using GeneFlow.ApiNet2.Domain.Subscriptions;
 using GeneFlow.ApiNet2.Domain.Pipelines;
@@ -43,6 +44,8 @@ using GeneFlow.ApiNet2.Infrastructure.Plans.Persistence.Repositories;
 using GeneFlow.ApiNet2.Infrastructure.Profiles.Persistence.Context;
 using GeneFlow.ApiNet2.Infrastructure.Profiles.Persistence.Repositories;
 using GeneFlow.ApiNet2.Infrastructure.Redis;
+using GeneFlow.ApiNet2.Infrastructure.Search.Persistence.Context;
+using GeneFlow.ApiNet2.Infrastructure.Search.Persistence.Repositories;
 using GeneFlow.ApiNet2.Infrastructure.Redis.Configuration;
 using GeneFlow.ApiNet2.Infrastructure.Storage;
 using GeneFlow.ApiNet2.Infrastructure.Storage.Configuration;
@@ -285,6 +288,21 @@ public static class DependencyInjection
         services.AddScoped<INotificationRepository, NotificationRepository>();
         services.AddScoped<IWatchRepository, WatchRepository>();
         services.AddScoped<INotificationUnitOfWork, NotificationUnitOfWork>();
+
+        // Search DbContext
+        services.AddDbContext<SearchContext>(options =>
+            options.UseNpgsql(connectionString, npgsqlOptions =>
+            {
+                npgsqlOptions.MigrationsAssembly(typeof(SearchContext).Assembly.FullName);
+                npgsqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: DbMaxRetryCount,
+                    maxRetryDelay: DbMaxRetryDelay,
+                    errorCodesToAdd: null);
+            }));
+
+        // Search Repositories
+        services.AddScoped<ISearchIndexRepository, SearchIndexRepository>();
+        services.AddScoped<ISearchUnitOfWork, SearchUnitOfWork>();
 
         return services;
     }
