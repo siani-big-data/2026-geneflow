@@ -1,4 +1,5 @@
 using GeneFlow.ApiNet2.Domain.Identity;
+using GeneFlow.ApiNet2.Domain.Orgs.Enumerations;
 using GeneFlow.ApiNet2.Domain.Studies;
 using GeneFlow.ApiNet2.Domain.Studies.Enumerations;
 using GeneFlow.ApiNet2.Domain.Studies.ValueObjects;
@@ -37,6 +38,18 @@ public sealed class StudyConfiguration : IEntityTypeConfiguration<Study>
             .IsRequired();
 
         builder.HasIndex(s => s.OwnerId);
+
+        // OwnerType (smart enumeration stored as string) — discriminator for
+        // whether OwnerId references a User or an Org. Defaults to User so
+        // existing rows back-fill cleanly.
+        builder.Property(s => s.OwnerType)
+            .HasColumnName("owner_type")
+            .HasMaxLength(10)
+            .HasConversion(
+                t => t.Name,
+                name => StudyOwnerType.FromName(name)!)
+            .HasDefaultValue(StudyOwnerType.User)
+            .IsRequired();
 
         // StudyTitle (owned value object)
         builder.OwnsOne(s => s.Title, title =>

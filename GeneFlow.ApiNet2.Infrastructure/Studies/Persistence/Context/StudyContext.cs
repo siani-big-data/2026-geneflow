@@ -1,3 +1,4 @@
+using GeneFlow.ApiNet2.Domain.Orgs.Enumerations;
 using GeneFlow.ApiNet2.Domain.Studies;
 using GeneFlow.ApiNet2.Domain.Studies.Entities;
 using GeneFlow.ApiNet2.Domain.Studies.Enumerations;
@@ -48,7 +49,8 @@ public sealed class StudyContext : DbContext
         modelBuilder.Ignore<StudyStatus>();
         modelBuilder.Ignore<StudyRole>();
         modelBuilder.Ignore<ResearchField>();
-        modelBuilder.Ignore<InvitationStatus>();
+        modelBuilder.Ignore<GeneFlow.ApiNet2.Domain.Studies.Enumerations.InvitationStatus>();
+        modelBuilder.Ignore<StudyOwnerType>();
 
         // Only apply configurations from the Studies namespace
         modelBuilder.ApplyConfigurationsFromAssembly(

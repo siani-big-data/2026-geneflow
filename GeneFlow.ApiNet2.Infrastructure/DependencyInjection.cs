@@ -8,6 +8,7 @@ using GeneFlow.ApiNet2.Domain.Discussions;
 using GeneFlow.ApiNet2.Domain.Notifications;
 using GeneFlow.ApiNet2.Domain.Activity;
 using GeneFlow.ApiNet2.Domain.Identity;
+using GeneFlow.ApiNet2.Domain.Orgs;
 using GeneFlow.ApiNet2.Domain.PaymentMethods;
 using GeneFlow.ApiNet2.Domain.Plans;
 using GeneFlow.ApiNet2.Domain.Profiles;
@@ -21,6 +22,8 @@ using GeneFlow.ApiNet2.Infrastructure.Discussions.Persistence.Context;
 using GeneFlow.ApiNet2.Infrastructure.Discussions.Persistence.Repositories;
 using GeneFlow.ApiNet2.Infrastructure.Notifications.Persistence.Context;
 using GeneFlow.ApiNet2.Infrastructure.Notifications.Persistence.Repositories;
+using GeneFlow.ApiNet2.Infrastructure.Orgs.Persistence.Context;
+using GeneFlow.ApiNet2.Infrastructure.Orgs.Persistence.Repositories;
 using GeneFlow.ApiNet2.Infrastructure.Notifications.SSE;
 using GeneFlow.ApiNet2.Infrastructure.Activity.Persistence.Repositories;
 using GeneFlow.ApiNet2.Infrastructure.Activity.Projection;
@@ -272,6 +275,22 @@ public static class DependencyInjection
         services.AddScoped<ICommentRepository, CommentRepository>();
         services.AddScoped<IReactionRepository, ReactionRepository>();
         services.AddScoped<IDiscussionUnitOfWork, DiscussionUnitOfWork>();
+
+        // Orgs DbContext
+        services.AddDbContext<OrgsContext>(options =>
+            options.UseNpgsql(connectionString, npgsqlOptions =>
+            {
+                npgsqlOptions.MigrationsAssembly(typeof(OrgsContext).Assembly.FullName);
+                npgsqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: DbMaxRetryCount,
+                    maxRetryDelay: DbMaxRetryDelay,
+                    errorCodesToAdd: null);
+            }));
+
+        // Orgs Repositories
+        services.AddScoped<IOrgRepository, OrgRepository>();
+        services.AddScoped<IOrgInvitationRepository, OrgInvitationRepository>();
+        services.AddScoped<IOrgUnitOfWork, OrgUnitOfWork>();
 
         // Notifications DbContext
         services.AddDbContext<NotificationContext>(options =>
