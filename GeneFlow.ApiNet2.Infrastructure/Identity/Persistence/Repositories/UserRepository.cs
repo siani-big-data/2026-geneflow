@@ -1,7 +1,9 @@
 using GeneFlow.ApiNet2.Domain.Identity;
+using GeneFlow.ApiNet2.Domain.Identity.Entities;
 using GeneFlow.ApiNet2.Domain.Identity.Enumerations;
 using GeneFlow.ApiNet2.Domain.Identity.ValueObjects;
 using GeneFlow.ApiNet2.Infrastructure.Identity.Persistence.Context;
+using GeneFlow.ApiNet2.SharedKernel.Domain.Pagination;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -270,5 +272,118 @@ public sealed class UserRepository : IUserRepository
         var userId = result.ToString()!;
         return await _context.Users
             .FirstOrDefaultAsync(u => u.Id == UserId.Parse(userId), cancellationToken);
+    }
+
+    // ============================================================
+    // Follow graph
+    // ============================================================
+
+    /// <inheritdoc />
+    public async Task<bool> IsFollowingAsync(UserId followerId, UserId followeeId, CancellationToken cancellationToken = default)
+    {
+        return await _context.UserFollows
+            .AsNoTracking()
+            .AnyAsync(f => f.FollowerId == followerId && f.FolloweeId == followeeId, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task AddFollowAsync(UserFollow follow, CancellationToken cancellationToken = default)
+    {
+        await _context.UserFollows.AddAsync(follow, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task RemoveFollowAsync(UserId followerId, UserId followeeId, CancellationToken cancellationToken = default)
+    {
+        var edge = await _context.UserFollows
+            .FirstOrDefaultAsync(f => f.FollowerId == followerId && f.FolloweeId == followeeId, cancellationToken);
+
+        if (edge is not null)
+            _context.UserFollows.Remove(edge);
+    }
+
+    /// <inheritdoc />
+    public async Task<int> CountFollowersAsync(UserId userId, CancellationToken cancellationToken = default)
+    {
+        return await _context.UserFollows
+            .AsNoTracking()
+            .CountAsync(f => f.FolloweeId == userId, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<int> CountFollowingAsync(UserId userId, CancellationToken cancellationToken = default)
+    {
+        return await _context.UserFollows
+            .AsNoTracking()
+            .CountAsync(f => f.FollowerId == userId, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<PagedList<User>> GetFollowersAsync(
+        UserId userId,
+        int pageNumber,
+        int pageSize,
+        CancellationToken cancellationToken = default)
+    {
+        var followerIds = _context.UserFollows
+            .AsNoTracking()
+            .Where(f => f.FolloweeId == userId)
+            .OrderByDescending(f => f.FollowedAt)
+            .Select(f => f.FollowerId);
+
+        var totalCount = await followerIds.CountAsync(cancellationToken);
+
+        var pagedIds = await followerIds
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        var users = await _context.Users
+            .AsNoTracking()
+            .Where(u => pagedIds.Contains(u.Id))
+            .ToListAsync(cancellationToken);
+
+        // Preserve the page order (sorted by FollowedAt desc).
+        var ordered = pagedIds
+            .Select(id => users.FirstOrDefault(u => u.Id == id))
+            .Where(u => u is not null)
+            .Select(u => u!)
+            .ToList();
+
+        return PagedList<User>.Create(ordered, pageNumber, pageSize, totalCount);
+    }
+
+    /// <inheritdoc />
+    public async Task<PagedList<User>> GetFollowingAsync(
+        UserId userId,
+        int pageNumber,
+        int pageSize,
+        CancellationToken cancellationToken = default)
+    {
+        var followeeIds = _context.UserFollows
+            .AsNoTracking()
+            .Where(f => f.FollowerId == userId)
+            .OrderByDescending(f => f.FollowedAt)
+            .Select(f => f.FolloweeId);
+
+        var totalCount = await followeeIds.CountAsync(cancellationToken);
+
+        var pagedIds = await followeeIds
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        var users = await _context.Users
+            .AsNoTracking()
+            .Where(u => pagedIds.Contains(u.Id))
+            .ToListAsync(cancellationToken);
+
+        var ordered = pagedIds
+            .Select(id => users.FirstOrDefault(u => u.Id == id))
+            .Where(u => u is not null)
+            .Select(u => u!)
+            .ToList();
+
+        return PagedList<User>.Create(ordered, pageNumber, pageSize, totalCount);
     }
 }

@@ -1,4 +1,5 @@
 using GeneFlow.ApiNet2.Domain.Identity;
+using GeneFlow.ApiNet2.Domain.Identity.Entities;
 using GeneFlow.ApiNet2.Domain.Identity.Enumerations;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,6 +21,11 @@ public sealed class UserContext : DbContext
     /// Gets or sets the Users DbSet.
     /// </summary>
     public DbSet<User> Users => Set<User>();
+
+    /// <summary>
+    /// Social graph edges between users (follower → followee).
+    /// </summary>
+    public DbSet<UserFollow> UserFollows => Set<UserFollow>();
 
     /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder modelBuilder)

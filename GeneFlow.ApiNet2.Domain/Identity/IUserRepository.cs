@@ -1,6 +1,8 @@
+using GeneFlow.ApiNet2.Domain.Identity.Entities;
 using GeneFlow.ApiNet2.Domain.Identity.Enumerations;
 using GeneFlow.ApiNet2.Domain.Identity.ValueObjects;
 using GeneFlow.ApiNet2.SharedKernel.Domain;
+using GeneFlow.ApiNet2.SharedKernel.Domain.Pagination;
 
 namespace GeneFlow.ApiNet2.Domain.Identity;
 
@@ -63,4 +65,51 @@ public interface IUserRepository : IRepository<User, UserId>
     /// Gets a user by their external OAuth login.
     /// </summary>
     Task<User?> GetByExternalLoginAsync(ExternalProvider provider, string providerKey, CancellationToken cancellationToken = default);
+
+    // ============================================================
+    // Follow graph (social primitive)
+    // ============================================================
+
+    /// <summary>
+    /// Checks whether <paramref name="followerId"/> currently follows <paramref name="followeeId"/>.
+    /// </summary>
+    Task<bool> IsFollowingAsync(UserId followerId, UserId followeeId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Persists a new follow edge. Does not check duplicates; the handler enforces invariants.
+    /// </summary>
+    Task AddFollowAsync(UserFollow follow, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Removes the follow edge between <paramref name="followerId"/> and <paramref name="followeeId"/>.
+    /// </summary>
+    Task RemoveFollowAsync(UserId followerId, UserId followeeId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Counts the number of followers a user has.
+    /// </summary>
+    Task<int> CountFollowersAsync(UserId userId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Counts the number of users a user is following.
+    /// </summary>
+    Task<int> CountFollowingAsync(UserId userId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets a paginated list of users following <paramref name="userId"/>.
+    /// </summary>
+    Task<PagedList<User>> GetFollowersAsync(
+        UserId userId,
+        int pageNumber,
+        int pageSize,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets a paginated list of users that <paramref name="userId"/> is following.
+    /// </summary>
+    Task<PagedList<User>> GetFollowingAsync(
+        UserId userId,
+        int pageNumber,
+        int pageSize,
+        CancellationToken cancellationToken = default);
 }
