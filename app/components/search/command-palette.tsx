@@ -10,6 +10,7 @@ import {
   User,
   FlaskConical,
   Loader2,
+  CornerDownLeft,
 } from "lucide-react";
 import { useGlobalSearch } from "@/hooks/use-search";
 import { useCommandPalette } from "@/providers/command-palette-provider";
@@ -50,6 +51,7 @@ export function CommandPalette() {
   const [debounced, setDebounced] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const activeItemRef = useRef<HTMLButtonElement>(null);
 
   // Debounce keystrokes to avoid hammering the API.
   useEffect(() => {
@@ -73,6 +75,12 @@ export function CommandPalette() {
     { q: debounced, pageSize: 8 },
     { enabled: open && debounced.length > 0 },
   );
+
+  // Keep the highlighted row scrolled into view as the user navigates with
+  // the keyboard. block: "nearest" avoids jumpy scrolling.
+  useEffect(() => {
+    activeItemRef.current?.scrollIntoView({ block: "nearest" });
+  }, [activeIndex]);
 
   const hits: SearchHit[] = data?.pages.flatMap((page) => page.items) ?? [];
 
@@ -155,23 +163,47 @@ export function CommandPalette() {
             const Icon = TYPE_ICON[hit.objectType];
             const isActive = idx === activeIndex;
             return (
-              <li key={`${hit.objectType}:${hit.objectId}`}>
+              <li key={`${hit.objectType}:${hit.objectId}`} className="px-2">
                 <button
                   type="button"
+                  ref={isActive ? activeItemRef : undefined}
+                  aria-selected={isActive}
                   onMouseEnter={() => setActiveIndex(idx)}
                   onClick={() => activate(hit)}
                   className={cn(
-                    "flex w-full items-start gap-3 px-4 py-2.5 text-left transition-colors",
-                    isActive ? "bg-muted/60" : "hover:bg-muted/40",
+                    "relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors",
+                    "before:absolute before:inset-y-1.5 before:left-0 before:w-0.5 before:rounded-full before:transition-colors",
+                    isActive
+                      ? "bg-teal/10 ring-1 ring-inset ring-teal/30 before:bg-teal"
+                      : "hover:bg-muted/50 before:bg-transparent",
                   )}
                 >
-                  <Icon className="mt-0.5 h-4 w-4 shrink-0 text-teal" />
+                  <Icon
+                    className={cn(
+                      "h-4 w-4 shrink-0 transition-colors",
+                      isActive ? "text-teal" : "text-muted-foreground",
+                    )}
+                  />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="truncate text-sm font-medium text-foreground">
+                      <span
+                        className={cn(
+                          "truncate text-sm",
+                          isActive
+                            ? "font-semibold text-foreground"
+                            : "font-medium text-foreground",
+                        )}
+                      >
                         {hit.title}
                       </span>
-                      <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+                      <span
+                        className={cn(
+                          "rounded px-1.5 py-0.5 text-[10px] uppercase tracking-wide",
+                          isActive
+                            ? "bg-teal/15 text-teal"
+                            : "bg-muted text-muted-foreground",
+                        )}
+                      >
                         {t(`types.${hit.objectType}`)}
                       </span>
                     </div>
@@ -181,6 +213,12 @@ export function CommandPalette() {
                       </p>
                     )}
                   </div>
+                  {isActive && (
+                    <CornerDownLeft
+                      className="h-3.5 w-3.5 shrink-0 text-teal"
+                      aria-hidden
+                    />
+                  )}
                 </button>
               </li>
             );
