@@ -23,7 +23,8 @@ public sealed class RedisEventBusPublisher : IEventBusPublisher
     {
         PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        WriteIndented = false
+        WriteIndented = false,
+        Converters = { new PrefixedIdJsonConverter() }
     };
 
     /// <summary>
