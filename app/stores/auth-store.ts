@@ -12,6 +12,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { authService, profileService } from "@/services";
 import { tokenStorage } from "@/lib/api-client";
+import { useActiveOrgStore } from "@/stores/active-org-store";
 import type {
   AuthUser,
   AuthState,
@@ -252,6 +253,14 @@ export const useAuthStore = create<AuthStore>()(
           await authService.logout();
         } finally {
           tokenStorage.clearTokens();
+          // Reset the active workspace context so the next user starts in
+          // their personal context. Safe to call from anywhere (the store
+          // gates writes on the client).
+          try {
+            useActiveOrgStore.getState().reset();
+          } catch {
+            // Best-effort — never let a store hiccup block logout.
+          }
           set({
             ...initialState,
             isLoading: false,
