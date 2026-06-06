@@ -55,12 +55,14 @@ export const discussionsService = {
   ): Promise<Comment> {
     return api.post<Comment>(
       `/api/v1/discussions/${discussionId}/comments`,
-      input,
+      { bodyMarkdown: input.body },
     );
   },
 
   editComment(commentId: string, input: EditCommentInput): Promise<Comment> {
-    return api.put<Comment>(`/api/v1/comments/${commentId}`, input);
+    return api.put<Comment>(`/api/v1/comments/${commentId}`, {
+      bodyMarkdown: input.body,
+    });
   },
 
   deleteComment(commentId: string): Promise<void> {
