@@ -47,6 +47,8 @@ export interface Org {
 
 export interface OrgMember {
   userId: string;
+  userName?: string | null;
+  avatarUrl?: string | null;
   role: OrgRole;
   joinedAt: string;
 }

@@ -1,9 +1,10 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Loader2, Trash2 } from "lucide-react";
-import { Badge, Button } from "@/components/ui";
+import { Avatar, AvatarFallback, AvatarImage, Badge, Button } from "@/components/ui";
 import {
   useChangeOrgMemberRole,
   useRemoveOrgMember,
@@ -30,6 +31,58 @@ function RolePill({ role }: { role: OrgRole }) {
   const label =
     role === "Owner" ? t("owner") : role === "Admin" ? t("admin") : t("member");
   return <Badge variant={variant as "default" | "secondary" | "outline"}>{label}</Badge>;
+}
+
+function initialsFor(name: string): string {
+  return name
+    .split(/[\s._-]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("") || name.slice(0, 2).toUpperCase();
+}
+
+function UserCell({
+  userId,
+  userName,
+  avatarUrl,
+  isSelf,
+  youLabel,
+}: {
+  userId: string;
+  userName?: string | null;
+  avatarUrl?: string | null;
+  isSelf: boolean;
+  youLabel: string;
+}) {
+  const displayName = userName?.trim() || `${userId.slice(0, 8)}…`;
+  const initials = initialsFor(userName?.trim() || userId);
+  const content = (
+    <span className="flex items-center gap-2.5">
+      <Avatar className="h-8 w-8">
+        {avatarUrl ? <AvatarImage src={avatarUrl} alt={displayName} /> : null}
+        <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+      </Avatar>
+      <span className="text-sm font-medium text-foreground">{displayName}</span>
+    </span>
+  );
+  return (
+    <span className="inline-flex items-center gap-2">
+      {userName ? (
+        <Link
+          href={`/users/${userName}`}
+          className="hover:underline focus:outline-none focus-visible:underline"
+        >
+          {content}
+        </Link>
+      ) : (
+        content
+      )}
+      {isSelf && (
+        <span className="text-xs text-muted-foreground">({youLabel})</span>
+      )}
+    </span>
+  );
 }
 
 /**
@@ -85,14 +138,13 @@ export function OrgMembersList({ org, members }: OrgMembersListProps) {
                 className="border-b border-border last:border-0"
               >
                 <td className="px-4 py-3">
-                  <span className="font-mono text-xs text-foreground">
-                    {m.userId.slice(0, 8)}…
-                  </span>
-                  {isSelf && (
-                    <span className="ml-2 text-xs text-muted-foreground">
-                      ({tCommon("yes") === "Yes" ? "you" : "tú"})
-                    </span>
-                  )}
+                  <UserCell
+                    userId={m.userId}
+                    userName={m.userName}
+                    avatarUrl={m.avatarUrl}
+                    isSelf={isSelf}
+                    youLabel={tCommon("yes") === "Yes" ? "you" : "tú"}
+                  />
                 </td>
                 <td className="px-4 py-3">
                   {canManage && !isLastOwner ? (
