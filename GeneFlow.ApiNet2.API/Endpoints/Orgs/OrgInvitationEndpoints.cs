@@ -35,7 +35,11 @@ public sealed class OrgInvitationEndpoints : IEndpoint
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status404NotFound);
 
-        var tokenInvites = app.MapGroup("/api/v1/invitations")
+        // Use a dedicated prefix so the route does not collide with
+        // /api/v1/invitations/{token}/accept already registered by
+        // StudyInvitationEndpoints — duplicate (method, pattern) entries
+        // crash the OpenAPI generator at startup.
+        var tokenInvites = app.MapGroup("/api/v1/org-invitations")
             .WithTags("OrgInvitations")
             .WithOpenApi()
             .RequireAuthorization();
@@ -92,7 +96,7 @@ public sealed class OrgInvitationEndpoints : IEndpoint
             return result.ToHttpResult();
 
         var response = result.Value.ToResponse();
-        return Results.Created($"/api/v1/invitations/{response.Id}", response);
+        return Results.Created($"/api/v1/org-invitations/{response.Id}", response);
     }
 
     private static async Task<IResult> Accept(
