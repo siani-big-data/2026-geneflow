@@ -47,3 +47,4 @@ export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "./tool
 export { Textarea, type TextareaProps } from "./textarea";
 export { Markdown, type MarkdownProps } from "./markdown";
 export { MarkdownEditor, type MarkdownEditorProps } from "./markdown-editor";
+export { OwnerAvatar, type OwnerAvatarProps } from "./owner-avatar";
