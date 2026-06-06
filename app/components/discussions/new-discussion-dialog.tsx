@@ -13,6 +13,7 @@ import {
 } from "@/components/ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useCreateDiscussion } from "@/hooks";
 
 interface NewDiscussionDialogProps {
@@ -33,25 +34,33 @@ export function NewDiscussionDialog({
 
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("");
+  const [body, setBody] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const reset = () => {
     setTitle("");
     setCategory("");
+    setBody("");
     setError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmed = title.trim();
-    if (!trimmed) {
+    const trimmedTitle = title.trim();
+    const trimmedBody = body.trim();
+    if (!trimmedTitle) {
       setError(t("validation.titleRequired"));
+      return;
+    }
+    if (!trimmedBody) {
+      setError(t("validation.bodyRequired"));
       return;
     }
     try {
       const created = await create.mutateAsync({
-        title: trimmed,
+        title: trimmedTitle,
         category: category.trim() || null,
+        firstCommentBody: trimmedBody,
       });
       reset();
       onOpenChange(false);
@@ -103,6 +112,20 @@ export function NewDiscussionDialog({
               onChange={(e) => setCategory(e.target.value)}
               maxLength={50}
               placeholder={t("new.categoryPlaceholder")}
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-medium" htmlFor="discussion-body">
+              {t("new.bodyLabel")}
+            </label>
+            <Textarea
+              id="discussion-body"
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              rows={5}
+              maxLength={5000}
+              placeholder={t("new.bodyPlaceholder")}
             />
           </div>
 

@@ -2282,11 +2282,14 @@
       "titlePlaceholder": "What would you like to discuss?",
       "categoryLabel": "Category (optional)",
       "categoryPlaceholder": "e.g. results, ideas, questions",
+      "bodyLabel": "First message",
+      "bodyPlaceholder": "Kick off the conversation…",
       "cancel": "Cancel",
       "submit": "Create"
     },
     "validation": {
       "titleRequired": "Title is required.",
+      "bodyRequired": "First message is required.",
       "unknown": "Something went wrong."
     }
   },

@@ -2246,11 +2246,14 @@
       "titlePlaceholder": "¿De qué te gustaría hablar?",
       "categoryLabel": "Categoría (opcional)",
       "categoryPlaceholder": "p. ej. resultados, ideas, preguntas",
+      "bodyLabel": "Primer mensaje",
+      "bodyPlaceholder": "Inicia la conversación…",
       "cancel": "Cancelar",
       "submit": "Crear"
     },
     "validation": {
       "titleRequired": "El título es obligatorio.",
+      "bodyRequired": "El primer mensaje es obligatorio.",
       "unknown": "Algo salió mal."
     }
   },

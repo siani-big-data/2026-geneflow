@@ -43,6 +43,7 @@ export interface Comment {
 export interface CreateDiscussionInput {
   title: string;
   category?: string | null;
+  firstCommentBody: string;
 }
 
 export interface LockDiscussionInput {
