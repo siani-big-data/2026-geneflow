@@ -42,6 +42,8 @@ public sealed class SearchIndexRepository : ISearchIndexRepository
         SearchObjectType? type,
         string? ownerId,
         string? tag,
+        string? viewerId,
+        IReadOnlyCollection<string>? viewerVisibleStudyIds,
         DateTime? cursorUpdatedBefore,
         Guid? cursorId,
         int pageSize,
@@ -70,6 +72,30 @@ WHERE tsv @@ to_tsquery('simple', @q)");
             new("@q", tsquery),
             new("@limit", pageSize),
         };
+
+        // Visibility filter — applied before user-supplied filters so a
+        // private entry the viewer can't see can never match, regardless
+        // of the other filter values.
+        if (string.IsNullOrWhiteSpace(viewerId))
+        {
+            // Anonymous caller: public only.
+            sql.Append(" AND is_public = TRUE");
+        }
+        else
+        {
+            sql.Append(@"
+  AND (
+    is_public = TRUE
+    OR owner_id = @viewer
+    OR (object_type = @studyType AND object_id = ANY(@visibleStudies))
+    OR (object_type = @discussionType AND tags = ANY(@visibleStudies))
+  )");
+            parameters.Add(new NpgsqlParameter("@viewer", viewerId));
+            parameters.Add(new NpgsqlParameter("@visibleStudies",
+                (viewerVisibleStudyIds ?? Array.Empty<string>()).ToArray()));
+            parameters.Add(new NpgsqlParameter("@studyType", SearchObjectType.Study.Id));
+            parameters.Add(new NpgsqlParameter("@discussionType", SearchObjectType.Discussion.Id));
+        }
 
         if (type is not null)
         {

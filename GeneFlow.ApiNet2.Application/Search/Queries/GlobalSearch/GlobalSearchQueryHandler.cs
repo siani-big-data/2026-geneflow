@@ -1,7 +1,9 @@
+using GeneFlow.ApiNet2.Application.Identity.Interfaces;
 using GeneFlow.ApiNet2.Application.Search.Common;
 using GeneFlow.ApiNet2.Application.Search.DTOs;
 using GeneFlow.ApiNet2.Domain.Search;
 using GeneFlow.ApiNet2.Domain.Search.Enumerations;
+using GeneFlow.ApiNet2.Domain.Studies;
 using GeneFlow.ApiNet2.SharedKernel.Application.CQRS;
 using GeneFlow.ApiNet2.SharedKernel.Domain.Results;
 
@@ -12,10 +14,17 @@ public sealed class GlobalSearchQueryHandler
 {
     private const int MaxPageSize = 50;
     private readonly ISearchIndexRepository _repository;
+    private readonly ICurrentUserService _currentUser;
+    private readonly IStudyRepository _studyRepository;
 
-    public GlobalSearchQueryHandler(ISearchIndexRepository repository)
+    public GlobalSearchQueryHandler(
+        ISearchIndexRepository repository,
+        ICurrentUserService currentUser,
+        IStudyRepository studyRepository)
     {
         _repository = repository;
+        _currentUser = currentUser;
+        _studyRepository = studyRepository;
     }
 
     public async Task<Result<CursorPagedList<SearchHitDto>>> Handle(
@@ -44,11 +53,21 @@ public sealed class GlobalSearchQueryHandler
 
         var pageSize = Math.Clamp(request.PageSize, 1, MaxPageSize);
 
+        // Resolve the caller's visibility envelope on every read so revoked
+        // study access takes effect immediately. Anonymous callers get only
+        // public entries via null viewerId.
+        var viewerId = _currentUser.UserId?.ToString();
+        IReadOnlyCollection<string> visibleStudyIds = _currentUser.UserId is { } uid
+            ? await _studyRepository.GetVisibleStudyIdsForUserAsync(uid, cancellationToken)
+            : Array.Empty<string>();
+
         var hits = await _repository.SearchAsync(
             request.Q,
             type,
             request.Owner,
             request.Tag,
+            viewerId,
+            visibleStudyIds,
             cursorUpdatedBefore,
             cursorId,
             pageSize + 1, // overfetch by 1 to determine if next page exists

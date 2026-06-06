@@ -21,13 +21,21 @@ public interface ISearchIndexRepository
 
     /// <summary>
     /// Full-text query with optional filters and cursor pagination.
-    /// Returns hits already projected to <see cref="SearchHit"/>.
+    /// Results are restricted to entries the caller can see:
+    /// <list type="bullet">
+    ///   <item><description>public entries, or</description></item>
+    ///   <item><description>entries owned by <paramref name="viewerId"/>, or</description></item>
+    ///   <item><description>Study entries whose id is in <paramref name="viewerVisibleStudyIds"/>.</description></item>
+    /// </list>
+    /// Pass <c>null</c>/empty viewer args for anonymous callers (public only).
     /// </summary>
     Task<IReadOnlyList<SearchHit>> SearchAsync(
         string query,
         SearchObjectType? type,
         string? ownerId,
         string? tag,
+        string? viewerId,
+        IReadOnlyCollection<string>? viewerVisibleStudyIds,
         DateTime? cursorUpdatedBefore,
         Guid? cursorId,
         int pageSize,

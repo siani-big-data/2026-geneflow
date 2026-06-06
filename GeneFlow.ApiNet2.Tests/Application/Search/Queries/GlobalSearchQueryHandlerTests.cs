@@ -1,18 +1,27 @@
+using GeneFlow.ApiNet2.Application.Identity.Interfaces;
 using GeneFlow.ApiNet2.Application.Search.Common;
 using GeneFlow.ApiNet2.Application.Search.Queries.GlobalSearch;
+using GeneFlow.ApiNet2.Domain.Identity;
 using GeneFlow.ApiNet2.Domain.Search;
 using GeneFlow.ApiNet2.Domain.Search.Enumerations;
+using GeneFlow.ApiNet2.Domain.Studies;
 
 namespace GeneFlow.ApiNet2.Tests.Application.Search.Queries;
 
 public class GlobalSearchQueryHandlerTests
 {
     private readonly ISearchIndexRepository _repo = Substitute.For<ISearchIndexRepository>();
+    private readonly ICurrentUserService _currentUser = Substitute.For<ICurrentUserService>();
+    private readonly IStudyRepository _studyRepository = Substitute.For<IStudyRepository>();
     private readonly GlobalSearchQueryHandler _handler;
 
     public GlobalSearchQueryHandlerTests()
     {
-        _handler = new GlobalSearchQueryHandler(_repo);
+        _studyRepository
+            .GetVisibleStudyIdsForUserAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<string>());
+
+        _handler = new GlobalSearchQueryHandler(_repo, _currentUser, _studyRepository);
     }
 
     private static SearchHit Hit(SearchObjectType type, string id, string title,
@@ -55,6 +64,7 @@ public class GlobalSearchQueryHandlerTests
     {
         _repo.SearchAsync(Arg.Any<string>(), Arg.Any<SearchObjectType?>(),
                 Arg.Any<string?>(), Arg.Any<string?>(),
+                Arg.Any<string?>(), Arg.Any<IReadOnlyCollection<string>?>(),
                 Arg.Any<DateTime?>(), Arg.Any<Guid?>(), Arg.Any<int>(),
                 Arg.Any<CancellationToken>())
             .Returns(new List<SearchHit> { Hit(SearchObjectType.Study, "S1", "T1") });
@@ -80,6 +90,7 @@ public class GlobalSearchQueryHandlerTests
         };
         _repo.SearchAsync(Arg.Any<string>(), Arg.Any<SearchObjectType?>(),
                 Arg.Any<string?>(), Arg.Any<string?>(),
+                Arg.Any<string?>(), Arg.Any<IReadOnlyCollection<string>?>(),
                 Arg.Any<DateTime?>(), Arg.Any<Guid?>(), pageSize + 1,
                 Arg.Any<CancellationToken>())
             .Returns(hits);
@@ -99,6 +110,7 @@ public class GlobalSearchQueryHandlerTests
         var body = new string('a', 200) + " needle " + new string('b', 200);
         _repo.SearchAsync(Arg.Any<string>(), Arg.Any<SearchObjectType?>(),
                 Arg.Any<string?>(), Arg.Any<string?>(),
+                Arg.Any<string?>(), Arg.Any<IReadOnlyCollection<string>?>(),
                 Arg.Any<DateTime?>(), Arg.Any<Guid?>(), Arg.Any<int>(),
                 Arg.Any<CancellationToken>())
             .Returns(new List<SearchHit> { Hit(SearchObjectType.Discussion, "D1", "T", body) });

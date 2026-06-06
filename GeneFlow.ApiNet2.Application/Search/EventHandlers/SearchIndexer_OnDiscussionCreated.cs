@@ -49,8 +49,9 @@ public sealed class SearchIndexer_OnDiscussionCreated : IDomainEventHandler<Disc
 
             var objectId = discussion.Id.ToString();
             var ownerId = discussion.AuthorId.ToString();
-            var tags = string.IsNullOrWhiteSpace(discussion.Category)
-                ? null : discussion.Category;
+            // tags carries the parent study id so visibility checks and
+            // /studies/{id}/discussions/{id} routing both work off the index.
+            var tags = discussion.StudyId.ToString();
 
             var existing = await _index.GetAsync(SearchObjectType.Discussion, objectId, cancellationToken);
             if (existing is not null)

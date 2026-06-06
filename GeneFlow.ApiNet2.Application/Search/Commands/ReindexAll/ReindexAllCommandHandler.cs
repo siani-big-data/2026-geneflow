@@ -77,7 +77,8 @@ public sealed class ReindexAllCommandHandler
         {
             var objectId = discussion.Id.ToString();
             var ownerId = discussion.AuthorId.ToString();
-            var tags = string.IsNullOrWhiteSpace(discussion.Category) ? null : discussion.Category;
+            // tags carries the parent study id (see SearchIndexer_OnDiscussionCreated).
+            var tags = discussion.StudyId.ToString();
             var isPublic = publicByStudy.TryGetValue(discussion.StudyId.ToString(), out var p) && p;
 
             var existing = await _index.GetAsync(
