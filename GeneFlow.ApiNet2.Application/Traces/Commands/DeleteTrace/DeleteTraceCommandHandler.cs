@@ -39,8 +39,9 @@ public sealed class DeleteTraceCommandHandler
         if (!trace.Status.CanDelete)
             return Result.Failure(TraceErrors.CannotDeleteWhileProcessing);
 
-        // Soft delete
-        trace.SoftDelete(userId.Value.ToString());
+        // Soft delete via aggregate method so TraceDeletedEvent is raised
+        // and the activity projector records the event in the study timeline.
+        trace.Delete(userId);
 
         // Persist
         _unitOfWork.Traces.Update(trace);

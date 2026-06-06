@@ -203,6 +203,30 @@ public sealed class Trace : FullAuditableAggregateRoot<TraceId>
 
         return Result.Success();
     }
+
+    /// <summary>
+    /// Soft-deletes the trace and raises <see cref="TraceDeletedEvent"/> so the
+    /// activity projector can record the deletion in the study timeline.
+    /// </summary>
+    public void Delete(UserId deletedBy)
+    {
+        if (IsDeleted) return;
+
+        SoftDelete(deletedBy.Value.ToString());
+
+        RaiseDomainEvent(new TraceDeletedEvent(Id, StudyId, deletedBy));
+    }
+
+    /// <summary>
+    /// Records that a user requested an analysis job on this trace and raises
+    /// <see cref="AnalysisRequestedEvent"/>. Pure record-keeping for the
+    /// activity feed; the actual analysis work is dispatched through the
+    /// Redis job stream by the application layer.
+    /// </summary>
+    public void RecordAnalysisRequested(string analysisType, UserId requestedBy)
+    {
+        RaiseDomainEvent(new AnalysisRequestedEvent(Id, StudyId, analysisType, requestedBy));
+    }
     #endregion
 
     #region Trimming

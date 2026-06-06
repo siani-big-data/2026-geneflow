@@ -1,3 +1,4 @@
+using GeneFlow.ApiNet2.Application.Identity.Interfaces;
 using GeneFlow.ApiNet2.Application.Traces.Interfaces;
 using GeneFlow.ApiNet2.Domain.Traces;
 using GeneFlow.ApiNet2.SharedKernel.Application.CQRS;
@@ -10,6 +11,8 @@ namespace GeneFlow.ApiNet2.Application.Analysis.Commands.RequestAnalysis;
 /// Handler for RequestAnalysisCommand.
 /// Loads sequence + quality from the trace's processed data file
 /// and publishes the analysis job to the Analysis worker via Redis Streams.
+/// Also records an <c>AnalysisRequested</c> domain event so the activity
+/// projector can surface the action in the user feed and study timeline.
 /// </summary>
 public sealed class RequestAnalysisCommandHandler
     : ICommandHandler<RequestAnalysisCommand, Result>
@@ -17,15 +20,18 @@ public sealed class RequestAnalysisCommandHandler
     private readonly ITraceUnitOfWork _unitOfWork;
     private readonly IJobPublisher _jobPublisher;
     private readonly ITraceAnalysisService _analysisService;
+    private readonly ICurrentUserService _currentUserService;
 
     public RequestAnalysisCommandHandler(
         ITraceUnitOfWork unitOfWork,
         IJobPublisher jobPublisher,
-        ITraceAnalysisService analysisService)
+        ITraceAnalysisService analysisService,
+        ICurrentUserService currentUserService)
     {
         _unitOfWork = unitOfWork;
         _jobPublisher = jobPublisher;
         _analysisService = analysisService;
+        _currentUserService = currentUserService;
     }
 
     public async Task<Result> Handle(
@@ -58,6 +64,16 @@ public sealed class RequestAnalysisCommandHandler
             Quality: quality,
             Options: request.Options
         ), cancellationToken);
+
+        // Record the analysis request in the activity feed. The trace is
+        // already tracked by EF; SaveChangesAsync flushes the domain event to
+        // the dispatcher without mutating trace state.
+        var actor = _currentUserService.UserId;
+        if (actor is not null)
+        {
+            trace.RecordAnalysisRequested(request.AnalysisType, actor);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+        }
 
         return Result.Success();
     }

@@ -1,5 +1,6 @@
 using GeneFlow.ApiNet2.Application.Analysis;
 using GeneFlow.ApiNet2.Application.Analysis.Commands.RequestAnalysis;
+using GeneFlow.ApiNet2.Application.Identity.Interfaces;
 using GeneFlow.ApiNet2.Application.Traces.Interfaces;
 using GeneFlow.ApiNet2.Domain.Identity;
 using GeneFlow.ApiNet2.Domain.Studies;
@@ -20,6 +21,7 @@ public class RequestAnalysisCommandHandlerTests
     private readonly ITraceUnitOfWork _unitOfWork = Substitute.For<ITraceUnitOfWork>();
     private readonly IJobPublisher _jobPublisher = Substitute.For<IJobPublisher>();
     private readonly ITraceAnalysisService _analysisService = Substitute.For<ITraceAnalysisService>();
+    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
     private readonly RequestAnalysisCommandHandler _handler;
 
     public RequestAnalysisCommandHandlerTests()
@@ -28,8 +30,10 @@ public class RequestAnalysisCommandHandlerTests
         _analysisService
             .GetAnalysisDataAsync(Arg.Any<Trace>(), Arg.Any<CancellationToken>())
             .Returns(Result.Success(("ACGT", new[] { 30, 30, 30, 30 })));
+        _currentUserService.UserId.Returns(UserId.New());
 
-        _handler = new RequestAnalysisCommandHandler(_unitOfWork, _jobPublisher, _analysisService);
+        _handler = new RequestAnalysisCommandHandler(
+            _unitOfWork, _jobPublisher, _analysisService, _currentUserService);
     }
 
     #region Success Scenarios
