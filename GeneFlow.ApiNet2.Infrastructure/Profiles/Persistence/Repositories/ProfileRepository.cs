@@ -1,5 +1,7 @@
 using GeneFlow.ApiNet2.Domain.Identity;
 using GeneFlow.ApiNet2.Domain.Profiles;
+using GeneFlow.ApiNet2.Domain.Profiles.Entities;
+using GeneFlow.ApiNet2.Domain.Studies;
 using GeneFlow.ApiNet2.Infrastructure.Profiles.Persistence.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -102,6 +104,47 @@ public sealed class ProfileRepository : IProfileRepository
         return await _context.Profiles
             .Where(p => parsedProfileIds.Contains(p.Id))
             .ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<PinnedStudy>> GetPinnedStudiesAsync(
+        UserId userId,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("Getting pinned studies for user: {UserId}", userId);
+        return await _context.PinnedStudies
+            .Where(p => p.UserId == userId)
+            .OrderBy(p => p.Order)
+            .ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<StudyId>> ReplacePinnedStudiesAsync(
+        UserId userId,
+        IReadOnlyList<StudyId> orderedStudyIds,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug(
+            "Replacing pinned studies for user {UserId} with {Count} entries",
+            userId,
+            orderedStudyIds.Count);
+
+        var existing = await _context.PinnedStudies
+            .Where(p => p.UserId == userId)
+            .ToListAsync(cancellationToken);
+
+        var previousIds = existing.Select(p => p.StudyId).ToList();
+
+        if (existing.Count > 0)
+            _context.PinnedStudies.RemoveRange(existing);
+
+        for (var i = 0; i < orderedStudyIds.Count; i++)
+        {
+            var pin = PinnedStudy.Create(userId, orderedStudyIds[i], i);
+            await _context.PinnedStudies.AddAsync(pin, cancellationToken);
+        }
+
+        return previousIds;
     }
 
     private async Task<string?> GetProfileIdByUserIdAsync(string userId, CancellationToken cancellationToken)

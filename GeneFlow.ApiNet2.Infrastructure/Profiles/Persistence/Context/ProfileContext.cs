@@ -1,4 +1,5 @@
 using GeneFlow.ApiNet2.Domain.Profiles;
+using GeneFlow.ApiNet2.Domain.Profiles.Entities;
 using GeneFlow.ApiNet2.Domain.Profiles.Enumerations;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,6 +21,11 @@ public sealed class ProfileContext : DbContext
     /// Gets or sets the Profiles DbSet.
     /// </summary>
     public DbSet<Profile> Profiles => Set<Profile>();
+
+    /// <summary>
+    /// Studies that users have pinned to their profiles (ordered).
+    /// </summary>
+    public DbSet<PinnedStudy> PinnedStudies => Set<PinnedStudy>();
 
     /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder modelBuilder)
