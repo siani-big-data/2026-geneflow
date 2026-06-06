@@ -6,7 +6,8 @@ import { Loader2, MessageSquare, Plus, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui";
-import { useStudyDiscussions } from "@/hooks";
+import { useStudyDiscussions, useUserDisplayName } from "@/hooks";
+import type { Discussion } from "@/types/discussions";
 import { NewDiscussionDialog } from "./new-discussion-dialog";
 import { DiscussionDetail } from "./discussion-detail";
 import { WatchSelector } from "./watch-selector";
@@ -85,37 +86,11 @@ export function DiscussionsTab({ studyId }: DiscussionsTabProps) {
       ) : (
         <ul className="flex flex-col gap-2">
           {items.map((d) => (
-            <li key={d.id}>
-              <button
-                type="button"
-                onClick={() => setSelectedId(d.id)}
-                className="w-full rounded-md border bg-card p-3 text-left text-sm shadow-sm transition hover:border-primary/50 hover:bg-accent"
-              >
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-medium">{d.title}</span>
-                  {d.category && (
-                    <Badge variant="secondary" className="text-[10px]">
-                      {d.category}
-                    </Badge>
-                  )}
-                  {d.isLocked && (
-                    <Badge
-                      variant="outline"
-                      className="gap-1 text-[10px]"
-                    >
-                      <Lock className="h-3 w-3" />
-                      {t("locked")}
-                    </Badge>
-                  )}
-                </div>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {t("createdBy", {
-                    name: d.authorId,
-                    date: new Date(d.createdAt).toLocaleString(),
-                  })}
-                </p>
-              </button>
-            </li>
+            <DiscussionListRow
+              key={d.id}
+              discussion={d}
+              onOpen={() => setSelectedId(d.id)}
+            />
           ))}
         </ul>
       )}
@@ -153,5 +128,46 @@ export function DiscussionsTab({ studyId }: DiscussionsTabProps) {
         onCreated={(id) => setSelectedId(id)}
       />
     </div>
+  );
+}
+
+interface DiscussionListRowProps {
+  discussion: Discussion;
+  onOpen: () => void;
+}
+
+function DiscussionListRow({ discussion: d, onOpen }: DiscussionListRowProps) {
+  const t = useTranslations("discussions");
+  const authorName = useUserDisplayName(d.authorId);
+
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={onOpen}
+        className="w-full rounded-md border bg-card p-3 text-left text-sm shadow-sm transition hover:border-primary/50 hover:bg-accent"
+      >
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="font-medium">{d.title}</span>
+          {d.category && (
+            <Badge variant="secondary" className="text-[10px]">
+              {d.category}
+            </Badge>
+          )}
+          {d.isLocked && (
+            <Badge variant="outline" className="gap-1 text-[10px]">
+              <Lock className="h-3 w-3" />
+              {t("locked")}
+            </Badge>
+          )}
+        </div>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          {t("createdBy", {
+            name: authorName,
+            date: new Date(d.createdAt).toLocaleString(),
+          })}
+        </p>
+      </button>
+    </li>
   );
 }

@@ -141,3 +141,4 @@ export {
   useMarkAllNotificationsRead,
 } from "./use-notifications";
 export { useSetWatchLevel } from "./use-watch";
+export { useUserDisplayName } from "./use-user-display-name";
