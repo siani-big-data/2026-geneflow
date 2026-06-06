@@ -18,6 +18,7 @@ import { Card, CardContent } from "@/components/ui";
 import { usageService } from "@/services";
 import { useAuthStore } from "@/stores/auth-store";
 import {
+  FeedPanel,
   MyActivityPanel,
   RecentPipelinesPanel,
   RecentStudiesPanel,
@@ -161,6 +162,7 @@ export default function DashboardPage() {
         </section>
 
         <aside className="space-y-6 lg:col-span-1">
+          <FeedPanel />
           <RecentStudiesPanel />
           <RecentPipelinesPanel />
         </aside>
