@@ -2401,17 +2401,21 @@
       "lastOwnerError": "You cannot remove the last owner of an organization."
     },
     "invitations": {
-      "title": "Invitations",
+      "title": "Invite member",
       "empty": "You have no pending invitations.",
       "accept": "Accept",
       "decline": "Decline",
       "expiresIn": "Expires",
       "invitedBy": "Invited by",
-      "invitedToOrg": "Invited to join",
+      "invitedToOrg": "Invite a teammate to join this organization.",
       "sentSuccess": "Invitation sent",
       "copyLink": "Copy link",
       "copied": "Copied",
-      "banner": "You have pending invitations"
+      "banner": "You have pending invitations",
+      "emailAddress": "Email Address",
+      "emailPlaceholder": "colleague@institution.edu",
+      "role": "Role",
+      "sendInvitation": "Send Invitation"
     },
     "transfer": {
       "title": "Transfer ownership",

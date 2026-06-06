@@ -2365,17 +2365,21 @@
       "lastOwnerError": "No puedes quitar al último propietario de una organización."
     },
     "invitations": {
-      "title": "Invitaciones",
+      "title": "Invitar miembro",
       "empty": "No tienes invitaciones pendientes.",
       "accept": "Aceptar",
       "decline": "Rechazar",
       "expiresIn": "Expira",
       "invitedBy": "Invitado por",
-      "invitedToOrg": "Invitación para unirse a",
+      "invitedToOrg": "Invita a un compañero a unirse a esta organización.",
       "sentSuccess": "Invitación enviada",
       "copyLink": "Copiar enlace",
       "copied": "Copiado",
-      "banner": "Tienes invitaciones pendientes"
+      "banner": "Tienes invitaciones pendientes",
+      "emailAddress": "Correo electrónico",
+      "emailPlaceholder": "colega@institucion.edu",
+      "role": "Rol",
+      "sendInvitation": "Enviar invitación"
     },
     "transfer": {
       "title": "Transferir propiedad",
