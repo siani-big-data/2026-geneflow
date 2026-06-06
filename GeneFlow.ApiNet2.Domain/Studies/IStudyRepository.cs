@@ -1,4 +1,5 @@
 using GeneFlow.ApiNet2.Domain.Identity;
+using GeneFlow.ApiNet2.Domain.Orgs;
 using GeneFlow.ApiNet2.Domain.Studies.Entities;
 using GeneFlow.ApiNet2.Domain.Studies.Enumerations;
 using GeneFlow.ApiNet2.SharedKernel.Domain.Pagination;
@@ -111,5 +112,18 @@ public interface IStudyRepository
     /// jobs (search index, etc.) — do NOT use from user-facing requests.
     /// </summary>
     Task<IReadOnlyList<Study>> ListAllForReindexAsync(
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Lists studies whose principal owner is an Organisation. When
+    /// <paramref name="includeNonPublished"/> is false only Published studies
+    /// are returned (used for visitors); when true, every non-deleted study
+    /// owned by the org is returned (used for org members).
+    /// </summary>
+    Task<PagedList<Study>> GetByOrgAsync(
+        OrgId orgId,
+        bool includeNonPublished,
+        int pageNumber,
+        int pageSize,
         CancellationToken cancellationToken = default);
 }

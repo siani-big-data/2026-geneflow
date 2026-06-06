@@ -1,12 +1,16 @@
+using GeneFlow.ApiNet2.API.Contracts.Common;
 using GeneFlow.ApiNet2.API.Contracts.Orgs.Requests;
 using GeneFlow.ApiNet2.API.Contracts.Orgs.Responses;
+using GeneFlow.ApiNet2.API.Contracts.Studies.Responses;
 using GeneFlow.ApiNet2.API.Extensions;
 using GeneFlow.ApiNet2.Application.Identity.Interfaces;
 using GeneFlow.ApiNet2.Application.Orgs.Commands.CreateOrg;
 using GeneFlow.ApiNet2.Application.Orgs.Commands.UpdateOrgProfile;
 using GeneFlow.ApiNet2.Application.Orgs.Queries.GetOrgByHandle;
 using GeneFlow.ApiNet2.Application.Orgs.Queries.ListMyOrgs;
+using GeneFlow.ApiNet2.Application.Studies.Queries.GetOrgStudies;
 using GeneFlow.ApiNet2.Domain.Orgs;
+using GeneFlow.ApiNet2.SharedKernel.Domain.Pagination;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -37,6 +41,12 @@ public sealed class OrgEndpoints : IEndpoint
             .WithName("Orgs_GetByHandle")
             .WithSummary("Get an organisation by handle")
             .Produces<OrgResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status404NotFound);
+
+        orgs.MapGet("/{handle}/studies", ListOrgStudies)
+            .WithName("Orgs_ListStudies")
+            .WithSummary("List studies owned by an organisation")
+            .Produces<PagedResponse<StudyResponse>>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound);
 
         orgs.MapPut("/{handle}", UpdateProfile)
@@ -131,6 +141,26 @@ public sealed class OrgEndpoints : IEndpoint
             return result.ToHttpResult();
 
         return Results.Ok(result.Value.ToResponse());
+    }
+
+    private static async Task<IResult> ListOrgStudies(
+        [FromRoute] string handle,
+        [FromQuery] int pageNumber,
+        [FromQuery] int pageSize,
+        [FromServices] ISender sender,
+        CancellationToken cancellationToken)
+    {
+        var query = new GetOrgStudiesQuery(
+            handle,
+            pageNumber > 0 ? pageNumber : 1,
+            pageSize > 0 ? pageSize : PagedRequest.DefaultPageSize);
+
+        var result = await sender.Send(query, cancellationToken);
+
+        if (result.IsFailure)
+            return result.ToHttpResult();
+
+        return Results.Ok(result.Value.ToPagedResponse(dto => dto.ToResponse()));
     }
 
     private static async Task<IResult> ListMyOrgs(

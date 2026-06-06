@@ -1,4 +1,6 @@
 using GeneFlow.ApiNet2.Domain.Identity;
+using GeneFlow.ApiNet2.Domain.Orgs;
+using GeneFlow.ApiNet2.Domain.Orgs.Enumerations;
 using GeneFlow.ApiNet2.Domain.Studies;
 using GeneFlow.ApiNet2.Domain.Studies.Entities;
 using GeneFlow.ApiNet2.Domain.Studies.Enumerations;
@@ -515,5 +517,42 @@ public sealed class StudyRepository : IStudyRepository
             .AsNoTracking()
             .Where(s => !s.IsDeleted)
             .ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<PagedList<Study>> GetByOrgAsync(
+        OrgId orgId,
+        bool includeNonPublished,
+        int pageNumber,
+        int pageSize,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug(
+            "Getting org studies. OrgId={OrgId} includeNonPublished={Flag}",
+            orgId, includeNonPublished);
+
+        // Studies store their org-owner under OwnerType=Org with OwnerId
+        // packed as a UserId that carries the org's numeric id. We compare
+        // the underlying long value to avoid relying on cross-VO equality.
+        var ownerNumeric = orgId.Value;
+        var orgOwnerId = new UserId(ownerNumeric);
+
+        var query = _context.Studies
+            .Where(s => !s.IsDeleted
+                && s.OwnerType == StudyOwnerType.Org
+                && s.OwnerId == orgOwnerId);
+
+        if (!includeNonPublished)
+            query = query.Where(s => s.Status == StudyStatus.Published);
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var items = await query
+            .OrderByDescending(s => s.CreatedAt)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        return PagedList<Study>.Create(items, pageNumber, pageSize, totalCount);
     }
 }
