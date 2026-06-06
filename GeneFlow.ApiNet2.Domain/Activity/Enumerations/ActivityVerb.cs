@@ -22,6 +22,9 @@ public sealed class ActivityVerb : Enumeration<ActivityVerb>
     public static readonly ActivityVerb Published = new(12, nameof(Published));
     public static readonly ActivityVerb Archived = new(13, nameof(Archived));
     public static readonly ActivityVerb Registered = new(14, nameof(Registered));
+    public static readonly ActivityVerb Applied = new(15, nameof(Applied));
+    public static readonly ActivityVerb Undone = new(16, nameof(Undone));
+    public static readonly ActivityVerb Requested = new(17, nameof(Requested));
     public static readonly ActivityVerb Unknown = new(99, nameof(Unknown));
 
     private ActivityVerb(int id, string name) : base(id, name) { }

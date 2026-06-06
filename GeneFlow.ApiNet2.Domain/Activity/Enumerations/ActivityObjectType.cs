@@ -20,6 +20,9 @@ public sealed class ActivityObjectType : Enumeration<ActivityObjectType>
     public static readonly ActivityObjectType Plan = new(10, nameof(Plan));
     public static readonly ActivityObjectType Member = new(11, nameof(Member));
     public static readonly ActivityObjectType Comment = new(12, nameof(Comment));
+    public static readonly ActivityObjectType Annotation = new(13, nameof(Annotation));
+    public static readonly ActivityObjectType SequenceEdit = new(14, nameof(SequenceEdit));
+    public static readonly ActivityObjectType TraceTrim = new(15, nameof(TraceTrim));
     public static readonly ActivityObjectType Other = new(99, nameof(Other));
 
     private ActivityObjectType(int id, string name) : base(id, name) { }

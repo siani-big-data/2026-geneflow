@@ -15,6 +15,13 @@ public static class ActivityErrors
         "The supplied user identifier is malformed.");
 
     /// <summary>
+    /// Returned when the request carries a study identifier that is missing or malformed.
+    /// </summary>
+    public static readonly Error InvalidStudyId = Error.Validation(
+        "Activity.InvalidStudyId",
+        "The supplied study identifier is missing or malformed.");
+
+    /// <summary>
     /// Returned when a client supplies a malformed pagination cursor.
     /// </summary>
     public static readonly Error InvalidCursor = Error.Validation(
