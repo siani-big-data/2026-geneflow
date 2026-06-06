@@ -2308,5 +2308,39 @@
       "mentions": "Sólo menciones",
       "none": "Desactivado"
     }
+  },
+  "commandPalette": {
+    "ariaLabel": "Búsqueda global",
+    "placeholder": "Busca estudios, trazas, discusiones, usuarios…",
+    "emptyPrompt": "Escribe para buscar en toda la plataforma.",
+    "noResults": "Sin resultados para \"{query}\".",
+    "types": {
+      "Study": "Estudio",
+      "Trace": "Traza",
+      "Discussion": "Discusión",
+      "User": "Usuario"
+    },
+    "hints": {
+      "navigate": "para navegar",
+      "open": "para abrir",
+      "close": "para cerrar"
+    }
+  },
+  "feed": {
+    "title": "Mi feed",
+    "subtitle": "Actividad de personas que sigues y estudios que observas.",
+    "loadMore": "Cargar más",
+    "loadingMore": "Cargando…",
+    "error": "No pudimos cargar tu feed. Inténtalo de nuevo.",
+    "empty": {
+      "title": "Tu feed está tranquilo",
+      "description": "Sigue investigadores y observa estudios para ver su actividad aquí."
+    },
+    "reason": {
+      "self": "Tú",
+      "follow": "Sigues",
+      "watch": "Observas",
+      "other": "Actividad"
+    }
   }
 }

@@ -4,7 +4,8 @@ import { Sidebar, Header } from "@/components/layout";
 import { SkipLink } from "@/components/shared";
 import { AuthGuard } from "@/components/auth";
 import { SubscriptionLimitDialog } from "@/components/subscription/subscription-limit-dialog";
-import { NotificationsProvider } from "@/providers";
+import { CommandPalette } from "@/components/search";
+import { CommandPaletteProvider, NotificationsProvider } from "@/providers";
 import { useUIStore } from "@/stores/ui-store";
 import { cn } from "@/lib/utils";
 
@@ -18,6 +19,7 @@ export default function PlatformLayout({
   return (
     <AuthGuard>
       <NotificationsProvider>
+        <CommandPaletteProvider>
         <div className="flex min-h-screen bg-background">
           <SkipLink />
           <Sidebar />
@@ -35,6 +37,8 @@ export default function PlatformLayout({
           </div>
         </div>
         <SubscriptionLimitDialog />
+        <CommandPalette />
+        </CommandPaletteProvider>
       </NotificationsProvider>
     </AuthGuard>
   );

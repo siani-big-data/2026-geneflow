@@ -2344,5 +2344,39 @@
       "mentions": "Mentions only",
       "none": "Off"
     }
+  },
+  "commandPalette": {
+    "ariaLabel": "Global search",
+    "placeholder": "Search studies, traces, discussions, users…",
+    "emptyPrompt": "Type to search across the platform.",
+    "noResults": "No results for \"{query}\".",
+    "types": {
+      "Study": "Study",
+      "Trace": "Trace",
+      "Discussion": "Discussion",
+      "User": "User"
+    },
+    "hints": {
+      "navigate": "to navigate",
+      "open": "to open",
+      "close": "to close"
+    }
+  },
+  "feed": {
+    "title": "Feed",
+    "subtitle": "Activity from people you follow and studies you watch.",
+    "loadMore": "Load more",
+    "loadingMore": "Loading…",
+    "error": "Could not load your feed. Please try again.",
+    "empty": {
+      "title": "Your feed is quiet",
+      "description": "Follow researchers and watch studies to see their activity here."
+    },
+    "reason": {
+      "self": "You",
+      "follow": "Follow",
+      "watch": "Watching",
+      "other": "Activity"
+    }
   }
 }
