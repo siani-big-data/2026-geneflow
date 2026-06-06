@@ -2,9 +2,8 @@
 
 import * as React from "react";
 import { useTranslations } from "next-intl";
-import { Check, Copy, Loader2, Mail } from "lucide-react";
+import { Loader2, Mail } from "lucide-react";
 import {
-  Button,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -13,7 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui";
 import { useInviteOrgMember } from "@/hooks/use-org-invitations";
-import type { OrgRole, CreateOrgInvitationResponse } from "@/types";
+import type { OrgRole } from "@/types";
 
 export interface InviteMemberDialogProps {
   open: boolean;
@@ -22,9 +21,8 @@ export interface InviteMemberDialogProps {
 }
 
 /**
- * Dialog to send an invitation to an org. On success, surfaces the generated
- * accept link so the inviter can copy and share it manually (email delivery
- * is the backend's responsibility, but we still show the token for OOB use).
+ * Dialog to send an org invitation by email. On success the dialog closes;
+ * the recipient picks up the invitation from their notifications tray.
  */
 export function InviteMemberDialog({
   open,
@@ -38,20 +36,11 @@ export function InviteMemberDialog({
 
   const [email, setEmail] = React.useState("");
   const [role, setRole] = React.useState<OrgRole>("Member");
-  const [result, setResult] =
-    React.useState<CreateOrgInvitationResponse | null>(null);
-  const [copied, setCopied] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-
-  const acceptUrl = result
-    ? `${typeof window !== "undefined" ? window.location.origin : ""}/invitations/${result.token}`
-    : "";
 
   const reset = () => {
     setEmail("");
     setRole("Member");
-    setResult(null);
-    setCopied(false);
     setError(null);
   };
 
@@ -64,70 +53,19 @@ export function InviteMemberDialog({
     e.preventDefault();
     setError(null);
     try {
-      const res = await invite.mutateAsync({ email: email.trim(), role });
-      setResult(res);
+      await invite.mutateAsync({ email: email.trim(), role });
+      // Close the dialog immediately — the recipient receives the
+      // invitation in their notifications tray, no inviter-side share UI.
+      handleClose(false);
     } catch (err) {
       setError((err as Error).message);
-    }
-  };
-
-  const handleCopy = async () => {
-    if (!acceptUrl) return;
-    try {
-      await navigator.clipboard.writeText(acceptUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // ignore
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[480px]">
-        {result ? (
-          <>
-            <DialogHeader>
-              <DialogTitle>{t("sentSuccess")}</DialogTitle>
-              <DialogDescription>{t("copyLink")}</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-3 py-4">
-              <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 p-2.5">
-                <code className="flex-1 truncate text-xs text-foreground">
-                  {acceptUrl}
-                </code>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleCopy}
-                >
-                  {copied ? (
-                    <>
-                      <Check className="h-4 w-4" />
-                      <span className="ml-1">{t("copied")}</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="h-4 w-4" />
-                      <span className="ml-1">{t("copyLink")}</span>
-                    </>
-                  )}
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {t("expiresIn")}:{" "}
-                {new Date(result.expiresAt).toLocaleString()}
-              </p>
-            </div>
-            <DialogFooter>
-              <Button onClick={() => handleClose(false)}>
-                {tCommon("done")}
-              </Button>
-            </DialogFooter>
-          </>
-        ) : (
-          <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit}>
             <DialogHeader>
               <DialogTitle>{t("title")}</DialogTitle>
               <DialogDescription>{t("invitedToOrg")}</DialogDescription>
@@ -196,9 +134,8 @@ export function InviteMemberDialog({
                   t("sendInvitation")
                 )}
               </button>
-            </DialogFooter>
-          </form>
-        )}
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

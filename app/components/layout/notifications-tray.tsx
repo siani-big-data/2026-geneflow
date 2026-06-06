@@ -21,9 +21,14 @@ import {
   useMarkNotificationRead,
   useMarkAllNotificationsRead,
 } from "@/hooks";
+import {
+  useMyInvitations as useMyOrgInvitations,
+  useAcceptInvitation as useAcceptOrgInvitation,
+  useDeclineInvitation as useDeclineOrgInvitation,
+} from "@/hooks/use-org-invitations";
 import { useNotificationsStore } from "@/stores/notifications-store";
 import { ApiClientError } from "@/lib/api-client";
-import type { StudyInvitation } from "@/types";
+import type { OrgInvitation, StudyInvitation } from "@/types";
 
 type Feedback =
   | { type: "success"; message: string }
@@ -66,6 +71,15 @@ export function NotificationsTray() {
   const acceptMutation = useAcceptInvitation();
   const declineMutation = useDeclineInvitation();
 
+  // Org invitations live in a separate context (`/api/v1/me/invitations`).
+  const {
+    data: orgInvData,
+    isLoading: orgInvLoading,
+    isError: orgInvError,
+  } = useMyOrgInvitations();
+  const acceptOrgMutation = useAcceptOrgInvitation();
+  const declineOrgMutation = useDeclineOrgInvitation();
+
   // Notifications page (first page).
   const {
     data: notifData,
@@ -107,8 +121,9 @@ export function NotificationsTray() {
   const dateFormatter = new Intl.DateTimeFormat(locale, { dateStyle: "medium" });
   const invitations = invData?.items ?? [];
   const notifications = notifData?.items ?? [];
+  const orgInvitations = orgInvData ?? [];
 
-  const invCount = invitations.length;
+  const invCount = invitations.length + orgInvitations.length;
   const totalBadge = unreadNotifCount + invCount;
 
   const handleAccept = (invitation: StudyInvitation) => {
@@ -128,6 +143,42 @@ export function NotificationsTray() {
         setFeedback({
           type: "error",
           message: getErrorMessage(error, tInv("feedback.acceptError")),
+        });
+        setPendingId(null);
+      },
+    });
+  };
+
+  const handleAcceptOrg = (invitation: OrgInvitation) => {
+    setPendingId(invitation.token);
+    setFeedback(null);
+    acceptOrgMutation.mutate(invitation.token, {
+      onSuccess: () => {
+        setPendingId(null);
+        setOpen(false);
+        router.push(`/orgs/${invitation.orgHandle}` as never);
+      },
+      onError: (error) => {
+        setFeedback({
+          type: "error",
+          message: getErrorMessage(error, tInv("feedback.acceptError")),
+        });
+        setPendingId(null);
+      },
+    });
+  };
+
+  const handleDeclineOrg = (invitation: OrgInvitation) => {
+    setPendingId(invitation.token);
+    setFeedback(null);
+    declineOrgMutation.mutate(invitation.token, {
+      onSuccess: () => {
+        setPendingId(null);
+      },
+      onError: (error) => {
+        setFeedback({
+          type: "error",
+          message: getErrorMessage(error, tInv("feedback.declineError")),
         });
         setPendingId(null);
       },
@@ -340,24 +391,108 @@ export function NotificationsTray() {
           {/* ============= INVITATIONS TAB ============= */}
           {tab === "invitations" && (
             <div className="max-h-[420px] overflow-y-auto">
-              {invLoading && (
+              {(invLoading || orgInvLoading) && (
                 <div className="flex items-center gap-2 px-4 py-6 text-xs text-muted-foreground">
                   <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
                   {tInv("loading")}
                 </div>
               )}
 
-              {invError && !invLoading && (
+              {(invError || orgInvError) && !invLoading && !orgInvLoading && (
                 <div className="flex items-center gap-2 px-4 py-6 text-xs text-destructive">
                   <AlertCircle className="h-3.5 w-3.5" aria-hidden />
                   {tInv("loadError")}
                 </div>
               )}
 
-              {!invLoading && !invError && invitations.length === 0 && (
+              {!invLoading && !orgInvLoading && !invError && !orgInvError
+                && invitations.length === 0 && orgInvitations.length === 0 && (
                 <div className="px-4 py-8 text-center text-xs text-muted-foreground">
                   {tInv("empty")}
                 </div>
+              )}
+
+              {!orgInvLoading && !orgInvError && orgInvitations.length > 0 && (
+                <ul className="divide-y">
+                  {orgInvitations.map((invitation) => {
+                    const isRowPending = pendingId === invitation.token;
+                    const expiresDate = new Date(invitation.expiresAt);
+                    const isExpired = expiresDate.getTime() < now;
+                    return (
+                      <li
+                        key={`org-${invitation.token}`}
+                        className="px-4 py-3 text-sm"
+                      >
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <Link
+                              href={`/orgs/${invitation.orgHandle}` as never}
+                              onClick={() => setOpen(false)}
+                              className="truncate font-medium text-foreground hover:underline"
+                            >
+                              @{invitation.orgHandle}
+                            </Link>
+                            <Badge variant="secondary" className="text-[10px]">
+                              {invitation.role}
+                            </Badge>
+                            {isExpired && (
+                              <Badge variant="destructive" className="text-[10px]">
+                                {tInv("card.expired")}
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                            {invitation.orgName ?? invitation.orgHandle}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground">
+                            {tInv("card.expires", {
+                              date: dateFormatter.format(expiresDate),
+                            })}
+                          </p>
+                        </div>
+                        <div className="mt-2 flex justify-end gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleDeclineOrg(invitation)}
+                            disabled={isRowPending}
+                          >
+                            {isRowPending && declineOrgMutation.isPending ? (
+                              <>
+                                <Loader2
+                                  className="mr-1.5 h-3 w-3 animate-spin"
+                                  aria-hidden
+                                />
+                                {tInv("actions.declining")}
+                              </>
+                            ) : (
+                              tInv("actions.decline")
+                            )}
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={() => handleAcceptOrg(invitation)}
+                            disabled={isRowPending || isExpired}
+                          >
+                            {isRowPending && acceptOrgMutation.isPending ? (
+                              <>
+                                <Loader2
+                                  className="mr-1.5 h-3 w-3 animate-spin"
+                                  aria-hidden
+                                />
+                                {tInv("actions.accepting")}
+                              </>
+                            ) : (
+                              tInv("actions.accept")
+                            )}
+                          </Button>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
               )}
 
               {!invLoading && !invError && invitations.length > 0 && (
