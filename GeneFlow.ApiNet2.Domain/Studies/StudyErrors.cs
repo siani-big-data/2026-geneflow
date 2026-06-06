@@ -68,6 +68,9 @@ public static class StudyErrors
     public static Error InstitutionTooLong(int max) => Error.Validation("Study.InstitutionTooLong", $"Institution must not exceed {max} characters.");
     public static Error PrincipalInvestigatorTooLong(int max) => Error.Validation("Study.PrincipalInvestigatorTooLong", $"Principal investigator must not exceed {max} characters.");
 
+    // README errors
+    public static Error ReadmeTooLong(int max) => Error.Validation("Study.ReadmeTooLong", $"README must not exceed {max} characters.");
+
     // Invitation errors
     public static readonly Error InvitationNotFound = Error.NotFound("Study.InvitationNotFound", "Invitation was not found.");
     public static Error InvitationNotFoundByToken(string token) => Error.NotFound("Study.InvitationNotFoundByToken", $"Invitation with token '{token}' was not found.");

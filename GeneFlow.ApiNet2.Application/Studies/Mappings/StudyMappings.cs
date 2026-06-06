@@ -60,6 +60,7 @@ public static class StudyMappings
             RequireApprovalToJoin = study.Settings.RequireApprovalToJoin,
             Institution = study.Institution,
             PrincipalInvestigator = study.PrincipalInvestigator,
+            ReadmeMarkdown = study.ReadmeMarkdown,
             IsFeatured = study.IsFeatured,
             Tags = study.Tags,
             ViewsCount = study.Metrics.ViewsCount,

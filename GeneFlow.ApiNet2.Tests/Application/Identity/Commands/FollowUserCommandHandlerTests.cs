@@ -4,7 +4,7 @@ using GeneFlow.ApiNet2.Domain.Identity.Entities;
 using GeneFlow.ApiNet2.Domain.Identity.Enumerations;
 using GeneFlow.ApiNet2.Domain.Identity.ValueObjects;
 using GeneFlow.ApiNet2.SharedKernel.Application.EventNotifications;
-using GeneFlow.ApiNet2.SharedKernel.Infrastructure;
+using IDomainEventDispatcher = GeneFlow.ApiNet2.SharedKernel.Infrastructure.IDomainEventDispatcher;
 
 namespace GeneFlow.ApiNet2.Tests.Application.Identity.Commands;
 

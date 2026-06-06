@@ -14,6 +14,7 @@ public sealed record StudyResponse(
     string StatusName,
     string? Institution,
     string? PrincipalInvestigator,
+    string? ReadmeMarkdown,
     bool IsFeatured,
     StudySettingsResponse Settings,
     StudyMetricsResponse Metrics,

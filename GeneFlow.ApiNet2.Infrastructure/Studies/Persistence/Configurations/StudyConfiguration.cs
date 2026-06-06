@@ -115,6 +115,13 @@ public sealed class StudyConfiguration : IEntityTypeConfiguration<Study>
             .HasColumnName("principal_investigator")
             .HasMaxLength(Study.MaxPrincipalInvestigatorLength);
 
+        // README markdown (nullable, stored as text without length cap so that the
+        // domain MaxReadmeLength check is the single source of truth and PostgreSQL
+        // doesn't need a varchar TOAST roundtrip on read).
+        builder.Property(s => s.ReadmeMarkdown)
+            .HasColumnName("readme_markdown")
+            .HasColumnType("text");
+
         // IsFeatured
         builder.Property(s => s.IsFeatured)
             .HasColumnName("is_featured")

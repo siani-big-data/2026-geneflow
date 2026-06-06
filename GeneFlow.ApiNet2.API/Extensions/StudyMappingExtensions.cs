@@ -22,6 +22,7 @@ public static class StudyMappingExtensions
         dto.Status,
         dto.Institution,
         dto.PrincipalInvestigator,
+        dto.ReadmeMarkdown,
         dto.IsFeatured,
         new StudySettingsResponse(
             dto.AllowPublicComments,

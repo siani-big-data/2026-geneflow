@@ -30,7 +30,7 @@ public class RequestAnalysisCommandHandlerTests
         _analysisService
             .GetAnalysisDataAsync(Arg.Any<Trace>(), Arg.Any<CancellationToken>())
             .Returns(Result.Success(("ACGT", new[] { 30, 30, 30, 30 })));
-        _currentUserService.UserId.Returns(UserId.New());
+        _currentUserService.UserId.Returns(UserId.FromSequence(1));
 
         _handler = new RequestAnalysisCommandHandler(
             _unitOfWork, _jobPublisher, _analysisService, _currentUserService);

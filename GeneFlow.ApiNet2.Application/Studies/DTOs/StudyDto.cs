@@ -85,6 +85,7 @@ public sealed record StudyDto
     // New fields
     public string? Institution { get; init; }
     public string? PrincipalInvestigator { get; init; }
+    public string? ReadmeMarkdown { get; init; }
     public required bool IsFeatured { get; init; }
     public required IReadOnlyList<string> Tags { get; init; }
 

@@ -8,6 +8,7 @@ using GeneFlow.ApiNet2.Application.Studies.Commands.CreateStudy;
 using GeneFlow.ApiNet2.Application.Studies.Commands.DeleteStudy;
 using GeneFlow.ApiNet2.Application.Studies.Commands.DuplicateStudy;
 using GeneFlow.ApiNet2.Application.Studies.Commands.ExportStudy;
+using GeneFlow.ApiNet2.Application.Studies.Commands.UpdateReadme;
 using GeneFlow.ApiNet2.Application.Studies.Commands.UpdateStudy;
 using GeneFlow.ApiNet2.Application.Studies.Commands.UpdateStudySettings;
 using GeneFlow.ApiNet2.Application.Studies.Queries.GetFeaturedStudies;
@@ -100,6 +101,16 @@ public sealed class StudyEndpoints : IEndpoint
             .WithName("Studies_ChangeStatus")
             .WithSummary("Change study status")
             .WithDescription("Changes the status of a study.")
+            .Produces<StudyResponse>(StatusCodes.Status200OK)
+            .ProducesValidationProblem()
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces<ApiError>(StatusCodes.Status403Forbidden)
+            .Produces<ApiError>(StatusCodes.Status404NotFound);
+
+        authGroup.MapPut("/{studyId}/readme", UpdateReadme)
+            .WithName("Studies_UpdateReadme")
+            .WithSummary("Update study README")
+            .WithDescription("Updates the README markdown content of a study.")
             .Produces<StudyResponse>(StatusCodes.Status200OK)
             .ProducesValidationProblem()
             .Produces(StatusCodes.Status401Unauthorized)
@@ -301,6 +312,29 @@ public sealed class StudyEndpoints : IEndpoint
             request.Institution,
             request.PrincipalInvestigator,
             request.Tags);
+
+        var result = await sender.Send(command, cancellationToken);
+
+        if (result.IsFailure)
+            return result.ToHttpResult();
+
+        return Results.Ok(result.Value.ToResponse());
+    }
+
+    private static async Task<IResult> UpdateReadme(
+        [FromRoute] string studyId,
+        [FromBody] UpdateReadmeRequest request,
+        [FromServices] ISender sender,
+        [FromServices] ICurrentUserService currentUser,
+        CancellationToken cancellationToken)
+    {
+        if (currentUser.UserId is null)
+            return Results.Unauthorized();
+
+        var command = new UpdateReadmeCommand(
+            studyId,
+            currentUser.UserId.ToString()!,
+            request.Markdown);
 
         var result = await sender.Send(command, cancellationToken);
 

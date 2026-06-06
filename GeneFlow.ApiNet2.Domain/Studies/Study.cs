@@ -19,6 +19,7 @@ public sealed class Study : FullAuditableAggregateRoot<StudyId>
     public const int MaxInstitutionLength = 200;
     public const int MaxPrincipalInvestigatorLength = 200;
     public const int MaxPapers = 50;
+    public const int MaxReadmeLength = 100_000;
     #endregion
 
     #region Properties
@@ -32,6 +33,7 @@ public sealed class Study : FullAuditableAggregateRoot<StudyId>
 
     public string? Institution { get; private set; }
     public string? PrincipalInvestigator { get; private set; }
+    public string? ReadmeMarkdown { get; private set; }
     public bool IsFeatured { get; private set; }
 
     private readonly List<StudyMember> _members = new();
@@ -141,6 +143,23 @@ public sealed class Study : FullAuditableAggregateRoot<StudyId>
 
         PrincipalInvestigator = pi?.Trim();
         SetModified(updatedBy.Value.ToString());
+
+        return Result.Success();
+    }
+
+    public Result UpdateReadme(string? markdown, UserId updatedBy)
+    {
+        if (!CanUserEdit(updatedBy))
+            return Result.Failure(StudyErrors.InsufficientPermissions);
+
+        if (markdown?.Length > MaxReadmeLength)
+            return Result.Failure(StudyErrors.ReadmeTooLong(MaxReadmeLength));
+
+        // Normalize empty to null so DB stores NULL rather than empty string.
+        ReadmeMarkdown = string.IsNullOrWhiteSpace(markdown) ? null : markdown;
+        SetModified(updatedBy.Value.ToString());
+
+        RaiseDomainEvent(new StudyReadmeUpdatedEvent(Id, updatedBy));
 
         return Result.Success();
     }
