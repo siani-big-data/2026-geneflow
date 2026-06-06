@@ -3,13 +3,13 @@
 import { useMemo } from "react";
 import type { Study, CurrentUserPermissions, StudyStatus } from "@/types/study";
 
-const ALL_TABS = ["overview", "traces", "pipelines", "papers", "timeline", "team", "settings"] as const;
+const ALL_TABS = ["overview", "traces", "pipelines", "papers", "discussions", "timeline", "team", "settings"] as const;
 type TabId = (typeof ALL_TABS)[number];
 
 // Tabs visible to everyone (including public visitors on published studies).
 // `timeline` mirrors the backend's GetStudyTimelineQuery (MinimumRole = null):
 // members + non-members on public studies can read the study activity feed.
-const PUBLIC_TABS: TabId[] = ["overview", "traces", "pipelines", "papers", "timeline"];
+const PUBLIC_TABS: TabId[] = ["overview", "traces", "pipelines", "papers", "discussions", "timeline"];
 
 // Tabs only visible to study members
 const MEMBER_ONLY_TABS: TabId[] = ["team", "settings"];
