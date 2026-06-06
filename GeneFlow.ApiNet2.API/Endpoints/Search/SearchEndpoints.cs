@@ -2,6 +2,7 @@ using GeneFlow.ApiNet2.API.Contracts.Common;
 using GeneFlow.ApiNet2.API.Contracts.Search.Responses;
 using GeneFlow.ApiNet2.API.Extensions;
 using GeneFlow.ApiNet2.Application.Identity.Interfaces;
+using GeneFlow.ApiNet2.Application.Search.Commands.ReindexAll;
 using GeneFlow.ApiNet2.Application.Search.Queries.ExploreFeatured;
 using GeneFlow.ApiNet2.Application.Search.Queries.ExploreRecent;
 using GeneFlow.ApiNet2.Application.Search.Queries.ExploreTrending;
@@ -62,6 +63,25 @@ public sealed class SearchEndpoints : IEndpoint
             .WithDescription("Composes follows + watched studies + self activity.")
             .Produces<CursorPagedResponse<FeedItemResponse>>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized);
+
+        // One-shot backfill — requires auth. In production this should be
+        // gated by an admin role; for now any authenticated user can trigger
+        // it because the operation is idempotent.
+        search.MapPost("/reindex", ReindexAll)
+            .RequireAuthorization()
+            .WithName("Search_ReindexAll")
+            .WithSummary("Backfill the search index from existing studies and discussions")
+            .Produces<ReindexAllResult>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status401Unauthorized);
+    }
+
+    private static async Task<IResult> ReindexAll(
+        [FromServices] ISender sender,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(new ReindexAllCommand(), cancellationToken);
+        if (result.IsFailure) return result.ToHttpResult();
+        return Results.Ok(result.Value);
     }
 
     private static async Task<IResult> GlobalSearch(

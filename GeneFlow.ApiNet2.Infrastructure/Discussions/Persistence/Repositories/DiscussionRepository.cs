@@ -70,4 +70,13 @@ public sealed class DiscussionRepository : IDiscussionRepository
     {
         return _sequenceGenerator.NextAsync(DiscussionId.SequenceName, cancellationToken);
     }
+
+    public async Task<IReadOnlyList<Discussion>> ListAllForReindexAsync(
+        CancellationToken cancellationToken = default)
+    {
+        return await _context.Discussions
+            .AsNoTracking()
+            .Where(d => !d.IsDeleted)
+            .ToListAsync(cancellationToken);
+    }
 }

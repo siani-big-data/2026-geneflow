@@ -105,4 +105,11 @@ public interface IStudyRepository
     Task<UserId?> GetOwnerIdAsync(
         StudyId studyId,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Returns every non-deleted study. Intended for one-shot reindex/backfill
+    /// jobs (search index, etc.) — do NOT use from user-facing requests.
+    /// </summary>
+    Task<IReadOnlyList<Study>> ListAllForReindexAsync(
+        CancellationToken cancellationToken = default);
 }

@@ -47,17 +47,27 @@ public sealed class SearchIndexRepository : ISearchIndexRepository
         int pageSize,
         CancellationToken cancellationToken = default)
     {
+        // Build a prefix-friendly ts_query: tokenize the user input, strip
+        // anything that's not alphanumeric (avoids breaking to_tsquery with
+        // operators like &/|/!/:), and append ':*' to each token so partial
+        // matches work. Empty input → no hits.
+        var tsquery = BuildPrefixTsQuery(query);
+        if (tsquery.Length == 0)
+        {
+            return Array.Empty<SearchHit>();
+        }
+
         var sql = new StringBuilder();
         sql.Append(@"
 SELECT id, object_type, object_id, owner_id, title, body, tags,
        is_public, created_at, updated_at,
-       ts_rank_cd(tsv, plainto_tsquery('simple', @q)) AS rank
+       ts_rank_cd(tsv, to_tsquery('simple', @q)) AS rank
 FROM search.search_index
-WHERE tsv @@ plainto_tsquery('simple', @q)");
+WHERE tsv @@ to_tsquery('simple', @q)");
 
         var parameters = new List<NpgsqlParameter>
         {
-            new("@q", query),
+            new("@q", tsquery),
             new("@limit", pageSize),
         };
 
@@ -194,6 +204,25 @@ WHERE (
         sql.Append(" ORDER BY updated_at DESC, id DESC LIMIT @limit");
 
         return await ExecuteHitQueryAsync(sql.ToString(), parameters, cancellationToken);
+    }
+
+    /// <summary>
+    /// Tokenizes a free-form search string into a Postgres ts_query that
+    /// matches token prefixes (so "stud" matches "study"). Drops every
+    /// character that is not a letter or digit to avoid syntax errors in
+    /// to_tsquery.
+    /// </summary>
+    private static string BuildPrefixTsQuery(string raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw)) return string.Empty;
+
+        var tokens = raw
+            .Split(new[] { ' ', '\t', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries)
+            .Select(token => new string(token.Where(char.IsLetterOrDigit).ToArray()))
+            .Where(t => t.Length > 0)
+            .Select(t => t + ":*");
+
+        return string.Join(" & ", tokens);
     }
 
     private async Task<IReadOnlyList<SearchHit>> ExecuteHitQueryAsync(

@@ -506,4 +506,14 @@ public sealed class StudyRepository : IStudyRepository
 
         return UserId.TryParse(result.ToString()!, out var userId) ? userId : null;
     }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<Study>> ListAllForReindexAsync(
+        CancellationToken cancellationToken = default)
+    {
+        return await _context.Studies
+            .AsNoTracking()
+            .Where(s => !s.IsDeleted)
+            .ToListAsync(cancellationToken);
+    }
 }
