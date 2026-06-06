@@ -11,3 +11,6 @@ export { analysisService } from "./analysis.service";
 export { activityService } from "./activity.service";
 export { discussionsService } from "./discussions.service";
 export { notificationsService } from "./notifications.service";
+export { orgsService } from "./orgs.service";
+export { orgInvitationsService } from "./org-invitations.service";
+export { ownershipService } from "./ownership.service";

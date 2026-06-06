@@ -12,6 +12,7 @@ export * from "./analysis";
 export * from "./activity";
 export * from "./discussions";
 export * from "./notifications";
+export * from "./orgs";
 export * from "./common";
 
 // Legacy compatibility - prefer PagedResponse from common.ts
