@@ -41,12 +41,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { StatusBadge, EmptyState } from "@/components/shared";
+import { StarButton } from "@/components/social/star-button";
 import {
   useMyStudies,
   useCreateStudy,
   useDeleteStudy,
+  useDuplicateStudy,
   useResearchFields,
 } from "@/hooks";
+import { studiesService } from "@/services";
+import { useRouter } from "@/lib/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import type { StudySummary, CreateStudyInput } from "@/types";
 
 const statusOptions = [
@@ -61,6 +66,7 @@ const statusOptions = [
 export default function StudiesPage() {
   const t = useTranslations("studies");
   const tCommon = useTranslations("common");
+  const router = useRouter();
 
   // State
   const [searchQuery, setSearchQuery] = useState("");
@@ -71,6 +77,7 @@ export default function StudiesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [exportOpen, setExportOpen] = useState(false);
   const [deleteStudyOpen, setDeleteStudyOpen] = useState(false);
+  const [archiveStudyOpen, setArchiveStudyOpen] = useState(false);
   const [selectedStudy, setSelectedStudy] = useState<StudySummary | null>(null);
 
   // Form state for new study
@@ -79,7 +86,6 @@ export default function StudiesPage() {
     description: "",
     researchFieldId: 1,
     institution: "",
-    principalInvestigator: "",
     tags: [],
   });
   const [tagsInput, setTagsInput] = useState("");
@@ -89,13 +95,57 @@ export default function StudiesPage() {
   const { data: researchFields } = useResearchFields();
 
   // Mutations
+  const queryClient = useQueryClient();
   const createStudyMutation = useCreateStudy();
   const deleteStudyMutation = useDeleteStudy();
+  const duplicateStudyMutation = useDuplicateStudy();
+  const [isArchiving, setIsArchiving] = useState(false);
 
   // Handlers
   const handleExport = (format: string) => {
     console.log(`Exporting studies as ${format}`);
     setExportOpen(false);
+  };
+
+  const handleEditStudy = (study: StudySummary) => {
+    router.push(`/studies/${study.id}?tab=settings`);
+  };
+
+  const handleDuplicateStudy = async (study: StudySummary) => {
+    try {
+      const duplicated = await duplicateStudyMutation.mutateAsync(study.id);
+      router.push(`/studies/${duplicated.id}`);
+    } catch (err) {
+      console.error("Failed to duplicate study:", err);
+      alert(t("actions.duplicateFailed") || "Failed to duplicate study");
+    }
+  };
+
+  const handleShareStudy = async (study: StudySummary) => {
+    const url = `${window.location.origin}/studies/${study.id}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      alert(t("actions.linkCopied") || "Link copied to clipboard");
+    } catch {
+      alert(t("actions.copyFailed") || "Failed to copy link");
+    }
+  };
+
+  const handleArchiveStudy = async () => {
+    if (selectedStudy) {
+      setIsArchiving(true);
+      try {
+        await studiesService.changeStatus(selectedStudy.id, 5); // 5 = Archived
+        queryClient.invalidateQueries({ queryKey: ["studies"] });
+        setArchiveStudyOpen(false);
+        setSelectedStudy(null);
+      } catch (err) {
+        console.error("Failed to archive study:", err);
+        alert(t("actions.archiveFailed") || "Failed to archive study");
+      } finally {
+        setIsArchiving(false);
+      }
+    }
   };
 
   const handleDeleteStudy = async () => {
@@ -123,7 +173,6 @@ export default function StudiesPage() {
         description: "",
         researchFieldId: 1,
         institution: "",
-        principalInvestigator: "",
         tags: [],
       });
       setTagsInput("");
@@ -339,6 +388,14 @@ export default function StudiesPage() {
                     {study.title}
                   </h2>
                 </div>
+                <div
+                  className="flex items-center gap-1"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                >
+                  <StarButton studyId={study.id} showCount size="sm" variant="ghost" />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button
@@ -366,20 +423,26 @@ export default function StudiesPage() {
                         {t("actions.viewDetails")}
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => console.log(`Edit ${study.id}`)}>
+                    <DropdownMenuItem onClick={() => handleEditStudy(study)}>
                       <Edit className="h-4 w-4" />
                       {t("actions.editStudy")}
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => console.log(`Duplicate ${study.id}`)}>
+                    <DropdownMenuItem onClick={() => handleDuplicateStudy(study)}>
                       <Copy className="h-4 w-4" />
                       {t("actions.duplicate")}
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => console.log(`Share ${study.id}`)}>
+                    <DropdownMenuItem onClick={() => handleShareStudy(study)}>
                       <Share2 className="h-4 w-4" />
                       {t("actions.share")}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => console.log(`Archive ${study.id}`)}>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setSelectedStudy(study);
+                        setArchiveStudyOpen(true);
+                      }}
+                      disabled={study.statusName === "archived"}
+                    >
                       <Archive className="h-4 w-4" />
                       {t("actions.archive")}
                     </DropdownMenuItem>
@@ -395,6 +458,7 @@ export default function StudiesPage() {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
+                </div>
               </div>
 
               {/* Stats Row */}
@@ -444,9 +508,19 @@ export default function StudiesPage() {
               {study.principalInvestigator && (
                 <div className="mb-4">
                   <p className="mb-1 text-xs text-muted-foreground">{t("card.pi")}</p>
-                  <p className="text-sm font-medium text-foreground">
-                    {study.principalInvestigator}
-                  </p>
+                  {study.ownerId ? (
+                    <Link
+                      href={`/users/${study.ownerId}` as never}
+                      className="text-sm font-medium text-foreground hover:text-teal hover:underline"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {study.principalInvestigator}
+                    </Link>
+                  ) : (
+                    <p className="text-sm font-medium text-foreground">
+                      {study.principalInvestigator}
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -581,6 +655,38 @@ export default function StudiesPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Archive Study Confirmation Dialog */}
+      <Dialog open={archiveStudyOpen} onOpenChange={setArchiveStudyOpen}>
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle>{t("archive.title") || "Archive Study"}</DialogTitle>
+            <DialogDescription>
+              {t("archive.description", { name: selectedStudy?.title ?? "" }) ||
+                `Are you sure you want to archive "${selectedStudy?.title}"? You can restore it later.`}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4">
+            <button
+              onClick={() => setArchiveStudyOpen(false)}
+              className="rounded-lg px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted"
+            >
+              {tCommon("cancel")}
+            </button>
+            <button
+              onClick={handleArchiveStudy}
+              disabled={isArchiving}
+              className="rounded-lg bg-amber-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-amber-500/90 disabled:opacity-50"
+            >
+              {isArchiving ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                t("archive.confirm") || "Archive"
+              )}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* New Study Dialog */}
       <Dialog open={newStudyOpen} onOpenChange={setNewStudyOpen}>
         <DialogContent className="sm:max-w-[540px]">
@@ -644,28 +750,6 @@ export default function StudiesPage() {
                   placeholder="e.g., MIT, Stanford"
                 />
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <label
-                htmlFor="principal-investigator"
-                className="text-sm font-medium text-foreground"
-              >
-                {t("create.principalInvestigator")}
-              </label>
-              <input
-                id="principal-investigator"
-                type="text"
-                value={newStudyForm.principalInvestigator ?? ""}
-                onChange={(e) =>
-                  setNewStudyForm((f) => ({
-                    ...f,
-                    principalInvestigator: e.target.value,
-                  }))
-                }
-                className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground transition-all placeholder:text-muted-foreground focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/10"
-                placeholder={t("create.piPlaceholder")}
-              />
             </div>
 
             <div className="space-y-2">
