@@ -18,6 +18,15 @@ public interface IWatchRepository
         WatchLevel level,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Returns the study IDs that the given user is watching with the
+    /// specified level. Used by the personal feed composer.
+    /// </summary>
+    Task<IReadOnlyList<StudyId>> GetWatchedStudyIdsAsync(
+        UserId userId,
+        WatchLevel level,
+        CancellationToken cancellationToken = default);
+
     Task AddAsync(Watch watch, CancellationToken cancellationToken = default);
 
     void Update(Watch watch);

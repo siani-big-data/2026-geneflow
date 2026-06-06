@@ -42,6 +42,26 @@ public interface ISearchIndexRepository
         Guid? cursorId,
         int pageSize,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Returns top public entries by a simple recency-weighted score.
+    /// </summary>
+    Task<IReadOnlyList<SearchHit>> GetTrendingPublicAsync(
+        SearchObjectType? type,
+        int limit,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Composes the personal feed from authors, watched studies and self.
+    /// </summary>
+    Task<IReadOnlyList<SearchHit>> GetFeedAsync(
+        IReadOnlyCollection<string> followedOwnerIds,
+        IReadOnlyCollection<string> watchedStudyIds,
+        string selfOwnerId,
+        DateTime? cursorUpdatedBefore,
+        Guid? cursorId,
+        int pageSize,
+        CancellationToken cancellationToken = default);
 }
 
 /// <summary>

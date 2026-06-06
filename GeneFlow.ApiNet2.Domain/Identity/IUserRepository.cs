@@ -112,4 +112,13 @@ public interface IUserRepository : IRepository<User, UserId>
         int pageNumber,
         int pageSize,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Returns the raw set of user ids that <paramref name="userId"/> follows.
+    /// Used by the feed / search to compose a "people you follow" projection
+    /// without paying the cost of materialising full user rows.
+    /// </summary>
+    Task<IReadOnlyList<UserId>> GetFollowingIdsAsync(
+        UserId userId,
+        CancellationToken cancellationToken = default);
 }
