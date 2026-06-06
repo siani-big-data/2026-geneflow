@@ -1,0 +1,60 @@
+using GeneFlow.ApiNet2.Domain.Search.Entities;
+using GeneFlow.ApiNet2.Domain.Search.Enumerations;
+
+namespace GeneFlow.ApiNet2.Domain.Search;
+
+/// <summary>
+/// Repository contract for the denormalised search index.
+/// </summary>
+public interface ISearchIndexRepository
+{
+    Task<SearchIndexEntry?> GetAsync(
+        SearchObjectType objectType,
+        string objectId,
+        CancellationToken cancellationToken = default);
+
+    Task AddAsync(SearchIndexEntry entry, CancellationToken cancellationToken = default);
+
+    void Update(SearchIndexEntry entry);
+
+    void Remove(SearchIndexEntry entry);
+
+    /// <summary>
+    /// Full-text query with optional filters and cursor pagination.
+    /// Returns hits already projected to <see cref="SearchHit"/>.
+    /// </summary>
+    Task<IReadOnlyList<SearchHit>> SearchAsync(
+        string query,
+        SearchObjectType? type,
+        string? ownerId,
+        string? tag,
+        DateTime? cursorUpdatedBefore,
+        Guid? cursorId,
+        int pageSize,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Returns recent public entries (no relevance ranking, just by date).
+    /// </summary>
+    Task<IReadOnlyList<SearchHit>> GetRecentPublicAsync(
+        SearchObjectType? type,
+        DateTime? cursorUpdatedBefore,
+        Guid? cursorId,
+        int pageSize,
+        CancellationToken cancellationToken = default);
+}
+
+/// <summary>
+/// Lightweight projection returned by full-text queries.
+/// </summary>
+public sealed record SearchHit(
+    Guid Id,
+    SearchObjectType ObjectType,
+    string ObjectId,
+    string? OwnerId,
+    string Title,
+    string? Body,
+    string? Tags,
+    bool IsPublic,
+    DateTime UpdatedAt,
+    double Rank);
