@@ -29,14 +29,14 @@ export const orgInvitationsService = {
    * Accept an invitation by token. Returns the org the user just joined.
    */
   async accept(token: string): Promise<Org> {
-    return api.post<Org>(`/api/v1/invitations/${token}/accept`);
+    return api.post<Org>(`/api/v1/org-invitations/${token}/accept`);
   },
 
   /**
    * Decline an invitation by token.
    */
   async decline(token: string): Promise<void> {
-    return api.post<void>(`/api/v1/invitations/${token}/decline`);
+    return api.post<void>(`/api/v1/org-invitations/${token}/decline`);
   },
 
   /**
