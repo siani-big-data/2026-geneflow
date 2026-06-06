@@ -118,3 +118,26 @@ export type {
 export { useTranslatedResearchFields } from "./use-research-fields";
 export { useStudyPermissions } from "./use-study-permissions";
 export type { UseStudyPermissionsResult } from "./use-study-permissions";
+// Discussions / Comments / Reactions
+export {
+  discussionKeys,
+  useStudyDiscussions,
+  useDiscussion,
+  useCreateDiscussion,
+  useLockDiscussion,
+} from "./use-discussions";
+export {
+  useCreateComment,
+  useEditComment,
+  useDeleteComment,
+} from "./use-comments";
+export { useAddReaction, useRemoveReaction } from "./use-reactions";
+// Notifications + Watch
+export {
+  notificationKeys,
+  useNotifications,
+  useUnreadCount,
+  useMarkNotificationRead,
+  useMarkAllNotificationsRead,
+} from "./use-notifications";
+export { useSetWatchLevel } from "./use-watch";

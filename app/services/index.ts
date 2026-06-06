@@ -9,3 +9,5 @@ export { planService, subscriptionService } from "./subscription.service";
 export { usageService } from "./usage.service";
 export { analysisService } from "./analysis.service";
 export { activityService } from "./activity.service";
+export { discussionsService } from "./discussions.service";
+export { notificationsService } from "./notifications.service";

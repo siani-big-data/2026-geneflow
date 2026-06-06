@@ -10,6 +10,8 @@ export * from "./usage";
 export * from "./dashboard";
 export * from "./analysis";
 export * from "./activity";
+export * from "./discussions";
+export * from "./notifications";
 export * from "./common";
 
 // Legacy compatibility - prefer PagedResponse from common.ts
