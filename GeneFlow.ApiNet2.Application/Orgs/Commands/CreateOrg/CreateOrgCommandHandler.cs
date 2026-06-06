@@ -65,6 +65,6 @@ public sealed class CreateOrgCommandHandler
         await _orgRepository.AddAsync(org, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return Result.Success(org.ToDto());
+        return Result.Success(org.ToDto(creator));
     }
 }

@@ -57,6 +57,6 @@ public sealed class UpdateOrgProfileCommandHandler
         _orgRepository.Update(org);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return Result.Success(org.ToDto());
+        return Result.Success(org.ToDto(actor));
     }
 }

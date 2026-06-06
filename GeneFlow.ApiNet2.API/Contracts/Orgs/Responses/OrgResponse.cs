@@ -13,4 +13,6 @@ public sealed record OrgResponse(
     string? WebsiteUrl,
     string? Location,
     string Visibility,
+    int MemberCount,
+    string? MyRole,
     DateTime CreatedAt);

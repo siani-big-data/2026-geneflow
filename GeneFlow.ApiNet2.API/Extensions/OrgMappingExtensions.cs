@@ -18,6 +18,8 @@ public static class OrgMappingExtensions
         dto.WebsiteUrl,
         dto.Location,
         dto.Visibility,
+        dto.MemberCount,
+        dto.MyRole,
         dto.CreatedAt);
 
     public static OrgMembershipResponse ToResponse(this OrgMembershipDto dto) => new(

@@ -10,5 +10,7 @@ public sealed record OrgDto
     public string? WebsiteUrl { get; init; }
     public string? Location { get; init; }
     public required string Visibility { get; init; }
+    public required int MemberCount { get; init; }
+    public string? MyRole { get; init; }
     public required DateTime CreatedAt { get; init; }
 }

@@ -40,6 +40,6 @@ public sealed class GetOrgByHandleQueryHandler
                 return Result.Failure<OrgDto>(OrgErrors.NotFound);
         }
 
-        return Result.Success(org.ToDto());
+        return Result.Success(org.ToDto(_currentUser.UserId));
     }
 }

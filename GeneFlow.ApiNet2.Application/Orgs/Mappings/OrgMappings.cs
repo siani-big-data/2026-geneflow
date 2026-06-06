@@ -8,7 +8,7 @@ namespace GeneFlow.ApiNet2.Application.Orgs.Mappings;
 
 public static class OrgMappings
 {
-    public static OrgDto ToDto(this Org org) => new()
+    public static OrgDto ToDto(this Org org, UserId? viewer = null) => new()
     {
         Id = org.Id.ToString(),
         Handle = org.Handle,
@@ -18,6 +18,8 @@ public static class OrgMappings
         WebsiteUrl = org.WebsiteUrl,
         Location = org.Location,
         Visibility = org.Visibility.Name,
+        MemberCount = org.Members.Count,
+        MyRole = viewer is null ? null : org.GetMember(viewer)?.Role.Name,
         CreatedAt = org.CreatedAt
     };
 
