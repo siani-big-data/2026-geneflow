@@ -156,6 +156,28 @@ public sealed class ConventionActivityEventProjectorTests
     }
 
     [Fact]
+    public void Project_StronglyTypedIdPayload_UnwrapsValueProperty()
+    {
+        // Real domain events serialize strongly-typed IDs as { "value": "..." }
+        // (snake_case policy keeps the "value" key as-is). The projector must unwrap
+        // them so the resulting ActivityEvent has actor + study populated and the
+        // visibility resolves to StudyMembers.
+        var message = new EventMessage(
+            MessageId: "msg-strong-1",
+            EventId: "evt-strong-1",
+            EventType: "StudyCreatedEvent",
+            OccurredAt: DateTime.UtcNow,
+            Data: """{"study_id":{"value":"S00000273"},"owner_id":{"value":"U00000004"},"title":"x"}""");
+
+        var result = _projector.Project(message, "studies");
+
+        result.Should().NotBeNull();
+        result!.ActorUserId.Should().Be("U00000004");
+        result.StudyId.Should().Be("S00000273");
+        result.Visibility.Should().Be(ActivityVisibility.StudyMembers);
+    }
+
+    [Fact]
     public void Project_PreservesOriginalOccurredAtAsUtc()
     {
         var occurredAt = new DateTime(2025, 6, 1, 12, 0, 0, DateTimeKind.Utc);

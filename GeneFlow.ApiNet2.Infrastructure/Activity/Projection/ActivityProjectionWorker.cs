@@ -121,15 +121,21 @@ public sealed class ActivityProjectionWorker : BackgroundService
             var activityEvent = _projector.Project(message, category);
             if (activityEvent is null)
             {
+                _logger.LogInformation(
+                    "Activity projector skipped event {EventType} on {Category} (no verb/object mapping)",
+                    message.EventType, category);
                 return;
             }
 
             await repository.AddAsync(activityEvent, cancellationToken);
             await repository.SaveChangesAsync(cancellationToken);
 
-            _logger.LogDebug(
-                "Projected activity event {ActivityEventId} from {EventType} on {Category}",
-                activityEvent.Id, message.EventType, category);
+            _logger.LogInformation(
+                "Projected activity event {ActivityEventId} from {EventType} on {Category} (actor={Actor}, study={Study}, visibility={Visibility})",
+                activityEvent.Id, message.EventType, category,
+                activityEvent.ActorUserId ?? "<null>",
+                activityEvent.StudyId ?? "<null>",
+                activityEvent.Visibility.Name);
         }
         catch (Exception ex)
         {

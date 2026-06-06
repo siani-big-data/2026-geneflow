@@ -44,7 +44,27 @@ public sealed class ConventionActivityEventProjector : IActivityEventProjector
         "uploadedBy",
         "uploaded_by",
         "createdBy",
-        "created_by"
+        "created_by",
+        "updatedBy",
+        "updated_by",
+        "deletedBy",
+        "deleted_by",
+        "appliedBy",
+        "applied_by",
+        "undoneBy",
+        "undone_by",
+        "editedBy",
+        "edited_by",
+        "trimmedBy",
+        "trimmed_by",
+        "requestedBy",
+        "requested_by",
+        "addedBy",
+        "added_by",
+        "removedBy",
+        "removed_by",
+        "archivedBy",
+        "archived_by"
     ];
 
     private static readonly string[] StudyIdProperties =
@@ -155,21 +175,43 @@ public sealed class ConventionActivityEventProjector : IActivityEventProjector
                 continue;
             }
 
-            switch (prop.ValueKind)
+            var extracted = ExtractScalar(prop);
+            if (!string.IsNullOrWhiteSpace(extracted))
             {
-                case JsonValueKind.String:
-                    var s = prop.GetString();
-                    if (!string.IsNullOrWhiteSpace(s))
-                    {
-                        return s;
-                    }
-                    break;
-                case JsonValueKind.Number:
-                    return prop.GetRawText();
+                return extracted;
             }
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Extracts a scalar string from a JSON element. Handles plain strings and numbers,
+    /// and unwraps strongly-typed-id payloads that serialize as <c>{ "value": "..." }</c>.
+    /// </summary>
+    private static string? ExtractScalar(JsonElement prop)
+    {
+        switch (prop.ValueKind)
+        {
+            case JsonValueKind.String:
+                var s = prop.GetString();
+                return string.IsNullOrWhiteSpace(s) ? null : s;
+            case JsonValueKind.Number:
+                return prop.GetRawText();
+            case JsonValueKind.Object:
+                // Strongly-typed IDs serialize as { "value": "..." } (snake_case policy keeps "value").
+                if (prop.TryGetProperty("value", out var camel))
+                {
+                    return ExtractScalar(camel);
+                }
+                if (prop.TryGetProperty("Value", out var pascal))
+                {
+                    return ExtractScalar(pascal);
+                }
+                return null;
+            default:
+                return null;
+        }
     }
 
     private static (ActivityObjectType? Object, ActivityVerb? Verb) ParseEventType(string eventType)
