@@ -8,12 +8,12 @@ namespace GeneFlow.ApiNet2.Application.Studies.Queries.GetStudyMembers;
 
 /// <summary>
 /// Query to get all members of a study.
-/// Requires Viewer role or higher.
+/// Accessible to any member, or to anyone for public studies.
 /// </summary>
 public sealed record GetStudyMembersQuery(
     string StudyId,
     string? UserId = null) : IQuery<Result<IReadOnlyList<StudyMemberDto>>>, IRequireStudyMembership
 {
     string IRequireStudyMembership.StudyId => StudyId;
-    StudyRole? IRequireStudyMembership.MinimumRole => StudyRole.Viewer;
+    StudyRole? IRequireStudyMembership.MinimumRole => null;
 }
