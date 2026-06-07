@@ -71,7 +71,7 @@ public class AcceptInvitationCommandHandlerTests
             .Returns(invitation);
 
         _studyRepository
-            .GetByIdAsync(Arg.Any<StudyId>(), Arg.Any<CancellationToken>())
+            .GetByIdWithMembersAsync(Arg.Any<StudyId>(), Arg.Any<CancellationToken>())
             .Returns(study);
 
         // Act
@@ -96,7 +96,7 @@ public class AcceptInvitationCommandHandlerTests
             .Returns(invitation);
 
         _studyRepository
-            .GetByIdAsync(Arg.Any<StudyId>(), Arg.Any<CancellationToken>())
+            .GetByIdWithMembersAsync(Arg.Any<StudyId>(), Arg.Any<CancellationToken>())
             .Returns(study);
 
         // Act
@@ -121,7 +121,7 @@ public class AcceptInvitationCommandHandlerTests
             .Returns(invitation);
 
         _studyRepository
-            .GetByIdAsync(Arg.Any<StudyId>(), Arg.Any<CancellationToken>())
+            .GetByIdWithMembersAsync(Arg.Any<StudyId>(), Arg.Any<CancellationToken>())
             .Returns(study);
 
         // Act
@@ -145,7 +145,7 @@ public class AcceptInvitationCommandHandlerTests
             .Returns(invitation);
 
         _studyRepository
-            .GetByIdAsync(Arg.Any<StudyId>(), Arg.Any<CancellationToken>())
+            .GetByIdWithMembersAsync(Arg.Any<StudyId>(), Arg.Any<CancellationToken>())
             .Returns(study);
 
         // Act
@@ -203,7 +203,7 @@ public class AcceptInvitationCommandHandlerTests
             .Returns(invitation);
 
         _studyRepository
-            .GetByIdAsync(Arg.Any<StudyId>(), Arg.Any<CancellationToken>())
+            .GetByIdWithMembersAsync(Arg.Any<StudyId>(), Arg.Any<CancellationToken>())
             .Returns((Study?)null);
 
         // Act
@@ -228,7 +228,7 @@ public class AcceptInvitationCommandHandlerTests
             .Returns(invitation);
 
         _studyRepository
-            .GetByIdAsync(Arg.Any<StudyId>(), Arg.Any<CancellationToken>())
+            .GetByIdWithMembersAsync(Arg.Any<StudyId>(), Arg.Any<CancellationToken>())
             .Returns(study);
 
         // Act
@@ -252,7 +252,7 @@ public class AcceptInvitationCommandHandlerTests
             .Returns(invitation);
 
         _studyRepository
-            .GetByIdAsync(Arg.Any<StudyId>(), Arg.Any<CancellationToken>())
+            .GetByIdWithMembersAsync(Arg.Any<StudyId>(), Arg.Any<CancellationToken>())
             .Returns(study);
 
         // Act
@@ -277,7 +277,7 @@ public class AcceptInvitationCommandHandlerTests
             .Returns(invitation);
 
         _studyRepository
-            .GetByIdAsync(Arg.Any<StudyId>(), Arg.Any<CancellationToken>())
+            .GetByIdWithMembersAsync(Arg.Any<StudyId>(), Arg.Any<CancellationToken>())
             .Returns(study);
 
         // Act
@@ -302,7 +302,7 @@ public class AcceptInvitationCommandHandlerTests
             .Returns(invitation);
 
         _studyRepository
-            .GetByIdAsync(Arg.Any<StudyId>(), Arg.Any<CancellationToken>())
+            .GetByIdWithMembersAsync(Arg.Any<StudyId>(), Arg.Any<CancellationToken>())
             .Returns(study);
 
         // Act
@@ -330,7 +330,7 @@ public class AcceptInvitationCommandHandlerTests
             .Returns(invitation);
 
         _studyRepository
-            .GetByIdAsync(Arg.Any<StudyId>(), Arg.Any<CancellationToken>())
+            .GetByIdWithMembersAsync(Arg.Any<StudyId>(), Arg.Any<CancellationToken>())
             .Returns(study);
 
         // Act
@@ -354,7 +354,7 @@ public class AcceptInvitationCommandHandlerTests
             .Returns(invitation);
 
         _studyRepository
-            .GetByIdAsync(Arg.Any<StudyId>(), Arg.Any<CancellationToken>())
+            .GetByIdWithMembersAsync(Arg.Any<StudyId>(), Arg.Any<CancellationToken>())
             .Returns(study);
 
         // Act
@@ -379,7 +379,7 @@ public class AcceptInvitationCommandHandlerTests
             .Returns(invitation);
 
         _studyRepository
-            .GetByIdAsync(Arg.Any<StudyId>(), Arg.Any<CancellationToken>())
+            .GetByIdWithMembersAsync(Arg.Any<StudyId>(), Arg.Any<CancellationToken>())
             .Returns(study);
 
         // Act
@@ -403,7 +403,7 @@ public class AcceptInvitationCommandHandlerTests
             .Returns(invitation);
 
         _studyRepository
-            .GetByIdAsync(Arg.Any<StudyId>(), Arg.Any<CancellationToken>())
+            .GetByIdWithMembersAsync(Arg.Any<StudyId>(), Arg.Any<CancellationToken>())
             .Returns(study);
 
         // Act
