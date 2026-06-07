@@ -225,9 +225,7 @@ public sealed class ActivityEventRepositoryTests : RepositoryTestBase
     private async Task EnsureMigratedAsync()
     {
         await using var context = CreateContext();
-        // Use EnsureCreatedAsync so re-runs across tests are no-ops; Respawn wipes
-        // data but the table definition (including the partial unique index) stays.
-        await context.Database.EnsureCreatedAsync();
+        await EnsureContextSchemaAsync(context);
     }
 
     private static async Task SeedAsync(ActivityEventRepository repository, params ActivityEvent[] events)

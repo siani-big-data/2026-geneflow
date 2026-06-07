@@ -25,15 +25,16 @@ public class UserRepositoryTests : RepositoryTestBase
     {
     }
 
-    public override async Task InitializeAsync()
+    protected override async Task PrepareSchemaAsync()
     {
-        await base.InitializeAsync();
-
+        // Create the schema BEFORE the base class instantiates Respawn — otherwise
+        // Respawner.CreateAsync throws "No tables found" because identity.users
+        // wouldn't exist yet. We use the duplicate-tolerant helper so the test
+        // works regardless of whether sibling fixtures already populated other
+        // schemas in the shared PostgreSQL container.
         var options = CreateDbContextOptions<UserContext>();
         _context = new UserContext(options);
-
-        // Ensure database is created
-        await _context.Database.EnsureCreatedAsync();
+        await EnsureContextSchemaAsync(_context);
 
         _repository = new UserRepository(_context, CreateLogger<UserRepository>());
     }
