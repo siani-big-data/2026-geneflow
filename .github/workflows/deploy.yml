@@ -20,7 +20,7 @@ name: Deploy
 on:
   push:
     branches:
-      - main
+      - master
     paths-ignore:
       - '**.md'
       - 'docs/**'
@@ -40,6 +40,9 @@ env:
   DEPLOY_PATH: /home/${{ secrets.HETZNER_USER || 'deploy' }}/geneflow
   DOCKER_REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}/geneflow-api
+  # The secrets context is not allowed in step `if:` expressions, so the
+  # Discord notification steps check this env mirror instead.
+  DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
 
 jobs:
   # ===========================================================================
@@ -212,14 +215,14 @@ jobs:
           ENDSSH
 
       - name: Notify Discord (Success)
-        if: success() && secrets.DISCORD_WEBHOOK_URL != ''
+        if: success() && env.DISCORD_WEBHOOK_URL != ''
         run: |
           curl -H "Content-Type: application/json" \
                -d "{\"content\":\"GeneFlow deployed successfully to production\n\nCommit: \`${{ github.sha }}\`\nBranch: \`${{ github.ref_name }}\`\nBy: ${{ github.actor }}\"}" \
                ${{ secrets.DISCORD_WEBHOOK_URL }}
 
       - name: Notify Discord (Failure)
-        if: failure() && secrets.DISCORD_WEBHOOK_URL != ''
+        if: failure() && env.DISCORD_WEBHOOK_URL != ''
         run: |
           curl -H "Content-Type: application/json" \
                -d "{\"content\":\"GeneFlow deployment FAILED!\n\nCommit: \`${{ github.sha }}\`\nBranch: \`${{ github.ref_name }}\`\nBy: ${{ github.actor }}\n\nCheck: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
@@ -268,7 +271,7 @@ jobs:
           ENDSSH
 
       - name: Notify Discord (Rollback)
-        if: secrets.DISCORD_WEBHOOK_URL != ''
+        if: env.DISCORD_WEBHOOK_URL != ''
         run: |
           curl -H "Content-Type: application/json" \
                -d "{\"content\":\"GeneFlow ROLLBACK executed!\n\nCommit: \`${{ github.sha }}\`\nBy: ${{ github.actor }}\"}" \
