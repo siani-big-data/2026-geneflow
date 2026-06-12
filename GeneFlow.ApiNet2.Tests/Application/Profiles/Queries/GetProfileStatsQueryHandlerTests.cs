@@ -4,6 +4,7 @@ using GeneFlow.ApiNet2.Domain.Profiles;
 using GeneFlow.ApiNet2.Domain.Profiles.ValueObjects;
 using GeneFlow.ApiNet2.Domain.Studies;
 using GeneFlow.ApiNet2.Domain.Traces;
+using GeneFlow.ApiNet2.Domain.Usage;
 using GeneFlow.ApiNet2.SharedKernel.Domain.Pagination;
 
 namespace GeneFlow.ApiNet2.Tests.Application.Profiles.Queries;
@@ -16,6 +17,7 @@ public class GetProfileStatsQueryHandlerTests
     private readonly IProfileRepository _profileRepository = Substitute.For<IProfileRepository>();
     private readonly IStudyRepository _studyRepository = Substitute.For<IStudyRepository>();
     private readonly ITraceRepository _traceRepository = Substitute.For<ITraceRepository>();
+    private readonly IUsageStatsRepository _usageStatsRepository = Substitute.For<IUsageStatsRepository>();
     private readonly GetProfileStatsQueryHandler _handler;
 
     public GetProfileStatsQueryHandlerTests()
@@ -23,7 +25,8 @@ public class GetProfileStatsQueryHandlerTests
         _handler = new GetProfileStatsQueryHandler(
             _profileRepository,
             _studyRepository,
-            _traceRepository);
+            _traceRepository,
+            _usageStatsRepository);
     }
 
     private static Profile CreateTestProfile(long id = 1)
@@ -158,6 +161,93 @@ public class GetProfileStatsQueryHandlerTests
         await _traceRepository.Received(1).CountByUserStudiesAsync(
             Arg.Any<IEnumerable<string>>(),
             Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_ShouldReturnAlignmentCountsFromUsageStats()
+    {
+        // Arrange
+        var profile = CreateTestProfile();
+        var query = new GetProfileStatsQuery("U00000001");
+
+        _profileRepository
+            .GetByUserIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns(profile);
+
+        _studyRepository
+            .CountByMemberAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns(0);
+
+        _studyRepository
+            .CountByOwnerIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns(0);
+
+        var emptyStudies = PagedList<Study>.Empty(1000);
+        _studyRepository
+            .GetByMemberAsync(Arg.Any<UserId>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<string?>(), Arg.Any<GeneFlow.ApiNet2.Domain.Studies.Enumerations.StudyStatus?>(), Arg.Any<GeneFlow.ApiNet2.Domain.Studies.Enumerations.ResearchField?>(), Arg.Any<CancellationToken>())
+            .Returns(emptyStudies);
+
+        var usageStats = UsageStats.Create(new UserId(1), BillingPeriodKey.Current());
+        usageStats.SetStats(
+            studiesOwned: 0,
+            studiesTotal: 0,
+            tracesThisPeriod: 0,
+            tracesTotal: 0,
+            maxMembersInStudy: 0,
+            alignmentsThisPeriod: 2,
+            alignmentsTotal: 12,
+            alignmentsCompleted: 9,
+            tracesPending: 0,
+            lastActivityAt: null);
+
+        _usageStatsRepository
+            .GetByUserIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns(usageStats);
+
+        // Act
+        var result = await _handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.TotalAlignments.Should().Be(12);
+        result.Value.CompletedAlignments.Should().Be(9);
+    }
+
+    [Fact]
+    public async Task Handle_WithNoUsageStats_ShouldReturnZeroAlignments()
+    {
+        // Arrange
+        var profile = CreateTestProfile();
+        var query = new GetProfileStatsQuery("U00000001");
+
+        _profileRepository
+            .GetByUserIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns(profile);
+
+        _studyRepository
+            .CountByMemberAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns(0);
+
+        _studyRepository
+            .CountByOwnerIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns(0);
+
+        var emptyStudies = PagedList<Study>.Empty(1000);
+        _studyRepository
+            .GetByMemberAsync(Arg.Any<UserId>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<string?>(), Arg.Any<GeneFlow.ApiNet2.Domain.Studies.Enumerations.StudyStatus?>(), Arg.Any<GeneFlow.ApiNet2.Domain.Studies.Enumerations.ResearchField?>(), Arg.Any<CancellationToken>())
+            .Returns(emptyStudies);
+
+        _usageStatsRepository
+            .GetByUserIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns((UsageStats?)null);
+
+        // Act
+        var result = await _handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.TotalAlignments.Should().Be(0);
+        result.Value.CompletedAlignments.Should().Be(0);
     }
 
     [Fact]

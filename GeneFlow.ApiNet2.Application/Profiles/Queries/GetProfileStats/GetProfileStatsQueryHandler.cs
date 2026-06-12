@@ -3,6 +3,7 @@ using GeneFlow.ApiNet2.Domain.Identity;
 using GeneFlow.ApiNet2.Domain.Profiles;
 using GeneFlow.ApiNet2.Domain.Studies;
 using GeneFlow.ApiNet2.Domain.Traces;
+using GeneFlow.ApiNet2.Domain.Usage;
 using GeneFlow.ApiNet2.SharedKernel.Application.CQRS;
 using GeneFlow.ApiNet2.SharedKernel.Domain.Results;
 
@@ -10,7 +11,8 @@ namespace GeneFlow.ApiNet2.Application.Profiles.Queries.GetProfileStats;
 
 /// <summary>
 /// Handler for getting profile statistics.
-/// Queries actual statistics from Studies and Traces repositories.
+/// Queries actual statistics from Studies and Traces repositories,
+/// and alignment counters from the usage datamart.
 /// </summary>
 public sealed class GetProfileStatsQueryHandler
     : IQueryHandler<GetProfileStatsQuery, Result<ProfileStatsDto>>
@@ -18,6 +20,7 @@ public sealed class GetProfileStatsQueryHandler
     private readonly IProfileRepository _profileRepository;
     private readonly IStudyRepository _studyRepository;
     private readonly ITraceRepository _traceRepository;
+    private readonly IUsageStatsRepository _usageStatsRepository;
 
     /// <summary>
     /// Initializes a new instance of the handler.
@@ -25,11 +28,13 @@ public sealed class GetProfileStatsQueryHandler
     public GetProfileStatsQueryHandler(
         IProfileRepository profileRepository,
         IStudyRepository studyRepository,
-        ITraceRepository traceRepository)
+        ITraceRepository traceRepository,
+        IUsageStatsRepository usageStatsRepository)
     {
         _profileRepository = profileRepository;
         _studyRepository = studyRepository;
         _traceRepository = traceRepository;
+        _usageStatsRepository = usageStatsRepository;
     }
 
     /// <inheritdoc />
@@ -60,6 +65,10 @@ public sealed class GetProfileStatsQueryHandler
 
         var totalTraces = processedTraces + pendingTraces;
 
+        // Alignment counters come from the usage datamart, which the
+        // UsageStatsEventProcessor keeps up to date from alignment events.
+        var usageStats = await _usageStatsRepository.GetByUserIdAsync(userId, cancellationToken);
+
         // Get last activity (most recent study modification or trace upload)
         DateTime? lastActivityAt = null;
         if (studies.Items.Any())
@@ -74,8 +83,8 @@ public sealed class GetProfileStatsQueryHandler
             TotalStudies = totalStudies,
             OwnedStudies = ownedStudies,
             TotalTraces = totalTraces,
-            TotalAlignments = 0, // TODO: Add when alignments module is ready
-            CompletedAlignments = 0, // TODO: Add when alignments module is ready
+            TotalAlignments = (int)(usageStats?.AlignmentsTotal ?? 0),
+            CompletedAlignments = (int)(usageStats?.AlignmentsCompleted ?? 0),
             LastActivityAt = lastActivityAt,
             MemberSince = profile.CreatedAt
         };
