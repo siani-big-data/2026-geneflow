@@ -256,17 +256,32 @@ public class StudyInvitationEndpointsTests : IClassFixture<GeneFlowWebApplicatio
     public async Task GetMyInvitations_WithoutAuthentication_ShouldReturnUnauthorized()
     {
         // Act
-        var response = await _client.GetAsync($"/api/v1/invitations?email={TestEmail}");
+        var response = await _client.GetAsync("/api/v1/invitations?pageNumber=1&pageSize=10");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
-    public async Task GetMyInvitations_WithValidEmail_ShouldReturnOk()
+    public async Task GetMyInvitations_WhenAuthenticated_ShouldReturnOk()
     {
-        // Arrange
-        _factory.SetupGetMyInvitationsSuccess(TestEmail);
+        // Arrange - the email is resolved from the authenticated user
+        _factory.SetupGetMyInvitationsSuccess("testuser@example.com");
+
+        // Act
+        var response = await _authenticatedClient.GetAsync(
+            "/api/v1/invitations?pageNumber=1&pageSize=10");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task GetMyInvitations_IgnoresEmailQueryParameter()
+    {
+        // Arrange - even if a caller passes someone else's email, the endpoint
+        // must use the authenticated user's email instead.
+        _factory.SetupGetMyInvitationsSuccess("testuser@example.com");
 
         // Act
         var response = await _authenticatedClient.GetAsync(
@@ -274,16 +289,8 @@ public class StudyInvitationEndpointsTests : IClassFixture<GeneFlowWebApplicatio
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-    }
-
-    [Fact]
-    public async Task GetMyInvitations_WithoutEmail_ShouldReturnBadRequest()
-    {
-        // Act
-        var response = await _authenticatedClient.GetAsync("/api/v1/invitations?pageNumber=1&pageSize=10");
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        await _factory.MockStudyInvitationRepository.DidNotReceive().GetPendingByEmailAsync(
+            TestEmail, Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
     }
 
     #endregion

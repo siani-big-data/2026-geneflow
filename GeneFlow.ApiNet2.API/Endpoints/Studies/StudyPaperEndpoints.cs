@@ -80,6 +80,15 @@ public sealed class StudyPaperEndpoints : IEndpoint
         if (currentUser.UserId is null)
             return Results.Unauthorized();
 
+        var maxYear = DateTime.UtcNow.Year + 1;
+        if (request.PublicationYear is int year && (year < 1900 || year > maxYear))
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["publicationYear"] = [$"Publication year must be between 1900 and {maxYear}."]
+            });
+        }
+
         var command = new AddStudyPaperCommand(
             studyId,
             currentUser.UserId.ToString()!,

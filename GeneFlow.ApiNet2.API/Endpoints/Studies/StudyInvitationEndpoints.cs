@@ -11,6 +11,8 @@ using GeneFlow.ApiNet2.Application.Studies.Commands.SendInvitation;
 using GeneFlow.ApiNet2.Application.Studies.Queries.GetInvitationByToken;
 using GeneFlow.ApiNet2.Application.Studies.Queries.GetMyInvitations;
 using GeneFlow.ApiNet2.Application.Studies.Queries.GetStudyInvitations;
+using GeneFlow.ApiNet2.Domain.Identity;
+using GeneFlow.ApiNet2.Domain.Identity.ValueObjects;
 using GeneFlow.ApiNet2.SharedKernel.Domain.Pagination;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -118,6 +120,14 @@ public sealed class StudyInvitationEndpoints : IEndpoint
         if (currentUser.UserId is null)
             return Results.Unauthorized();
 
+        if (Email.Create(request.Email).IsFailure)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["email"] = ["Email address format is invalid."]
+            });
+        }
+
         var command = new SendInvitationCommand(
             studyId,
             currentUser.UserId.ToString()!,
@@ -135,11 +145,11 @@ public sealed class StudyInvitationEndpoints : IEndpoint
 
     private static async Task<IResult> GetStudyInvitations(
         [FromRoute] string studyId,
-        [FromQuery] int pageNumber,
-        [FromQuery] int pageSize,
         [FromServices] ISender sender,
         [FromServices] ICurrentUserService currentUser,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = PagedRequest.DefaultPageSize)
     {
         if (currentUser.UserId is null)
             return Results.Unauthorized();
@@ -205,21 +215,24 @@ public sealed class StudyInvitationEndpoints : IEndpoint
     }
 
     private static async Task<IResult> GetMyInvitations(
-        [FromQuery] string email,
-        [FromQuery] int pageNumber,
-        [FromQuery] int pageSize,
         [FromServices] ISender sender,
         [FromServices] ICurrentUserService currentUser,
-        CancellationToken cancellationToken)
+        [FromServices] IUserRepository userRepository,
+        CancellationToken cancellationToken,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = PagedRequest.DefaultPageSize)
     {
         if (currentUser.UserId is null)
             return Results.Unauthorized();
 
-        if (string.IsNullOrWhiteSpace(email))
-            return Results.BadRequest("Email is required.");
+        // Always resolve the email server-side: accepting it from the query
+        // string would let any authenticated user read another user's invitations.
+        var user = await userRepository.GetByIdAsync(currentUser.UserId, cancellationToken);
+        if (user is null)
+            return Results.Unauthorized();
 
         var query = new GetMyInvitationsQuery(
-            email,
+            user.Email.Value,
             pageNumber > 0 ? pageNumber : 1,
             pageSize > 0 ? pageSize : PagedRequest.DefaultPageSize);
 

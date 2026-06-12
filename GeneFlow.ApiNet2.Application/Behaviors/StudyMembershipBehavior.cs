@@ -64,6 +64,15 @@ public sealed class StudyMembershipBehavior<TRequest, TResponse> : IPipelineBeha
                 }
             }
 
+            // A study that no longer exists (or was soft-deleted) has no owner.
+            // Return NotFound instead of Forbidden so deleted resources don't
+            // appear to still exist behind an access check.
+            var ownerId = await _studyRepository.GetOwnerIdAsync(studyId, cancellationToken);
+            if (ownerId is null)
+            {
+                return CreateErrorResult(Error.NotFound("Study.NotFound", "Study was not found."));
+            }
+
             return CreateForbiddenResult("User is not a member of this study.");
         }
 
@@ -91,9 +100,10 @@ public sealed class StudyMembershipBehavior<TRequest, TResponse> : IPipelineBeha
     }
 
     private static TResponse CreateForbiddenResult(string message)
-    {
-        var error = Error.Forbidden("Study.AccessDenied", message);
+        => CreateErrorResult(Error.Forbidden("Study.AccessDenied", message));
 
+    private static TResponse CreateErrorResult(Error error)
+    {
         // Handle Result<TValue> responses
         if (typeof(TResponse).IsGenericType &&
             typeof(TResponse).GetGenericTypeDefinition() == typeof(Result<>))
