@@ -5,13 +5,11 @@ using GeneFlow.ApiNet2.API;
 using GeneFlow.ApiNet2.API.Contracts.Subscriptions.Requests;
 using GeneFlow.ApiNet2.API.Contracts.Subscriptions.Responses;
 using GeneFlow.ApiNet2.Application.Identity.Interfaces;
-using GeneFlow.ApiNet2.Application.Subscriptions.DTOs;
 using GeneFlow.ApiNet2.Domain.Identity;
 using GeneFlow.ApiNet2.Domain.Plans;
 using GeneFlow.ApiNet2.Domain.Plans.ValueObjects;
 using GeneFlow.ApiNet2.Domain.Subscriptions;
 using GeneFlow.ApiNet2.Domain.Subscriptions.Enumerations;
-using GeneFlow.ApiNet2.SharedKernel.Domain.Results;
 using GeneFlow.ApiNet2.SharedKernel.Infrastructure;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
@@ -21,6 +19,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using NSubstitute.ReturnsExtensions;
+using StackExchange.Redis;
 
 namespace GeneFlow.ApiNet2.Tests.API.Subscriptions;
 
@@ -425,6 +424,13 @@ public class SubscriptionWebApplicationFactory : WebApplicationFactory<Program>
 
         builder.ConfigureTestServices(services =>
         {
+            // Replace Redis: without this the host connects to 127.0.0.1:6379,
+            // and on machines without Redis (e.g. CI) the background event
+            // processors crash a few seconds after startup, stopping the host
+            // and disposing the TestServer mid-run.
+            services.RemoveAll<IConnectionMultiplexer>();
+            services.AddSingleton(Substitute.For<IConnectionMultiplexer>());
+
             // Remove real services and add mocks
             services.RemoveAll<ISubscriptionRepository>();
             services.AddScoped(_ => MockSubscriptionRepository);
