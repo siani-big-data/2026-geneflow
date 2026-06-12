@@ -159,7 +159,8 @@ public sealed class ExportStudyCommandHandler
         // Trim the slug part while keeping the studyId + extension.
         var suffix = $"-{studyId}.zip";
         var prefixBudget = MaxArchiveFileNameLength - suffix.Length - "study-".Length;
-        if (prefixBudget < 1) prefixBudget = 1;
+        if (prefixBudget < 1)
+            prefixBudget = 1;
         var trimmedSlug = slug.Length > prefixBudget ? slug[..prefixBudget] : slug;
         return $"study-{trimmedSlug}{suffix}";
     }
@@ -194,7 +195,8 @@ public sealed class ExportStudyCommandHandler
         }
 
         // Trim trailing hyphen.
-        if (sb.Length > 0 && sb[^1] == '-') sb.Length--;
+        if (sb.Length > 0 && sb[^1] == '-')
+            sb.Length--;
         return sb.ToString();
     }
 }

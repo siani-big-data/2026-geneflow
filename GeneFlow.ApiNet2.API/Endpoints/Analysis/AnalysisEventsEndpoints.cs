@@ -1,7 +1,6 @@
 using System.Text;
 using System.Text.Json;
 using GeneFlow.ApiNet2.API.Extensions;
-using GeneFlow.ApiNet2.Application.Analysis.Events;
 using GeneFlow.ApiNet2.Application.Identity.Interfaces;
 using GeneFlow.ApiNet2.Application.Traces.Queries.GetTraceById;
 using GeneFlow.ApiNet2.Infrastructure.Analysis.Sse;
@@ -91,7 +90,9 @@ public sealed class AnalysisEventsEndpoints : IEndpoint
             }
 
             keepAliveTimer.Dispose();
-            try { await keepAliveTask; } catch (OperationCanceledException) { /* expected */ }
+            try
+            { await keepAliveTask; }
+            catch (OperationCanceledException) { /* expected */ }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {

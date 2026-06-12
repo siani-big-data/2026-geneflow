@@ -301,7 +301,8 @@ public sealed class RedisUsageStatsRepository : IUsageStatsRepository
     private static DateTime? GetHashDateTimeValue(HashEntry[] hash, string field)
     {
         var value = GetHashValue(hash, field);
-        if (string.IsNullOrEmpty(value)) return null;
+        if (string.IsNullOrEmpty(value))
+            return null;
         return DateTime.TryParse(value, out var result) ? result : null;
     }
 

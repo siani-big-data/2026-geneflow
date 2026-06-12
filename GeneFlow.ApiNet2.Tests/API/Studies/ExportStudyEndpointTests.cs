@@ -1,12 +1,10 @@
 using System.IO.Compression;
 using System.Net;
 using GeneFlow.ApiNet2.Domain.Studies;
-using GeneFlow.ApiNet2.Domain.Traces;
-using GeneFlow.ApiNet2.Tests.API;
-using DomainUserId = GeneFlow.ApiNet2.Domain.Identity.UserId;
-using DomainStudyTitle = GeneFlow.ApiNet2.Domain.Studies.ValueObjects.StudyTitle;
-using DomainStudyDescription = GeneFlow.ApiNet2.Domain.Studies.ValueObjects.StudyDescription;
 using DomainResearchField = GeneFlow.ApiNet2.Domain.Studies.Enumerations.ResearchField;
+using DomainStudyDescription = GeneFlow.ApiNet2.Domain.Studies.ValueObjects.StudyDescription;
+using DomainStudyTitle = GeneFlow.ApiNet2.Domain.Studies.ValueObjects.StudyTitle;
+using DomainUserId = GeneFlow.ApiNet2.Domain.Identity.UserId;
 
 namespace GeneFlow.ApiNet2.Tests.API.Studies;
 

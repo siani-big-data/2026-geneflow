@@ -82,7 +82,8 @@ public sealed class RefreshToken : ValueObject
     /// <returns>A new revoked token instance.</returns>
     public RefreshToken Revoke(string? replacedByToken = null)
     {
-        if (IsRevoked) return this;
+        if (IsRevoked)
+            return this;
 
         return new RefreshToken(
             Token, ExpiresAt, CreatedAt,

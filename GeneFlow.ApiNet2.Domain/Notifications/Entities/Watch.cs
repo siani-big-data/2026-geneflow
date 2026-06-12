@@ -37,7 +37,8 @@ public sealed class Watch : AggregateRoot<Guid>
 
     public void SetLevel(WatchLevel level)
     {
-        if (Level == level) return;
+        if (Level == level)
+            return;
         Level = level;
         ModifiedAt = DateTime.UtcNow;
         RaiseDomainEvent(new WatchUpdatedEvent(Id, UserId, StudyId, level));

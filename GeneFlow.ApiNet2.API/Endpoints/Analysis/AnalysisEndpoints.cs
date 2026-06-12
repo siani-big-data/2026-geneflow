@@ -1,5 +1,4 @@
 using GeneFlow.ApiNet2.API.Contracts.Analysis.Requests;
-using GeneFlow.ApiNet2.API.Contracts.Traces.Responses;
 using GeneFlow.ApiNet2.API.Extensions;
 using GeneFlow.ApiNet2.Application.Analysis.Commands.RequestAnalysis;
 using MediatR;

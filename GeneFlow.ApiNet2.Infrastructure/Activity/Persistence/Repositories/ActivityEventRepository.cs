@@ -154,8 +154,10 @@ public sealed class ActivityEventRepository : IActivityEventRepository
 
     private static int ClampLimit(int limit)
     {
-        if (limit < MinPageSize) return MinPageSize;
-        if (limit > MaxPageSize) return MaxPageSize;
+        if (limit < MinPageSize)
+            return MinPageSize;
+        if (limit > MaxPageSize)
+            return MaxPageSize;
         return limit;
     }
 }

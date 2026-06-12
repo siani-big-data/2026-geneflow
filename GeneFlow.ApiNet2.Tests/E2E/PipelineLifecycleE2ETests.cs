@@ -449,7 +449,8 @@ public sealed class PipelineLifecycleE2ETests : E2ETestBase
             }
         }
 
-        if (stepIds.Count < 2) return;
+        if (stepIds.Count < 2)
+            return;
 
         // Act - Reverse the order
         stepIds.Reverse();

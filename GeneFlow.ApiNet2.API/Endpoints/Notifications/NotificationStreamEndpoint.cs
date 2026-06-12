@@ -77,7 +77,9 @@ public sealed class NotificationStreamEndpoint : IEndpoint
             }
 
             keepAliveTimer.Dispose();
-            try { await keepAliveTask; } catch (OperationCanceledException) { /* expected */ }
+            try
+            { await keepAliveTask; }
+            catch (OperationCanceledException) { /* expected */ }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {

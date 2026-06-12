@@ -7,7 +7,6 @@ using GeneFlow.ApiNet2.API.Routes;
 using GeneFlow.ApiNet2.Application.Identity.Commands.OAuthLogin;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 
 namespace GeneFlow.ApiNet2.API.Endpoints.Identity;
 

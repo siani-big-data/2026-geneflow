@@ -1,6 +1,6 @@
+using System.Reflection;
 using GeneFlow.ApiNet2.Domain.Identity.Entities;
 using GeneFlow.ApiNet2.Domain.Identity.Enumerations;
-using System.Reflection;
 
 namespace GeneFlow.ApiNet2.Tests.Domain.Identity.Entities;
 

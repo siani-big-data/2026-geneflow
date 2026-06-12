@@ -41,7 +41,8 @@ public abstract class StronglyTypedId<TId, TValue> : IEquatable<StronglyTypedId<
     /// <inheritdoc />
     public bool Equals(StronglyTypedId<TId, TValue>? other)
     {
-        if (other is null) return false;
+        if (other is null)
+            return false;
         return EqualityComparer<TValue>.Default.Equals(Value, other.Value);
     }
 

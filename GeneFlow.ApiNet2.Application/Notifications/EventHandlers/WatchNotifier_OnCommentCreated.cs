@@ -52,7 +52,8 @@ public sealed class WatchNotifier_OnCommentCreated : IDomainEventHandler<Comment
                 return;
 
             var discussion = await _discussionRepository.GetByIdAsync(discussionId, cancellationToken);
-            if (discussion is null) return;
+            if (discussion is null)
+                return;
 
             var watchers = await _watchRepository.GetWatchersAsync(
                 discussion.StudyId, WatchLevel.All, cancellationToken);
@@ -62,7 +63,8 @@ public sealed class WatchNotifier_OnCommentCreated : IDomainEventHandler<Comment
                 .Distinct()
                 .ToList();
 
-            if (recipients.Count == 0) return;
+            if (recipients.Count == 0)
+                return;
 
             var bodyPreview = notification.BodyMarkdown.Length > 140
                 ? notification.BodyMarkdown[..140] + "…"

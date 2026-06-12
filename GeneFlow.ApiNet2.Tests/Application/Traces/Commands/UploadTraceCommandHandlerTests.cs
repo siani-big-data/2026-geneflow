@@ -1,6 +1,5 @@
 using GeneFlow.ApiNet2.Application.Traces.Commands.UploadTrace;
 using GeneFlow.ApiNet2.Domain.Traces;
-using GeneFlow.ApiNet2.Domain.Traces.Enumerations;
 using GeneFlow.ApiNet2.SharedKernel.Infrastructure;
 
 namespace GeneFlow.ApiNet2.Tests.Application.Traces.Commands;

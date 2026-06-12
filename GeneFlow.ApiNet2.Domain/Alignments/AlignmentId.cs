@@ -44,7 +44,8 @@ public sealed class AlignmentId : IEquatable<AlignmentId>
 
     public bool Equals(AlignmentId? other)
     {
-        if (other is null) return false;
+        if (other is null)
+            return false;
         return Value.Equals(other.Value);
     }
 

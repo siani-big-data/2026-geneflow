@@ -14,9 +14,12 @@ public abstract class ValueObject : IEquatable<ValueObject>
     /// <inheritdoc />
     public bool Equals(ValueObject? other)
     {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
-        if (GetType() != other.GetType()) return false;
+        if (other is null)
+            return false;
+        if (ReferenceEquals(this, other))
+            return true;
+        if (GetType() != other.GetType())
+            return false;
 
         return GetEqualityComponents()
             .SequenceEqual(other.GetEqualityComponents());

@@ -4,7 +4,6 @@ using GeneFlow.ApiNet2.Domain.Profiles.Entities;
 using GeneFlow.ApiNet2.Domain.Profiles.Events;
 using GeneFlow.ApiNet2.Domain.Studies;
 using GeneFlow.ApiNet2.SharedKernel.Application.CQRS;
-using GeneFlow.ApiNet2.SharedKernel.Application.EventNotifications;
 using GeneFlow.ApiNet2.SharedKernel.Domain.Results;
 using IDomainEventDispatcher = GeneFlow.ApiNet2.SharedKernel.Infrastructure.IDomainEventDispatcher;
 

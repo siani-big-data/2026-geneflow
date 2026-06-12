@@ -4,7 +4,6 @@ using GeneFlow.ApiNet2.Domain.Discussions.Entities;
 using GeneFlow.ApiNet2.Domain.Identity;
 using GeneFlow.ApiNet2.Domain.Notifications;
 using GeneFlow.ApiNet2.Domain.Notifications.Entities;
-using GeneFlow.ApiNet2.Domain.Notifications.Enumerations;
 using GeneFlow.ApiNet2.Domain.Studies;
 
 namespace GeneFlow.ApiNet2.Tests.Application.Discussions.Commands;
@@ -31,7 +30,8 @@ public class CreateCommentCommandHandlerTests
     private static Discussion BuildDiscussion(bool locked = false)
     {
         var d = Discussion.Create(new DiscussionId(1), new StudyId(1), new UserId(1), "T", null).Value;
-        if (locked) d.Lock(new UserId(1));
+        if (locked)
+            d.Lock(new UserId(1));
         return d;
     }
 

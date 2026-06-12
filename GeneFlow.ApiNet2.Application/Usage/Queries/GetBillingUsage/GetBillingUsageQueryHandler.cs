@@ -82,7 +82,8 @@ public sealed class GetBillingUsageQueryHandler
 
     private static int CalculatePercentage(int used, int total)
     {
-        if (total <= 0) return 0;
+        if (total <= 0)
+            return 0;
         return Math.Min((int)Math.Round((double)used / total * 100), 100);
     }
 }

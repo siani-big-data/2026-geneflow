@@ -1,4 +1,3 @@
-using GeneFlow.ApiNet2.API.Contracts.Common;
 using GeneFlow.ApiNet2.API.Contracts.Traces.Responses;
 using GeneFlow.ApiNet2.API.Extensions;
 using GeneFlow.ApiNet2.Application.Identity.Interfaces;

@@ -49,16 +49,16 @@ public static class OrgMappings
         this OrgInvitation invitation,
         string? orgHandle = null,
         string? orgName = null) => new()
-    {
-        Id = invitation.Id.ToString(),
-        OrgId = invitation.OrgId.ToString(),
-        OrgHandle = orgHandle,
-        OrgName = orgName,
-        InvitedEmail = invitation.InvitedEmail,
-        Role = invitation.Role.Name,
-        Status = invitation.Status.Name,
-        CreatedAt = invitation.CreatedAt,
-        ExpiresAt = invitation.ExpiresAt,
-        Token = invitation.Token
-    };
+        {
+            Id = invitation.Id.ToString(),
+            OrgId = invitation.OrgId.ToString(),
+            OrgHandle = orgHandle,
+            OrgName = orgName,
+            InvitedEmail = invitation.InvitedEmail,
+            Role = invitation.Role.Name,
+            Status = invitation.Status.Name,
+            CreatedAt = invitation.CreatedAt,
+            ExpiresAt = invitation.ExpiresAt,
+            Token = invitation.Token
+        };
 }

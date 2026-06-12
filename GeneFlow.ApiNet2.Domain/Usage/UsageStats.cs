@@ -100,8 +100,10 @@ public sealed class UsageStats : Entity<UserId>
     /// </summary>
     public void DecrementStudiesOwned()
     {
-        if (StudiesOwned > 0) StudiesOwned--;
-        if (StudiesTotal > 0) StudiesTotal--;
+        if (StudiesOwned > 0)
+            StudiesOwned--;
+        if (StudiesTotal > 0)
+            StudiesTotal--;
         TouchActivity();
     }
 
@@ -119,7 +121,8 @@ public sealed class UsageStats : Entity<UserId>
     /// </summary>
     public void DecrementStudiesTotal()
     {
-        if (StudiesTotal > 0) StudiesTotal--;
+        if (StudiesTotal > 0)
+            StudiesTotal--;
         TouchActivity();
     }
 

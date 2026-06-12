@@ -1,9 +1,9 @@
+using System.Text.Json;
+using System.Text.RegularExpressions;
 using GeneFlow.ApiNet2.Domain.Identity;
 using GeneFlow.ApiNet2.Domain.Traces.Enumerations;
 using GeneFlow.ApiNet2.SharedKernel.Domain.Auditing;
 using GeneFlow.ApiNet2.SharedKernel.Domain.Results;
-using System.Text.Json;
-using System.Text.RegularExpressions;
 
 namespace GeneFlow.ApiNet2.Domain.Traces.Entities;
 

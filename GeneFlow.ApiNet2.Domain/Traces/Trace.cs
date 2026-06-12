@@ -1,3 +1,4 @@
+using System.Text.Json;
 using GeneFlow.ApiNet2.Domain.Identity;
 using GeneFlow.ApiNet2.Domain.Studies;
 using GeneFlow.ApiNet2.Domain.Traces.Entities;
@@ -6,7 +7,6 @@ using GeneFlow.ApiNet2.Domain.Traces.Events;
 using GeneFlow.ApiNet2.Domain.Traces.ValueObjects;
 using GeneFlow.ApiNet2.SharedKernel.Domain.Auditing;
 using GeneFlow.ApiNet2.SharedKernel.Domain.Results;
-using System.Text.Json;
 
 namespace GeneFlow.ApiNet2.Domain.Traces;
 
@@ -210,7 +210,8 @@ public sealed class Trace : FullAuditableAggregateRoot<TraceId>
     /// </summary>
     public void Delete(UserId deletedBy)
     {
-        if (IsDeleted) return;
+        if (IsDeleted)
+            return;
 
         SoftDelete(deletedBy.Value.ToString());
 

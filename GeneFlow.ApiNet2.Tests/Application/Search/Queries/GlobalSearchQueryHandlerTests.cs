@@ -1,5 +1,4 @@
 using GeneFlow.ApiNet2.Application.Identity.Interfaces;
-using GeneFlow.ApiNet2.Application.Search.Common;
 using GeneFlow.ApiNet2.Application.Search.Queries.GlobalSearch;
 using GeneFlow.ApiNet2.Domain.Identity;
 using GeneFlow.ApiNet2.Domain.Search;

@@ -110,7 +110,8 @@ public sealed class SearchIndexEntry : Entity<Guid>
     /// </summary>
     public void Update(string title, string? body, string? tags, bool isPublic, string? ownerId)
     {
-        if (string.IsNullOrWhiteSpace(title)) return;
+        if (string.IsNullOrWhiteSpace(title))
+            return;
 
         Title = title.Trim().Length > MaxTitleLength
             ? title.Trim()[..MaxTitleLength]

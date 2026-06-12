@@ -1,4 +1,3 @@
-using GeneFlow.ApiNet2.API.Contracts.Common;
 using GeneFlow.ApiNet2.API.Contracts.Discussions.Requests;
 using GeneFlow.ApiNet2.API.Contracts.Discussions.Responses;
 using GeneFlow.ApiNet2.API.Extensions;

@@ -1,5 +1,4 @@
 using GeneFlow.ApiNet2.Tests.Common.Fixtures;
-using Microsoft.Extensions.DependencyInjection;
 using Respawn;
 
 namespace GeneFlow.ApiNet2.Tests.Common.Base;

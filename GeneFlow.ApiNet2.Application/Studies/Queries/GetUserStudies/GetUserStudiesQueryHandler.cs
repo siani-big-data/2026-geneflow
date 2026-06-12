@@ -4,8 +4,8 @@ using GeneFlow.ApiNet2.Domain.Identity;
 using GeneFlow.ApiNet2.Domain.Studies;
 using GeneFlow.ApiNet2.Domain.Studies.Enumerations;
 using GeneFlow.ApiNet2.SharedKernel.Application.CQRS;
-using GeneFlow.ApiNet2.SharedKernel.Domain.Results;
 using GeneFlow.ApiNet2.SharedKernel.Domain.Pagination;
+using GeneFlow.ApiNet2.SharedKernel.Domain.Results;
 using Microsoft.Extensions.Logging;
 
 namespace GeneFlow.ApiNet2.Application.Studies.Queries.GetUserStudies;

@@ -1,7 +1,6 @@
-using GeneFlow.ApiNet2.API.Contracts.Common;
+using GeneFlow.ApiNet2.API.Extensions;
 using GeneFlow.ApiNet2.Application.Discussions.Commands.AddReaction;
 using GeneFlow.ApiNet2.Application.Discussions.Commands.RemoveReaction;
-using GeneFlow.ApiNet2.API.Extensions;
 using GeneFlow.ApiNet2.Application.Identity.Interfaces;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;

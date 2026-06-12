@@ -1,5 +1,4 @@
 using GeneFlow.ApiNet2.Application.Identity.Interfaces;
-using GeneFlow.ApiNet2.Domain.Identity;
 using GeneFlow.ApiNet2.Domain.Studies;
 using GeneFlow.ApiNet2.Domain.Studies.Enumerations;
 using GeneFlow.ApiNet2.SharedKernel.Domain.Results;

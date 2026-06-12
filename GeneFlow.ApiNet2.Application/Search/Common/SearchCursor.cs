@@ -18,15 +18,19 @@ public static class SearchCursor
     {
         updatedAt = default;
         id = default;
-        if (string.IsNullOrWhiteSpace(cursor)) return false;
+        if (string.IsNullOrWhiteSpace(cursor))
+            return false;
 
         try
         {
             var raw = Encoding.UTF8.GetString(Convert.FromBase64String(cursor));
             var parts = raw.Split(':');
-            if (parts.Length != 2) return false;
-            if (!long.TryParse(parts[0], out var ticks)) return false;
-            if (!Guid.TryParseExact(parts[1], "N", out var parsedId)) return false;
+            if (parts.Length != 2)
+                return false;
+            if (!long.TryParse(parts[0], out var ticks))
+                return false;
+            if (!Guid.TryParseExact(parts[1], "N", out var parsedId))
+                return false;
 
             updatedAt = new DateTime(ticks, DateTimeKind.Utc);
             id = parsedId;

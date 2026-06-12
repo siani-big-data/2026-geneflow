@@ -92,8 +92,10 @@ public sealed class GetMyActivityFeedQueryHandler
 
     private static int ClampLimit(int limit)
     {
-        if (limit < MinLimit) return DefaultLimit;
-        if (limit > MaxLimit) return MaxLimit;
+        if (limit < MinLimit)
+            return DefaultLimit;
+        if (limit > MaxLimit)
+            return MaxLimit;
         return limit;
     }
 }

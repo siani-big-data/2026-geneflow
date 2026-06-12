@@ -1,11 +1,10 @@
+using System.Text;
 using GeneFlow.ApiNet2.Application.Traces.DTOs;
 using GeneFlow.ApiNet2.Application.Traces.Interfaces;
 using GeneFlow.ApiNet2.Application.Traces.Mappings;
 using GeneFlow.ApiNet2.Domain.Traces;
-using GeneFlow.ApiNet2.Domain.Traces.Enumerations;
 using GeneFlow.ApiNet2.SharedKernel.Application.CQRS;
 using GeneFlow.ApiNet2.SharedKernel.Domain.Results;
-using System.Text;
 
 namespace GeneFlow.ApiNet2.Application.Traces.Queries.GetEditedSequence;
 

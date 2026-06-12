@@ -1,4 +1,3 @@
-using GeneFlow.ApiNet2.Application.Identity.Interfaces;
 using GeneFlow.ApiNet2.Domain.Identity;
 using GeneFlow.ApiNet2.SharedKernel.Application.CQRS;
 using GeneFlow.ApiNet2.SharedKernel.Domain.Results;

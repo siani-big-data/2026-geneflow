@@ -1,11 +1,9 @@
-using FluentAssertions;
 using GeneFlow.ApiNet2.Application.Activity.Queries.GetMyActivityFeed;
 using GeneFlow.ApiNet2.Domain.Activity;
 using GeneFlow.ApiNet2.Domain.Activity.Enumerations;
 using GeneFlow.ApiNet2.Domain.Identity;
 using GeneFlow.ApiNet2.Domain.Studies;
 using Microsoft.Extensions.Logging.Abstractions;
-using NSubstitute;
 
 namespace GeneFlow.ApiNet2.Tests.Application.Activity.Queries;
 

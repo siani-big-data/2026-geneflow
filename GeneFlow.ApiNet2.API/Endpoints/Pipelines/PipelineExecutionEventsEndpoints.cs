@@ -2,7 +2,6 @@ using System.Text;
 using System.Text.Json;
 using GeneFlow.ApiNet2.API.Extensions;
 using GeneFlow.ApiNet2.Application.Identity.Interfaces;
-using GeneFlow.ApiNet2.Application.Pipelines.Events;
 using GeneFlow.ApiNet2.Application.Pipelines.Queries.GetExecutionById;
 using GeneFlow.ApiNet2.Infrastructure.Pipelines.Sse;
 using MediatR;
@@ -85,7 +84,9 @@ public sealed class PipelineExecutionEventsEndpoints : IEndpoint
             }
 
             keepAliveTimer.Dispose();
-            try { await keepAliveTask; } catch (OperationCanceledException) { /* expected */ }
+            try
+            { await keepAliveTask; }
+            catch (OperationCanceledException) { /* expected */ }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {

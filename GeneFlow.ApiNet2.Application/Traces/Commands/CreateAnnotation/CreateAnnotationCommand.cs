@@ -1,9 +1,9 @@
+using System.Text.Json;
 using GeneFlow.ApiNet2.Application.Behaviors;
 using GeneFlow.ApiNet2.Application.Traces.DTOs;
 using GeneFlow.ApiNet2.Domain.Studies.Enumerations;
 using GeneFlow.ApiNet2.SharedKernel.Application.CQRS;
 using GeneFlow.ApiNet2.SharedKernel.Domain.Results;
-using System.Text.Json;
 
 namespace GeneFlow.ApiNet2.Application.Traces.Commands.CreateAnnotation;
 

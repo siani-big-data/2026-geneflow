@@ -48,7 +48,8 @@ public sealed class TraceId : IEquatable<TraceId>
 
     public bool Equals(TraceId? other)
     {
-        if (other is null) return false;
+        if (other is null)
+            return false;
         return Value.Equals(other.Value);
     }
 

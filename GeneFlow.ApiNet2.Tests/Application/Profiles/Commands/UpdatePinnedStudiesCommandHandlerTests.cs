@@ -1,7 +1,6 @@
 using GeneFlow.ApiNet2.Application.Profiles.Commands.UpdatePinnedStudies;
 using GeneFlow.ApiNet2.Domain.Identity;
 using GeneFlow.ApiNet2.Domain.Profiles;
-using GeneFlow.ApiNet2.Domain.Profiles.Entities;
 using GeneFlow.ApiNet2.Domain.Studies;
 using GeneFlow.ApiNet2.SharedKernel.Application.EventNotifications;
 using IDomainEventDispatcher = GeneFlow.ApiNet2.SharedKernel.Infrastructure.IDomainEventDispatcher;

@@ -28,7 +28,8 @@ public sealed class PlanPricing : ValueObject
     {
         get
         {
-            if (MonthlyPrice == 0) return 0;
+            if (MonthlyPrice == 0)
+                return 0;
             var fullYearPrice = MonthlyPrice * 12;
             return Math.Round((fullYearPrice - AnnualPrice) / fullYearPrice * 100, 2);
         }

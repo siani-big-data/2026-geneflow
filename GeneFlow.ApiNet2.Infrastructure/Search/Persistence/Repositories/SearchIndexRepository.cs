@@ -240,7 +240,8 @@ WHERE (
     /// </summary>
     private static string BuildPrefixTsQuery(string raw)
     {
-        if (string.IsNullOrWhiteSpace(raw)) return string.Empty;
+        if (string.IsNullOrWhiteSpace(raw))
+            return string.Empty;
 
         var tokens = raw
             .Split(new[] { ' ', '\t', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries)
@@ -263,7 +264,8 @@ WHERE (
         {
             await using var command = connection.CreateCommand();
             command.CommandText = sql;
-            foreach (var p in parameters) command.Parameters.Add(p);
+            foreach (var p in parameters)
+                command.Parameters.Add(p);
 
             var hits = new List<SearchHit>();
             await using var reader = await command.ExecuteReaderAsync(cancellationToken);

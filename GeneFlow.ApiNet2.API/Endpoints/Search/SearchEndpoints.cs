@@ -80,7 +80,8 @@ public sealed class SearchEndpoints : IEndpoint
         CancellationToken cancellationToken)
     {
         var result = await sender.Send(new ReindexAllCommand(), cancellationToken);
-        if (result.IsFailure) return result.ToHttpResult();
+        if (result.IsFailure)
+            return result.ToHttpResult();
         return Results.Ok(result.Value);
     }
 

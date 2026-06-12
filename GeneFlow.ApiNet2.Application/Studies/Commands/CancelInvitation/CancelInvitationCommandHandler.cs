@@ -1,6 +1,5 @@
 using GeneFlow.ApiNet2.Domain.Identity;
 using GeneFlow.ApiNet2.Domain.Studies;
-using GeneFlow.ApiNet2.Domain.Studies.Entities;
 using GeneFlow.ApiNet2.SharedKernel.Application.CQRS;
 using GeneFlow.ApiNet2.SharedKernel.Domain.Results;
 

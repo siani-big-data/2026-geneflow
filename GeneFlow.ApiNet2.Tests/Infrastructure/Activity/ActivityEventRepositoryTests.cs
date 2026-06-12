@@ -1,4 +1,3 @@
-using FluentAssertions;
 using GeneFlow.ApiNet2.Domain.Activity;
 using GeneFlow.ApiNet2.Domain.Activity.Enumerations;
 using GeneFlow.ApiNet2.Infrastructure.Activity.Persistence.Context;

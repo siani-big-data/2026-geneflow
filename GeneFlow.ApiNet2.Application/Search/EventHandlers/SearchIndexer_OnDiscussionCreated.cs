@@ -41,7 +41,8 @@ public sealed class SearchIndexer_OnDiscussionCreated : IDomainEventHandler<Disc
         {
             var discussion = await _discussionRepository.GetByIdAsync(
                 notification.DiscussionId, cancellationToken);
-            if (discussion is null) return;
+            if (discussion is null)
+                return;
 
             // visibility tracks parent study
             var isPublic = await _studyRepository.IsPublicStudyAsync(
@@ -64,7 +65,8 @@ public sealed class SearchIndexer_OnDiscussionCreated : IDomainEventHandler<Disc
                 var entry = SearchIndexEntry.Create(
                     SearchObjectType.Discussion, objectId, ownerId,
                     discussion.Title, null, tags, isPublic);
-                if (entry.IsFailure) return;
+                if (entry.IsFailure)
+                    return;
                 await _index.AddAsync(entry.Value, cancellationToken);
             }
 

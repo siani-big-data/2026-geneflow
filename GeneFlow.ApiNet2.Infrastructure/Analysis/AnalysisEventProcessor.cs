@@ -294,13 +294,13 @@ public sealed class AnalysisEventProcessor : BackgroundService
             trace.Id, failureReason);
     }
 
-    private async Task HandleAlignmentEventAsync(string eventType, JsonDocument eventData)
+    private Task HandleAlignmentEventAsync(string eventType, JsonDocument eventData)
     {
         var alignmentId = GetStringProperty(eventData, "alignmentId");
         if (string.IsNullOrEmpty(alignmentId))
         {
             _logger.LogWarning("AlignmentId missing in {EventType} event", eventType);
-            return;
+            return Task.CompletedTask;
         }
 
         _logger.LogInformation(
@@ -324,15 +324,17 @@ public sealed class AnalysisEventProcessor : BackgroundService
                     alignmentId, error);
                 break;
         }
+
+        return Task.CompletedTask;
     }
 
-    private async Task HandleAnalysisEventAsync(string eventType, JsonDocument eventData)
+    private Task HandleAnalysisEventAsync(string eventType, JsonDocument eventData)
     {
         var traceId = GetStringProperty(eventData, "traceId");
         if (string.IsNullOrEmpty(traceId))
         {
             _logger.LogWarning("TraceId missing in {EventType} event", eventType);
-            return;
+            return Task.CompletedTask;
         }
 
         _logger.LogInformation(
@@ -390,6 +392,8 @@ public sealed class AnalysisEventProcessor : BackgroundService
                     traceId, enzymeCount, totalSites);
                 break;
         }
+
+        return Task.CompletedTask;
     }
 
     /// <summary>

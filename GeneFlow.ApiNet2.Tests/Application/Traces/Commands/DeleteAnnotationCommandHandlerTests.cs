@@ -3,7 +3,6 @@ using GeneFlow.ApiNet2.Domain.Identity;
 using GeneFlow.ApiNet2.Domain.Studies;
 using GeneFlow.ApiNet2.Domain.Traces;
 using GeneFlow.ApiNet2.Domain.Traces.Enumerations;
-using GeneFlow.ApiNet2.Domain.Traces.Events;
 using GeneFlow.ApiNet2.Domain.Traces.ValueObjects;
 
 namespace GeneFlow.ApiNet2.Tests.Application.Traces.Commands;

@@ -96,7 +96,7 @@ public static class ResultExtensions
         var result = await resultTask;
         return result.OnFailure(action);
     }
-    
+
     /// <summary>
     /// Converts a ValidationResult to a Result.
     /// </summary>

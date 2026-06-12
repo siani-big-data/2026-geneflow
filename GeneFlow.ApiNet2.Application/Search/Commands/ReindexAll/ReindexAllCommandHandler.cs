@@ -66,7 +66,8 @@ public sealed class ReindexAllCommandHandler
             {
                 var entry = SearchIndexEntry.Create(
                     SearchObjectType.Study, objectId, ownerId, title, body, tags, study.IsPublic);
-                if (entry.IsFailure) continue;
+                if (entry.IsFailure)
+                    continue;
                 await _index.AddAsync(entry.Value, cancellationToken);
             }
             studiesIndexed++;
@@ -93,7 +94,8 @@ public sealed class ReindexAllCommandHandler
                 var entry = SearchIndexEntry.Create(
                     SearchObjectType.Discussion, objectId, ownerId,
                     discussion.Title, null, tags, isPublic);
-                if (entry.IsFailure) continue;
+                if (entry.IsFailure)
+                    continue;
                 await _index.AddAsync(entry.Value, cancellationToken);
             }
             discussionsIndexed++;

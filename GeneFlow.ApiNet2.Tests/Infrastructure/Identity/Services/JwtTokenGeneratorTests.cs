@@ -1,13 +1,10 @@
 using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 using GeneFlow.ApiNet2.Domain.Identity;
 using GeneFlow.ApiNet2.Domain.Identity.Enumerations;
 using GeneFlow.ApiNet2.Domain.Identity.ValueObjects;
 using GeneFlow.ApiNet2.Infrastructure.Identity.Configuration;
 using GeneFlow.ApiNet2.Infrastructure.Identity.Services;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 
 namespace GeneFlow.ApiNet2.Tests.Infrastructure.Identity.Services;
 

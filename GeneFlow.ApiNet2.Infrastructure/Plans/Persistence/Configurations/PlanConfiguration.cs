@@ -1,5 +1,4 @@
 using GeneFlow.ApiNet2.Domain.Plans;
-using GeneFlow.ApiNet2.Domain.Plans.Enumerations;
 using GeneFlow.ApiNet2.Domain.Plans.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;

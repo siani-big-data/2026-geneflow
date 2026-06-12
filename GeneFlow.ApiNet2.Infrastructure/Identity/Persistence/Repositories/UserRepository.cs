@@ -57,7 +57,8 @@ public sealed class UserRepository : IUserRepository
         _logger.LogInformation("GetByEmailAsync: Starting for email {Email}", email.Value);
         var userId = await GetUserIdByEmailAsync(email.Value, cancellationToken);
         _logger.LogInformation("GetByEmailAsync: Got userId {UserId}", userId ?? "null");
-        if (userId == null) return null;
+        if (userId == null)
+            return null;
         _logger.LogInformation("GetByEmailAsync: Fetching user from EF Core");
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == UserId.Parse(userId), cancellationToken);
         _logger.LogInformation("GetByEmailAsync: Done, user found: {Found}", user != null);
@@ -68,7 +69,8 @@ public sealed class UserRepository : IUserRepository
     public async Task<User?> GetByEmailStringAsync(string email, CancellationToken cancellationToken = default)
     {
         var userId = await GetUserIdByEmailAsync(email.Trim(), cancellationToken);
-        if (userId == null) return null;
+        if (userId == null)
+            return null;
         return await _context.Users.FirstOrDefaultAsync(u => u.Id == UserId.Parse(userId), cancellationToken);
     }
 
@@ -76,7 +78,8 @@ public sealed class UserRepository : IUserRepository
     public async Task<User?> GetByUsernameAsync(Username username, CancellationToken cancellationToken = default)
     {
         var userId = await GetUserIdByUsernameAsync(username.Value, cancellationToken);
-        if (userId == null) return null;
+        if (userId == null)
+            return null;
         return await _context.Users.FirstOrDefaultAsync(u => u.Id == UserId.Parse(userId), cancellationToken);
     }
 
@@ -85,7 +88,8 @@ public sealed class UserRepository : IUserRepository
     {
         var normalizedIdentifier = identifier.Trim();
         var userId = await GetUserIdByEmailOrUsernameAsync(normalizedIdentifier, cancellationToken);
-        if (userId == null) return null;
+        if (userId == null)
+            return null;
         return await _context.Users.FirstOrDefaultAsync(u => u.Id == UserId.Parse(userId), cancellationToken);
     }
 

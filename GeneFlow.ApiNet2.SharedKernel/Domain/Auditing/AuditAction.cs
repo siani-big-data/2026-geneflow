@@ -1,4 +1,4 @@
-﻿namespace GeneFlow.ApiNet2.SharedKernel.Domain.Auditing;
+namespace GeneFlow.ApiNet2.SharedKernel.Domain.Auditing;
 
 /// <summary>
 /// The type of audit action.

@@ -1,3 +1,6 @@
+using System.IO.Compression;
+using System.Text;
+using System.Text.Json;
 using GeneFlow.ApiNet2.API.Contracts.Common;
 using GeneFlow.ApiNet2.API.Contracts.Studies.Requests;
 using GeneFlow.ApiNet2.API.Contracts.Studies.Responses;
@@ -20,10 +23,6 @@ using GeneFlow.ApiNet2.SharedKernel.Domain.Pagination;
 using GeneFlow.ApiNet2.SharedKernel.Infrastructure;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using System.IO.Compression;
-using System.Text;
-using System.Text.Json;
 
 namespace GeneFlow.ApiNet2.API.Endpoints.Studies;
 
@@ -478,111 +477,111 @@ public sealed class StudyEndpoints : IEndpoint
             async Task PopulateArchive(ZipArchive archive)
             {
 
-            var jsonOptions = new JsonSerializerOptions
-            {
-                WriteIndented = true,
-                DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.Never,
-            };
-
-            // Track which trace/paper files were actually included so
-            // {*}.json can record missing files honestly.
-            var traceMissing = new Dictionary<string, string>();
-            var paperMissing = new Dictionary<string, string>();
-
-            // 1) trace + paper file blobs first so we know what's missing
-            //    by the time we write the JSON indices.
-            foreach (var trace in dto.Traces)
-            {
-                var bytes = await fileStorage.GetFileAsync(trace.StoragePath, cancellationToken);
-                if (bytes is null)
+                var jsonOptions = new JsonSerializerOptions
                 {
-                    traceMissing[trace.Id] = "file not found in storage";
-                    continue;
-                }
-
-                var entryName = $"traces/files/{SafeEntryName($"{trace.Id}-{trace.FileName}")}";
-                var entry = archive.CreateEntry(entryName, CompressionLevel.Fastest);
-                using var entryStream = entry.Open();
-                await entryStream.WriteAsync(bytes, cancellationToken);
-            }
-
-            foreach (var paper in dto.Papers)
-            {
-                if (!paper.HasFile || string.IsNullOrEmpty(paper.StoragePath))
-                    continue;
-
-                var bytes = await fileStorage.GetFileAsync(paper.StoragePath, cancellationToken);
-                if (bytes is null)
-                {
-                    paperMissing[paper.Id] = "file not found in storage";
-                    continue;
-                }
-
-                var displayName = string.IsNullOrEmpty(paper.FileName)
-                    ? $"{paper.Id}.pdf"
-                    : $"{paper.Id}-{paper.FileName}";
-                var entryName = $"papers/files/{SafeEntryName(displayName)}";
-                var entry = archive.CreateEntry(entryName, CompressionLevel.Fastest);
-                using var entryStream = entry.Open();
-                await entryStream.WriteAsync(bytes, cancellationToken);
-            }
-
-            // 2) JSON indices
-            await WriteJsonEntry(archive, "study.json", dto.Study, jsonOptions, cancellationToken);
-            await WriteJsonEntry(archive, "members.json", dto.Members, jsonOptions, cancellationToken);
-
-            var traceIndex = dto.Traces.Select(t => new
-            {
-                t.Id,
-                t.FileName,
-                t.ContentType,
-                t.SizeBytes,
-                t.Format,
-                t.Status,
-                t.ProcessedAt,
-                t.FailureReason,
-                t.QualityMetrics,
-                FileBytesPath = traceMissing.ContainsKey(t.Id)
-                    ? null
-                    : $"traces/files/{SafeEntryName($"{t.Id}-{t.FileName}")}",
-                MissingReason = traceMissing.TryGetValue(t.Id, out var r) ? r : null,
-            }).ToList();
-            await WriteJsonEntry(archive, "traces/traces.json", traceIndex, jsonOptions, cancellationToken);
-
-            var paperIndex = dto.Papers.Select(p =>
-            {
-                string? fileBytesPath = null;
-                if (p.HasFile && !paperMissing.ContainsKey(p.Id))
-                {
-                    var displayName = string.IsNullOrEmpty(p.FileName) ? $"{p.Id}.pdf" : $"{p.Id}-{p.FileName}";
-                    fileBytesPath = $"papers/files/{SafeEntryName(displayName)}";
-                }
-                return new
-                {
-                    p.Id,
-                    p.Title,
-                    p.Authors,
-                    p.Doi,
-                    p.Journal,
-                    p.PublicationYear,
-                    p.Abstract,
-                    p.HasFile,
-                    p.FileName,
-                    p.FileSizeBytes,
-                    FileBytesPath = fileBytesPath,
-                    MissingReason = paperMissing.TryGetValue(p.Id, out var r) ? r : null,
+                    WriteIndented = true,
+                    DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.Never,
                 };
-            }).ToList();
-            await WriteJsonEntry(archive, "papers/papers.json", paperIndex, jsonOptions, cancellationToken);
 
-            // 3) human-readable README
-            var readme = BuildReadme(dto, traceMissing.Count, paperMissing.Count);
-            var readmeEntry = archive.CreateEntry("README.txt", CompressionLevel.Optimal);
-            using (var readmeStream = readmeEntry.Open())
-            {
-                var bytes = Encoding.UTF8.GetBytes(readme);
-                await readmeStream.WriteAsync(bytes, cancellationToken);
-            }
+                // Track which trace/paper files were actually included so
+                // {*}.json can record missing files honestly.
+                var traceMissing = new Dictionary<string, string>();
+                var paperMissing = new Dictionary<string, string>();
+
+                // 1) trace + paper file blobs first so we know what's missing
+                //    by the time we write the JSON indices.
+                foreach (var trace in dto.Traces)
+                {
+                    var bytes = await fileStorage.GetFileAsync(trace.StoragePath, cancellationToken);
+                    if (bytes is null)
+                    {
+                        traceMissing[trace.Id] = "file not found in storage";
+                        continue;
+                    }
+
+                    var entryName = $"traces/files/{SafeEntryName($"{trace.Id}-{trace.FileName}")}";
+                    var entry = archive.CreateEntry(entryName, CompressionLevel.Fastest);
+                    using var entryStream = entry.Open();
+                    await entryStream.WriteAsync(bytes, cancellationToken);
+                }
+
+                foreach (var paper in dto.Papers)
+                {
+                    if (!paper.HasFile || string.IsNullOrEmpty(paper.StoragePath))
+                        continue;
+
+                    var bytes = await fileStorage.GetFileAsync(paper.StoragePath, cancellationToken);
+                    if (bytes is null)
+                    {
+                        paperMissing[paper.Id] = "file not found in storage";
+                        continue;
+                    }
+
+                    var displayName = string.IsNullOrEmpty(paper.FileName)
+                        ? $"{paper.Id}.pdf"
+                        : $"{paper.Id}-{paper.FileName}";
+                    var entryName = $"papers/files/{SafeEntryName(displayName)}";
+                    var entry = archive.CreateEntry(entryName, CompressionLevel.Fastest);
+                    using var entryStream = entry.Open();
+                    await entryStream.WriteAsync(bytes, cancellationToken);
+                }
+
+                // 2) JSON indices
+                await WriteJsonEntry(archive, "study.json", dto.Study, jsonOptions, cancellationToken);
+                await WriteJsonEntry(archive, "members.json", dto.Members, jsonOptions, cancellationToken);
+
+                var traceIndex = dto.Traces.Select(t => new
+                {
+                    t.Id,
+                    t.FileName,
+                    t.ContentType,
+                    t.SizeBytes,
+                    t.Format,
+                    t.Status,
+                    t.ProcessedAt,
+                    t.FailureReason,
+                    t.QualityMetrics,
+                    FileBytesPath = traceMissing.ContainsKey(t.Id)
+                        ? null
+                        : $"traces/files/{SafeEntryName($"{t.Id}-{t.FileName}")}",
+                    MissingReason = traceMissing.TryGetValue(t.Id, out var r) ? r : null,
+                }).ToList();
+                await WriteJsonEntry(archive, "traces/traces.json", traceIndex, jsonOptions, cancellationToken);
+
+                var paperIndex = dto.Papers.Select(p =>
+                {
+                    string? fileBytesPath = null;
+                    if (p.HasFile && !paperMissing.ContainsKey(p.Id))
+                    {
+                        var displayName = string.IsNullOrEmpty(p.FileName) ? $"{p.Id}.pdf" : $"{p.Id}-{p.FileName}";
+                        fileBytesPath = $"papers/files/{SafeEntryName(displayName)}";
+                    }
+                    return new
+                    {
+                        p.Id,
+                        p.Title,
+                        p.Authors,
+                        p.Doi,
+                        p.Journal,
+                        p.PublicationYear,
+                        p.Abstract,
+                        p.HasFile,
+                        p.FileName,
+                        p.FileSizeBytes,
+                        FileBytesPath = fileBytesPath,
+                        MissingReason = paperMissing.TryGetValue(p.Id, out var r) ? r : null,
+                    };
+                }).ToList();
+                await WriteJsonEntry(archive, "papers/papers.json", paperIndex, jsonOptions, cancellationToken);
+
+                // 3) human-readable README
+                var readme = BuildReadme(dto, traceMissing.Count, paperMissing.Count);
+                var readmeEntry = archive.CreateEntry("README.txt", CompressionLevel.Optimal);
+                using (var readmeStream = readmeEntry.Open())
+                {
+                    var bytes = Encoding.UTF8.GetBytes(readme);
+                    await readmeStream.WriteAsync(bytes, cancellationToken);
+                }
             }
         }
 
@@ -634,7 +633,8 @@ public sealed class StudyEndpoints : IEndpoint
     /// </summary>
     private static string SafeEntryName(string name)
     {
-        if (string.IsNullOrEmpty(name)) return "file";
+        if (string.IsNullOrEmpty(name))
+            return "file";
         var sb = new StringBuilder(name.Length);
         foreach (var c in name)
         {

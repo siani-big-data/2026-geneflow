@@ -73,7 +73,8 @@ public sealed class GetTrimmedSequenceQueryHandler
     /// </summary>
     private static string ApplyTrims(string sequence, IReadOnlyList<TraceTrim> trims)
     {
-        if (trims.Count == 0) return sequence;
+        if (trims.Count == 0)
+            return sequence;
 
         // Sort trims by position descending to apply from end to start
         // This ensures that earlier trim positions remain valid after later trims are applied

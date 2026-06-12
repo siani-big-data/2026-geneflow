@@ -36,7 +36,8 @@ public sealed class SearchIndexer_OnStudyCreated : IDomainEventHandler<StudyCrea
         try
         {
             var study = await _studyRepository.GetByIdAsync(notification.StudyId, cancellationToken);
-            if (study is null) return;
+            if (study is null)
+                return;
 
             var objectId = study.Id.ToString();
             var title = study.Title.ToString();
@@ -55,7 +56,8 @@ public sealed class SearchIndexer_OnStudyCreated : IDomainEventHandler<StudyCrea
             {
                 var entry = SearchIndexEntry.Create(
                     SearchObjectType.Study, objectId, ownerId, title, body, tags, isPublic);
-                if (entry.IsFailure) return;
+                if (entry.IsFailure)
+                    return;
                 await _index.AddAsync(entry.Value, cancellationToken);
             }
 

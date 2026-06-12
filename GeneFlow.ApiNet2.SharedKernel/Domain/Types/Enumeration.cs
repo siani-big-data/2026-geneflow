@@ -114,7 +114,8 @@ public abstract class Enumeration<TEnum> : IEquatable<Enumeration<TEnum>>, IComp
     /// <inheritdoc />
     public bool Equals(Enumeration<TEnum>? other)
     {
-        if (other is null) return false;
+        if (other is null)
+            return false;
         return GetType() == other.GetType() && Id == other.Id;
     }
 

@@ -3,7 +3,6 @@ using GeneFlow.ApiNet2.Domain.Identity.ValueObjects;
 using GeneFlow.ApiNet2.Domain.Pipelines;
 using GeneFlow.ApiNet2.Domain.Pipelines.ValueObjects;
 using GeneFlow.ApiNet2.Domain.Profiles;
-using GeneFlow.ApiNet2.Domain.Profiles.Enumerations;
 using GeneFlow.ApiNet2.Domain.Profiles.ValueObjects;
 using GeneFlow.ApiNet2.Domain.Studies;
 using GeneFlow.ApiNet2.Domain.Studies.Enumerations;

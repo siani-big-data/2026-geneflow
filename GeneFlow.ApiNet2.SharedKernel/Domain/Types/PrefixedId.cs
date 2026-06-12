@@ -87,8 +87,10 @@ public abstract class PrefixedId<TId> : IEquatable<TId>, IComparable<TId>
     /// <inheritdoc />
     public bool Equals(TId? other)
     {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
+        if (other is null)
+            return false;
+        if (ReferenceEquals(this, other))
+            return true;
         return Value == other.Value;
     }
 
@@ -101,14 +103,16 @@ public abstract class PrefixedId<TId> : IEquatable<TId>, IComparable<TId>
     /// <inheritdoc />
     public int CompareTo(TId? other)
     {
-        if (other is null) return 1;
+        if (other is null)
+            return 1;
         return Value.CompareTo(other.Value);
     }
 
     /// <inheritdoc />
     public static bool operator ==(PrefixedId<TId>? left, PrefixedId<TId>? right)
     {
-        if (left is null) return right is null;
+        if (left is null)
+            return right is null;
         return left.Equals(right);
     }
 

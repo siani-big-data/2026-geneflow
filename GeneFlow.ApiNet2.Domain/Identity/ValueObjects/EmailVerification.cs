@@ -57,7 +57,8 @@ public sealed class EmailVerification : ValueObject
     /// <returns>A result with the verified state or error.</returns>
     public Result<EmailVerification> Verify(string token)
     {
-        if (IsVerified) return this;
+        if (IsVerified)
+            return this;
 
         if (Token != token)
             return Result.Failure<EmailVerification>(UserErrors.InvalidVerificationToken);
@@ -74,7 +75,8 @@ public sealed class EmailVerification : ValueObject
     /// <returns>A new verification state with fresh token.</returns>
     public EmailVerification RegenerateToken()
     {
-        if (IsVerified) return this;
+        if (IsVerified)
+            return this;
 
         return new EmailVerification(
             isVerified: false,

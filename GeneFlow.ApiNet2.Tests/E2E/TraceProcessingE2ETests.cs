@@ -421,7 +421,8 @@ public sealed class TraceProcessingE2ETests : E2ETestBase
         var study = await CreateStudyAsync(accessToken);
         var trace = await UploadMockTraceAsync(accessToken, study.Id, "Get By Id Test");
 
-        if (trace == null) return; // Skip if upload failed
+        if (trace == null)
+            return; // Skip if upload failed
 
         // Act
         SetAuthorizationHeader(accessToken);
@@ -463,7 +464,8 @@ public sealed class TraceProcessingE2ETests : E2ETestBase
         var study = await CreateStudyAsync(accessToken);
         var trace = await UploadMockTraceAsync(accessToken, study.Id, "Original Name");
 
-        if (trace == null) return;
+        if (trace == null)
+            return;
 
         // Act
         SetAuthorizationHeader(accessToken);
@@ -482,7 +484,8 @@ public sealed class TraceProcessingE2ETests : E2ETestBase
         var study = await CreateStudyAsync(accessToken);
         var trace = await UploadMockTraceAsync(accessToken, study.Id, "Archive Test");
 
-        if (trace == null) return;
+        if (trace == null)
+            return;
 
         // Act
         SetAuthorizationHeader(accessToken);
@@ -500,7 +503,8 @@ public sealed class TraceProcessingE2ETests : E2ETestBase
         var study = await CreateStudyAsync(accessToken);
         var trace = await UploadMockTraceAsync(accessToken, study.Id, "Delete Test");
 
-        if (trace == null) return;
+        if (trace == null)
+            return;
 
         // Act
         SetAuthorizationHeader(accessToken);
@@ -526,7 +530,8 @@ public sealed class TraceProcessingE2ETests : E2ETestBase
         var study = await CreateStudyAsync(accessToken);
         var trace = await UploadMockTraceAsync(accessToken, study.Id, "Annotation Test");
 
-        if (trace == null) return;
+        if (trace == null)
+            return;
 
         // Act
         SetAuthorizationHeader(accessToken);
@@ -554,7 +559,8 @@ public sealed class TraceProcessingE2ETests : E2ETestBase
         var study = await CreateStudyAsync(accessToken);
         var trace = await UploadMockTraceAsync(accessToken, study.Id, "Get Annotations Test");
 
-        if (trace == null) return;
+        if (trace == null)
+            return;
 
         // Act
         SetAuthorizationHeader(accessToken);
@@ -576,7 +582,8 @@ public sealed class TraceProcessingE2ETests : E2ETestBase
         var study = await CreateStudyAsync(accessToken);
         var trace = await UploadMockTraceAsync(accessToken, study.Id, "Edit Test");
 
-        if (trace == null) return;
+        if (trace == null)
+            return;
 
         // Act
         SetAuthorizationHeader(accessToken);
@@ -603,7 +610,8 @@ public sealed class TraceProcessingE2ETests : E2ETestBase
         var study = await CreateStudyAsync(accessToken);
         var trace = await UploadMockTraceAsync(accessToken, study.Id, "Get Edits Test");
 
-        if (trace == null) return;
+        if (trace == null)
+            return;
 
         // Act
         SetAuthorizationHeader(accessToken);
@@ -621,7 +629,8 @@ public sealed class TraceProcessingE2ETests : E2ETestBase
         var study = await CreateStudyAsync(accessToken);
         var trace = await UploadMockTraceAsync(accessToken, study.Id, "Edited Sequence Test");
 
-        if (trace == null) return;
+        if (trace == null)
+            return;
 
         // Act
         SetAuthorizationHeader(accessToken);

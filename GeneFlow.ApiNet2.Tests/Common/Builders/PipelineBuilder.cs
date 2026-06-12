@@ -1,6 +1,5 @@
 using GeneFlow.ApiNet2.Domain.Identity;
 using GeneFlow.ApiNet2.Domain.Pipelines;
-using GeneFlow.ApiNet2.Domain.Pipelines.Entities;
 using GeneFlow.ApiNet2.Domain.Pipelines.Enumerations;
 using GeneFlow.ApiNet2.Domain.Pipelines.ValueObjects;
 using GeneFlow.ApiNet2.Domain.Studies;

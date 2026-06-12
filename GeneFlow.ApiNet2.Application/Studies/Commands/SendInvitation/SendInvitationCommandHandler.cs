@@ -1,4 +1,3 @@
-using GeneFlow.ApiNet2.SharedKernel.Infrastructure;
 using GeneFlow.ApiNet2.Application.Studies.DTOs;
 using GeneFlow.ApiNet2.Application.Studies.Mappings;
 using GeneFlow.ApiNet2.Domain.Identity;
@@ -7,7 +6,7 @@ using GeneFlow.ApiNet2.Domain.Studies.Entities;
 using GeneFlow.ApiNet2.Domain.Studies.Enumerations;
 using GeneFlow.ApiNet2.SharedKernel.Application.CQRS;
 using GeneFlow.ApiNet2.SharedKernel.Domain.Results;
-using GeneFlow.ApiNet2.SharedKernel.Domain.Pagination;
+using GeneFlow.ApiNet2.SharedKernel.Infrastructure;
 
 namespace GeneFlow.ApiNet2.Application.Studies.Commands.SendInvitation;
 

@@ -45,7 +45,8 @@ public sealed class MinIODatalakeStorageClient : IDatalakeStorageClient
         try
         {
             var json = await GetObjectAsStringAsync(key, cancellationToken);
-            if (json is null) return null;
+            if (json is null)
+                return null;
 
             return JsonSerializer.Deserialize<TraceManifestDto>(json, JsonOptions);
         }
@@ -72,7 +73,8 @@ public sealed class MinIODatalakeStorageClient : IDatalakeStorageClient
         try
         {
             var json = await GetObjectAsStringAsync(key, cancellationToken);
-            if (json is null) return null;
+            if (json is null)
+                return null;
 
             return JsonSerializer.Deserialize<TraceChunkDto>(json, JsonOptions);
         }
@@ -149,7 +151,8 @@ public sealed class MinIODatalakeStorageClient : IDatalakeStorageClient
         CancellationToken cancellationToken = default) where T : class
     {
         var json = await GetAnalysisResultJsonAsync(traceId, analysisType, cancellationToken);
-        if (json is null) return null;
+        if (json is null)
+            return null;
 
         try
         {

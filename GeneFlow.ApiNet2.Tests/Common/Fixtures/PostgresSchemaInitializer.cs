@@ -28,12 +28,14 @@ public static class PostgresSchemaInitializer
 
         var connection = context.Database.GetDbConnection();
         var wasClosed = connection.State != ConnectionState.Open;
-        if (wasClosed) await connection.OpenAsync();
+        if (wasClosed)
+            await connection.OpenAsync();
         try
         {
             foreach (var statement in SplitPostgresStatements(script))
             {
-                if (string.IsNullOrWhiteSpace(statement)) continue;
+                if (string.IsNullOrWhiteSpace(statement))
+                    continue;
 
                 await using var cmd = connection.CreateCommand();
                 cmd.CommandText = statement;
@@ -49,7 +51,8 @@ public static class PostgresSchemaInitializer
         }
         finally
         {
-            if (wasClosed) await connection.CloseAsync();
+            if (wasClosed)
+                await connection.CloseAsync();
         }
     }
 

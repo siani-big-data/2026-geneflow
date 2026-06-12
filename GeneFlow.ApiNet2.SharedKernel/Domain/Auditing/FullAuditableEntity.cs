@@ -1,4 +1,4 @@
-﻿namespace GeneFlow.ApiNet2.SharedKernel.Domain.Auditing;
+namespace GeneFlow.ApiNet2.SharedKernel.Domain.Auditing;
 
 /// <summary>
 /// Base class for entities with full audit tracking including soft delete.

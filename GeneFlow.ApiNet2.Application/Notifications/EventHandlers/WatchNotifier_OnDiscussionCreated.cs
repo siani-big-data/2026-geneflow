@@ -41,7 +41,8 @@ public sealed class WatchNotifier_OnDiscussionCreated : IDomainEventHandler<Disc
                 .Distinct()
                 .ToList();
 
-            if (recipients.Count == 0) return;
+            if (recipients.Count == 0)
+                return;
 
             var subject = $"New discussion: \"{notification.Title}\"";
             var url = $"/studies/{notification.StudyId}/discussions/{notification.DiscussionId}";

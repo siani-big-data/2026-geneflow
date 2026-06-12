@@ -1,10 +1,10 @@
+using System.Text;
 using GeneFlow.ApiNet2.Application.Traces.DTOs;
 using GeneFlow.ApiNet2.Application.Traces.Interfaces;
 using GeneFlow.ApiNet2.Domain.Traces;
 using GeneFlow.ApiNet2.Domain.Traces.Entities;
 using GeneFlow.ApiNet2.SharedKernel.Application.CQRS;
 using GeneFlow.ApiNet2.SharedKernel.Domain.Results;
-using System.Text;
 
 namespace GeneFlow.ApiNet2.Application.Traces.Queries.GetReverseComplement;
 
@@ -20,21 +20,36 @@ public sealed class GetReverseComplementQueryHandler
 
     private static readonly Dictionary<char, char> ComplementMap = new()
     {
-        ['A'] = 'T', ['a'] = 't',
-        ['T'] = 'A', ['t'] = 'a',
-        ['G'] = 'C', ['g'] = 'c',
-        ['C'] = 'G', ['c'] = 'g',
-        ['N'] = 'N', ['n'] = 'n',
-        ['R'] = 'Y', ['r'] = 'y', // Purine (A/G) -> Pyrimidine (T/C)
-        ['Y'] = 'R', ['y'] = 'r', // Pyrimidine (T/C) -> Purine (A/G)
-        ['M'] = 'K', ['m'] = 'k', // Amino (A/C) -> Keto (T/G)
-        ['K'] = 'M', ['k'] = 'm', // Keto (T/G) -> Amino (A/C)
-        ['S'] = 'S', ['s'] = 's', // Strong (G/C) -> Strong (G/C)
-        ['W'] = 'W', ['w'] = 'w', // Weak (A/T) -> Weak (A/T)
-        ['H'] = 'D', ['h'] = 'd', // Not G (A/C/T) -> Not C (A/G/T)
-        ['D'] = 'H', ['d'] = 'h', // Not C (A/G/T) -> Not G (A/C/T)
-        ['B'] = 'V', ['b'] = 'v', // Not A (C/G/T) -> Not T (A/C/G)
-        ['V'] = 'B', ['v'] = 'b', // Not T (A/C/G) -> Not A (C/G/T)
+        ['A'] = 'T',
+        ['a'] = 't',
+        ['T'] = 'A',
+        ['t'] = 'a',
+        ['G'] = 'C',
+        ['g'] = 'c',
+        ['C'] = 'G',
+        ['c'] = 'g',
+        ['N'] = 'N',
+        ['n'] = 'n',
+        ['R'] = 'Y',
+        ['r'] = 'y', // Purine (A/G) -> Pyrimidine (T/C)
+        ['Y'] = 'R',
+        ['y'] = 'r', // Pyrimidine (T/C) -> Purine (A/G)
+        ['M'] = 'K',
+        ['m'] = 'k', // Amino (A/C) -> Keto (T/G)
+        ['K'] = 'M',
+        ['k'] = 'm', // Keto (T/G) -> Amino (A/C)
+        ['S'] = 'S',
+        ['s'] = 's', // Strong (G/C) -> Strong (G/C)
+        ['W'] = 'W',
+        ['w'] = 'w', // Weak (A/T) -> Weak (A/T)
+        ['H'] = 'D',
+        ['h'] = 'd', // Not G (A/C/T) -> Not C (A/G/T)
+        ['D'] = 'H',
+        ['d'] = 'h', // Not C (A/G/T) -> Not G (A/C/T)
+        ['B'] = 'V',
+        ['b'] = 'v', // Not A (C/G/T) -> Not T (A/C/G)
+        ['V'] = 'B',
+        ['v'] = 'b', // Not T (A/C/G) -> Not A (C/G/T)
     };
 
     public GetReverseComplementQueryHandler(
@@ -91,7 +106,8 @@ public sealed class GetReverseComplementQueryHandler
     /// </summary>
     private static string ApplyTrims(string sequence, IReadOnlyList<TraceTrim> trims)
     {
-        if (trims.Count == 0) return sequence;
+        if (trims.Count == 0)
+            return sequence;
 
         // Sort trims by position descending to apply from end to start
         var sortedTrims = trims
