@@ -72,7 +72,7 @@ public sealed class CollaborationFlowE2ETests : E2ETestBase
         DateTime? UpdatedAt);
 
     private sealed record AddStudyMemberRequest(string UserId, int RoleId);
-    private sealed record ChangeMemberRoleRequest(int RoleId);
+    private sealed record ChangeMemberRoleRequest(int NewRoleId);
     private sealed record TransferOwnershipRequest(string NewOwnerId);
 
     private sealed record StudyMemberResponse(
@@ -119,6 +119,8 @@ public sealed class CollaborationFlowE2ETests : E2ETestBase
 
         var registerRequest = new RegisterRequest(email, username, TestPassword);
         await PostJsonAsync("/api/v1/auth/register", registerRequest);
+
+        await ConfirmEmailAsync(email);
 
         var loginRequest = new LoginRequest(email, TestPassword);
         var loginResponse = await PostJsonAsync("/api/v1/auth/login", loginRequest);

@@ -73,13 +73,9 @@ public sealed class AuthenticationFlowE2ETests : E2ETestBase
         user.Username.Should().Be(username);
         user.IsEmailVerified.Should().BeFalse();
 
-        // Step 2: Verify email (simulate getting token from email)
-        // In real scenario, this would come from the email service
-        // For E2E we might need to mock this or access the token directly
-        var verifyEmailRequest = new VerifyEmailRequest("test-verification-token");
-        var verifyResponse = await PostJsonAsync("/api/v1/users/verify-email", verifyEmailRequest);
-        // Note: This may fail if token validation is strict, which is expected
-        // In a real E2E setup, we would capture the actual token
+        // Step 2: Verify email. The real token only exists in the verification
+        // email, so use the dev-only endpoint that runs the same domain path.
+        await ConfirmEmailAsync(email);
 
         // Step 3: Login
         var loginRequest = new LoginRequest(email, TestPassword);
@@ -136,6 +132,8 @@ public sealed class AuthenticationFlowE2ETests : E2ETestBase
         var registerResponse = await PostJsonAsync("/api/v1/auth/register", registerRequest);
         registerResponse.StatusCode.Should().Be(HttpStatusCode.Created);
 
+        await ConfirmEmailAsync(email);
+
         var loginRequest = new LoginRequest(email, TestPassword);
         var loginResponse = await PostJsonAsync("/api/v1/auth/login", loginRequest);
         loginResponse.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -174,6 +172,8 @@ public sealed class AuthenticationFlowE2ETests : E2ETestBase
         // Register
         var registerRequest = new RegisterRequest(email, username, TestPassword);
         await PostJsonAsync("/api/v1/auth/register", registerRequest);
+
+        await ConfirmEmailAsync(email);
 
         // Login
         var loginRequest = new LoginRequest(email, TestPassword);
@@ -296,6 +296,8 @@ public sealed class AuthenticationFlowE2ETests : E2ETestBase
         var username = GenerateTestUsername();
         await PostJsonAsync("/api/v1/auth/register", new RegisterRequest(email, username, TestPassword));
 
+        await ConfirmEmailAsync(email);
+
         var loginRequest = new LoginRequest(email, TestPassword);
 
         // Act
@@ -351,6 +353,8 @@ public sealed class AuthenticationFlowE2ETests : E2ETestBase
         var email = GenerateTestEmail();
         var username = GenerateTestUsername();
         await PostJsonAsync("/api/v1/auth/register", new RegisterRequest(email, username, TestPassword));
+
+        await ConfirmEmailAsync(email);
 
         var loginResponse = await PostJsonAsync("/api/v1/auth/login", new LoginRequest(email, TestPassword));
         var loginResult = await ReadAsAsync<LoginResponse>(loginResponse);

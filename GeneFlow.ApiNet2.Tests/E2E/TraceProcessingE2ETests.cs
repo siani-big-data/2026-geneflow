@@ -175,6 +175,8 @@ public sealed class TraceProcessingE2ETests : E2ETestBase
         var registerRequest = new RegisterRequest(email, username, TestPassword);
         await PostJsonAsync("/api/v1/auth/register", registerRequest);
 
+        await ConfirmEmailAsync(email);
+
         var loginRequest = new LoginRequest(email, TestPassword);
         var loginResponse = await PostJsonAsync("/api/v1/auth/login", loginRequest);
         var loginResult = await ReadAsAsync<LoginResponse>(loginResponse);

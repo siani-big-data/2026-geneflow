@@ -6,8 +6,8 @@ namespace GeneFlow.ApiNet2.API.Endpoints.Identity;
 
 /// <summary>
 /// Development-only authentication helpers used by the E2E test suite.
-/// These endpoints are NOT registered when the host environment is not
-/// <c>Development</c>, so they are inert in staging / production.
+/// These endpoints are ONLY registered when the host environment is
+/// <c>Development</c> or <c>Testing</c>, so they are inert in staging / production.
 /// </summary>
 public sealed class AuthDevEndpoints : IEndpoint
 {
@@ -16,7 +16,7 @@ public sealed class AuthDevEndpoints : IEndpoint
     {
         // Resolve the host environment from the application's service provider.
         var env = app.ServiceProvider.GetRequiredService<IHostEnvironment>();
-        if (!env.IsDevelopment())
+        if (!env.IsDevelopment() && !env.IsEnvironment("Testing"))
             return;
 
         var group = app.MapGroup($"{ApiRoutes.Auth.Base}/dev")

@@ -75,7 +75,7 @@ public sealed class PipelineLifecycleE2ETests : E2ETestBase
         string StudyId,
         string Name,
         string? Description,
-        string Status,
+        string StatusName,
         int StatusId,
         IReadOnlyList<PipelineStepResponse> Steps,
         DateTime CreatedAt,
@@ -84,7 +84,7 @@ public sealed class PipelineLifecycleE2ETests : E2ETestBase
     private sealed record PipelineSummaryResponse(
         string Id,
         string Name,
-        string Status,
+        string StatusName,
         int StatusId,
         int StepCount,
         int ExecutionCount,
@@ -92,22 +92,23 @@ public sealed class PipelineLifecycleE2ETests : E2ETestBase
 
     private sealed record PipelineStepResponse(
         string Id,
-        string Name,
-        string Type,
-        int TypeId,
+        int StepTypeId,
+        string StepTypeName,
         int Order,
-        object? Configuration,
+        string? Label,
+        string Configuration,
+        bool IsEnabled,
         DateTime CreatedAt);
 
     private sealed record AddStepRequest(
-        string Name,
-        int TypeId,
-        object? Configuration);
+        string Label,
+        int StepTypeId,
+        string? Configuration);
 
     private sealed record UpdateStepRequest(
-        string Name,
-        int TypeId,
-        object? Configuration);
+        string? Label,
+        string? Configuration,
+        bool IsEnabled);
 
     private sealed record ReorderStepsRequest(IReadOnlyList<string> StepIds);
 
@@ -157,6 +158,8 @@ public sealed class PipelineLifecycleE2ETests : E2ETestBase
 
         var registerRequest = new RegisterRequest(email, username, TestPassword);
         await PostJsonAsync("/api/v1/auth/register", registerRequest);
+
+        await ConfirmEmailAsync(email);
 
         var loginRequest = new LoginRequest(email, TestPassword);
         var loginResponse = await PostJsonAsync("/api/v1/auth/login", loginRequest);
@@ -210,7 +213,7 @@ public sealed class PipelineLifecycleE2ETests : E2ETestBase
         var pipeline = await CreatePipelineAsync(accessToken, study.Id, "Complete Lifecycle Pipeline");
         pipeline.Should().NotBeNull();
         pipeline!.Name.Should().Be("Complete Lifecycle Pipeline");
-        pipeline.Status.Should().Be("Draft");
+        pipeline.StatusName.Should().Be("Draft");
 
         // Step 2: Add steps
         SetAuthorizationHeader(accessToken);
@@ -218,7 +221,7 @@ public sealed class PipelineLifecycleE2ETests : E2ETestBase
         var step1Request = new AddStepRequest(
             "Quality Trim",
             1, // Quality trimming step type
-            new { threshold = 20 });
+            """{"threshold":20}""");
         var step1Response = await PostJsonAsync(
             $"/api/v1/studies/{study.Id}/pipelines/{pipeline.Id}/steps",
             step1Request);
@@ -227,7 +230,7 @@ public sealed class PipelineLifecycleE2ETests : E2ETestBase
         var step2Request = new AddStepRequest(
             "Vector Removal",
             2, // Vector removal step type
-            new { vectorSequence = "ATCGATCG" });
+            """{"vectorSequence":"ATCGATCG"}""");
         var step2Response = await PostJsonAsync(
             $"/api/v1/studies/{study.Id}/pipelines/{pipeline.Id}/steps",
             step2Request);
@@ -251,7 +254,7 @@ public sealed class PipelineLifecycleE2ETests : E2ETestBase
 
         if (activateResponse.StatusCode == HttpStatusCode.OK)
         {
-            activatedPipeline!.Status.Should().Be("Active");
+            activatedPipeline!.StatusName.Should().Be("Active");
         }
     }
 
@@ -325,7 +328,7 @@ public sealed class PipelineLifecycleE2ETests : E2ETestBase
         var pipeline = await ReadAsAsync<PipelineResponse>(response);
         pipeline.Should().NotBeNull();
         pipeline!.Name.Should().Be("New Pipeline");
-        pipeline.Status.Should().Be("Draft");
+        pipeline.StatusName.Should().Be("Draft");
     }
 
     [Fact]
@@ -374,7 +377,7 @@ public sealed class PipelineLifecycleE2ETests : E2ETestBase
         pipeline.Should().NotBeNull();
 
         SetAuthorizationHeader(accessToken);
-        var request = new AddStepRequest("Quality Check Step", 1, new { minQuality = 20 });
+        var request = new AddStepRequest("Quality Check Step", 1, """{"minQuality":20}""");
 
         // Act
         var response = await PostJsonAsync(
@@ -409,7 +412,7 @@ public sealed class PipelineLifecycleE2ETests : E2ETestBase
         var step = await ReadAsAsync<PipelineStepResponse>(addResponse);
 
         // Act
-        var updateRequest = new UpdateStepRequest("Updated Step Name", 1, new { newConfig = true });
+        var updateRequest = new UpdateStepRequest("Updated Step Name", """{"newConfig":true}""", true);
         var response = await PutJsonAsync(
             $"/api/v1/studies/{study.Id}/pipelines/{pipeline.Id}/steps/{step!.Id}",
             updateRequest);

@@ -82,7 +82,7 @@ public sealed class StudyLifecycleE2ETests : E2ETestBase
         DateTime CreatedAt);
 
     private sealed record AddStudyMemberRequest(string UserId, int RoleId);
-    private sealed record ChangeMemberRoleRequest(int RoleId);
+    private sealed record ChangeMemberRoleRequest(int NewRoleId);
 
     private sealed record StudyMemberResponse(
         string UserId,
@@ -115,6 +115,8 @@ public sealed class StudyLifecycleE2ETests : E2ETestBase
 
         var registerRequest = new RegisterRequest(email, username, TestPassword);
         await PostJsonAsync("/api/v1/auth/register", registerRequest);
+
+        await ConfirmEmailAsync(email);
 
         var loginRequest = new LoginRequest(email, TestPassword);
         var loginResponse = await PostJsonAsync("/api/v1/auth/login", loginRequest);
@@ -174,15 +176,20 @@ public sealed class StudyLifecycleE2ETests : E2ETestBase
         var invitationResponse = await PostJsonAsync($"/api/v1/studies/{study.Id}/invitations", invitationRequest);
         invitationResponse.StatusCode.Should().BeOneOf(HttpStatusCode.Created, HttpStatusCode.OK);
 
-        // Step 5: Change study status to Archived
-        var archiveRequest = new ChangeStudyStatusRequest(4); // Archived status
-        var archiveResponse = await PatchJsonAsync($"/api/v1/studies/{study.Id}/status", archiveRequest);
-        archiveResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        // Step 5: Change study status to Archived. Statuses only transition along
+        // Draft(1) -> Active(2) -> Completed(3) -> Published(4) -> Archived(5),
+        // so walk the full lifecycle chain.
+        foreach (var statusId in new[] { 2, 3, 4, 5 })
+        {
+            var statusRequest = new ChangeStudyStatusRequest(statusId);
+            var statusResponse = await PatchJsonAsync($"/api/v1/studies/{study.Id}/status", statusRequest);
+            statusResponse.StatusCode.Should().Be(HttpStatusCode.OK, $"transition to status {statusId} should succeed");
+        }
 
         // Step 6: Verify study is archived
         var archivedStudy = await GetAsync<StudyResponse>($"/api/v1/studies/{study.Id}");
         archivedStudy.Should().NotBeNull();
-        archivedStudy!.StatusId.Should().Be(4);
+        archivedStudy!.StatusId.Should().Be(5);
     }
 
     [Fact]
