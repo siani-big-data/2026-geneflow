@@ -208,6 +208,19 @@ public sealed class Pipeline : FullAuditableAggregateRoot<PipelineId>
         SetModified(reorderedBy.Value.ToString());
         return Result.Success();
     }
+
+    /// <summary>
+    /// Flips every step's order to its negative value. The
+    /// (pipeline_id, order) unique index is not deferrable, so persisting a
+    /// reorder directly can collide with the previous values mid-update; the
+    /// reorder handler parks the orders in the negative range, saves, then
+    /// calls this again to restore the (newly assigned) positive orders.
+    /// </summary>
+    public void ToggleParkedStepOrders()
+    {
+        foreach (var step in _steps)
+            step.SetOrder(-step.Order);
+    }
     #endregion
 
     #region Status Management

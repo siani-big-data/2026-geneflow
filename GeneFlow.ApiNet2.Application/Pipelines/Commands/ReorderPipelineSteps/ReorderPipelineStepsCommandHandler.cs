@@ -50,6 +50,14 @@ public sealed class ReorderPipelineStepsCommandHandler
         if (reorderResult.IsFailure)
             return Result.Failure<PipelineDto>(reorderResult.Error);
 
+        // The (pipeline_id, order) unique index is not deferrable, so saving
+        // the new order directly can collide with the previous values
+        // mid-update. Park the orders in the negative range first, then
+        // persist the final positive values.
+        pipeline.ToggleParkedStepOrders();
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        pipeline.ToggleParkedStepOrders();
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Success(pipeline.ToDto());
