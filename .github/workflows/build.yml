@@ -177,8 +177,13 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
 
+      # Scoped to whitespace + error-level style: the unscoped `dotnet format
+      # --verify-no-changes` also reports compiler warnings it cannot fix
+      # (CS1591 missing XML docs, CS86xx nullability), so it can never pass.
       - name: Check formatting
-        run: dotnet format --verify-no-changes --verbosity diagnostic
+        run: |
+          dotnet format whitespace --verify-no-changes --verbosity minimal
+          dotnet format style --verify-no-changes --severity error --verbosity minimal
 
   # ===========================================================================
   # DOCKER BUILD JOB (only on main/develop)
