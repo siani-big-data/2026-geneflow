@@ -24,9 +24,12 @@ public static partial class UserErrors
     public static readonly Error RefreshTokenExpiryInPast = Error.Validation(
         "User.RefreshTokenExpiryInPast", "Refresh token expiry must be in the future.");
 
-    /// <summary>Refresh token not found.</summary>
-    public static readonly Error RefreshTokenNotFound = Error.NotFound(
-        "User.RefreshTokenNotFound", "Refresh token was not found.");
+    /// <summary>
+    /// Refresh token not found. Deliberately Unauthorized (not NotFound) so an
+    /// unknown token is indistinguishable from an expired or revoked one.
+    /// </summary>
+    public static readonly Error RefreshTokenNotFound = Error.Unauthorized(
+        "User.RefreshTokenNotFound", "Refresh token is invalid.");
 
     /// <summary>Refresh token has expired.</summary>
     public static readonly Error RefreshTokenExpired = Error.Unauthorized(

@@ -276,7 +276,7 @@ public class AuthEndpointsTests : IClassFixture<GeneFlowWebApplicationFactory>, 
     }
 
     [Fact]
-    public async Task RefreshToken_WithInvalidToken_ShouldReturnNotFound()
+    public async Task RefreshToken_WithInvalidToken_ShouldReturnUnauthorized()
     {
         // Arrange
         var request = new RefreshTokenRequest
@@ -291,8 +291,9 @@ public class AuthEndpointsTests : IClassFixture<GeneFlowWebApplicationFactory>, 
         // Act
         var response = await _client.PostAsJsonAsync("/api/v1/auth/refresh", request);
 
-        // Assert - RefreshTokenNotFound is defined as NotFound error type
-        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        // Assert - an unknown refresh token is indistinguishable from an
+        // expired or revoked one (RefreshTokenNotFound maps to Unauthorized)
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
     #endregion
