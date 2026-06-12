@@ -5,10 +5,16 @@ using GeneFlow.ApiNet2.API;
 using GeneFlow.ApiNet2.Application.Identity.Interfaces;
 using GeneFlow.ApiNet2.Domain.Identity;
 using GeneFlow.ApiNet2.Domain.Identity.ValueObjects;
+using GeneFlow.ApiNet2.Domain.Plans;
+using GeneFlow.ApiNet2.Domain.Plans.Enumerations;
+using GeneFlow.ApiNet2.Domain.Plans.ValueObjects;
+using GeneFlow.ApiNet2.Domain.Profiles;
 using GeneFlow.ApiNet2.Domain.Studies;
 using GeneFlow.ApiNet2.Domain.Studies.Entities;
 using GeneFlow.ApiNet2.Domain.Studies.Enumerations;
 using GeneFlow.ApiNet2.Domain.Studies.ValueObjects;
+using GeneFlow.ApiNet2.Domain.Subscriptions;
+using GeneFlow.ApiNet2.Domain.Subscriptions.Enumerations;
 using GeneFlow.ApiNet2.Domain.Traces;
 using GeneFlow.ApiNet2.Infrastructure.Identity.Persistence.Context;
 using GeneFlow.ApiNet2.Infrastructure.Studies.Persistence.Context;
@@ -44,6 +50,14 @@ public class GeneFlowWebApplicationFactory : WebApplicationFactory<Program>
     // Study mocks
     public IStudyRepository MockStudyRepository { get; } = Substitute.For<IStudyRepository>();
     public IStudyInvitationRepository MockStudyInvitationRepository { get; } = Substitute.For<IStudyInvitationRepository>();
+    public IStudyUnitOfWork MockStudyUnitOfWork { get; } = Substitute.For<IStudyUnitOfWork>();
+
+    // Subscription + plan mocks (used by SubscriptionLimitBehavior on study/member/invitation commands)
+    public ISubscriptionRepository MockSubscriptionRepository { get; } = Substitute.For<ISubscriptionRepository>();
+    public IPlanRepository MockPlanRepository { get; } = Substitute.For<IPlanRepository>();
+
+    // Profile mock (used by study queries to enrich member info)
+    public IProfileRepository MockProfileRepository { get; } = Substitute.For<IProfileRepository>();
 
     // Trace + storage mocks (used by export and trace endpoints)
     public ITraceRepository MockTraceRepository { get; } = Substitute.For<ITraceRepository>();
@@ -104,6 +118,18 @@ public class GeneFlowWebApplicationFactory : WebApplicationFactory<Program>
             services.RemoveAll<IStudyInvitationRepository>();
             services.AddScoped(_ => MockStudyInvitationRepository);
 
+            services.RemoveAll<IStudyUnitOfWork>();
+            services.AddScoped(_ => MockStudyUnitOfWork);
+
+            services.RemoveAll<ISubscriptionRepository>();
+            services.AddScoped(_ => MockSubscriptionRepository);
+
+            services.RemoveAll<IPlanRepository>();
+            services.AddScoped(_ => MockPlanRepository);
+
+            services.RemoveAll<IProfileRepository>();
+            services.AddScoped(_ => MockProfileRepository);
+
             services.RemoveAll<ITraceRepository>();
             services.AddScoped(_ => MockTraceRepository);
 
@@ -154,6 +180,14 @@ public class GeneFlowWebApplicationFactory : WebApplicationFactory<Program>
         // Study mocks
         MockStudyRepository.ClearReceivedCalls();
         MockStudyInvitationRepository.ClearReceivedCalls();
+        MockStudyUnitOfWork.ClearReceivedCalls();
+
+        // Subscription + plan mocks
+        MockSubscriptionRepository.ClearReceivedCalls();
+        MockPlanRepository.ClearReceivedCalls();
+
+        // Profile mock
+        MockProfileRepository.ClearReceivedCalls();
 
         // Trace + storage mocks
         MockTraceRepository.ClearReceivedCalls();
@@ -169,6 +203,9 @@ public class GeneFlowWebApplicationFactory : WebApplicationFactory<Program>
         MockUserUnitOfWork
             .SaveChangesAsync(Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(1));
+        MockStudyUnitOfWork
+            .SaveChangesAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(1));
 
         // Default: User exists
         var testUser = CreateTestUser();
@@ -176,10 +213,52 @@ public class GeneFlowWebApplicationFactory : WebApplicationFactory<Program>
             .GetByIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
             .Returns(testUser);
 
+        // Default: member enrichment in study queries resolves the test user, no profiles
+        MockUserRepository
+            .GetByIdsAsync(Arg.Any<IEnumerable<UserId>>(), Arg.Any<CancellationToken>())
+            .Returns((IReadOnlyList<User>)new List<User> { testUser });
+        MockProfileRepository
+            .GetByUserIdsAsync(Arg.Any<IEnumerable<UserId>>(), Arg.Any<CancellationToken>())
+            .Returns((IReadOnlyList<Profile>)Array.Empty<Profile>());
+
         // Default: Sequence generation
         MockSequenceGenerator
             .NextAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(1L);
+
+        // Default: empty paged study lists (avoids NRE in handlers that don't stub the repo)
+        var emptyStudies = PagedList<Study>.Create(new List<Study>(), 1, 10, 0);
+        MockStudyRepository
+            .GetPublishedAsync(
+                Arg.Any<int>(), Arg.Any<int>(),
+                Arg.Any<string?>(), Arg.Any<ResearchField?>(),
+                Arg.Any<IReadOnlyList<string>?>(), Arg.Any<string?>(),
+                Arg.Any<bool>(), Arg.Any<CancellationToken>())
+            .Returns(emptyStudies);
+        MockStudyRepository
+            .GetByMemberAsync(
+                Arg.Any<UserId>(), Arg.Any<int>(), Arg.Any<int>(),
+                Arg.Any<string?>(), Arg.Any<StudyStatus?>(),
+                Arg.Any<ResearchField?>(), Arg.Any<CancellationToken>())
+            .Returns(emptyStudies);
+        MockStudyRepository
+            .GetFeaturedAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns((IReadOnlyList<Study>)Array.Empty<Study>());
+
+        // Default: SubscriptionLimitBehavior — give the test user an unlimited free plan
+        var planId = new PlanId(1);
+        var planLimits = PlanLimits.CreateUnlimited();
+        var planPricing = PlanPricing.Create(0m, 0m).Value;
+        var planName = PlanName.Create("Free").Value;
+        var plan = Plan.Create(planId, planName, "Free plan", planPricing, planLimits).Value;
+        var subscription = Subscription.CreateFree(new SubscriptionId(1), new UserId(1), planId).Value;
+
+        MockSubscriptionRepository
+            .GetActiveByUserIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns(subscription);
+        MockPlanRepository
+            .GetByIdAsync(Arg.Any<PlanId>(), Arg.Any<CancellationToken>())
+            .Returns(plan);
 
         // Default: no traces, missing files
         MockTraceRepository
@@ -213,6 +292,11 @@ public class GeneFlowWebApplicationFactory : WebApplicationFactory<Program>
         MockStudyRepository
             .GetMemberRoleAsync(Arg.Is<StudyId>(id => id.ToString() == studyId), Arg.Any<UserId>(), Arg.Any<CancellationToken>())
             .Returns(StudyRole.Owner);
+        // SubscriptionLimitBehavior requires the study owner to resolve the
+        // subscription that owns the limit being checked (member, trace, etc.).
+        MockStudyRepository
+            .GetOwnerIdAsync(Arg.Is<StudyId>(id => id.ToString() == studyId), Arg.Any<CancellationToken>())
+            .Returns(new UserId(1));
     }
 
     public void SetupStudyNotFound(string studyId)
@@ -223,6 +307,14 @@ public class GeneFlowWebApplicationFactory : WebApplicationFactory<Program>
         MockStudyRepository
             .GetByIdWithMembersAsync(Arg.Is<StudyId>(id => id.ToString() == studyId), Arg.Any<CancellationToken>())
             .Returns((Study?)null);
+        // Bypass StudyMembershipBehavior so the handler can return its real NotFound
+        // result instead of the behavior short-circuiting to 403 Forbidden.
+        MockStudyRepository
+            .GetMemberRoleAsync(Arg.Is<StudyId>(id => id.ToString() == studyId), Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns(StudyRole.Owner);
+        MockStudyRepository
+            .IsPublicStudyAsync(Arg.Is<StudyId>(id => id.ToString() == studyId), Arg.Any<CancellationToken>())
+            .Returns(true);
     }
 
     public void SetupCreateStudySuccess()
@@ -277,19 +369,29 @@ public class GeneFlowWebApplicationFactory : WebApplicationFactory<Program>
 
     public void SetupMemberAlreadyExists(string studyId, string userId)
     {
-        var study = CreateTestStudy(studyId);
-        // The study already has this member - handled by domain logic
+        // Study owned by auth user, with the target user already a member so AddMember returns Conflict.
+        var memberNumeric = long.Parse(userId.Substring(1));
+        var study = CreateTestStudyWithMember(studyId, new UserId(1), new UserId(memberNumeric), StudyRole.Editor);
+        MockStudyRepository
+            .GetByIdAsync(Arg.Is<StudyId>(id => id.ToString() == studyId), Arg.Any<CancellationToken>())
+            .Returns(study);
         MockStudyRepository
             .GetByIdWithMembersAsync(Arg.Is<StudyId>(id => id.ToString() == studyId), Arg.Any<CancellationToken>())
             .Returns(study);
         MockStudyRepository
             .GetMemberRoleAsync(Arg.Is<StudyId>(id => id.ToString() == studyId), Arg.Any<UserId>(), Arg.Any<CancellationToken>())
             .Returns(StudyRole.Owner);
+        MockStudyRepository
+            .GetOwnerIdAsync(Arg.Is<StudyId>(id => id.ToString() == studyId), Arg.Any<CancellationToken>())
+            .Returns(new UserId(1));
     }
 
     public void SetupRemoveMemberSuccess(string studyId, string userId)
     {
-        SetupStudyExists(studyId);
+        // Pre-populate the study with the target member so RemoveMember can find them.
+        var memberNumeric = long.Parse(userId.Substring(1));
+        var study = CreateTestStudyWithMember(studyId, new UserId(1), new UserId(memberNumeric), StudyRole.Editor);
+        ApplyStudyMocks(studyId, study, ownerId: new UserId(1));
     }
 
     public void SetupMemberNotFound(string studyId, string userId)
@@ -299,17 +401,28 @@ public class GeneFlowWebApplicationFactory : WebApplicationFactory<Program>
 
     public void SetupChangeMemberRoleSuccess(string studyId, string userId)
     {
-        SetupStudyExists(studyId);
+        // Pre-populate the study with the target member so ChangeMemberRole can find them.
+        var memberNumeric = long.Parse(userId.Substring(1));
+        var study = CreateTestStudyWithMember(studyId, new UserId(1), new UserId(memberNumeric), StudyRole.Editor);
+        ApplyStudyMocks(studyId, study, ownerId: new UserId(1));
     }
 
     public void SetupLeaveStudySuccess(string studyId)
     {
-        SetupStudyExists(studyId);
+        // Auth user (UserId 1) cannot leave if they're the owner; create a study owned
+        // by a different user with the auth user as a regular Editor member.
+        var ownerId = new UserId(2);
+        var study = CreateTestStudyWithMember(studyId, ownerId, new UserId(1), StudyRole.Editor);
+        ApplyStudyMocks(studyId, study, ownerId: ownerId);
     }
 
     public void SetupTransferOwnershipSuccess(string studyId, string newOwnerId)
     {
-        SetupStudyExists(studyId);
+        // Pre-populate the study with the prospective new owner as Admin
+        // (Study.TransferOwnership rejects non-Admin members; see StudyErrors.NewOwnerMustBeAdmin).
+        var memberNumeric = long.Parse(newOwnerId.Substring(1));
+        var study = CreateTestStudyWithMember(studyId, new UserId(1), new UserId(memberNumeric), StudyRole.Admin);
+        ApplyStudyMocks(studyId, study, ownerId: new UserId(1));
     }
 
     #endregion
@@ -400,11 +513,18 @@ public class GeneFlowWebApplicationFactory : WebApplicationFactory<Program>
 
     public void SetupAcceptInvitationSuccess(string token)
     {
-        var invitation = CreateTestInvitation("I00000001", "S00000001");
+        // Invitation accepted by the auth user (UserId 1). The study must be owned by
+        // someone else so adding the auth user as a member does not collide with the
+        // existing owner-membership entry. The invitation's inviter is the owner
+        // (UserId 2) so Study.AddMember's permission check finds them in _members.
+        var ownerId = new UserId(2);
+        var invitation = CreateTestInvitation("I00000001", "S00000001", invitedBy: ownerId);
         MockStudyInvitationRepository
             .GetByTokenAsync(Arg.Is<string>(t => t == token), Arg.Any<CancellationToken>())
             .Returns(invitation);
-        SetupStudyExists("S00000001");
+
+        var study = CreateTestStudy("S00000001", ownerId);
+        ApplyStudyMocks("S00000001", study, ownerId: ownerId);
     }
 
     public void SetupDeclineInvitationSuccess(string token)
@@ -434,7 +554,10 @@ public class GeneFlowWebApplicationFactory : WebApplicationFactory<Program>
 
     public void SetupRemovePaperSuccess(string studyId, string paperId)
     {
-        SetupStudyExists(studyId);
+        // Pre-populate the study with the target paper so RemovePaper can find it.
+        var paperNumeric = long.Parse(paperId.Substring(1));
+        var study = CreateTestStudyWithPaper(studyId, new UserId(1), new StudyPaperId(paperNumeric));
+        ApplyStudyMocks(studyId, study, ownerId: new UserId(1));
     }
 
     public void SetupPaperNotFound(string studyId, string paperId)
@@ -457,19 +580,19 @@ public class GeneFlowWebApplicationFactory : WebApplicationFactory<Program>
         return User.Create(userId, email, username, passwordHash).Value;
     }
 
-    private static Study CreateTestStudy(string studyId)
+    private static Study CreateTestStudy(string studyId, UserId? ownerId = null)
     {
         // Parse the study ID to get the numeric part
         var numericPart = long.Parse(studyId.Substring(1));
         var id = new StudyId(numericPart);
-        var ownerId = new UserId(1);
+        var actualOwner = ownerId ?? new UserId(1);
 
         var title = StudyTitle.Create("Test Study Title").Value;
         var description = StudyDescription.Create("Test study description").Value;
 
         var studyResult = Study.Create(
             id,
-            ownerId,
+            actualOwner,
             title,
             description,
             ResearchField.Genomics);
@@ -477,13 +600,70 @@ public class GeneFlowWebApplicationFactory : WebApplicationFactory<Program>
         return studyResult.Value;
     }
 
-    private static StudyInvitation CreateTestInvitation(string invitationId, string studyId)
+    private static Study CreateTestStudyWithMember(
+        string studyId,
+        UserId ownerId,
+        UserId memberId,
+        StudyRole memberRole)
+    {
+        var study = CreateTestStudy(studyId, ownerId);
+        study.AddMember(memberId, memberRole, ownerId);
+        return study;
+    }
+
+    private static Study CreateTestStudyWithPaper(
+        string studyId,
+        UserId ownerId,
+        StudyPaperId paperId)
+    {
+        var study = CreateTestStudy(studyId, ownerId);
+        var paper = StudyPaper.Create(
+            id: paperId,
+            title: "Test Paper",
+            authors: "Test Author",
+            doi: null,
+            @abstract: null,
+            journal: null,
+            publicationYear: 2024,
+            fileId: null,
+            fileName: null,
+            fileSizeBytes: null,
+            uploadedBy: ownerId).Value;
+        study.AddPaper(paper, ownerId);
+        return study;
+    }
+
+    /// <summary>
+    /// Wires every per-study mock — GetByIdAsync, GetByIdWithMembersAsync,
+    /// GetMemberRoleAsync, GetOwnerIdAsync — to point to the supplied study
+    /// instance so commands that load via different APIs see the same state.
+    /// </summary>
+    private void ApplyStudyMocks(string studyId, Study study, UserId ownerId)
+    {
+        MockStudyRepository
+            .GetByIdAsync(Arg.Is<StudyId>(id => id.ToString() == studyId), Arg.Any<CancellationToken>())
+            .Returns(study);
+        MockStudyRepository
+            .GetByIdWithMembersAsync(Arg.Is<StudyId>(id => id.ToString() == studyId), Arg.Any<CancellationToken>())
+            .Returns(study);
+        MockStudyRepository
+            .GetMemberRoleAsync(Arg.Is<StudyId>(id => id.ToString() == studyId), Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns(StudyRole.Owner);
+        MockStudyRepository
+            .GetOwnerIdAsync(Arg.Is<StudyId>(id => id.ToString() == studyId), Arg.Any<CancellationToken>())
+            .Returns(ownerId);
+    }
+
+    private static StudyInvitation CreateTestInvitation(
+        string invitationId,
+        string studyId,
+        UserId? invitedBy = null)
     {
         var numericPart = long.Parse(invitationId.Substring(1));
         var id = new StudyInvitationId(numericPart);
         var studyNumericPart = long.Parse(studyId.Substring(1));
         var studyIdParsed = new StudyId(studyNumericPart);
-        var invitedById = new UserId(1);
+        var invitedById = invitedBy ?? new UserId(1);
 
         var invitationResult = StudyInvitation.Create(
             id,

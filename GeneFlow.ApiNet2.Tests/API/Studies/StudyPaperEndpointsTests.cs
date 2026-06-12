@@ -15,7 +15,8 @@ public class StudyPaperEndpointsTests : IClassFixture<GeneFlowWebApplicationFact
     private readonly HttpClient _authenticatedClient;
 
     private const string TestStudyId = "S00000001";
-    private const string TestPaperId = "P00000001";
+    // StudyPaperId is prefixed with 'R' (study_papers sequence); see StudyPaperId.Prefix.
+    private const string TestPaperId = "R00000001";
 
     public StudyPaperEndpointsTests(GeneFlowWebApplicationFactory factory)
     {
@@ -225,10 +226,10 @@ public class StudyPaperEndpointsTests : IClassFixture<GeneFlowWebApplicationFact
     public async Task RemoveStudyPaper_WithNonExistentPaper_ShouldReturnNotFound()
     {
         // Arrange
-        _factory.SetupPaperNotFound(TestStudyId, "P99999999");
+        _factory.SetupPaperNotFound(TestStudyId, "R99999999");
 
         // Act
-        var response = await _authenticatedClient.DeleteAsync($"/api/v1/studies/{TestStudyId}/papers/P99999999");
+        var response = await _authenticatedClient.DeleteAsync($"/api/v1/studies/{TestStudyId}/papers/R99999999");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);

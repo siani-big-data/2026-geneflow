@@ -13,11 +13,13 @@ using GeneFlow.ApiNet2.Domain.Subscriptions;
 using GeneFlow.ApiNet2.Domain.Subscriptions.Enumerations;
 using GeneFlow.ApiNet2.SharedKernel.Domain.Results;
 using GeneFlow.ApiNet2.SharedKernel.Infrastructure;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 using NSubstitute.ReturnsExtensions;
 
 namespace GeneFlow.ApiNet2.Tests.API.Subscriptions;
@@ -438,7 +440,32 @@ public class SubscriptionWebApplicationFactory : WebApplicationFactory<Program>
 
             services.RemoveAll<ISequenceGenerator>();
             services.AddSingleton(_ => MockSequenceGenerator);
+
+            // Replace JWT authentication with the shared TestAuthHandler so endpoints
+            // that require [Authorize] don't return 401 in integration tests.
+            services.RemoveAll<IConfigureOptions<AuthenticationOptions>>();
+            services.RemoveAll<IPostConfigureOptions<AuthenticationOptions>>();
+
+            services.Configure<AuthenticationOptions>(options =>
+            {
+                options.DefaultAuthenticateScheme = "Test";
+                options.DefaultChallengeScheme = "Test";
+                options.DefaultScheme = "Test";
+            });
+
+            services.AddAuthentication()
+                .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>("Test", _ => { });
         });
+    }
+
+    /// <summary>
+    /// Creates an authenticated HTTP client for testing.
+    /// </summary>
+    public HttpClient CreateAuthenticatedClient()
+    {
+        var client = CreateClient();
+        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Test");
+        return client;
     }
 
     /// <summary>
