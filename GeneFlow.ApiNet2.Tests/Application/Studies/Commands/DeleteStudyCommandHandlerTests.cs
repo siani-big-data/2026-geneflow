@@ -84,6 +84,34 @@ public class DeleteStudyCommandHandlerTests
         result.IsFailure.Should().BeTrue();
     }
 
+    [Fact]
+    public async Task Handle_OrgOwnedStudy_ByOwnerMember_ShouldDeleteStudy()
+    {
+        // Arrange - Org-owned study: OwnerId carries the org id (O00000007),
+        // while the creator (U00000001) is recorded as the Owner member.
+        // Deletion must be authorized by membership role, not OwnerId.
+        var creatorId = new UserId(1);
+        var orgId = new GeneFlow.ApiNet2.Domain.Orgs.OrgId(7);
+        var title = StudyTitle.Create("Org Study").Value;
+        var description = StudyDescription.Create("Org-owned study").Value;
+        var study = Study.CreateForOrg(
+            new StudyId(1), orgId, creatorId, title, description, ResearchField.Genomics).Value;
+
+        var command = new DeleteStudyCommand("S00000001", "U00000001");
+
+        _studyRepository
+            .GetByIdAsync(Arg.Any<StudyId>(), Arg.Any<CancellationToken>())
+            .Returns(study);
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        study.IsDeleted.Should().BeTrue();
+        await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
     #endregion
 
     #region Validation Failures

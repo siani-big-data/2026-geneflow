@@ -208,6 +208,31 @@ public sealed class Study : FullAuditableAggregateRoot<StudyId>
     }
     #endregion
 
+    #region Lifecycle
+    /// <summary>
+    /// Soft-deletes the study. Authorization is based on the actor's study
+    /// membership role (<see cref="StudyRole.CanDeleteStudy"/>), not on
+    /// <see cref="OwnerId"/>: for Org-owned studies <see cref="OwnerId"/>
+    /// carries the org id, while the human owner is recorded as an Owner
+    /// member. Raises <see cref="StudyDeletedEvent"/> for downstream
+    /// projectors (usage stats, activity feed).
+    /// </summary>
+    public Result Delete(UserId deletedBy)
+    {
+        var member = GetMember(deletedBy);
+        if (member is null || !member.Role.CanDeleteStudy)
+            return Result.Failure(StudyErrors.OnlyOwnerCanDelete);
+
+        if (IsDeleted)
+            return Result.Success();
+
+        SoftDelete(DateTime.UtcNow, deletedBy.Value.ToString());
+        RaiseDomainEvent(new StudyDeletedEvent(Id, deletedBy));
+
+        return Result.Success();
+    }
+    #endregion
+
     #region Status Management
     public Result ChangeStatus(StudyStatus newStatus, UserId changedBy)
     {

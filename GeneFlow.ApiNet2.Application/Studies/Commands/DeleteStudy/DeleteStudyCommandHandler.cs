@@ -38,12 +38,13 @@ public sealed class DeleteStudyCommandHandler
         if (study is null)
             return Result.Failure(StudyErrors.NotFound);
 
-        // Only owner can delete
-        if (study.OwnerId != userId)
-            return Result.Failure(StudyErrors.OnlyOwnerCanDelete);
-
-        // Soft delete
-        study.SoftDelete(DateTime.UtcNow, userId.ToString());
+        // Authorize and soft-delete via the aggregate. Authorization is based
+        // on the actor's study membership role, which works for both
+        // user-owned and org-owned studies (the human owner is an Owner member
+        // in both cases).
+        var deleteResult = study.Delete(userId);
+        if (deleteResult.IsFailure)
+            return deleteResult;
 
         // Persist
         await _unitOfWork.SaveChangesAsync(cancellationToken);
