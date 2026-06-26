@@ -10,6 +10,7 @@ import type {
   LlmProvider,
   LlmToolCallInfo,
   TraceContext,
+  StudyContext,
 } from "@/services/ai.service";
 import {profileService} from "@/services";
 import {useAuthStore} from "@/stores/auth-store";
@@ -47,6 +48,13 @@ interface AIAssistantProps {
    * with the registered tools.
    */
   traceContext?: TraceContext | null;
+  /**
+   * When provided (typically for `contextType === "study"`) the study
+   * metadata, team, papers and sequencing progress are injected as a
+   * structured preamble in front of the first user question so the agent
+   * can answer questions about the study in general.
+   */
+  studyContext?: StudyContext | null;
   /** Force a specific LLM provider (claude / deepseek / ollama). */
   provider?: LlmProvider;
 }
@@ -59,6 +67,7 @@ export function AIAssistant({
   contextId,
   permanent,
   traceContext,
+  studyContext,
   provider,
 }: AIAssistantProps) {
   const [messages, setMessages] = useState<Message[]>([
@@ -70,7 +79,9 @@ export function AIAssistant({
           ? `Hola — soy tu asistente de biología molecular. Tengo cargada la traza "${
               traceContext.name || traceContext.traceId
             }" (${traceContext.length} bp). Puedo analizar calidad, traducir, alinear, detectar variantes, buscar motifs, construir filogenias y más. ¿Qué quieres saber?`
-          : `I'm your research assistant for this ${contextType}. I can help you understand your data, suggest quality improvements, interpret results, and guide you through analysis workflows. What would you like to know?`,
+          : contextType === "study"
+            ? `Hola — soy tu asistente de investigación. Conozco el estudio "${contextTitle}": su descripción, equipo, artículos y el progreso de secuenciación. Puedes preguntarme cualquier cosa sobre el estudio en general. ¿Qué quieres saber?`
+            : `I'm your research assistant for this ${contextType}. I can help you understand your data, suggest quality improvements, interpret results, and guide you through analysis workflows. What would you like to know?`,
       timestamp: new Date(),
     },
   ]);
@@ -80,6 +91,8 @@ export function AIAssistant({
   const [serverContextId, setServerContextId] = useState<string | null>(null);
   /** Whether the trace preamble has already been sent for this conversation. */
   const traceContextSentRef = useRef(false);
+  /** Whether the study preamble has already been sent for this conversation. */
+  const studyContextSentRef = useRef(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -155,10 +168,10 @@ export function AIAssistant({
   }, [isOpen]);
 
   const studySuggestions = [
-    "Summarize the quality metrics for this study",
-    "Which samples have quality issues?",
-    "Suggest next steps for analysis",
-    "Show me collaboration insights",
+    "Resume de qué trata este estudio",
+    "¿Quién forma parte del equipo y con qué rol?",
+    "¿Cuál es el progreso de secuenciación (trazas procesadas, pendientes, fallidas)?",
+    "¿Qué artículos hay asociados al estudio?",
   ];
 
   const traceSuggestions = [
@@ -185,13 +198,17 @@ export function AIAssistant({
     setInput("");
     setIsThinking(true);
 
-    // Only inject the trace context the FIRST time we hit the backend
-    // for this conversation. Subsequent calls reuse the server-side
-    // context via contextId.
+    // Only inject the context the FIRST time we hit the backend for this
+    // conversation. Subsequent calls reuse the server-side context via
+    // contextId.
     const includeTrace =
       contextType === "trace" &&
       !!traceContext &&
       !traceContextSentRef.current;
+    const includeStudy =
+      contextType === "study" &&
+      !!studyContext &&
+      !studyContextSentRef.current;
 
     try {
       const resp = await aiService.ask({
@@ -199,9 +216,11 @@ export function AIAssistant({
         contextId: serverContextId ?? undefined,
         provider,
         traceContext: includeTrace ? traceContext : null,
+        studyContext: includeStudy ? studyContext : null,
       });
 
       if (includeTrace) traceContextSentRef.current = true;
+      if (includeStudy) studyContextSentRef.current = true;
       if (resp.contextId) setServerContextId(resp.contextId);
 
       const assistantMessage: Message = {

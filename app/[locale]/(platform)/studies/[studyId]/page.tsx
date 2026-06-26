@@ -427,12 +427,9 @@ export default function StudyDetailPage() {
             <div className="flex items-center gap-2">
               <StarButton studyId={studyId} showCount variant="outline" />
               <PinStudyButton studyId={studyId} variant="outline" />
-              {/* TODO: Re-enable when AI Assistant feature is ready */}
               <button
-                // onClick={() => setAiAssistantOpen(true)}
-                disabled
-                className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-teal to-blue-deep px-4 py-2 text-sm font-medium text-white transition-all opacity-50 cursor-not-allowed"
-                title="Coming soon"
+                onClick={() => setAiAssistantOpen(true)}
+                className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-teal to-blue-deep px-4 py-2 text-sm font-medium text-white transition-all hover:opacity-90"
               >
                 <Sparkles className="h-4 w-4" />
                 {t("aiAssistant")}
@@ -1443,9 +1440,8 @@ export default function StudyDetailPage() {
         </DialogContent>
       </Dialog>
 
-      {/* TODO: Re-enable when AI Assistant feature is ready */}
       {/* AI Assistant Chat Bubble */}
-      {/* <button
+      <button
         onClick={() => setAiAssistantOpen(!aiAssistantOpen)}
         className={cn(
           "fixed bottom-6 z-40 flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl",
@@ -1456,16 +1452,49 @@ export default function StudyDetailPage() {
         aria-label={aiAssistantOpen ? "Close AI Assistant" : "Open AI Assistant"}
       >
         {aiAssistantOpen ? <X className="h-6 w-6" /> : <Sparkles className="h-6 w-6" />}
-      </button> */}
+      </button>
 
       {/* AI Assistant */}
-      {/* <AIAssistant
+      <AIAssistant
         isOpen={aiAssistantOpen}
         onClose={() => setAiAssistantOpen(false)}
         contextType="study"
         contextTitle={study.title}
         contextId={study.id}
-      /> */}
+        studyContext={{
+          studyId: study.id,
+          title: study.title,
+          description: study.description,
+          researchField: study.researchFieldName,
+          status: study.statusName,
+          institution: study.institution,
+          principalInvestigator: study.principalInvestigator,
+          tags: study.tags,
+          createdAt: study.createdAt,
+          readmeMarkdown: study.readmeMarkdown,
+          memberCount: members?.length ?? study.members?.length,
+          members: (members ?? study.members)?.map((m) => ({
+            name: m.userName,
+            role: m.roleName,
+          })),
+          paperCount: papers?.length ?? study.papers?.length,
+          papers: (papers ?? study.papers)?.map((p) => ({
+            title: p.title,
+            authors: p.authors,
+            year: p.publicationYear,
+          })),
+          traceCounts: traceCounts
+            ? {
+                total: traceCounts.total,
+                processed: traceCounts.processed,
+                processing: traceCounts.processing,
+                failed: traceCounts.failed,
+              }
+            : undefined,
+          viewsCount: stats?.viewsCount,
+          starsCount: stats?.starsCount,
+        }}
+      />
     </div>
   );
 }

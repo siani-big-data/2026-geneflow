@@ -48,6 +48,34 @@ export interface TraceContext {
   }>;
 }
 
+/** Study-level data passed to the agent so it can answer questions about
+ * the study as a whole (metadata, team, papers, trace counts...). */
+export interface StudyContext {
+  studyId: string;
+  title: string;
+  description?: string;
+  researchField?: string;
+  status?: string;
+  institution?: string;
+  principalInvestigator?: string;
+  tags?: string[];
+  memberCount?: number;
+  members?: Array<{ name?: string; role?: string }>;
+  paperCount?: number;
+  papers?: Array<{ title: string; authors?: string; year?: number }>;
+  traceCounts?: {
+    total?: number;
+    processed?: number;
+    processing?: number;
+    failed?: number;
+  };
+  viewsCount?: number;
+  starsCount?: number;
+  createdAt?: string;
+  /** Optional README markdown so the agent can summarise the study's notes. */
+  readmeMarkdown?: string;
+}
+
 export interface LlmAskRequest {
   question: string;
   contextId?: string;
@@ -56,6 +84,9 @@ export interface LlmAskRequest {
    * question describing the active trace. The backend will see one user
    * message containing both the trace block and the user's question. */
   traceContext?: TraceContext | null;
+  /** When provided, the service prepends a structured preamble describing
+   * the study so the agent can answer questions about it in general. */
+  studyContext?: StudyContext | null;
 }
 
 export interface LlmToolCallInfo {
@@ -210,6 +241,73 @@ export function buildTracePreamble(ctx: TraceContext): string {
   return lines.join("\n");
 }
 
+/**
+ * Build the structured study preamble that goes in front of the user's
+ * first question so the agent can answer questions about the study in
+ * general (metadata, team, papers, sequencing progress...).
+ */
+export function buildStudyPreamble(ctx: StudyContext): string {
+  const lines: string[] = [];
+  lines.push("=== STUDY CONTEXT (the study the user is viewing) ===");
+  lines.push(`studyId: ${ctx.studyId}`);
+  lines.push(`title: ${ctx.title}`);
+  if (ctx.description) lines.push(`description: ${ctx.description}`);
+  if (ctx.researchField) lines.push(`researchField: ${ctx.researchField}`);
+  if (ctx.status) lines.push(`status: ${ctx.status}`);
+  if (ctx.institution) lines.push(`institution: ${ctx.institution}`);
+  if (ctx.principalInvestigator)
+    lines.push(`principalInvestigator: ${ctx.principalInvestigator}`);
+  if (ctx.tags && ctx.tags.length > 0)
+    lines.push(`tags: ${ctx.tags.join(", ")}`);
+  if (ctx.createdAt) lines.push(`createdAt: ${ctx.createdAt}`);
+  if (typeof ctx.viewsCount === "number") lines.push(`views: ${ctx.viewsCount}`);
+  if (typeof ctx.starsCount === "number") lines.push(`stars: ${ctx.starsCount}`);
+
+  if (typeof ctx.memberCount === "number")
+    lines.push(`memberCount: ${ctx.memberCount}`);
+  if (ctx.members && ctx.members.length > 0) {
+    lines.push("members:");
+    for (const m of ctx.members.slice(0, 25)) {
+      lines.push(`  - ${m.name ?? "(unknown)"}${m.role ? ` (${m.role})` : ""}`);
+    }
+  }
+
+  if (ctx.traceCounts) {
+    const tc = ctx.traceCounts;
+    const parts: string[] = [];
+    if (typeof tc.total === "number") parts.push(`total=${tc.total}`);
+    if (typeof tc.processed === "number") parts.push(`processed=${tc.processed}`);
+    if (typeof tc.processing === "number")
+      parts.push(`processing=${tc.processing}`);
+    if (typeof tc.failed === "number") parts.push(`failed=${tc.failed}`);
+    if (parts.length > 0) lines.push(`traces: ${parts.join(", ")}`);
+  }
+
+  if (typeof ctx.paperCount === "number")
+    lines.push(`paperCount: ${ctx.paperCount}`);
+  if (ctx.papers && ctx.papers.length > 0) {
+    lines.push("papers:");
+    for (const p of ctx.papers.slice(0, 15)) {
+      lines.push(
+        `  - "${p.title}"${p.authors ? ` — ${p.authors}` : ""}` +
+          (p.year ? ` (${p.year})` : "")
+      );
+    }
+  }
+
+  if (ctx.readmeMarkdown) {
+    const readme =
+      ctx.readmeMarkdown.length > 4000
+        ? `${ctx.readmeMarkdown.slice(0, 4000)}\n…(truncated)`
+        : ctx.readmeMarkdown;
+    lines.push("readme:");
+    lines.push(readme);
+  }
+
+  lines.push("=== END STUDY CONTEXT ===");
+  return lines.join("\n");
+}
+
 // =============================================================================
 // Public service
 // =============================================================================
@@ -223,9 +321,14 @@ export const aiService = {
    * subsequent call to keep the conversation alive.
    */
   async ask(req: LlmAskRequest): Promise<LlmAskResponse> {
-    const userMessage = req.traceContext
-      ? `${buildTracePreamble(req.traceContext)}\n\nUSER QUESTION:\n${req.question}`
-      : req.question;
+    const preambles: string[] = [];
+    if (req.studyContext) preambles.push(buildStudyPreamble(req.studyContext));
+    if (req.traceContext) preambles.push(buildTracePreamble(req.traceContext));
+
+    const userMessage =
+      preambles.length > 0
+        ? `${preambles.join("\n\n")}\n\nUSER QUESTION:\n${req.question}`
+        : req.question;
 
     return aiFetch<LlmAskResponse>("/llm/ask", {
       method: "POST",
