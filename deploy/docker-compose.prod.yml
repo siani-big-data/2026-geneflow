@@ -1,0 +1,231 @@
+# =============================================================================
+# GeneFlow - Production stack (Hetzner)
+# =============================================================================
+# Pull-only: every image comes from GHCR. CI pushes new images on each push to
+# master; the per-repo CD workflow then SSHes here and runs:
+#     docker compose pull <service> && docker compose up -d <service>
+#
+# Services & their repos:
+#   api       -> geneflow-app/geneflow-backend   (.NET 8)
+#   frontend  -> geneflow-app/geneflow-frontend  (Next.js 16)
+#   ai        -> geneflow-app/geneflow-ai        (Python)
+#   worker    -> geneflow-app/geneflow-analysis  (Python, trace processing)
+#   datalake  -> geneflow-app/geneflow-datalake  (Python, event store)
+#
+# Usage on the host:
+#   cd /opt/geneflow
+#   cp .env.example .env   # then fill in secrets
+#   docker compose pull && docker compose up -d
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # PostgreSQL (datamart)
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: geneflow_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-geneflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:-geneflow_db}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-geneflow} -d ${POSTGRES_DB:-geneflow_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [geneflow]
+
+  # ---------------------------------------------------------------------------
+  # Redis (event bus + cache)
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: geneflow_redis
+    restart: unless-stopped
+    command: >
+      redis-server --appendonly yes --appendfsync everysec
+      --maxmemory 512mb --maxmemory-policy noeviction
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [geneflow]
+
+  # ---------------------------------------------------------------------------
+  # .NET API  (geneflow-backend)
+  # ---------------------------------------------------------------------------
+  api:
+    image: ghcr.io/geneflow-app/geneflow-backend:${BACKEND_TAG:-latest}
+    container_name: geneflow_api
+    restart: unless-stopped
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:5145
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=${POSTGRES_DB:-geneflow_db};Username=${POSTGRES_USER:-geneflow};Password=${POSTGRES_PASSWORD};Timeout=60;Command Timeout=120"
+      Redis__ConnectionString: "redis:6379"
+      Jwt__Secret: ${JWT_SECRET_KEY:?JWT_SECRET_KEY is required}
+      Jwt__Issuer: GeneFlow.Api
+      Jwt__Audience: GeneFlow.Client
+      TwoFactor__EncryptionKey: ${TWOFACTOR_ENCRYPTION_KEY:?TWOFACTOR_ENCRYPTION_KEY is required}
+      Worker__ApiKey: ${WORKER_API_KEY:?WORKER_API_KEY is required}
+      Email__SmtpHost: ${SMTP_HOST:-smtp.resend.com}
+      Email__SmtpPort: ${SMTP_PORT:-587}
+      Email__SmtpUsername: ${SMTP_USERNAME:-resend}
+      Email__SmtpPassword: ${SMTP_PASSWORD:-}
+      Email__FromEmail: ${SMTP_FROM_EMAIL:-noreply@geneflow.app}
+      Email__FromName: GeneFlow
+      Email__UseSsl: "true"
+      Email__BaseUrl: ${FRONTEND_URL:-https://app.geneflow.app}
+      OAuth__Google__ClientId: ${GOOGLE_CLIENT_ID:-}
+      OAuth__Google__ClientSecret: ${GOOGLE_CLIENT_SECRET:-}
+      OAuth__GitHub__ClientId: ${GITHUB_CLIENT_ID:-}
+      OAuth__GitHub__ClientSecret: ${GITHUB_CLIENT_SECRET:-}
+      Stripe__SecretKey: ${STRIPE_SECRET_KEY:-}
+      Storage__BasePath: /app/uploads
+      Cors__AllowedOrigins__0: ${FRONTEND_URL:-https://app.geneflow.app}
+    volumes:
+      - traces-data:/app/uploads
+    expose: ["5145"]
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:5145/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks: [geneflow]
+
+  # ---------------------------------------------------------------------------
+  # Frontend  (geneflow-frontend, Next.js standalone)
+  # ---------------------------------------------------------------------------
+  frontend:
+    image: ghcr.io/geneflow-app/geneflow-frontend:${FRONTEND_TAG:-latest}
+    container_name: geneflow_frontend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOSTNAME: "0.0.0.0"
+    expose: ["3000"]
+    networks: [geneflow]
+
+  # ---------------------------------------------------------------------------
+  # AI service  (geneflow-ai)
+  # ---------------------------------------------------------------------------
+  ai:
+    image: ghcr.io/geneflow-app/geneflow-ai:${AI_TAG:-latest}
+    container_name: geneflow_ai
+    restart: unless-stopped
+    depends_on:
+      redis: { condition: service_healthy }
+    environment:
+      AI_REDIS_URL: redis://redis:6379
+      AI_REDIS_CONSUMER_GROUP: ai-consumers
+      AI_REDIS_CONSUMER_NAME: ai-1
+      AI_API_HOST: 0.0.0.0
+      AI_API_PORT: "8090"
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_LLM_PROVIDER: ${AI_LLM_PROVIDER:-deepseek}
+      AI_DEEPSEEK_API_KEY: ${AI_DEEPSEEK_API_KEY:-}
+      AI_CLAUDE_API_KEY: ${AI_CLAUDE_API_KEY:-}
+      AI_BLAST_EMAIL: ${NCBI_EMAIL:-}
+      NCBI_EMAIL: ${NCBI_EMAIL:-}
+      NCBI_API_KEY_1: ${NCBI_API_KEY_1:-}
+      AI_EVENTBUS_ENABLED: "true"
+      AI_EVENTBUS_STREAM_PREFIX: geneflow:events
+      AI_SUBSCRIBED_CATEGORIES: '["traces","alignments"]'
+      AI_LOG_LEVEL: INFO
+    volumes:
+      - ai-data:/app/data
+    expose: ["8090"]
+    networks: [geneflow]
+
+  # ---------------------------------------------------------------------------
+  # Analysis worker  (geneflow-analysis)
+  # ---------------------------------------------------------------------------
+  worker:
+    image: ghcr.io/geneflow-app/geneflow-analysis:${ANALYSIS_TAG:-latest}
+    container_name: geneflow_worker
+    restart: unless-stopped
+    depends_on:
+      redis: { condition: service_healthy }
+      api: { condition: service_healthy }
+    environment:
+      WORKER_REDIS_URL: redis://redis:6379
+      WORKER_REDIS_CONSUMER_GROUP: geneflow-analysis-consumers
+      WORKER_REDIS_CONSUMER_NAME: analysis-1
+      WORKER_STORAGE_PROVIDER: local
+      WORKER_LOCAL_STORAGE_PATH: /app/data/analysis
+      WORKER_API_HOST: 0.0.0.0
+      WORKER_API_PORT: "8080"
+      WORKER_LOG_LEVEL: INFO
+    volumes:
+      - traces-data:/app/data/analysis
+    networks: [geneflow]
+
+  # ---------------------------------------------------------------------------
+  # Datalake  (geneflow-datalake, event store / source of truth)
+  # ---------------------------------------------------------------------------
+  datalake:
+    image: ghcr.io/geneflow-app/geneflow-datalake:${DATALAKE_TAG:-latest}
+    container_name: geneflow_datalake
+    restart: unless-stopped
+    depends_on:
+      redis: { condition: service_healthy }
+    environment:
+      DATALAKE_REDIS_URL: redis://redis:6379
+      DATALAKE_REDIS_CONSUMER_GROUP: geneflow-datalake-consumers
+      DATALAKE_REDIS_CONSUMER_NAME: geneflow-datalake-1
+      DATALAKE_STORAGE_PROVIDER: local
+      DATALAKE_LOCAL_STORAGE_PATH: /app/data/datalake
+      DATALAKE_WAL_PATH: /app/data/wal
+      DATALAKE_DLQ_PATH: /app/data/dlq
+      DATALAKE_API_HOST: 0.0.0.0
+      DATALAKE_API_PORT: "8082"
+      DATALAKE_API_KEY: ${DATALAKE_API_KEY:-}
+    volumes:
+      - datalake-data:/app/data
+    networks: [geneflow]
+
+  # ---------------------------------------------------------------------------
+  # Caddy (reverse proxy + automatic TLS)
+  # ---------------------------------------------------------------------------
+  caddy:
+    image: caddy:2-alpine
+    container_name: geneflow_caddy
+    restart: unless-stopped
+    depends_on: [api, frontend]
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@geneflow.app}
+      API_DOMAIN: ${API_DOMAIN:-api.geneflow.app}
+      FRONTEND_DOMAIN: ${FRONTEND_DOMAIN:-app.geneflow.app}
+    volumes:
+      - ./config/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks: [geneflow]
+
+volumes:
+  postgres-data:
+  redis-data:
+  traces-data:
+  datalake-data:
+  ai-data:
+  caddy-data:
+  caddy-config:
+
+networks:
+  geneflow:
+    driver: bridge

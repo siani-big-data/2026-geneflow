@@ -1,0 +1,4 @@
+# Keep files that run on the Linux host as LF, regardless of the dev OS,
+# so the deploy bootstrap script doesn't break with CRLF line endings.
+*.sh text eol=lf
+bootstrap.sh text eol=lf
