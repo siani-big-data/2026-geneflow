@@ -447,11 +447,8 @@ export default function LandingPage() {
           </p>
           <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-6">
             {[
-              "Stanford Medicine",
-              "Broad Institute",
-              "NIH",
-              "EMBL",
-              "Sanger Institute",
+              "ULPGC",
+              "SIANI",
             ].map((name) => (
               <div
                 key={name}
