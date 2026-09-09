@@ -1,0 +1,40 @@
+# =============================================================================
+# GeneFlow - Main Docker Compose Orchestrator
+# =============================================================================
+#
+# Usage:
+#   # Start everything (core + all services)
+#   docker compose up -d
+#
+#   # Start only core infrastructure
+#   docker compose up -d redis postgres minio
+#
+#   # Start core + admin tools
+#   docker compose --profile admin up -d
+#
+#   # Start specific modules
+#   docker compose -f docker-compose.yml -f datalake/docker-compose.datalake.yml up -d
+#
+#   # View logs
+#   docker compose logs -f
+#
+#   # Stop everything
+#   docker compose down
+#
+#   # Stop and remove volumes (CAUTION: deletes data)
+#   docker compose down -v
+#
+# =============================================================================
+
+include:
+  - core/docker-compose.core.yml
+
+# Note: Additional modules can be started separately or included here
+#
+# To include all modules by default, uncomment:
+# include:
+#   - core/docker-compose.core.yml
+#   - apinet/docker-compose.apinet.yml
+#   - datalake/docker-compose.datalake.yml
+#   - ai/docker-compose.ai.yml
+#   - analysis/docker-compose.analysis.yml

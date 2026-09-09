@@ -1,0 +1,50 @@
+# =============================================================================
+# GeneFlow API .NET
+# =============================================================================
+# Main REST API built with ASP.NET Core
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # API .NET - Main Application
+  # ---------------------------------------------------------------------------
+  api:
+    build:
+      context: ../../geneflow-backend/GeneFlow.ApiNet2
+      dockerfile: GeneFlow.ApiNet2.API/Dockerfile
+    container_name: geneflow-apinet-api
+    ports:
+      - "${APINET_PORT:-5286}:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${APINET_ENVIRONMENT:-Development}
+      ASPNETCORE_URLS: http://+:8080
+      # Database
+      ConnectionStrings__DefaultConnection: Host=geneflow-core-postgres;Database=${POSTGRES_DB:-geneflow};Username=${POSTGRES_USER:-geneflow};Password=${POSTGRES_PASSWORD:-geneflow}
+      # Redis
+      Redis__ConnectionString: geneflow-core-redis:6379
+      # MinIO
+      Storage__MinIO__Endpoint: geneflow-core-minio:9000
+      Storage__MinIO__AccessKey: ${MINIO_ROOT_USER:-geneflow}
+      Storage__MinIO__SecretKey: ${MINIO_ROOT_PASSWORD:-geneflow123}
+      Storage__MinIO__Bucket: ${MINIO_BUCKET:-geneflow}
+      # Email (Mailpit for development)
+      Email__SmtpHost: geneflow-core-mailpit
+      Email__SmtpPort: 1025
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - geneflow-network
+
+networks:
+  geneflow-network:
+    external: true

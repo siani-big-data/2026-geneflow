@@ -1,0 +1,52 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GeneFlow.ApiNet2.SharedKernel", "GeneFlow.ApiNet2.SharedKernel\GeneFlow.ApiNet2.SharedKernel.csproj", "{1AE89891-2D17-4DAC-9FE4-30CA8192F190}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GeneFlow.ApiNet2.Domain", "GeneFlow.ApiNet2.Domain\GeneFlow.ApiNet2.Domain.csproj", "{A9836A02-931B-4854-A17E-FED2D2CCB62F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GeneFlow.ApiNet2.Application", "GeneFlow.ApiNet2.Application\GeneFlow.ApiNet2.Application.csproj", "{2E434DEE-64D1-4679-AA73-AD3775338AF4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GeneFlow.ApiNet2.Infrastructure", "GeneFlow.ApiNet2.Infrastructure\GeneFlow.ApiNet2.Infrastructure.csproj", "{FD6D9EE0-F09A-4250-B451-74AD3A2B1F15}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GeneFlow.ApiNet2.API", "GeneFlow.ApiNet2.API\GeneFlow.ApiNet2.API.csproj", "{1E73ACB2-39E5-49B3-B52B-D44C81E85080}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GeneFlow.ApiNet2.Tests", "GeneFlow.ApiNet2.Tests\GeneFlow.ApiNet2.Tests.csproj", "{E6538541-190A-492D-978C-C787F765AB80}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1AE89891-2D17-4DAC-9FE4-30CA8192F190}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1AE89891-2D17-4DAC-9FE4-30CA8192F190}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1AE89891-2D17-4DAC-9FE4-30CA8192F190}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1AE89891-2D17-4DAC-9FE4-30CA8192F190}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A9836A02-931B-4854-A17E-FED2D2CCB62F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A9836A02-931B-4854-A17E-FED2D2CCB62F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A9836A02-931B-4854-A17E-FED2D2CCB62F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A9836A02-931B-4854-A17E-FED2D2CCB62F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2E434DEE-64D1-4679-AA73-AD3775338AF4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2E434DEE-64D1-4679-AA73-AD3775338AF4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2E434DEE-64D1-4679-AA73-AD3775338AF4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2E434DEE-64D1-4679-AA73-AD3775338AF4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FD6D9EE0-F09A-4250-B451-74AD3A2B1F15}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FD6D9EE0-F09A-4250-B451-74AD3A2B1F15}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FD6D9EE0-F09A-4250-B451-74AD3A2B1F15}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FD6D9EE0-F09A-4250-B451-74AD3A2B1F15}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1E73ACB2-39E5-49B3-B52B-D44C81E85080}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1E73ACB2-39E5-49B3-B52B-D44C81E85080}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1E73ACB2-39E5-49B3-B52B-D44C81E85080}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1E73ACB2-39E5-49B3-B52B-D44C81E85080}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E6538541-190A-492D-978C-C787F765AB80}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E6538541-190A-492D-978C-C787F765AB80}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E6538541-190A-492D-978C-C787F765AB80}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E6538541-190A-492D-978C-C787F765AB80}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,49 @@
+Compilando...
+C:\develop\geneflow\geneflow-backend\GeneFlow.ApiNet2\GeneFlow.ApiNet2.API\GeneFlow.ApiNet2.API.csproj : warning NU1603: GeneFlow.ApiNet2.Infrastructure depends on Stripe.net (>= 45.15.0) but Stripe.net 45.15.0 was not found. Stripe.net 46.0.0 was resolved instead.
+C:\develop\geneflow\geneflow-backend\GeneFlow.ApiNet2\GeneFlow.ApiNet2.Infrastructure\GeneFlow.ApiNet2.Infrastructure.csproj : warning NU1603: GeneFlow.ApiNet2.Infrastructure depends on Stripe.net (>= 45.15.0) but Stripe.net 45.15.0 was not found. Stripe.net 46.0.0 was resolved instead. [C:\develop\geneflow\geneflow-backend\GeneFlow.ApiNet2\GeneFlow.ApiNet2.API\GeneFlow.ApiNet2.API.csproj]
+C:\develop\geneflow\geneflow-backend\GeneFlow.ApiNet2\GeneFlow.ApiNet2.Infrastructure\GeneFlow.ApiNet2.Infrastructure.csproj : warning NU1902: Package 'MailKit' 4.8.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-9j88-vvj5-vhgr [C:\develop\geneflow\geneflow-backend\GeneFlow.ApiNet2\GeneFlow.ApiNet2.API\GeneFlow.ApiNet2.API.csproj]
+C:\develop\geneflow\geneflow-backend\GeneFlow.ApiNet2\GeneFlow.ApiNet2.API\GeneFlow.ApiNet2.API.csproj : warning NU1603: GeneFlow.ApiNet2.Infrastructure depends on Stripe.net (>= 45.15.0) but Stripe.net 45.15.0 was not found. Stripe.net 46.0.0 was resolved instead.
+C:\develop\geneflow\geneflow-backend\GeneFlow.ApiNet2\GeneFlow.ApiNet2.Infrastructure\GeneFlow.ApiNet2.Infrastructure.csproj : warning NU1603: GeneFlow.ApiNet2.Infrastructure depends on Stripe.net (>= 45.15.0) but Stripe.net 45.15.0 was not found. Stripe.net 46.0.0 was resolved instead.
+C:\develop\geneflow\geneflow-backend\GeneFlow.ApiNet2\GeneFlow.ApiNet2.Infrastructure\GeneFlow.ApiNet2.Infrastructure.csproj : warning NU1902: Package 'MailKit' 4.8.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-9j88-vvj5-vhgr
+info: Program[0]
+      Applying database migrations...
+warn: Microsoft.EntityFrameworkCore.Model.Validation[10620]
+      The property 'Study.Tags' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+info: Program[0]
+      UserContext migrations applied
+info: Program[0]
+      ProfileContext migrations applied
+info: Program[0]
+      PlanContext migrations applied
+info: Program[0]
+      SubscriptionContext migrations applied
+info: GeneFlow.ApiNet2.Infrastructure.Plans.Services.PlanSeeder[0]
+      Plans already exist, skipping seed
+info: Program[0]
+      Database initialization completed successfully
+info: GeneFlow.ApiNet2.Infrastructure.Usage.Services.UsageStatsEventProcessor[0]
+      Usage Stats Event Processor starting...
+info: GeneFlow.ApiNet2.Infrastructure.Analysis.AnalysisEventProcessor[0]
+      Analysis Event Processor starting...
+info: GeneFlow.ApiNet2.Infrastructure.Events.RedisEventBusSubscriber[0]
+      Starting subscription to stream geneflow:events:studies with consumer group usage-stats-processor
+info: GeneFlow.ApiNet2.Infrastructure.Events.RedisEventBusSubscriber[0]
+      Starting subscription to stream geneflow:events:alignments with consumer group usage-stats-processor
+info: GeneFlow.ApiNet2.Infrastructure.Events.RedisEventBusSubscriber[0]
+      Starting subscription to stream geneflow:events:traces with consumer group usage-stats-processor
+info: GeneFlow.ApiNet2.Infrastructure.Events.RedisEventBusSubscriber[0]
+      Starting subscription to stream geneflow:events:traces with consumer group analysis-event-processor
+info: GeneFlow.ApiNet2.Infrastructure.Events.RedisEventBusSubscriber[0]
+      Starting subscription to stream geneflow:events:alignments with consumer group analysis-event-processor
+info: GeneFlow.ApiNet2.Infrastructure.Events.RedisEventBusSubscriber[0]
+      Starting subscription to stream geneflow:events:analysis with consumer group analysis-event-processor
+info: Microsoft.Hosting.Lifetime[14]
+      Now listening on: http://localhost:5145
+info: Microsoft.Hosting.Lifetime[0]
+      Application started. Press Ctrl+C to shut down.
+info: Microsoft.Hosting.Lifetime[0]
+      Hosting environment: Development
+info: Microsoft.Hosting.Lifetime[0]
+      Content root path: C:\develop\geneflow\geneflow-backend\GeneFlow.ApiNet2\GeneFlow.ApiNet2.API
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]
+      Failed to determine the https port for redirect.

@@ -1,0 +1,64 @@
+# =============================================================================
+# GeneFlow AI Workers
+# =============================================================================
+# AI-powered processing workers (embeddings, analysis, etc.)
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # AI Worker - Main Processing
+  # ---------------------------------------------------------------------------
+  worker:
+    build:
+      context: ../../geneflow-ai
+      dockerfile: Dockerfile
+    container_name: geneflow-ai-worker
+    environment:
+      # Redis
+      GENEFLOW_REDIS_URL: redis://geneflow-core-redis:6379
+      GENEFLOW_REDIS_STREAM: ai:processing
+      GENEFLOW_REDIS_CONSUMER_GROUP: ai-workers
+      GENEFLOW_REDIS_CONSUMER_NAME: worker-1
+      # API
+      GENEFLOW_API_BASE_URL: http://geneflow-apinet-api:8080
+      # MinIO
+      GENEFLOW_MINIO_ENDPOINT: http://geneflow-core-minio:9000
+      GENEFLOW_MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-geneflow}
+      GENEFLOW_MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-geneflow123}
+      # Logging
+      GENEFLOW_LOG_LEVEL: INFO
+    volumes:
+      - geneflow-ai-temp:/tmp/ai-processing
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      replicas: ${AI_WORKER_REPLICAS:-1}
+      resources:
+        limits:
+          memory: 1G
+    networks:
+      - geneflow-network
+
+  # ---------------------------------------------------------------------------
+  # Qdrant - Vector Database (Optional)
+  # ---------------------------------------------------------------------------
+  # qdrant:
+  #   image: qdrant/qdrant:latest
+  #   container_name: geneflow-ai-qdrant
+  #   ports:
+  #     - "6333:6333"
+  #   volumes:
+  #     - geneflow-ai-qdrant:/qdrant/storage
+  #   restart: unless-stopped
+  #   networks:
+  #     - geneflow-network
+
+volumes:
+  geneflow-ai-temp:
+  # geneflow-ai-qdrant:
+
+networks:
+  geneflow-network:
+    external: true

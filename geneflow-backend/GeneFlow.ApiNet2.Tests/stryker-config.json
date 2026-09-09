@@ -1,0 +1,19 @@
+{
+  "stryker-config": {
+    "project": "GeneFlow.ApiNet2.Domain.csproj",
+    "test-projects": ["GeneFlow.ApiNet2.Tests.csproj"],
+    "mutation-level": "Standard",
+    "reporters": ["html", "json", "progress"],
+    "thresholds": {
+      "high": 80,
+      "low": 60,
+      "break": 50
+    },
+    "mutate": [
+      "!**/Migrations/**",
+      "!**/obj/**",
+      "!**/bin/**"
+    ],
+    "concurrency": 4
+  }
+}

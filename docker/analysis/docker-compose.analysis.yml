@@ -1,0 +1,102 @@
+# =============================================================================
+# GeneFlow Analysis Workers
+# =============================================================================
+# Trace processing, alignments, quality analysis
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # Trace Worker - Trace File Processing
+  # ---------------------------------------------------------------------------
+  trace-worker:
+    build:
+      context: ../../geneflow-backend/GeneFlow.ApiNet/python-worker
+      dockerfile: Dockerfile
+    container_name: geneflow-analysis-trace
+    environment:
+      # Redis
+      GENEFLOW_REDIS_URL: redis://geneflow-core-redis:6379
+      GENEFLOW_REDIS_STREAM: traces:processing
+      GENEFLOW_REDIS_CONSUMER_GROUP: trace-workers
+      GENEFLOW_REDIS_CONSUMER_NAME: worker-1
+      # API
+      GENEFLOW_API_BASE_URL: http://geneflow-apinet-api:8080
+      GENEFLOW_API_TIMEOUT: 30
+      # Storage
+      GENEFLOW_STORAGE_PROVIDER: http
+      # Logging
+      GENEFLOW_LOG_LEVEL: INFO
+      GENEFLOW_LOG_FORMAT: json
+    volumes:
+      - geneflow-analysis-temp:/tmp/trace-processing
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      replicas: ${ANALYSIS_WORKER_REPLICAS:-1}
+      resources:
+        limits:
+          memory: 512M
+    networks:
+      - geneflow-network
+
+  # ---------------------------------------------------------------------------
+  # Alignment Worker - Sequence Alignment Processing
+  # ---------------------------------------------------------------------------
+  alignment-worker:
+    build:
+      context: ../../geneflow-analysis
+      dockerfile: Dockerfile
+    container_name: geneflow-analysis-alignment
+    environment:
+      # Redis
+      GENEFLOW_REDIS_URL: redis://geneflow-core-redis:6379
+      GENEFLOW_REDIS_STREAM: alignments:processing
+      GENEFLOW_REDIS_CONSUMER_GROUP: alignment-workers
+      GENEFLOW_REDIS_CONSUMER_NAME: worker-1
+      # API
+      GENEFLOW_API_BASE_URL: http://geneflow-apinet-api:8080
+      # MinIO
+      GENEFLOW_MINIO_ENDPOINT: http://geneflow-core-minio:9000
+      GENEFLOW_MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-geneflow}
+      GENEFLOW_MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-geneflow123}
+      # Logging
+      GENEFLOW_LOG_LEVEL: INFO
+    volumes:
+      - geneflow-analysis-temp:/tmp/alignment-processing
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    networks:
+      - geneflow-network
+
+  # ---------------------------------------------------------------------------
+  # BLAST Worker - Sequence Search (Optional)
+  # ---------------------------------------------------------------------------
+  # blast-worker:
+  #   build:
+  #     context: ../../geneflow-blast
+  #     dockerfile: Dockerfile
+  #   container_name: geneflow-analysis-blast
+  #   environment:
+  #     GENEFLOW_REDIS_URL: redis://geneflow-core-redis:6379
+  #     GENEFLOW_REDIS_STREAM: blast:processing
+  #   volumes:
+  #     - geneflow-blast-db:/blast/db
+  #   restart: unless-stopped
+  #   networks:
+  #     - geneflow-network
+
+volumes:
+  geneflow-analysis-temp:
+  # geneflow-blast-db:
+
+networks:
+  geneflow-network:
+    external: true

@@ -1,0 +1,9 @@
+# Development overrides - mounts source code for hot reload
+services:
+  analysis:
+    user: root
+    volumes:
+      - ./data:/app/data
+      - ./src:/app/src:ro
+    entrypoint: ["sh", "-c"]
+    command: ["uv pip install --python /app/.venv/bin/python minio && /app/.venv/bin/python -m src.main"]

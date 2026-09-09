@@ -1,302 +1,123 @@
 <div align="center">
 
-```
+<pre>
  ██████╗ ███████╗███╗   ██╗███████╗███████╗██╗      ██████╗ ██╗    ██╗
 ██╔════╝ ██╔════╝████╗  ██║██╔════╝██╔════╝██║     ██╔═══██╗██║    ██║
 ██║  ███╗█████╗  ██╔██╗ ██║█████╗  █████╗  ██║     ██║   ██║██║ █╗ ██║
 ██║   ██║██╔══╝  ██║╚██╗██║██╔══╝  ██╔══╝  ██║     ██║   ██║██║███╗██║
 ╚██████╔╝███████╗██║ ╚████║███████╗██║     ███████╗╚██████╔╝╚███╔███╔╝
  ╚═════╝ ╚══════╝╚═╝  ╚═══╝╚══════╝╚═╝     ╚══════╝ ╚═════╝  ╚══╝╚══╝
-        ███████╗██████╗  ██████╗ ███╗   ██╗████████╗███████╗███╗   ██╗██████╗
-        ██╔════╝██╔══██╗██╔═══██╗████╗  ██║╚══██╔══╝██╔════╝████╗  ██║██╔══██╗
-        █████╗  ██████╔╝██║   ██║██╔██╗ ██║   ██║   █████╗  ██╔██╗ ██║██║  ██║
-        ██╔══╝  ██╔══██╗██║   ██║██║╚██╗██║   ██║   ██╔══╝  ██║╚██╗██║██║  ██║
-        ██║     ██║  ██║╚██████╔╝██║ ╚████║   ██║   ███████╗██║ ╚████║██████╔╝
-        ╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝   ╚═╝   ╚══════╝╚═╝  ╚═══╝╚═════╝
-```
+</pre>
 
-**Modern Bioinformatics Platform for the GeneFlow Ecosystem**
+**Plataforma SaaS distribuida y orientada a eventos para el análisis de secuencias genéticas Sanger**
 
-[![Next.js](https://img.shields.io/badge/Next.js-16.2.1-000000?logo=next.js&logoColor=white)](https://nextjs.org/)
-[![React](https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=white)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-06b6d4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
-[![License](https://img.shields.io/badge/License-Proprietary-red)]()
+[![Tech Stack](https://skillicons.dev/icons?i=dotnet,cs,nextjs,react,ts,tailwind,python,fastapi,pytorch,postgres,redis,docker)](https://skillicons.dev)
 
 </div>
 
 ---
 
-GeneFlow Frontend is the **web interface** for the GeneFlow platform — a SaaS bioinformatics solution for genomic study management, trace visualization, pipeline orchestration, and real-time analysis dashboards.
+## 🧬 Sobre el proyecto
+
+**GeneFlow** es una plataforma web colaborativa para el análisis de secuencias genéticas obtenidas mediante **secuenciación Sanger**. Reúne en un único entorno accesible desde el navegador la visualización interactiva de cromatogramas, la gestión colaborativa de estudios, un motor de análisis bioinformático extensible y capacidades de inteligencia artificial, manteniendo el diseño centrado en el usuario como criterio principal.
+
+El análisis de datos Sanger sigue dependiendo, en buena medida, de aplicaciones de escritorio antiguas, monousuario y sin trabajo colaborativo. GeneFlow cubre ese hueco llevando al navegador un flujo de trabajo completo (carga, visualización, análisis, colaboración y clasificación automática) sobre una arquitectura de ingeniería del software contemporánea.
+
+Bajo la interfaz, GeneFlow es un **sistema distribuido y orientado a eventos** formado por cinco servicios independientes que cooperan a través de un bus de eventos (**Redis Streams**) y un **registro inmutable de eventos** como fuente única de verdad, siguiendo los patrones **CQRS** y **Event Sourcing**.
+
+## 🏗️ Arquitectura
 
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                           GeneFlow Frontend                              │
-├─────────────────────────────────────────────────────────────────────────┤
-│  Dashboard  │  Studies  │  Traces  │  Pipelines  │  Analysis  │  Discover│
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                          │
-│   ┌──────────────┐  ┌──────────────┐  ┌──────────────┐                  │
-│   │   Studies    │  │    Traces    │  │  Pipelines   │                  │
-│   │  Management  │  │   Viewer     │  │  Execution   │                  │
-│   └──────┬───────┘  └──────┬───────┘  └──────┬───────┘                  │
-│          │                 │                 │                           │
-│          └─────────────────┴─────────────────┘                           │
-│                            │                                             │
-│                            ▼                                             │
-│                    ┌───────────────┐                                     │
-│                    │  GeneFlow API │                                     │
-│                    └───────────────┘                                     │
-│                                                                          │
-└─────────────────────────────────────────────────────────────────────────┘
+                        ┌──────────────────────────┐
+                        │    geneflow-frontend     │   Next.js · React · TS
+                        │      (interfaz web)      │
+                        └────────────┬─────────────┘
+                                     │  REST  ·  SSE (tiempo real)
+                        ┌────────────▼─────────────┐
+                        │     geneflow-backend     │   .NET 8 · CQRS · DDD
+                        │   (API + único productor │
+                        │      de eventos)         │
+                        └────────────┬─────────────┘
+                                     │  publica eventos de dominio
+      ┌──────────────────────────────┼──────────────────────────────┐
+      │              BUS DE EVENTOS  ·  Redis Streams                 │
+      │   users · studies · traces · alignments · ai · system ...     │
+      └───────┬───────────────────┬───────────────────┬──────────────┘
+              │ consume           │ consume           │ consume
+      ┌───────▼────────┐  ┌───────▼────────┐  ┌───────▼────────────┐
+      │ geneflow-      │  │ geneflow-ai    │  │ geneflow-datalake  │
+      │ analysis       │  │ (IA · copiloto │  │ (event store       │
+      │ (bioinformática)│  │  · BLAST · ML) │  │  inmutable · JSONL)│
+      └────────────────┘  └────────────────┘  └────────────────────┘
 ```
 
----
+El **servicio principal** (backend) es el único que produce eventos de dominio. El resto de servicios (motor de análisis, IA y datalake) los consumen de forma **asíncrona y desacoplada**, lo que permite escalar y evolucionar cada pieza por separado. La interfaz dialoga con el backend por **REST** y recibe el progreso de las operaciones largas por **Server-Sent Events (SSE)**. Los binarios pesados (trazas, cromatogramas) viajan por almacenamiento de objetos compatible con **S3 (MinIO)**, no por la mensajería.
 
-## Features
+## ✨ Características
 
-| Feature | Description |
-|---------|-------------|
-| **Dashboard** | Real-time metrics, activity feed, and quick actions |
-| **Studies** | Create, organize, and manage genomic research projects |
-| **Traces** | Interactive visualization of genetic sequences (AB1, FASTA) |
-| **Pipelines** | Execute and monitor bioinformatics workflows |
-| **Analysis** | Charts, statistics, and data exploration tools |
-| **Discover** | Search and explore public datasets |
-| **Billing** | Subscription management and usage tracking |
+- **Visualización interactiva de cromatogramas** sobre lienzo HTML5, con virtualización por ventana, zoom, minimapa y capas superpuestas (calidad, anotaciones, recortes, motivos).
+- **Gestión colaborativa de estudios** con roles diferenciados, organizaciones, invitaciones, trazabilidad y control de versiones.
+- **Carga y procesamiento de trazas** en los formatos habituales: AB1, SCF, FASTQ y FASTA.
+- **Motor de análisis bioinformático**: evaluación de calidad (Phred, Q20/Q30), recorte (algoritmo de Mott), detección de heterocigotos (códigos IUPAC), marcos abiertos de lectura (ORF), motivos, sitios de restricción, alineamiento (Needleman-Wunsch y Smith-Waterman) y consenso.
+- **Inteligencia artificial**: clasificación taxonómica jerárquica (redes convolucionales), detección de heterocigotos, clasificación de calidad por base, predicción de recorte y un **asistente conversacional** que coordina las herramientas de la plataforma y consulta bases de datos externas (BLAST/NCBI).
+- **Arquitectura distribuida orientada a eventos**: CQRS + Event Sourcing, datalake con *write-ahead log* (WAL), cola de mensajes fallidos (DLQ), *replay* y proyecciones reconstruibles.
+- **Seguridad**: autenticación JWT, inicio de sesión federado (Google y GitHub), doble factor (TOTP o correo), y suscripciones con pasarela de pago.
+- **Experiencia de usuario**: interfaz multilingüe (español e inglés), accesible (ARIA, navegación por teclado), con tema claro y oscuro.
+- **Calidad**: contenedorización con Docker, integración y entrega continuas (GitHub Actions) y una batería con más de 5.000 ejecuciones de prueba.
 
----
+## 📦 Módulos del proyecto
 
-## Quick Start
+Este repositorio reúne los **cinco servicios** que componen la plataforma. Cada carpeta contiene su propio `README.md` con el detalle técnico y las instrucciones de puesta en marcha.
 
-```bash
-# Clone the repository
-git clone https://github.com/geneflow-app/geneflow-frontend.git
-cd geneflow-frontend
+### 🖥️ `geneflow-frontend` — Interfaz web
+Aplicación web con la que interactúa el usuario. Ofrece el panel de trabajo, el visor de cromatogramas, la gestión de estudios y trazas, los flujos de análisis y el asistente conversacional.
+- **Stack:** Next.js 16, React 19, TypeScript, Tailwind CSS v4.
+- **Estructura:** rutas con App Router y segmento de idioma, estado de cliente con Zustand y estado de servidor con TanStack Query, visor de cromatogramas en `canvas`, y un cliente HTTP/SSE tipado hacia el backend.
 
-# Install dependencies
-npm install
+### ⚙️ `geneflow-backend` — API y núcleo de negocio
+Servicio principal y **único productor de eventos de dominio**. Gestiona identidad, perfiles, organizaciones, estudios, trazas, suscripciones y la coordinación general.
+- **Stack:** .NET 8, ASP.NET Core, Entity Framework Core, PostgreSQL 16, Redis.
+- **Estructura:** *Clean Architecture* en cuatro capas (Domain, Application, Infrastructure, API) sobre 15 contextos delimitados (DDD), con CQRS y patrón *Result*.
 
-# Run development server
-npm run dev
+### 🔬 `geneflow-analysis` — Motor de análisis bioinformático
+Trabajador orientado a eventos que procesa las trazas de secuenciación: lectura de formatos, calidad, recorte, heterocigotos, ORF, motivos, restricción, alineamiento y consenso.
+- **Stack:** Python 3.12, BioPython, Redis Streams.
+- **Estructura:** consumidores (*workers*) sobre grupos de Redis, *parsers* por formato, analizadores del dominio y publicación de resultados como eventos.
 
-# Open http://localhost:3000
-```
+### 🤖 `geneflow-ai` — Servicio de inteligencia artificial
+Capa inteligente de la plataforma: cuatro modelos de aprendizaje profundo y el **asistente conversacional** (copiloto) con coordinación de herramientas y búsqueda de homología (BLAST).
+- **Stack:** Python 3.12, FastAPI, PyTorch, Redis Streams, Qdrant, proveedores de modelos de lenguaje.
+- **Estructura:** módulo `copilot` (agente + herramientas), modelos de ML (clasificación taxonómica, heterocigotos, calidad, recorte) y puente con el motor de análisis.
 
----
+### 🗄️ `geneflow-datalake` — Almacén inmutable de eventos
+*Event store* que consume **todos** los eventos del bus y los persiste en JSONL. Es la fuente única de verdad: habilita *replay*, auditoría y proyecciones.
+- **Stack:** Python 3.12, FastAPI, Redis Streams.
+- **Estructura:** consumidor con deduplicación por `eventId`, *buffer* + WAL, particionado por categoría y día, reintentos con DLQ, *mounters* (proyecciones) y una API de consulta/operación.
 
-## Tech Stack
+## 🛠️ Tecnologías
 
-| Category | Technology |
-|----------|------------|
-| **Framework** | Next.js 16.2.1 (App Router) |
-| **UI Library** | React 19 |
-| **Language** | TypeScript 5 |
-| **Styling** | Tailwind CSS v4 |
-| **Components** | Radix UI Primitives |
-| **State** | Zustand + TanStack Query |
-| **Forms** | React Hook Form + Zod |
-| **Charts** | Recharts |
-| **Icons** | Lucide React |
+| Capa / servicio | Tecnologías |
+|---|---|
+| Frontend | Next.js · React · TypeScript · Tailwind CSS |
+| Backend | .NET 8 · ASP.NET Core · Entity Framework Core · C# |
+| Análisis e IA | Python 3.12 · FastAPI · BioPython · PyTorch |
+| Datos | PostgreSQL 16 · Redis (Streams y caché) · MinIO (S3) · Qdrant |
+| Infraestructura | Docker · GitHub Actions (CI/CD) |
 
----
+## 🚀 Puesta en marcha
 
-## Project Structure
+Cada servicio se ejecuta de forma independiente y se contenedoriza con Docker. La infraestructura compartida (Redis, PostgreSQL, MinIO) se levanta con Docker Compose, y sobre ella se añaden los servicios necesarios para cada escenario. Consulta el `README.md` de cada módulo para los detalles concretos de configuración, variables de entorno y ejecución.
 
-```
-geneflow-frontend/
-├── app/                                 # Next.js App Router
-│   ├── (auth)/                          # Public routes (login, register)
-│   │   ├── login/page.tsx
-│   │   ├── register/page.tsx
-│   │   └── layout.tsx
-│   ├── (platform)/                      # Protected routes
-│   │   ├── layout.tsx                   # Platform layout (sidebar + header)
-│   │   ├── dashboard/page.tsx
-│   │   ├── discover/page.tsx
-│   │   ├── studies/
-│   │   │   ├── page.tsx
-│   │   │   └── [studyId]/page.tsx
-│   │   ├── traces/
-│   │   │   ├── page.tsx
-│   │   │   └── [traceId]/page.tsx
-│   │   ├── pipelines/page.tsx
-│   │   ├── analysis/page.tsx
-│   │   ├── profile/page.tsx
-│   │   ├── settings/
-│   │   │   ├── page.tsx
-│   │   │   └── billing/page.tsx
-│   │   └── help/page.tsx
-│   ├── layout.tsx                       # Root layout
-│   ├── globals.css
-│   └── not-found.tsx
-│
-├── src/
-│   ├── components/
-│   │   ├── ui/                          # UI primitives (Radix-based)
-│   │   ├── layout/                      # Sidebar, Header, Navigation
-│   │   ├── features/                    # Feature-specific components
-│   │   └── shared/                      # Shared components
-│   │
-│   ├── lib/                             # Utilities (cn, formatters)
-│   ├── hooks/                           # Custom React hooks
-│   ├── services/                        # API service layer
-│   ├── types/                           # TypeScript definitions
-│   ├── stores/                          # Zustand stores
-│   ├── providers/                       # Context providers
-│   └── mocks/                           # Mock data for development
-│
-└── docs/                                # Design system documentation
-```
+## 📄 Contexto académico
 
----
+Proyecto desarrollado como **Trabajo Fin de Título (TFT)** del Grado en Ingeniería Informática de la **Escuela de Ingeniería Informática de la Universidad de Las Palmas de Gran Canaria (ULPGC)**.
 
-## Scripts
-
-```bash
-npm run dev       # Start development server
-npm run build     # Build for production
-npm run start     # Start production server
-npm run lint      # Run ESLint
-```
-
----
-
-## Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `NEXT_PUBLIC_API_URL` | GeneFlow API base URL | `http://localhost:5000` |
-| `NEXT_PUBLIC_APP_URL` | Frontend application URL | `http://localhost:3000` |
-
----
-
-## Architecture
-
-### Route Groups
-
-| Group | Path | Description |
-|-------|------|-------------|
-| `(auth)` | `/login`, `/register` | Public authentication routes |
-| `(platform)` | `/dashboard`, `/studies`, etc. | Protected platform routes |
-
-### State Management
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        State Architecture                        │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│   ┌─────────────────┐     ┌─────────────────┐                   │
-│   │  TanStack Query │     │     Zustand     │                   │
-│   │  (Server State) │     │  (Client State) │                   │
-│   ├─────────────────┤     ├─────────────────┤                   │
-│   │ • Studies       │     │ • UI State      │                   │
-│   │ • Traces        │     │ • Sidebar       │                   │
-│   │ • Pipelines     │     │ • Theme         │                   │
-│   │ • User Data     │     │ • Filters       │                   │
-│   └─────────────────┘     └─────────────────┘                   │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### Component Hierarchy
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  Providers (Theme, Query, Toast)                                 │
-│  └─► Root Layout                                                 │
-│      └─► Platform Layout (Sidebar + Header)                      │
-│          └─► Page Content                                        │
-│              ├─► Feature Components                              │
-│              │   └─► UI Primitives (Radix)                       │
-│              └─► Shared Components                               │
-└─────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## Next.js 16 Notes
-
-This project uses Next.js 16 with **async params** (breaking change from v15):
-
-```typescript
-// Page with dynamic route params
-export default async function StudyPage({
-  params,
-}: {
-  params: Promise<{ studyId: string }>
-}) {
-  const { studyId } = await params;
-  // ...
-}
-
-// Page with search params
-export default async function StudiesPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ page?: string; filter?: string }>
-}) {
-  const { page, filter } = await searchParams;
-  // ...
-}
-```
-
----
-
-## Development
-
-### Prerequisites
-
-- Node.js 20+
-- npm 10+
-
-### Code Style
-
-- ESLint + Prettier for formatting
-- Conventional Commits for git messages
-- TypeScript strict mode enabled
-
-### Branch Strategy
-
-```
-main
-└── develop
-    ├── feature/foundation
-    ├── feature/layout
-    ├── feature/core-pages
-    ├── feature/pipelines-analysis
-    ├── feature/user-settings
-    └── feature/polish
-```
-
----
-
-## Implementation Status
-
-| Phase | Description | Status |
-|-------|-------------|--------|
-| 1 | Foundation (types, UI components, providers) | ⏳ In Progress |
-| 2 | Layout & Navigation (sidebar, header) | ⏳ Pending |
-| 3 | Core Pages (dashboard, studies, traces) | ⏳ Pending |
-| 4 | Pipelines & Analysis | ⏳ Pending |
-| 5 | User & Settings | ⏳ Pending |
-| 6 | Polish & Forms | ⏳ Pending |
-
----
-
-## Related Projects
-
-| Project | Description |
-|---------|-------------|
-| [GeneFlow API](https://github.com/geneflow-app/GeneFlow) | .NET Core backend API |
-| [GeneFlow Datalake](https://github.com/geneflow-app/GeneFlow-Datalake) | Event store and data lake |
-| [GeneFlow AI](https://github.com/geneflow-app/GeneFlow-AI) | AI-powered sequence analysis |
+**Autor:** Eduardo Marrero González
 
 ---
 
 <div align="center">
 
-**GeneFlow Platform** · Proprietary
+*GeneFlow — leer, analizar y colaborar sobre secuencias Sanger en un único lugar.*
 
 </div>

@@ -1,0 +1,72 @@
+# =============================================================================
+# Docker Ignore File
+# =============================================================================
+# Files and directories to exclude from Docker build context
+# =============================================================================
+
+# Build outputs
+**/bin/
+**/obj/
+**/out/
+**/publish/
+
+# IDE and editor files
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.sln.docstates
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Test results
+**/TestResults/
+**/coverage/
+*.trx
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# CI/CD
+.github/
+
+# Deployment (except Dockerfile)
+deploy/
+!deploy/api/Dockerfile
+
+# Local development
+docker-compose*.yml
+.env*
+*.local.*
+appsettings.*.json
+!appsettings.json
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# NuGet
+*.nupkg
+packages/
+
+# Scripts
+scripts/
+
+# Pipeline reports
+pipeline-reports/

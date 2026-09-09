@@ -1,0 +1,29 @@
+# =============================================================================
+# GeneFlow Datalake
+# =============================================================================
+
+services:
+  consumer:
+    image: geneflow-datalake:latest
+    container_name: geneflow-datalake-consumer
+    ports:
+      - "${DATALAKE_PORT:-8080}:8080"
+    environment:
+      DATALAKE_REDIS_URL: redis://geneflow-core-redis:6379
+      DATALAKE_REDIS_STREAM_PREFIX: geneflow:events
+      DATALAKE_MINIO_ENDPOINT: http://geneflow-core-minio:9000
+      DATALAKE_MINIO_ACCESS_KEY: geneflow
+      DATALAKE_MINIO_SECRET_KEY: geneflow123
+      DATALAKE_MINIO_BUCKET: geneflow
+    depends_on:
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - geneflow-network
+
+networks:
+  geneflow-network:
+    external: true

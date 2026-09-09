@@ -1,0 +1,2421 @@
+{
+  "common": {
+    "appName": "GeneFlow",
+    "tagline": "Sequencing Platform",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "close": "Close",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "download": "Download",
+    "upload": "Upload",
+    "create": "Create",
+    "update": "Update",
+    "remove": "Remove",
+    "confirm": "Confirm",
+    "ok": "OK",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "done": "Done",
+    "yes": "Yes",
+    "no": "No",
+    "or": "or",
+    "and": "and",
+    "all": "All",
+    "none": "None",
+    "showing": "Showing",
+    "of": "of",
+    "items": "items",
+    "retry": "Retry",
+    "viewAll": "View All",
+    "status": {
+      "draft": "Draft",
+      "active": "Active",
+      "completed": "Completed",
+      "published": "Published",
+      "archived": "Archived",
+      "pending": "Pending",
+      "processing": "Processing",
+      "failed": "Failed",
+      "queued": "Queued",
+      "running": "Running",
+      "cancelled": "Cancelled",
+      "inProgress": "In Progress",
+      "review": "Review",
+      "processed": "Processed",
+      "uploaded": "Uploaded",
+      "validating": "Validating",
+      "expired": "Expired",
+      "accepted": "Accepted",
+      "declined": "Declined"
+    },
+    "researchFields": {
+      "Genomics": "Genomics",
+      "Proteomics": "Proteomics",
+      "Transcriptomics": "Transcriptomics",
+      "Bioinformatics": "Bioinformatics",
+      "MolecularBiology": "Molecular Biology",
+      "CellBiology": "Cell Biology",
+      "Genetics": "Genetics",
+      "Biochemistry": "Biochemistry",
+      "Microbiology": "Microbiology",
+      "Immunology": "Immunology",
+      "Neuroscience": "Neuroscience",
+      "PlantBiology": "Plant Biology",
+      "MarineBiology": "Marine Biology",
+      "Ecology": "Ecology",
+      "EvolutionaryBiology": "Evolutionary Biology",
+      "ComputationalBiology": "Computational Biology",
+      "SyntheticBiology": "Synthetic Biology",
+      "Other": "Other"
+    }
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "discover": "Discover",
+    "studies": "Studies",
+    "traces": "Traces",
+    "pipelines": "Pipelines",
+    "settings": "Settings",
+    "help": "Help",
+    "profile": "Profile",
+    "logout": "Log out",
+    "expandSidebar": "Expand sidebar",
+    "collapseSidebar": "Collapse sidebar"
+  },
+  "activity": {
+    "title": "My activity",
+    "description": "Recent events from your studies, traces and pipelines.",
+    "locale": "en",
+    "loadMore": "Load more",
+    "endOfFeed": "That's all your recent activity.",
+    "retry": "Retry",
+    "refresh": "Refresh",
+    "error": "We couldn't load your activity. Please try again.",
+    "inStudy": "in study",
+    "empty": {
+      "title": "No activity yet",
+      "description": "Create a study or upload a trace to start seeing events here."
+    },
+    "studyTimeline": {
+      "title": "Study timeline",
+      "description": "Chronological events for this study (members and public activity).",
+      "empty": {
+        "title": "No activity in this study yet",
+        "description": "Actions on this study — traces uploaded, members joined, pipelines run — will appear here."
+      }
+    },
+    "verbs": {
+      "Created": "created",
+      "Updated": "updated",
+      "Deleted": "deleted",
+      "Uploaded": "uploaded",
+      "Started": "started",
+      "Completed": "completed",
+      "Failed": "failed",
+      "Cancelled": "cancelled",
+      "Joined": "joined",
+      "Left": "left",
+      "Invited": "invited",
+      "Published": "published",
+      "Archived": "archived",
+      "Registered": "registered",
+      "Applied": "applied",
+      "Undone": "undid",
+      "Requested": "requested"
+    },
+    "objects": {
+      "Study": "a study",
+      "Trace": "a trace",
+      "Pipeline": "a pipeline",
+      "PipelineExecution": "a pipeline run",
+      "Profile": "a profile",
+      "User": "a user",
+      "Annotation": "an annotation",
+      "SequenceEdit": "a sequence edit",
+      "TraceTrim": "a trim",
+      "Analysis": "an analysis",
+      "Alignment": "an alignment",
+      "Member": "a member",
+      "Comment": "a comment",
+      "Subscription": "a subscription",
+      "Plan": "a plan"
+    }
+  },
+  "invitations": {
+    "trayTitle": "Invitations",
+    "trayAriaLabel": "Open invitations",
+    "trayBadge": "{count, plural, one {# pending invitation} other {# pending invitations}}",
+    "loading": "Loading invitations…",
+    "empty": "You have no pending invitations.",
+    "loadError": "Could not load your invitations.",
+    "card": {
+      "invitedBy": "Invited by {name}",
+      "role": "{role}",
+      "expires": "Expires {date}",
+      "expired": "Expired"
+    },
+    "actions": {
+      "accept": "Accept",
+      "accepting": "Accepting…",
+      "decline": "Decline",
+      "declining": "Declining…"
+    },
+    "feedback": {
+      "accepted": "Joined {study}.",
+      "declined": "Invitation declined.",
+      "acceptError": "Could not accept the invitation.",
+      "declineError": "Could not decline the invitation."
+    }
+  },
+  "header": {
+    "searchPlaceholder": "Search studies, samples, or analyses...",
+    "uploadTraces": "Upload Traces",
+    "notifications": "View notifications",
+    "switchToDark": "Switch to dark mode",
+    "switchToLight": "Switch to light mode",
+    "settings": "Settings",
+    "logout": "Log out"
+  },
+  "localeSwitcher": {
+    "language": "Language",
+    "spanish": "Español",
+    "english": "English"
+  },
+  "auth": {
+    "welcomeBack": "Welcome back",
+    "signInToAccount": "Sign in to your GeneFlow account",
+    "backToHome": "Back to home",
+    "email": "Email",
+    "emailPlaceholder": "name@company.com",
+    "password": "Password",
+    "passwordPlaceholder": "••••••••",
+    "forgotPassword": "Forgot password?",
+    "rememberMe": "Remember me",
+    "signIn": "Sign in",
+    "signingIn": "Signing in...",
+    "orContinueWith": "Or continue with",
+    "signInWithGoogle": "Sign in with Google",
+    "signInWithGitHub": "Sign in with GitHub",
+    "noAccount": "Don't have an account?",
+    "signUp": "Sign up",
+    "createAccount": "Create account",
+    "alreadyHaveAccount": "Already have an account?",
+    "register": "Register",
+    "registering": "Registering...",
+    "fullName": "Full Name",
+    "fullNamePlaceholder": "Dr. John Smith",
+    "confirmPassword": "Confirm Password",
+    "agreeToTerms": "I agree to the",
+    "termsOfService": "Terms of Service",
+    "privacyPolicy": "Privacy Policy",
+    "resetPassword": {
+      "title": "Create New Password",
+      "description": "Enter your new password below.",
+      "newPassword": "New Password",
+      "newPasswordPlaceholder": "Enter your new password",
+      "confirmPassword": "Confirm New Password",
+      "confirmPasswordPlaceholder": "Confirm your new password",
+      "resetButton": "Reset Password",
+      "resetting": "Resetting...",
+      "successTitle": "Password Reset Successfully",
+      "successDescription": "Your password has been reset. You can now log in with your new password.",
+      "invalidToken": "Invalid or missing reset token",
+      "tokenExpired": "This reset link has expired. Please request a new one.",
+      "error": "Failed to reset password. Please try again.",
+      "invalidLinkTitle": "Invalid Reset Link",
+      "invalidLinkDescription": "This password reset link is invalid or has expired.",
+      "requestNewLink": "Request New Link"
+    },
+    "resetPasswordDescription": "Enter your email and we'll send you instructions to reset your password.",
+    "sendResetLink": "Send reset link",
+    "sendingResetLink": "Sending...",
+    "backToLogin": "Back to login",
+    "twoFactorAuth": "Two-Factor Authentication",
+    "twoFactorDescription": "We've sent a verification code to your email address.",
+    "verificationCode": "Verification Code",
+    "verifyCode": "Verify Code",
+    "verifying": "Verifying...",
+    "resendCode": "Resend code",
+    "codeSentSuccess": "Verification code sent successfully",
+    "registrationSuccess": {
+      "title": "Check your email",
+      "subtitle": "We've sent a verification link to",
+      "description": "Please click the link in the email to activate your account. The link will expire in 24 hours.",
+      "backToLogin": "Back to login",
+      "didntReceive": "Didn't receive the email?",
+      "resendVerification": "Resend verification email",
+      "resending": "Sending...",
+      "resent": "Email sent!",
+      "checkSpam": "Check your spam folder if you don't see it in your inbox.",
+      "wrongEmail": "Wrong email?",
+      "tryAgain": "Register again"
+    },
+    "validation": {
+      "emailRequired": "Please enter a valid email address",
+      "passwordRequired": "Password must be at least 8 characters",
+      "passwordsMatch": "Passwords must match",
+      "passwordsMustMatch": "Passwords do not match",
+      "nameRequired": "Please enter your name",
+      "termsRequired": "You must accept the terms and conditions",
+      "invalidCode": "Please enter a valid 6-digit code",
+      "passwordRequirements": "Password must contain:",
+      "minLength": "At least 8 characters",
+      "uppercase": "One uppercase letter",
+      "lowercase": "One lowercase letter",
+      "number": "One number"
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome back, {name}. Here's your laboratory overview for today.",
+    "metrics": {
+      "activeStudies": "Active Studies",
+      "processedTraces": "Processed Traces",
+      "pendingTraces": "Pending Traces",
+      "teamActivity": "Team Activity",
+      "thisWeek": "+{count} this week",
+      "today": "+{count} today",
+      "processing": "Processing",
+      "activeNow": "Active now"
+    },
+    "chart": {
+      "title": "Trace Processing Activity",
+      "description": "24-hour trace processing volume and quality metrics",
+      "tracesProcessed": "Traces Processed",
+      "qualityScore": "Quality Score"
+    },
+    "pipelinesShortcut": {
+      "title": "Analysis pipelines",
+      "description": "Create, configure and run pipelines on your studies.",
+      "action": "View pipelines"
+    },
+    "recentPipelines": {
+      "title": "Recent pipelines",
+      "description": "Latest executions in your studies",
+      "viewAll": "View all",
+      "empty": {
+        "title": "No executions yet",
+        "description": "Pipeline runs will appear here."
+      },
+      "steps": "{completed}/{total} steps",
+      "duration": "{seconds}s"
+    },
+    "recentStudies": {
+      "title": "Recent Studies",
+      "description": "Active and recently updated sequencing studies",
+      "viewAll": "View all",
+      "samples": "Samples",
+      "traces": "Traces",
+      "quality": "Quality",
+      "updated": "Updated",
+      "progress": "Progress",
+      "members": "Members",
+      "field": "Field",
+      "views": "Views",
+      "empty": {
+        "title": "No studies yet",
+        "description": "Create your first study to start analyzing sequencing data.",
+        "createFirst": "Create Study"
+      }
+    },
+    "pipelines": {
+      "title": "Processing Pipelines",
+      "description": "Active analysis pipelines",
+      "running": "Running",
+      "completed": "Completed",
+      "samples": "Samples",
+      "eta": "ETA",
+      "viewAll": "View all pipelines"
+    },
+    "recentActivity": {
+      "title": "Recent Analysis Activity",
+      "description": "Latest team actions and study updates",
+      "actions": {
+        "upload": "Uploaded {count} chromatogram traces",
+        "review": "Completed quality review",
+        "pipeline": "Started new variant calling pipeline",
+        "export": "Exported analysis results",
+        "create": "Created new study"
+      }
+    },
+    "time": {
+      "minutesAgo": "{count} minutes ago",
+      "hourAgo": "1 hour ago",
+      "hoursAgo": "{count} hours ago",
+      "daysAgo": "{count} days ago",
+      "minAgo": "{count} min ago"
+    }
+  },
+  "studies": {
+    "title": "Studies",
+    "description": "Manage and monitor your genetic sequencing studies",
+    "newStudy": "New Study",
+    "searchPlaceholder": "Search studies by ID, name, or PI...",
+    "noStudiesFound": "No studies found",
+    "noStudiesDescription": "Try adjusting your search or filters",
+    "createFirstStudy": "Create your first study to get started",
+    "filters": {
+      "type": "Type",
+      "status": "Status",
+      "allTypes": "All Types",
+      "allStatus": "All Status",
+      "clearFilters": "Clear filters"
+    },
+    "card": {
+      "type": "Type",
+      "samples": "Samples",
+      "created": "Created",
+      "pi": "Principal Investigator",
+      "progress": "Progress"
+    },
+    "actions": {
+      "viewDetails": "View Details",
+      "editStudy": "Edit Study",
+      "duplicate": "Duplicate",
+      "duplicateFailed": "Failed to duplicate study",
+      "share": "Share",
+      "linkCopied": "Link copied to clipboard",
+      "copyFailed": "Failed to copy link",
+      "archive": "Archive",
+      "studyArchived": "Study archived successfully",
+      "archiveFailed": "Failed to archive study",
+      "delete": "Delete"
+    },
+    "export": {
+      "title": "Export Studies",
+      "description": "Choose the format to export your studies data.",
+      "csv": "CSV",
+      "csvDescription": "Spreadsheet compatible format",
+      "json": "JSON",
+      "jsonDescription": "Machine-readable format",
+      "pdf": "PDF",
+      "pdfDescription": "Printable report format"
+    },
+    "delete": {
+      "title": "Delete Study",
+      "description": "Are you sure you want to delete \"{name}\"? This action cannot be undone.",
+      "confirm": "Delete Study"
+    },
+    "archive": {
+      "title": "Archive Study",
+      "description": "Are you sure you want to archive \"{name}\"? You can restore it later from the archived studies.",
+      "confirm": "Archive Study"
+    },
+    "create": {
+      "title": "Create New Study",
+      "description": "Set up a new genetic sequencing study with project details and configuration.",
+      "studyName": "Study Name",
+      "studyNamePlaceholder": "e.g., Genome-Wide Association Study",
+      "studyType": "Study Type",
+      "selectType": "Select type...",
+      "expectedSamples": "Expected Samples",
+      "expectedSamplesPlaceholder": "e.g., 1247",
+      "principalInvestigator": "Principal Investigator",
+      "piPlaceholder": "e.g., Dr. Sarah Martinez",
+      "initialStatus": "Initial Status",
+      "startDate": "Start Date",
+      "tags": "Tags",
+      "tagsPlaceholder": "e.g., Diabetes, GWAS, Population Study",
+      "tagsHelp": "Separate tags with commas",
+      "studyDescription": "Description",
+      "descriptionPlaceholder": "Brief description of the study objectives...",
+      "submit": "Create Study"
+    },
+    "status": {
+      "active": "Active",
+      "completed": "Completed",
+      "published": "Published",
+      "draft": "Draft",
+      "onHold": "On Hold",
+      "processing": "Processing",
+      "pending": "Pending",
+      "archived": "Archived"
+    },
+    "roles": {
+      "owner": "Owner",
+      "admin": "Admin",
+      "editor": "Editor",
+      "viewer": "Viewer"
+    },
+    "researchFields": {
+      "genomics": "Genomics",
+      "proteomics": "Proteomics",
+      "transcriptomics": "Transcriptomics",
+      "metabolomics": "Metabolomics",
+      "epigenomics": "Epigenomics",
+      "metagenomics": "Metagenomics",
+      "pharmacogenomics": "Pharmacogenomics",
+      "clinicalGenetics": "Clinical Genetics",
+      "other": "Other"
+    },
+    "papers": {
+      "title": "Scientific Papers",
+      "description": "{count, plural, =0 {No papers associated with this study} =1 {1 paper associated with this study} other {# papers associated with this study}}",
+      "addPaper": "Add Paper",
+      "addFirstPaper": "Add your first paper",
+      "noPapers": "No papers added yet. Add references to relevant scientific papers.",
+      "loadError": "Failed to load papers",
+      "form": {
+        "title": "Title",
+        "titlePlaceholder": "Enter the paper title",
+        "authors": "Authors",
+        "authorsPlaceholder": "e.g., Smith J, Johnson M, Williams K",
+        "doi": "DOI",
+        "doiPlaceholder": "e.g., 10.1234/example.2024",
+        "journal": "Journal",
+        "journalPlaceholder": "e.g., Nature Genetics",
+        "year": "Publication Year",
+        "yearPlaceholder": "e.g., 2024",
+        "abstract": "Abstract",
+        "abstractPlaceholder": "Enter the paper abstract (optional)"
+      },
+      "validation": {
+        "titleRequired": "Paper title is required",
+        "titleTooLong": "Title must be 500 characters or less",
+        "authorsTooLong": "Authors must be 1000 characters or less",
+        "doiTooLong": "DOI must be 100 characters or less",
+        "abstractTooLong": "Abstract must be 5000 characters or less",
+        "journalTooLong": "Journal name must be 200 characters or less",
+        "invalidYear": "Please enter a valid publication year"
+      },
+      "addPaperDialog": {
+        "title": "Add Paper",
+        "description": "Add a reference to a scientific paper related to this study.",
+        "submit": "Add Paper"
+      },
+      "deleteDialog": {
+        "title": "Remove Paper",
+        "description": "Are you sure you want to remove \"{title}\"? This action cannot be undone."
+      }
+    },
+    "stars": {
+      "star": "Star",
+      "unstar": "Unstar",
+      "starred": "Starred",
+      "starCount": "{count} stars",
+      "viewCount": "{count} views"
+    },
+    "invitations": {
+      "title": "Invitations",
+      "pending": "Pending Invitations",
+      "sendInvitation": "Send Invitation",
+      "cancelInvitation": "Cancel Invitation",
+      "resendInvitation": "Resend Invitation",
+      "acceptInvitation": "Accept",
+      "declineInvitation": "Decline",
+      "invitedBy": "Invited by",
+      "expiresAt": "Expires",
+      "message": "Message",
+      "status": {
+        "pending": "Pending",
+        "accepted": "Accepted",
+        "declined": "Declined",
+        "expired": "Expired",
+        "cancelled": "Cancelled"
+      },
+      "noInvitations": "No pending invitations",
+      "invitationSent": "Invitation sent successfully",
+      "invitationAccepted": "Invitation accepted",
+      "invitationDeclined": "Invitation declined"
+    },
+    "featured": {
+      "badge": "Featured",
+      "featuredStudies": "Featured Studies",
+      "feature": "Feature Study",
+      "unfeature": "Remove from Featured"
+    },
+    "pagination": {
+      "showing": "Showing",
+      "of": "of",
+      "studies": "studies"
+    },
+    "detail": {
+      "backToStudies": "Back to Studies",
+      "aiAssistant": "AI Assistant",
+      "share": "Share",
+      "export": "Export",
+      "tabs": {
+        "overview": "Overview",
+        "traces": "Traces",
+        "pipelines": "Pipelines",
+        "papers": "Papers",
+        "discussions": "Discussions",
+        "timeline": "Timeline",
+        "analysis": "Analysis",
+        "team": "Team",
+        "settings": "Settings"
+      },
+      "pipelines": {
+        "comingSoon": "Coming Soon",
+        "comingSoonDescription": "Automated analysis pipelines are under development. Soon you'll be able to create custom workflows to process your traces automatically."
+      },
+      "visibility": {
+        "private": "Private",
+        "public": "Public"
+      },
+      "publicView": {
+        "banner": "You are viewing this study as a public visitor. Sign in and request access to collaborate.",
+        "readOnly": "This content is read-only for public visitors."
+      },
+      "stats": {
+        "totalSamples": "Total Samples",
+        "allSamplesCollected": "All samples collected",
+        "chromatogramTraces": "Chromatogram Traces",
+        "processed": "{percent}% processed",
+        "qualityScore": "Quality Score",
+        "excellentQuality": "Excellent quality",
+        "teamMembers": "Team Members",
+        "papersList": "Papers",
+        "associatedPapers": "Associated papers",
+        "activeCollaborators": "Active collaborators"
+      },
+      "overview": {
+        "studyDescription": "Study Description",
+        "researchField": "Research Field",
+        "principalInvestigator": "Principal Investigator",
+        "institution": "Institution",
+        "createdDate": "Created Date",
+        "processingProgress": "Processing Progress",
+        "tracesProcessed": "Traces Processed",
+        "tracesOf": "{processed} of {total} traces",
+        "inProgress": "In Progress",
+        "tracesProcessing": "{count} traces processing",
+        "pending": "Pending",
+        "tracesQueued": "{count} traces queued",
+        "recentAnalysis": "Recent Analysis",
+        "latestAnalysisRuns": "Latest analysis runs and their results"
+      },
+      "table": {
+        "analysisName": "Analysis Name",
+        "type": "Type",
+        "status": "Status",
+        "date": "Date",
+        "results": "Results",
+        "actions": "Actions",
+        "view": "View"
+      },
+      "traces": {
+        "title": "Chromatogram Traces",
+        "description": "All sequencing traces for this study",
+        "uploadTraces": "Upload Traces",
+        "searchPlaceholder": "Search traces by name...",
+        "stats": {
+          "total": "Total",
+          "processed": "Processed",
+          "processing": "Processing",
+          "pending": "Pending",
+          "failed": "Failed",
+          "archived": "Archived"
+        },
+        "filters": {
+          "allStatuses": "All Statuses",
+          "uploaded": "Uploaded",
+          "processing": "Processing",
+          "processed": "Processed",
+          "failed": "Failed"
+        },
+        "noTraces": "No traces yet",
+        "noTracesDesc": "Upload your first trace file to get started.",
+        "uploadFirst": "Upload Traces",
+        "table": {
+          "name": "Name",
+          "format": "Format",
+          "size": "Size",
+          "status": "Status",
+          "quality": "Quality",
+          "uploaded": "Uploaded"
+        },
+        "actions": {
+          "view": "View Trace",
+          "retry": "Retry Processing",
+          "delete": "Delete Trace"
+        },
+        "showing": "Showing {from}-{to} of {total}",
+        "previous": "Previous",
+        "next": "Next"
+      },
+      "analysis": {
+        "title": "Analysis Tools",
+        "description": "Run analysis on your processed traces",
+        "selectTrace": "Select a trace to analyze",
+        "selectTraces": "Select traces to align",
+        "noProcessedTraces": "No processed traces available",
+        "noProcessedTracesDesc": "Process some traces first to run analysis.",
+        "runAnalysis": "Run Analysis",
+        "analyzing": "Analyzing...",
+        "analysisRequested": "Analysis requested successfully",
+        "analysisError": "Failed to request analysis",
+        "tools": {
+          "trimming": {
+            "title": "Sequence Trimming",
+            "description": "Trim low-quality ends from your sequence",
+            "algorithm": "Algorithm",
+            "algorithms": {
+              "modified_mott": "Modified Mott",
+              "window": "Sliding Window",
+              "adaptive": "Adaptive"
+            },
+            "qualityThreshold": "Quality Threshold",
+            "windowSize": "Window Size"
+          },
+          "heterozygote": {
+            "title": "Heterozygote Detection",
+            "description": "Detect heterozygous positions in chromatogram",
+            "secondaryPeakThreshold": "Secondary Peak Threshold",
+            "minQuality": "Minimum Quality"
+          },
+          "motif": {
+            "title": "Motif Search",
+            "description": "Search for patterns in your sequence",
+            "pattern": "Search Pattern",
+            "patternPlaceholder": "e.g., GAATTC or regex",
+            "searchComplement": "Search complement strand",
+            "useRegex": "Use regular expression"
+          },
+          "translation": {
+            "title": "Sequence Translation",
+            "description": "Translate DNA to protein sequence",
+            "readingFrame": "Reading Frame",
+            "geneticCode": "Genetic Code",
+            "geneticCodes": {
+              "1": "Standard",
+              "2": "Vertebrate Mitochondrial",
+              "3": "Yeast Mitochondrial",
+              "4": "Mold/Protozoan Mitochondrial",
+              "5": "Invertebrate Mitochondrial"
+            }
+          },
+          "orf": {
+            "title": "ORF Detection",
+            "description": "Find open reading frames",
+            "minLength": "Minimum Length (codons)",
+            "startCodons": "Start Codons",
+            "stopCodons": "Stop Codons"
+          },
+          "restriction": {
+            "title": "Restriction Analysis",
+            "description": "Find restriction enzyme cut sites",
+            "enzymes": "Enzymes",
+            "enzymesPlaceholder": "e.g., EcoRI, BamHI, HindIII",
+            "enzymesHelp": "Comma-separated list, or leave empty for all common enzymes"
+          },
+          "alignment": {
+            "title": "Sequence Alignment",
+            "description": "Align multiple sequences",
+            "type": "Alignment Type",
+            "types": {
+              "pairwise": "Pairwise",
+              "multiple": "Multiple"
+            },
+            "buildConsensus": "Build consensus sequence",
+            "consensusMethod": "Consensus Method",
+            "consensusMethods": {
+              "majority": "Majority",
+              "threshold": "Threshold"
+            },
+            "scoring": "Scoring Parameters",
+            "matchScore": "Match Score",
+            "mismatchPenalty": "Mismatch Penalty",
+            "gapPenalty": "Gap Penalty",
+            "minTwoTraces": "Select at least 2 traces for alignment"
+          }
+        }
+      },
+      "team": {
+        "title": "Team Members",
+        "description": "Manage collaborators and permissions",
+        "inviteMember": "Invite Member",
+        "member": "Member",
+        "role": "Role",
+        "email": "Email",
+        "roles": {
+          "principalInvestigator": "Principal Investigator",
+          "coInvestigator": "Co-Investigator",
+          "researchScientist": "Research Scientist",
+          "labTechnician": "Lab Technician",
+          "bioinformatician": "Bioinformatician",
+          "viewer": "Viewer"
+        }
+      },
+      "settings": {
+        "title": "Study Settings",
+        "description": "Manage study configuration and preferences",
+        "studyName": "Study Name",
+        "studyDescription": "Description",
+        "visibility": "Visibility",
+        "privateDesc": "Only team members can access",
+        "publicDesc": "Anyone with the link can view",
+        "saveChanges": "Save Changes",
+        "saved": "Saved!",
+        "dangerZone": "Danger Zone",
+        "dangerZoneDesc": "Once you delete a study, there is no going back.",
+        "deleteStudy": "Delete Study"
+      },
+      "dialogs": {
+        "share": {
+          "title": "Share Study",
+          "description": "Share this study with team members or collaborators.",
+          "copy": "Copy",
+          "copied": "Copied",
+          "done": "Done"
+        },
+        "export": {
+          "title": "Export Study Data",
+          "description": "Choose the format to export.",
+          "pdfReport": "PDF Report",
+          "csvData": "CSV Data",
+          "jsonFormat": "JSON Format",
+          "action": "Export study",
+          "exporting": "Exporting…",
+          "success": "Export ready",
+          "error": "Export failed",
+          "notMember": "Only members can export this study"
+        },
+        "uploadTraces": {
+          "title": "Upload Traces",
+          "description": "Upload new sequencing trace files for analysis.",
+          "dropzone": "Drag and drop files here, or click to browse",
+          "formats": "Supported: AB1, ABI, FASTA, FASTQ, SEQ, SCF (max 50MB)",
+          "browse": "Browse Files",
+          "cancel": "Cancel",
+          "upload": "Upload {count} file(s)"
+        },
+        "inviteMember": {
+          "title": "Invite Team Member",
+          "description": "Add a new collaborator to this study.",
+          "emailAddress": "Email Address",
+          "emailPlaceholder": "colleague@institution.edu",
+          "role": "Role",
+          "selectRole": "Select role...",
+          "cancel": "Cancel",
+          "sendInvitation": "Send Invitation"
+        },
+        "newAnalysis": {
+          "title": "Create New Analysis",
+          "description": "Configure and run a new analysis pipeline.",
+          "analysisName": "Analysis Name",
+          "analysisNamePlaceholder": "e.g., Variant Calling Analysis",
+          "pipelineType": "Pipeline Type",
+          "selectPipeline": "Select pipeline...",
+          "priority": "Priority",
+          "notifications": "Notifications",
+          "cancel": "Cancel",
+          "createAnalysis": "Create Analysis"
+        },
+        "viewAnalysis": {
+          "description": "Analysis details and results",
+          "analysisCompleted": "Analysis completed successfully. Results are available for download.",
+          "close": "Close",
+          "downloadResults": "Download Results"
+        },
+        "editMember": {
+          "title": "Edit Team Member",
+          "description": "Update role and permissions for {name}",
+          "cancel": "Cancel",
+          "saveChanges": "Save Changes"
+        },
+        "deleteMember": {
+          "title": "Remove Team Member",
+          "description": "Are you sure you want to remove {name} from this study?",
+          "cancel": "Cancel",
+          "removeMember": "Remove Member"
+        },
+        "deleteStudy": {
+          "title": "Delete Study",
+          "description": "This action is permanent and cannot be undone. All traces, analyses, and data will be deleted.",
+          "confirmLabel": "Type the study ID to confirm:",
+          "cancel": "Cancel",
+          "delete": "Delete Study"
+        }
+      }
+    }
+  },
+  "traces": {
+    "title": "Chromatogram Traces",
+    "description": "Upload, manage, and monitor sequencing trace files",
+    "stats": {
+      "totalTraces": "Total Traces",
+      "processing": "Processing",
+      "pending": "Pending",
+      "failed": "Failed",
+      "processed": "Processed",
+      "inProgress": "In Progress",
+      "queued": "Queued",
+      "requiresReview": "Requires Review"
+    },
+    "upload": {
+      "title": "Upload Chromatogram Traces",
+      "description": "Drag and drop your .ab1, .scf, or .abi files here, or click to browse",
+      "chooseFiles": "Choose Files",
+      "supportedFormats": "Supported formats: AB1, SCF, ABI • Max file size: 50 MB per file",
+      "dialogTitle": "Upload Chromatogram Traces",
+      "dialogDescription": "Upload .ab1, .scf, or .abi files for processing.",
+      "clickToUpload": "Click to upload or drag and drop",
+      "fileTypes": "ABI, SCF, or AB1 files (max 50MB each)",
+      "filesSelected": "{count} file(s) selected",
+      "uploadFiles": "Upload Files"
+    },
+    "search": {
+      "placeholder": "Search by trace ID, sample name, or study..."
+    },
+    "filters": {
+      "allStatus": "All Status",
+      "allTime": "All Time",
+      "today": "Today",
+      "last7Days": "Last 7 Days",
+      "last30Days": "Last 30 Days",
+      "last90Days": "Last 90 Days",
+      "allOwners": "All Owners"
+    },
+    "batch": {
+      "selected": "{count} trace(s) selected",
+      "downloadSelected": "Download Selected",
+      "reprocess": "Reprocess",
+      "deleteSelected": "Delete Selected"
+    },
+    "table": {
+      "traceId": "Trace ID",
+      "sampleName": "Sample Name",
+      "study": "Study",
+      "uploadDate": "Upload Date",
+      "owner": "Owner",
+      "status": "Status",
+      "quality": "Quality",
+      "size": "Size",
+      "actions": "Actions"
+    },
+    "status": {
+      "uploaded": "Uploaded",
+      "validating": "Validating",
+      "processing": "Processing",
+      "processed": "Processed",
+      "failed": "Failed"
+    },
+    "processing": {
+      "notifications": {
+        "completed": "Trace processing complete",
+        "failed": "Trace processing failed",
+        "failedWithReason": "Trace processing failed: {reason}"
+      }
+    },
+    "actions": {
+      "view": "View trace",
+      "download": "Download trace",
+      "delete": "Delete trace",
+      "copyId": "Copy Trace ID",
+      "reprocess": "Reprocess"
+    },
+    "empty": {
+      "title": "No traces found",
+      "description": "Try adjusting your search or filters",
+      "uploadFirst": "Upload your first trace to get started"
+    },
+    "pagination": {
+      "showing": "Showing",
+      "of": "of",
+      "traces": "traces"
+    },
+    "notifications": {
+      "uploadSuccess": "{count} file(s) uploaded successfully",
+      "reprocessQueued": "Trace {id} queued for reprocessing",
+      "reprocessBatchQueued": "{count} trace(s) queued for reprocessing",
+      "copySuccess": "Copied {id} to clipboard",
+      "deleteSuccess": "Trace deleted successfully",
+      "deleteBatchSuccess": "{count} trace(s) deleted successfully",
+      "downloadStarted": "Downloading trace {id}...",
+      "downloadBatchStarted": "Downloading {count} trace(s)...",
+      "exportStarted": "Exporting traces to CSV..."
+    },
+    "detail": {
+      "backToStudy": "Back to Study",
+      "searchTraces": "Search traces...",
+      "traceSelector": {
+        "label": "Switch to another trace in this study"
+      },
+      "stats": {
+        "length": "Length",
+        "quality": "Quality",
+        "gc": "GC"
+      },
+      "viewModes": {
+        "trace": "Trace View",
+        "sequence": "Sequence View"
+      },
+      "controls": {
+        "zoomIn": "Zoom In",
+        "zoomOut": "Zoom Out",
+        "resetZoom": "Reset Zoom",
+        "quality": "Quality",
+        "reverseComplement": "Reverse complement (3' ↔ 5')",
+        "trim": "Trim",
+        "annotate": "Annotate",
+        "copy": "Copy",
+        "copied": "Copied!",
+        "copySequence": "Copy Sequence",
+        "exportFasta": "Export FASTA",
+        "compareStrands": "Compare strands",
+        "topStrand": "Top strand",
+        "bottomStrand": "Bottom strand (reverse complement)"
+      },
+      "aiAssistant": "AI Assistant",
+      "openAiAssistant": "Open AI Assistant",
+      "closeAiAssistant": "Close AI Assistant",
+      "notifications": {
+        "preparingExport": "Preparing export..."
+      }
+    },
+    "analysis": {
+      "title": "Analysis",
+      "close": "Close",
+      "run": "Run",
+      "rerun": "Re-run",
+      "expand": "Show details",
+      "collapse": "Hide details",
+      "showLayer": "Show layer on chromatogram",
+      "hideLayer": "Hide layer on chromatogram",
+      "copy": "Copy",
+      "emptyTitle": "No results yet",
+      "emptyDescription": "Run the analysis to see results here.",
+      "status": {
+        "ready": "Ready",
+        "notRun": "Not run"
+      },
+      "summary": {
+        "trimming": "{original} → {trimmed} bp",
+        "heterozygote": "{count} heterozygote calls",
+        "motif": "{count} matches",
+        "translation": "{length} aa",
+        "orf": "{count} ORFs (longest {longest} bp)",
+        "restriction": "{enzymes} enzymes, {sites} sites"
+      },
+      "tabs": {
+        "trimming": "Trimming",
+        "heterozygote": "Heterozygote",
+        "motif": "Motif",
+        "translation": "Translation",
+        "orf": "ORF",
+        "restriction": "Restriction"
+      },
+      "notifications": {
+        "queued": "Queued",
+        "done": "Ready",
+        "timeout": "Analysis timed out, try again later",
+        "error": "Failed to run analysis",
+        "copied": "Copied to clipboard",
+        "failed": "{type} analysis failed",
+        "failedWithReason": "{type} analysis failed: {error}",
+        "complete": {
+          "trimming": "Trimming complete",
+          "heterozygote": "Heterozygote detection complete",
+          "motif": "Motif search complete",
+          "translation": "Translation complete",
+          "orf": "ORF detection complete",
+          "restriction": "Restriction analysis complete"
+        }
+      },
+      "trimming": {
+        "algorithm": "Algorithm",
+        "qualityThreshold": "Quality threshold",
+        "windowSize": "Window size",
+        "originalLength": "Original length",
+        "trimmedLength": "Trimmed length",
+        "trimRange": "Trim range",
+        "preview": "Trimmed sequence",
+        "start": "Start",
+        "end": "End"
+      },
+      "heterozygote": {
+        "secondaryPeakThreshold": "Secondary peak threshold",
+        "minQuality": "Minimum quality",
+        "callsFound": "{count} calls",
+        "noCalls": "No heterozygote calls.",
+        "position": "Position",
+        "primary": "Primary",
+        "secondary": "Secondary",
+        "ratio": "Ratio",
+        "preview": "First {count} of {total} calls"
+      },
+      "motif": {
+        "pattern": "Pattern",
+        "searchComplement": "Search complement",
+        "useRegex": "Use regex",
+        "matches": "{count} matches",
+        "noMatches": "No matches found.",
+        "patternRequired": "Pattern is required",
+        "start": "Start",
+        "end": "End",
+        "strand": "Strand",
+        "matchedSequence": "Match",
+        "previewPattern": "Pattern"
+      },
+      "translation": {
+        "frame": "Frame",
+        "geneticCode": "Genetic code",
+        "protein": "Protein sequence",
+        "proteinLength": "{count} aa",
+        "stopCodons": "{count} stops",
+        "composition": "Amino acid composition"
+      },
+      "orf": {
+        "minLength": "Min length (bp)",
+        "startCodons": "Start codons",
+        "stopCodons": "Stop codons",
+        "totalOrfs": "{count} ORFs",
+        "longestLength": "Longest: {length} bp",
+        "noOrfs": "No ORFs detected.",
+        "start": "Start",
+        "end": "End",
+        "frame": "Frame",
+        "strand": "Strand",
+        "length": "Length",
+        "previewTop": "Top {count} ORFs"
+      },
+      "restriction": {
+        "enzymes": "Enzymes",
+        "enzymesHint": "Comma-separated, e.g. EcoRI,BamHI",
+        "totalSites": "{count} sites",
+        "enzymeCount": "{count} enzymes",
+        "noSites": "No restriction sites detected.",
+        "enzyme": "Enzyme",
+        "position": "Position",
+        "cutPosition": "Cut",
+        "recognition": "Recognition"
+      }
+    }
+  },
+  "pipelines": {
+    "title": "Pipeline Monitor",
+    "description": "Real-time monitoring of data processing pipelines",
+    "selectStudy": "Select a study to manage its pipelines:",
+    "noStudies": "You don't have any studies yet",
+    "noStudiesDesc": "Create or join a study to start configuring analysis pipelines.",
+    "goToStudies": "Go to studies",
+    "noDescription": "No description",
+    "refresh": "Refresh",
+    "refreshing": "Refreshing...",
+    "newPipeline": "New Pipeline",
+    "noPipelines": "No pipelines yet",
+    "noPipelinesDesc": "Create your first pipeline to automate trace analysis workflows.",
+    "createFirst": "Create your first pipeline",
+    "selectPipeline": "Select a pipeline to view details",
+    "steps": "steps",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "noDescription": "No description",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "execute": {
+      "title": "Execute Pipeline",
+      "description": "Select a trace to run this pipeline on.",
+      "selectTrace": "Select Trace",
+      "selectTracePlaceholder": "Choose a trace...",
+      "noProcessedTraces": "No processed traces available",
+      "run": "Execute"
+    },
+    "archive": "Archive",
+    "pipelineSteps": "Pipeline Steps",
+    "addStepLabel": "Add Step",
+    "stepConfig": {
+      "title": "Configuration",
+      "algorithm": "Algorithm",
+      "cutoff": "Quality Cutoff",
+      "minRatio": "Minimum Ratio",
+      "maxRatio": "Maximum Ratio",
+      "pattern": "Search Pattern",
+      "searchComplement": "Search reverse complement",
+      "frame": "Reading Frame",
+      "minLength": "Minimum Length (bp)",
+      "enzymes": "Restriction Enzymes",
+      "enzymesSeparator": "Separate multiple enzymes with commas"
+    },
+    "noSteps": "No steps configured",
+    "addFirstStep": "Add the first step to this pipeline",
+    "recentExecutions": "Recent Executions",
+    "executionOn": "Execution on {traceName}",
+    "noExecutions": "No executions yet",
+    "runFirstExecution": "Execute this pipeline on a trace to see results",
+    "executions": {
+      "notifications": {
+        "started": "Pipeline execution started",
+        "stepCompleted": "Step completed: {stepType}",
+        "completed": "Pipeline execution complete",
+        "failed": "Pipeline execution failed",
+        "failedWithReason": "Pipeline execution failed: {reason}"
+      }
+    },
+    "metrics": {
+      "active": "Active",
+      "runningPipelines": "Running pipelines",
+      "pending": "Pending",
+      "queuedPipelines": "Queued for execution",
+      "total": "Total",
+      "totalPipelines": "Total pipelines",
+      "completed": "Completed",
+      "completedPipelines": "Completed pipelines",
+      "failed": "Failed",
+      "failedPipelines": "Failed pipelines",
+      "cpuUtilization": "CPU utilization",
+      "memoryUsage": "Memory usage",
+      "samplesProcessed": "Samples processed",
+      "today": "Today",
+      "avg": "Avg"
+    },
+    "charts": {
+      "resourceUtilization": "Resource Utilization",
+      "resourceDescription": "CPU and memory usage over time",
+      "sampleThroughput": "Sample Throughput",
+      "throughputDescription": "Samples processed per hour",
+      "cpu": "CPU",
+      "memory": "Memory"
+    },
+    "activePipelines": {
+      "title": "Active Pipelines",
+      "description": "Currently running and queued processing jobs",
+      "empty": "No active pipelines at the moment"
+    },
+    "comingSoon": {
+      "title": "Pipelines Coming Soon",
+      "description": "We're working on bringing you powerful batch processing capabilities. Soon you'll be able to run alignments, BLAST searches, and more on multiple traces at once.",
+      "features": {
+        "alignment": "Sequence Alignment",
+        "blast": "BLAST Search",
+        "annotation": "Annotation",
+        "qualityCheck": "Quality Check"
+      }
+    },
+    "table": {
+      "study": "Study",
+      "samples": "Samples",
+      "traces": "Traces",
+      "type": "Type",
+      "started": "Started",
+      "eta": "ETA",
+      "cpu": "CPU",
+      "memory": "Memory",
+      "progress": "Progress"
+    },
+    "actions": {
+      "pause": "Pause pipeline",
+      "resume": "Start pipeline",
+      "retry": "Retry pipeline"
+    },
+    "create": {
+      "title": "Create New Pipeline",
+      "description": "Configure a new data processing pipeline for your study.",
+      "name": "Pipeline Name",
+      "namePlaceholder": "e.g., Quality Analysis Pipeline",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Describe what this pipeline does...",
+      "pipelineName": "Pipeline Name",
+      "pipelineNamePlaceholder": "e.g., Quality Control Pipeline",
+      "pipelineType": "Pipeline Type",
+      "selectType": "Select pipeline type...",
+      "types": {
+        "qc": "Quality Control",
+        "variant": "Variant Calling",
+        "alignment": "Sequence Alignment",
+        "assembly": "De Novo Assembly",
+        "annotation": "Variant Annotation"
+      },
+      "targetStudy": "Target Study",
+      "selectStudy": "Select study...",
+      "priority": "Priority",
+      "priorityNormal": "Normal",
+      "priorityHigh": "High",
+      "priorityUrgent": "Urgent",
+      "notifications": "Notifications",
+      "onCompletion": "On Completion",
+      "onErrorOnly": "On Error Only",
+      "none": "None",
+      "submit": "Create Pipeline"
+    },
+    "edit": {
+      "title": "Edit Pipeline",
+      "description": "Update pipeline name and description.",
+      "save": "Save Changes"
+    },
+    "delete": {
+      "title": "Delete Pipeline",
+      "description": "Are you sure you want to delete this pipeline? This action cannot be undone.",
+      "confirm": "Delete Pipeline"
+    },
+    "addStep": {
+      "title": "Add Step",
+      "description": "Select an analysis step to add to this pipeline.",
+      "add": "Add Step"
+    },
+    "dialogs": {
+      "create": {
+        "title": "Create Pipeline",
+        "description": "Create a new analysis pipeline for this study.",
+        "name": "Pipeline Name",
+        "namePlaceholder": "e.g., Quality Analysis Pipeline",
+        "pipelineDescription": "Description",
+        "descriptionPlaceholder": "Describe what this pipeline does...",
+        "submit": "Create Pipeline"
+      },
+      "edit": {
+        "title": "Edit Pipeline",
+        "description": "Update pipeline name and description.",
+        "submit": "Save Changes"
+      },
+      "delete": {
+        "title": "Delete Pipeline",
+        "description": "Are you sure you want to delete \"{name}\"? This action cannot be undone.",
+        "confirm": "Delete Pipeline"
+      },
+      "addStep": {
+        "title": "Add Step",
+        "description": "Select an analysis step to add to this pipeline.",
+        "stepType": "Step Type",
+        "selectStepType": "Select a step type...",
+        "submit": "Add Step"
+      },
+      "execute": {
+        "title": "Execute Pipeline",
+        "description": "Select a trace to run this pipeline on.",
+        "selectTrace": "Select Trace",
+        "selectTracePlaceholder": "Choose a trace...",
+        "noProcessedTraces": "No processed traces available",
+        "submit": "Execute"
+      }
+    },
+    "stepTypes": {
+      "quality": "Quality Analysis",
+      "qualityDesc": "Analyze sequence quality scores",
+      "trimming": "Sequence Trimming",
+      "trimmingDesc": "Trim low-quality ends from sequences",
+      "heterozygote": "Heterozygote Detection",
+      "heterozygoteDesc": "Detect heterozygous positions",
+      "motif": "Motif Search",
+      "motifDesc": "Search for sequence patterns",
+      "translation": "Translation",
+      "translationDesc": "Translate DNA to protein sequence",
+      "orf": "ORF Detection",
+      "orfDesc": "Find open reading frames",
+      "restriction": "Restriction Analysis",
+      "restrictionDesc": "Find restriction enzyme cut sites"
+    },
+    "status": {
+      "draft": "Draft",
+      "active": "Active",
+      "archived": "Archived"
+    },
+    "executionStatus": {
+      "pending": "Pending",
+      "running": "Running",
+      "completed": "Completed",
+      "failed": "Failed",
+      "cancelled": "Cancelled"
+    },
+    "time": {
+      "minAgo": "{count} min ago",
+      "hoursAgo": "{count} hour(s) ago",
+      "daysAgo": "{count} day(s) ago"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Manage your account settings and preferences",
+    "sections": {
+      "account": "Account",
+      "security": "Security",
+      "notifications": "Notifications",
+      "preferences": "Preferences",
+      "billing": "Billing",
+      "collaboration": "Collaboration"
+    },
+    "account": {
+      "profileInfo": "Profile Information",
+      "profilePhoto": "Profile Photo",
+      "profilePhotoDesc": "Update your profile picture. JPG or PNG, max 5MB.",
+      "uploadNew": "Upload New",
+      "remove": "Remove",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "emailAddress": "Email Address",
+      "emailReadOnly": "Email address cannot be changed",
+      "role": "Role",
+      "institution": "Institution",
+      "bio": "Bio",
+      "researchIdentifiers": "Research Identifiers",
+      "researchField": "Research Field",
+      "selectField": "Select a field...",
+      "orcid": "ORCID iD",
+      "website": "Website",
+      "dangerZone": "Danger Zone",
+      "deactivateAccount": "Deactivate Account",
+      "deactivateDesc": "Temporarily disable your account. You can reactivate it at any time.",
+      "deactivate": "Deactivate",
+      "deleteAccount": "Delete Account",
+      "deleteDesc": "Permanently delete your account and all associated data. This action cannot be undone.",
+      "saveChanges": "Save Changes",
+      "saved": "Saved!",
+      "photoUploadError": "Failed to upload photo. Please try again."
+    },
+    "security": {
+      "password": "Password",
+      "currentPassword": "Current Password",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm New Password",
+      "updatePassword": "Update Password",
+      "updated": "Updated!",
+      "passwordChanged": "Password changed successfully!",
+      "passwordsDoNotMatch": "New passwords do not match",
+      "passwordTooShort": "Password must be at least 8 characters",
+      "changePasswordError": "Failed to change password. Please try again.",
+      "noPasswordOAuth": "This account uses external login (Google/GitHub) and doesn't have a password set.",
+      "twoFactor": "Two-Factor Authentication",
+      "enable2FA": "Enable 2FA",
+      "active": "Active",
+      "twoFactorDesc": "Add an extra layer of security to your account using authentication apps.",
+      "authenticatorConnected": "Authenticator App Connected",
+      "authenticatorDesc": "You're using an authenticator app for two-factor authentication.",
+      "securityOptions": "Security Options",
+      "sessionTimeout": "Session Timeout",
+      "sessionTimeoutDesc": "Automatically log out after 30 minutes of inactivity.",
+      "viewActiveSessions": "View Active Sessions",
+      "remove": "Remove"
+    },
+    "notifications": {
+      "emailNotifications": "Email Notifications",
+      "enableEmail": "Enable Email Notifications",
+      "enableEmailDesc": "Receive email updates about your studies and activities.",
+      "studyUpdates": "Study Updates",
+      "studyUpdatesDesc": "Notifications when studies you're involved in are updated.",
+      "analysisCompletion": "Analysis Completion",
+      "analysisCompletionDesc": "Get notified when your analysis pipelines complete.",
+      "teamInvitations": "Team Invitations",
+      "teamInvitationsDesc": "Receive notifications when you're invited to collaborate.",
+      "weeklyDigest": "Weekly Digest",
+      "weeklyDigestDesc": "Summary of your activity and important updates once a week.",
+      "marketing": "Marketing & Updates",
+      "productUpdates": "Product Updates & News",
+      "productUpdatesDesc": "Receive occasional emails about new features and platform updates."
+    },
+    "preferences": {
+      "appearance": "Appearance",
+      "theme": "Theme",
+      "light": "Light",
+      "lightDesc": "Clean and bright",
+      "dark": "Dark",
+      "darkDesc": "Easy on the eyes",
+      "system": "System",
+      "systemDesc": "System default",
+      "dataDisplay": "Data & Display",
+      "timezone": "Timezone",
+      "dateFormat": "Date Format",
+      "itemsPerPage": "Items Per Page",
+      "dataExport": "Data Export",
+      "dataExportDesc": "Download a copy of your account data and research information.",
+      "requestExport": "Request Data Export"
+    },
+    "billing": {
+      "title": "Billing & Subscription",
+      "description": "Manage your subscription plan, payment methods, billing history, and usage metrics on the dedicated billing page.",
+      "goToBilling": "Go to Billing",
+      "currentPlan": "Current Plan",
+      "nextBilling": "Next Billing",
+      "paymentMethod": "Payment Method",
+      "active": "Active",
+      "noSubscription": "No subscription",
+      "free": "Free",
+      "noPaymentMethod": "No payment method"
+    },
+    "collaboration": {
+      "settings": "Collaboration Settings",
+      "autoApprove": "Auto-approve Collaborations",
+      "autoApproveDesc": "Automatically accept collaboration requests from verified institutions.",
+      "defaultRole": "Default Role for Invited Members",
+      "visibility": "Visibility",
+      "profileVisibility": "Profile Visibility",
+      "studyVisibility": "Default Study Visibility",
+      "blockedUsers": "Blocked Users",
+      "blockedUsersDesc": "Manage users you've blocked from collaborating with you.",
+      "viewBlocked": "View Blocked Users",
+      "roles": {
+        "viewerReadOnly": "Viewer (Read-only)",
+        "collaborator": "Collaborator",
+        "researchScientist": "Research Scientist"
+      },
+      "profileOptions": {
+        "public": "Public - Visible to all GeneFlow users",
+        "institutionOnly": "Institution Only - Visible to your institution",
+        "private": "Private - Only visible to collaborators"
+      },
+      "studyOptions": {
+        "private": "Private - Team members only",
+        "institution": "Institution - Visible to institution members",
+        "public": "Public - Visible to all users"
+      }
+    },
+    "dialogs": {
+      "uploadPhoto": {
+        "title": "Upload Profile Photo",
+        "description": "Choose a new profile picture. JPG or PNG, max 5MB.",
+        "clickToSelect": "Click to select a photo",
+        "upload": "Upload"
+      },
+      "sessions": {
+        "title": "Active Sessions",
+        "description": "Manage devices that are currently signed into your account.",
+        "current": "Current",
+        "endSession": "End Session",
+        "done": "Done"
+      },
+      "dataExport": {
+        "title": "Request Data Export",
+        "description": "We'll prepare a download of your account data and send you an email when it's ready.",
+        "includesTitle": "Your export will include:",
+        "profileInfo": "Profile information",
+        "studyData": "Study data and metadata",
+        "analysisResults": "Analysis results",
+        "activityLogs": "Activity logs",
+        "requestExport": "Request Export"
+      },
+      "blockedUsers": {
+        "title": "Blocked Users",
+        "description": "Users you've blocked cannot collaborate with you or view your studies.",
+        "noBlockedUsers": "You haven't blocked any users.",
+        "unblock": "Unblock",
+        "done": "Done"
+      },
+      "deactivate": {
+        "title": "Deactivate Account",
+        "description": "Your account will be temporarily disabled. You can reactivate it at any time by logging in.",
+        "warning": "While deactivated, your studies will be hidden and team members won't be able to access shared data.",
+        "confirm": "Deactivate Account"
+      },
+      "deleteAccount": {
+        "title": "Delete Account",
+        "description": "This action is permanent and cannot be undone. All your data will be permanently deleted.",
+        "warningTitle": "This will permanently delete:",
+        "warningProfile": "Your profile and account settings",
+        "warningStudies": "All studies you own",
+        "warningTraces": "All uploaded traces and analysis results",
+        "confirmLabel": "Type \"DELETE\" to confirm",
+        "confirmPlaceholder": "DELETE",
+        "confirm": "Delete Account",
+        "confirmError": "Please type DELETE to confirm",
+        "error": "Failed to delete account. Please try again."
+      },
+      "remove2FA": {
+        "title": "Remove Two-Factor Authentication",
+        "description": "This will remove the extra security from your account. Are you sure?",
+        "confirm": "Remove 2FA"
+      }
+    }
+  },
+  "discover": {
+    "title": "Discover Public Sequencing Studies",
+    "badge": "Open Science Initiative",
+    "description": "Explore cutting-edge genetic research from leading institutions worldwide. Access public datasets, collaborate with researchers, and advance open science.",
+    "searchPlaceholder": "Search studies, institutions, or researchers...",
+    "featuredStudies": "Featured Studies",
+    "filters": {
+      "button": "Filters",
+      "clearFilters": "Clear filters",
+      "clearAll": "Clear all filters",
+      "allFields": "All Fields",
+      "visibility": "Visibility",
+      "publicStudies": "Public Studies",
+      "collaborativeProjects": "Collaborative Projects",
+      "studyType": "Study Type",
+      "wholeGenome": "Whole Genome",
+      "rnaSeq": "RNA-Seq",
+      "targetedPanels": "Targeted Panels",
+      "sampleSize": "Sample Size",
+      "lessThan100": "< 100 samples",
+      "between100And1000": "100 - 1,000 samples",
+      "moreThan1000": "> 1,000 samples"
+    },
+    "fields": {
+      "allFields": "All Fields",
+      "cancerResearch": "Cancer Research",
+      "cardiovascularDisease": "Cardiovascular Disease",
+      "diabetesResearch": "Diabetes Research",
+      "rareDisease": "Rare Disease",
+      "microbiome": "Microbiome",
+      "pharmacogenomics": "Pharmacogenomics",
+      "populationGenetics": "Population Genetics",
+      "infectiousDisease": "Infectious Disease"
+    },
+    "card": {
+      "traces": "Traces",
+      "samples": "Samples",
+      "papers": "Papers",
+      "members": "Members",
+      "public": "Public",
+      "collaborators": "Collaborators",
+      "views": "Views",
+      "citations": "Citations",
+      "stars": "Stars",
+      "noInstitution": "Independent Research"
+    },
+    "error": {
+      "loadFailed": "Failed to load studies. Please try again."
+    },
+    "time": {
+      "justNow": "Just now",
+      "hoursAgo": "{count} hours ago",
+      "daysAgo": "{count} days ago"
+    },
+    "count": {
+      "study": "study",
+      "studies": "studies"
+    },
+    "pagination": {
+      "showing": "Showing",
+      "of": "of",
+      "studies": "studies",
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "empty": {
+      "title": "No studies found",
+      "description": "Try adjusting your search or filters to find more studies"
+    }
+  },
+  "profile": {
+    "title": "Profile",
+    "description": "Your personal information and research statistics",
+    "editProfile": "Edit Profile",
+    "settings": "Settings",
+    "activityOverview": "Activity Overview",
+    "noRole": "No role specified",
+    "stats": {
+      "activeStudies": "Active Studies",
+      "totalSamples": "Total Samples",
+      "collaborators": "Collaborators",
+      "analysesRun": "Analyses Run"
+    },
+    "about": {
+      "title": "About",
+      "edit": "Edit",
+      "noBio": "No bio yet. Click edit to add one.",
+      "orcid": "ORCID",
+      "website": "Website",
+      "labWebsite": "Lab Website",
+      "memberSince": "Member Since"
+    },
+    "studies": {
+      "title": "My Studies",
+      "description": "Studies you're leading or contributing to",
+      "samples": "samples",
+      "traces": "traces",
+      "members": "members",
+      "noStudies": "No studies yet",
+      "roles": {
+        "principalInvestigator": "Principal Investigator",
+        "coInvestigator": "Co-Investigator",
+        "collaborator": "Collaborator"
+      }
+    },
+    "recentActivity": {
+      "title": "Recent Activity",
+      "viewAll": "View All Activity",
+      "noActivity": "No recent activity",
+      "lastActive": "Last Activity",
+      "studiesOwned": "studies owned",
+      "studiesCollaborating": "collaborating",
+      "tracesProcessed": "traces processed"
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "createStudy": "Create New Study",
+      "runAnalysis": "Run Analysis",
+      "manageTeam": "Manage Team"
+    },
+    "dialogs": {
+      "editProfile": {
+        "title": "Edit Profile",
+        "description": "Update your profile information and research details.",
+        "firstName": "First Name",
+        "lastName": "Last Name",
+        "role": "Role",
+        "institution": "Institution",
+        "researchField": "Research Field",
+        "selectField": "Select a field...",
+        "location": "Location",
+        "saveChanges": "Save Changes"
+      },
+      "editBio": {
+        "title": "Edit Bio",
+        "description": "Update your research biography and external links.",
+        "biography": "Biography",
+        "orcid": "ORCID",
+        "website": "Website",
+        "saveChanges": "Save Changes"
+      },
+      "uploadPhoto": {
+        "title": "Upload Profile Photo",
+        "description": "Choose a new profile picture. JPG or PNG, max 5MB.",
+        "clickToSelect": "Click to select a photo",
+        "upload": "Upload"
+      },
+      "activityHistory": {
+        "title": "Activity History",
+        "description": "Your recent activity across all studies."
+      }
+    }
+  },
+  "completeProfile": {
+    "title": "Complete Your Profile",
+    "subtitle": "Tell us a bit about yourself to get started",
+    "submit": "Create Profile",
+    "skipHint": "You can always update this information later in your profile settings.",
+    "steps": {
+      "basicInfo": {
+        "title": "Basic Information",
+        "description": "Your name and location"
+      },
+      "professionalInfo": {
+        "title": "Professional Information",
+        "description": "Your role and institution"
+      },
+      "researchIds": {
+        "title": "Research Identifiers",
+        "description": "Optional: ORCID and website"
+      }
+    },
+    "fields": {
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "location": "Location",
+      "bio": "Short Bio",
+      "role": "Professional Role",
+      "institution": "Institution",
+      "department": "Department",
+      "researchField": "Research Field",
+      "orcid": "ORCID iD",
+      "website": "Website"
+    },
+    "placeholders": {
+      "firstName": "John",
+      "lastName": "Doe",
+      "location": "Cambridge, MA",
+      "bio": "Brief description of your research interests...",
+      "role": "e.g., Research Scientist, PhD Student",
+      "institution": "e.g., MIT, Stanford University",
+      "department": "e.g., Department of Biology",
+      "researchField": "Select a field..."
+    },
+    "hints": {
+      "orcid": "Your 16-digit ORCID identifier (e.g., 0000-0002-1825-0097)"
+    }
+  },
+  "help": {
+    "title": "Help Center",
+    "description": "Find answers and get support",
+    "hero": {
+      "title": "How can we help you?",
+      "description": "Search our knowledge base or browse topics to find answers",
+      "searchPlaceholder": "Search for help articles, guides, or tutorials..."
+    },
+    "quickStart": {
+      "title": "Quick Start Guides",
+      "description": "Get started with essential workflows",
+      "minRead": "min read",
+      "guides": {
+        "createStudy": {
+          "title": "Create Your First Study",
+          "description": "Go to Studies > New Study. Enter a name, select a research field (Genomics, Proteomics, etc.), add a description, and click Create. Your study starts in Draft status."
+        },
+        "uploadTraces": {
+          "title": "Upload & Manage Traces",
+          "description": "Open your study, go to the Traces tab, and click Upload. Drag and drop .ab1, .scf, .fastq, or .fasta files. Traces are automatically validated and processed for quality metrics."
+        },
+        "runPipeline": {
+          "title": "Run Sequence Alignments",
+          "description": "Select 2+ traces from your study to create an alignment. Choose Pairwise (2 traces), Multiple (3+), or Reference alignment. Results include consensus sequence and variant detection."
+        }
+      }
+    },
+    "categories": {
+      "title": "Browse by Topic",
+      "description": "Explore help articles organized by category",
+      "gettingStarted": {
+        "title": "Getting Started",
+        "topics": {
+          "createStudy": "Creating your first study",
+          "setupProfile": "Setting up your profile",
+          "inviteTeam": "Inviting team members",
+          "understandDashboard": "Understanding the dashboard"
+        }
+      },
+      "studiesData": {
+        "title": "Studies & Data",
+        "topics": {
+          "manageMetadata": "Managing study metadata",
+          "uploadTraces": "Uploading chromatogram traces",
+          "organizeSamples": "Organizing samples",
+          "shareStudies": "Sharing studies with collaborators"
+        }
+      },
+      "pipelines": {
+        "title": "Pipelines",
+        "topics": {
+          "runPipelines": "Running analysis pipelines on traces",
+          "understandResults": "Understanding pipeline execution results",
+          "qcMetrics": "Configuring quality, trimming and motif steps",
+          "exportData": "Exporting per-step results and reports"
+        }
+      },
+      "collaboration": {
+        "title": "Collaboration",
+        "topics": {
+          "rolesPermissions": "Team roles: Owner, Admin, Editor, Viewer",
+          "inviteCollaborators": "Sending invitations to collaborators",
+          "shareSecurely": "Publishing studies publicly",
+          "manageAccess": "Transferring study ownership"
+        }
+      },
+      "security": {
+        "title": "Security & Privacy",
+        "topics": {
+          "twoFactor": "Two-factor authentication (TOTP)",
+          "encryption": "Data encryption",
+          "compliance": "OAuth login (Google, GitHub)",
+          "auditLogs": "Session management"
+        }
+      },
+      "accountSettings": {
+        "title": "Account & Settings",
+        "topics": {
+          "profileCustomization": "Profile customization",
+          "notificationPrefs": "Notification preferences",
+          "billing": "Plans: Free, Pro, Premium, Enterprise",
+          "apiTokens": "Managing your subscription"
+        }
+      }
+    },
+    "workflows": {
+      "title": "Common Workflows",
+      "description": "Step-by-step guides for key research tasks",
+      "qc": {
+        "title": "Quality Control Workflow",
+        "description": "Evaluate trace quality using automatic metrics after upload",
+        "steps": {
+          "upload": "Upload .ab1/.scf/.fastq/.fasta files",
+          "runQC": "Wait for automatic processing",
+          "reviewMetrics": "Check quality scores (Q20, Q30, GC%)",
+          "filterSamples": "Filter by status: Processed/Failed"
+        }
+      },
+      "variantCalling": {
+        "title": "Sequence Alignment Workflow",
+        "description": "Align multiple sequences and detect variants",
+        "steps": {
+          "align": "Select 2+ traces from your study",
+          "callVariants": "Create Pairwise/Multiple/Reference alignment",
+          "annotate": "Review consensus sequence",
+          "exportVCF": "Export alignment results"
+        }
+      },
+      "collaborative": {
+        "title": "Collaborative Research Workflow",
+        "description": "Share studies and collaborate with research teams",
+        "steps": {
+          "createStudy": "Create study (starts as Draft)",
+          "inviteMembers": "Invite members via email",
+          "assignRoles": "Assign roles: Admin, Editor, Viewer",
+          "shareResults": "Publish study when complete"
+        }
+      }
+    },
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "description": "Quick answers to common questions",
+      "questions": {
+        "uploadTraces": {
+          "question": "What file formats are supported?",
+          "answer": "GeneFlow supports: AB1 (.ab1) - Applied Biosystems chromatogram files with full quality data. SCF (.scf) - Standard Chromatogram Format. FASTQ (.fastq, .fq) - Sequences with quality scores. FASTA (.fasta, .fa) - Sequence-only files. Maximum file size is 50MB per trace."
+        },
+        "availablePipelines": {
+          "question": "What pipeline steps are available?",
+          "answer": "Pipelines chain analysis steps that run on a trace: Quality (per-base quality scoring), Trimming (low-quality end removal), Heterozygote (double-peak detection), Motif (search a DNA motif, optionally on the reverse complement), Translation (codon translation in a chosen frame), ORF (open reading frame detection), and Restriction (restriction-enzyme site search). Steps execute in order; progress is streamed in real time."
+        },
+        "inviteTeam": {
+          "question": "What are the different team roles?",
+          "answer": "Owner - Full control, can transfer ownership (one per study). Admin - Manage members, change study settings and status. Editor - Create and edit traces and alignments. Viewer - Read-only access to study data. Invitations are sent by email and must be accepted to join."
+        },
+        "exportResults": {
+          "question": "What are study statuses?",
+          "answer": "Studies progress through: Draft - Initial setup, not visible. Active - Work in progress. Completed - Research finished. Published - Publicly visible in Discover. Archived - Hidden but preserved. Only the Owner or Admin can change status."
+        },
+        "dataProtection": {
+          "question": "How do I secure my account?",
+          "answer": "Enable Two-Factor Authentication (2FA) using TOTP with apps like Google Authenticator or Authy. You can also sign in with Google or GitHub OAuth. Sessions expire after inactivity and can be managed in Settings > Security."
+        },
+        "fileFormats": {
+          "question": "How does trace processing work?",
+          "answer": "After upload, traces go through: Uploaded - File received. Validating - Format and integrity check. Processing - Quality analysis and base calling. Processed - Ready for use. Failed traces can be retried. Quality metrics include average quality score, Q20/Q30 percentages, GC content, and trimmed length."
+        }
+      }
+    },
+    "support": {
+      "title": "Contact Support",
+      "description": "Can't find what you're looking for? Send us a message.",
+      "emailSupport": "Email Support",
+      "emailResponse": "Response within 24 hours"
+    },
+    "stillNeedHelp": {
+      "title": "Still need help?",
+      "description": "Our support team is available to answer your questions and help you get the most out of GeneFlow.",
+      "contactSupport": "Contact Support"
+    },
+    "dialogs": {
+      "contact": {
+        "title": "Contact Support",
+        "description": "Send us a message and we'll respond within 24 hours.",
+        "subject": "Subject",
+        "subjectPlaceholder": "Brief description of your issue",
+        "category": "Category",
+        "selectCategory": "Select a category...",
+        "categories": {
+          "technical": "Technical Issue",
+          "billing": "Billing Question",
+          "feature": "Feature Request",
+          "account": "Account Help",
+          "other": "Other"
+        },
+        "message": "Message",
+        "messagePlaceholder": "Describe your question or issue in detail...",
+        "send": "Send Message"
+      }
+    }
+  },
+  "billingPage": {
+    "title": "Billing",
+    "description": "Manage your subscription, payment methods and billing history",
+    "backToSettings": "Back to Settings",
+    "currentPlan": {
+      "title": "Current Plan",
+      "plan": "Professional",
+      "status": "Active",
+      "price": "$49",
+      "perMonth": "/month",
+      "perYear": "/year",
+      "renewsOn": "Renews on {date}",
+      "expiresOn": "Expires on {date}",
+      "trialEnds": "Trial ends {date}",
+      "changePlan": "Change Plan",
+      "selectPlan": "Select a Plan",
+      "cancelSubscription": "Cancel Subscription",
+      "noSubscription": "You don't have an active subscription"
+    },
+    "usage": {
+      "title": "Current Period Usage",
+      "period": "Billing Period",
+      "samples": {
+        "title": "Samples Processed",
+        "used": "{used} of {total} used",
+        "unlimited": "Unlimited"
+      },
+      "storage": {
+        "title": "Storage",
+        "used": "{used} GB of {total} GB"
+      },
+      "pipelines": {
+        "title": "Pipeline Runs",
+        "used": "{used} of {total} this month"
+      },
+      "collaborators": {
+        "title": "Team Collaborators",
+        "used": "{used} of {total} seats"
+      },
+      "studies": {
+        "title": "Studies"
+      },
+      "traces": {
+        "title": "Traces per Month"
+      },
+      "members": {
+        "title": "Members per Study"
+      },
+      "daysRemaining": {
+        "title": "Days Remaining",
+        "days": "days"
+      }
+    },
+    "planFeatures": {
+      "title": "Plan Features"
+    },
+    "paymentMethod": {
+      "title": "Payment Method",
+      "cardEnding": "Card ending in {last4}",
+      "expires": "Expires {date}",
+      "default": "Default",
+      "addNew": "Add Payment Method",
+      "update": "Update"
+    },
+    "billingHistory": {
+      "title": "Billing History",
+      "downloadAll": "Download All",
+      "invoice": "Invoice",
+      "date": "Date",
+      "amount": "Amount",
+      "status": "Status",
+      "paid": "Paid",
+      "pending": "Pending",
+      "failed": "Failed",
+      "download": "Download",
+      "viewAll": "View All History"
+    },
+    "billingInfo": {
+      "title": "Billing Information",
+      "name": "Billing Name",
+      "email": "Billing Email",
+      "address": "Address",
+      "taxId": "Tax ID / VAT",
+      "edit": "Edit Information"
+    },
+    "plans": {
+      "title": "Available Plans",
+      "starter": {
+        "name": "Starter",
+        "price": "Free",
+        "description": "For individual researchers",
+        "features": {
+          "samples": "100 samples/month",
+          "storage": "1 GB storage",
+          "pipelines": "3 pipelines",
+          "support": "Community support"
+        }
+      },
+      "professional": {
+        "name": "Professional",
+        "price": "$49",
+        "description": "For research teams",
+        "features": {
+          "samples": "5,000 samples/month",
+          "storage": "100 GB storage",
+          "pipelines": "Unlimited pipelines",
+          "collaborators": "10 collaborators",
+          "support": "Priority support"
+        },
+        "current": "Current Plan"
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "price": "Custom",
+        "description": "For large institutions",
+        "features": {
+          "samples": "Unlimited samples",
+          "storage": "Unlimited storage",
+          "pipelines": "Unlimited pipelines",
+          "collaborators": "Unlimited collaborators",
+          "support": "Dedicated 24/7 support",
+          "sla": "Guaranteed SLA"
+        },
+        "contact": "Contact Sales"
+      }
+    },
+    "dialogs": {
+      "changePlan": {
+        "title": "Change Plan",
+        "description": "Select a new plan for your subscription.",
+        "confirm": "Confirm Change",
+        "prorate": "You will be charged or credited prorated for the remainder of your billing period.",
+        "monthly": "Monthly",
+        "yearly": "Yearly",
+        "free": "Free",
+        "current": "Current",
+        "studies": "studies",
+        "tracesPerMonth": "traces/month",
+        "membersPerStudy": "members/study"
+      },
+      "cancelSubscription": {
+        "title": "Cancel Subscription",
+        "description": "Are you sure you want to cancel your subscription?",
+        "warning": "Your account will be downgraded to the free plan at the end of your current billing period. You will lose access to:",
+        "loseAccess": {
+          "storage": "Additional storage",
+          "pipelines": "Unlimited pipelines",
+          "collaborators": "Additional collaborators",
+          "support": "Priority support"
+        },
+        "confirm": "Yes, Cancel Subscription",
+        "keepPlan": "Keep My Plan",
+        "reasonLabel": "Reason for cancellation (optional)",
+        "reasonPlaceholder": "Tell us why you're cancelling..."
+      },
+      "addPayment": {
+        "title": "Add Payment Method",
+        "description": "Enter your card details securely.",
+        "cardNumber": "Card Number",
+        "expiry": "Expiry Date",
+        "cvc": "CVC",
+        "nameOnCard": "Name on Card",
+        "setDefault": "Set as default payment method",
+        "add": "Add Card"
+      },
+      "editBillingInfo": {
+        "title": "Edit Billing Information",
+        "description": "Update your billing information.",
+        "save": "Save Changes"
+      }
+    }
+  },
+  "landing": {
+    "nav": {
+      "features": "Features",
+      "howItWorks": "How it works",
+      "pricing": "Pricing",
+      "about": "About",
+      "signIn": "Sign in",
+      "getStarted": "Get Started"
+    },
+    "hero": {
+      "badge": "Now with AI-powered variant calling",
+      "title": "Modern Bioinformatics",
+      "titleHighlight": "Made Simple",
+      "description": "The all-in-one platform for genomic study management, trace visualization, and pipeline orchestration. Accelerate your research with powerful tools designed for scientists.",
+      "startTrial": "Start Free Trial",
+      "watchDemo": "Watch Demo",
+      "noCreditCard": "No credit card required. Free plan available forever.",
+      "dashboardAlt": "GeneFlow Dashboard Preview",
+      "pipelineComplete": "Pipeline Complete",
+      "pipelineDetails": "WGS Analysis - 2,340 samples",
+      "qualityScore": "Quality Score"
+    },
+    "logos": {
+      "trusted": "Trusted by leading research institutions worldwide"
+    },
+    "features": {
+      "title": "Everything you need for genomics research",
+      "description": "A comprehensive suite of tools designed to streamline your workflow from sample to insight.",
+      "studyManagement": "Study Management",
+      "studyManagementDesc": "Organize and track genomic studies with comprehensive metadata, sample tracking, and collaboration tools.",
+      "traceVisualization": "Trace Visualization",
+      "traceVisualizationDesc": "Analyze Sanger sequencing traces with our interactive chromatogram viewer featuring quality scores and base calling.",
+      "pipelineOrchestration": "Pipeline Orchestration",
+      "pipelineOrchestrationDesc": "Design, execute, and monitor bioinformatics pipelines with real-time progress tracking and resource management.",
+      "advancedAnalytics": "Advanced Analytics",
+      "advancedAnalyticsDesc": "Generate insights from your genomic data with built-in statistical analysis and customizable visualizations.",
+      "teamCollaboration": "Team Collaboration",
+      "teamCollaborationDesc": "Share studies, assign roles, and collaborate with your team in real-time with granular access controls.",
+      "enterpriseSecurity": "Enterprise Security",
+      "enterpriseSecurityDesc": "HIPAA-compliant infrastructure with end-to-end encryption, audit logs, and SOC 2 Type II certification."
+    },
+    "howItWorks": {
+      "title": "Get started in minutes",
+      "description": "Our intuitive workflow gets you from raw data to actionable insights faster than ever.",
+      "step1Title": "Upload Your Data",
+      "step1Desc": "Import sequencing files, FASTA/FASTQ data, or connect directly to your sequencer output.",
+      "step2Title": "Configure Pipelines",
+      "step2Desc": "Choose from pre-built workflows or create custom pipelines tailored to your research needs.",
+      "step3Title": "Analyze & Collaborate",
+      "step3Desc": "Explore results with interactive visualizations and share findings with your team."
+    },
+    "stats": {
+      "studiesAnalyzed": "Studies Analyzed",
+      "samplesProcessed": "Samples Processed",
+      "researchInstitutions": "Research Institutions",
+      "uptimeSLA": "Uptime SLA"
+    },
+    "testimonials": {
+      "title": "Loved by researchers worldwide",
+      "description": "See what scientists and bioinformaticians are saying about GeneFlow."
+    },
+    "pricing": {
+      "title": "Simple, transparent pricing",
+      "description": "Start free and scale as your research grows. No hidden fees.",
+      "mostPopular": "Most Popular",
+      "starter": "Free",
+      "starterDesc": "Perfect for individual researchers and small projects",
+      "professional": "Pro",
+      "professionalDesc": "For research teams that need more capacity and collaboration",
+      "enterprise": "Enterprise",
+      "enterpriseDesc": "For institutions requiring maximum scale",
+      "free": "Free",
+      "custom": "Custom",
+      "perMonth": "/month",
+      "getStarted": "Get Started",
+      "startFreeTrial": "Start Free Trial",
+      "contactSales": "Contact Sales",
+      "features": {
+        "freeStudies": "2 studies",
+        "freeTraces": "50 traces per month",
+        "freeMembers": "Up to 3 members per study",
+        "proStudies": "10 studies",
+        "proTraces": "500 traces per month",
+        "proMembers": "Up to 10 members per study",
+        "entStudies": "Unlimited studies",
+        "entTraces": "Unlimited traces",
+        "entMembers": "Unlimited members per study",
+        "entAI": "AI usage"
+      }
+    },
+    "cta": {
+      "title": "Ready to accelerate your research?",
+      "description": "Join thousands of researchers using GeneFlow to transform their genomics workflow.",
+      "getStartedFree": "Get Started Free",
+      "scheduleDemo": "Schedule a Demo"
+    },
+    "footer": {
+      "description": "Modern bioinformatics platform for the next generation of genomics research.",
+      "product": "Product",
+      "features": "Features",
+      "pricing": "Pricing",
+      "integrations": "Integrations",
+      "changelog": "Changelog",
+      "resources": "Resources",
+      "documentation": "Documentation",
+      "apiReference": "API Reference",
+      "blog": "Blog",
+      "community": "Community",
+      "company": "Company",
+      "about": "About",
+      "careers": "Careers",
+      "contact": "Contact",
+      "privacy": "Privacy",
+      "copyright": "GeneFlow. All rights reserved.",
+      "terms": "Terms",
+      "cookies": "Cookies"
+    }
+  },
+  "errors": {
+    "notFound": "Page not found",
+    "notFoundDescription": "The page you're looking for doesn't exist.",
+    "goHome": "Go home",
+    "somethingWentWrong": "Something went wrong",
+    "tryAgain": "Try again"
+  },
+  "subscriptionLimit": {
+    "title": "Plan limit reached",
+    "viewPlans": "View plans",
+    "close": "Close",
+    "codes": {
+      "NoActiveSubscription": {
+        "title": "No active subscription",
+        "description": "You need an active subscription to perform this action. Pick a plan to continue."
+      },
+      "StudyLimitReached": {
+        "title": "Study limit reached",
+        "description": "You have hit the maximum number of studies included in your current plan. Upgrade to create more studies."
+      },
+      "TraceLimitReached": {
+        "title": "Trace limit reached",
+        "description": "You have hit the maximum number of traces included in your current plan. Upgrade to upload more traces."
+      },
+      "MemberLimitReached": {
+        "title": "Member limit reached",
+        "description": "You have hit the maximum number of members per study included in your current plan. Upgrade to invite more people."
+      }
+    }
+  },
+  "follows": {
+    "follow": "Follow",
+    "unfollow": "Unfollow",
+    "following": "Following",
+    "followers": "Followers",
+    "empty": "No users yet.",
+    "followersCount": "{count} followers",
+    "followingCount": "{count} following"
+  },
+  "pinned": {
+    "pin": "Pin",
+    "unpin": "Unpin",
+    "pinned": "Pinned",
+    "title": "Pinned studies",
+    "emptyOwner": "You haven't pinned any studies yet. Pin up to {max} to showcase them on your profile.",
+    "emptyOther": "This user hasn't pinned any studies yet.",
+    "limitHint": "{count} of {max} pinned.",
+    "atLimitHint": "You can pin at most {max} studies. Unpin one to add a new one."
+  },
+  "organization": {
+    "readme": {
+      "title": "README",
+      "add": "Add README",
+      "edit": "Edit",
+      "save": "Save",
+      "saving": "Saving...",
+      "cancel": "Cancel",
+      "empty": "No README yet. Add one to introduce this study.",
+      "placeholder": "Describe your study using Markdown — objectives, methods, datasets, contributors...",
+      "editTab": "Edit",
+      "previewTab": "Preview",
+      "emptyPreview": "Nothing to preview.",
+      "saveError": "Could not save README."
+    }
+  },
+  "discussions": {
+    "listTitle": "Discussions",
+    "loadError": "Could not load discussions.",
+    "retry": "Retry",
+    "empty": "No discussions yet. Start one to get the conversation going.",
+    "locked": "Locked",
+    "back": "Back",
+    "prev": "Previous",
+    "next": "Next",
+    "pageOf": "Page {page} of {total}",
+    "createdBy": "Started by {name} on {date}",
+    "createdByLabel": "Started by",
+    "actions": {
+      "lock": "Lock",
+      "unlock": "Unlock"
+    },
+    "new": {
+      "title": "New discussion",
+      "description": "Start a new threaded conversation in this study.",
+      "titleLabel": "Title",
+      "titlePlaceholder": "What would you like to discuss?",
+      "categoryLabel": "Category (optional)",
+      "categoryPlaceholder": "e.g. results, ideas, questions",
+      "bodyLabel": "First message",
+      "bodyPlaceholder": "Kick off the conversation…",
+      "cancel": "Cancel",
+      "submit": "Create"
+    },
+    "validation": {
+      "titleRequired": "Title is required.",
+      "bodyRequired": "First message is required.",
+      "unknown": "Something went wrong."
+    }
+  },
+  "comments": {
+    "empty": "No comments yet.",
+    "edited": "(edited)",
+    "deleted": "(comment deleted)",
+    "locked": "This discussion is locked. No new comments can be posted.",
+    "actions": {
+      "edit": "Edit",
+      "delete": "Delete",
+      "confirmDelete": "Delete this comment?"
+    },
+    "form": {
+      "placeholder": "Write a comment…",
+      "submit": "Comment",
+      "post": "Post",
+      "save": "Save",
+      "cancel": "Cancel"
+    },
+    "validation": {
+      "bodyRequired": "Comment cannot be empty."
+    }
+  },
+  "reactions": {
+    "addReaction": "Add reaction",
+    "toggle": "Toggle {emoji} reaction"
+  },
+  "notifications": {
+    "pageTitle": "Notifications",
+    "trayTitle": "Notifications",
+    "trayAriaLabel": "Open notifications",
+    "trayBadge": "{count, plural, one {# unread notification} other {# unread notifications}}",
+    "loading": "Loading notifications…",
+    "loadError": "Could not load notifications.",
+    "retry": "Retry",
+    "empty": "You're all caught up.",
+    "markRead": "Mark read",
+    "markAllRead": "Mark all read",
+    "seeAll": "See all",
+    "prev": "Previous",
+    "next": "Next",
+    "pageOf": "Page {page} of {total}",
+    "filter": {
+      "unreadOnly": "Unread only"
+    }
+  },
+  "watch": {
+    "levels": {
+      "all": "Watching",
+      "mentions": "Mentions only",
+      "none": "Off"
+    }
+  },
+  "commandPalette": {
+    "ariaLabel": "Global search",
+    "placeholder": "Search studies, traces, discussions, users…",
+    "emptyPrompt": "Type to search across the platform.",
+    "noResults": "No results for \"{query}\".",
+    "types": {
+      "Study": "Study",
+      "Trace": "Trace",
+      "Discussion": "Discussion",
+      "User": "User"
+    },
+    "hints": {
+      "navigate": "to navigate",
+      "open": "to open",
+      "close": "to close"
+    }
+  },
+  "orgs": {
+    "create": {
+      "title": "Create organization",
+      "handle": "Handle",
+      "handleHelp": "2–39 lowercase letters, numbers, and hyphens. This is your org's URL.",
+      "name": "Name",
+      "nameHelp": "A friendly display name for your organization.",
+      "description": "Description",
+      "submit": "Create organization",
+      "cancel": "Cancel",
+      "errors": {
+        "handleTaken": "That handle is already taken. Try another one.",
+        "handleInvalid": "Use 2–39 lowercase letters, numbers, or hyphens."
+      }
+    },
+    "switcher": {
+      "personal": "Personal",
+      "label": "Switch workspace",
+      "createNew": "New organization"
+    },
+    "header": {
+      "overview": "Overview",
+      "people": "People",
+      "settings": "Settings",
+      "membersCount": "{count, plural, one {# member} other {# members}}"
+    },
+    "members": {
+      "title": "Members",
+      "columns": {
+        "user": "User",
+        "role": "Role",
+        "joined": "Joined"
+      },
+      "invite": "Invite member",
+      "empty": "No members yet.",
+      "confirmRemove": "Remove this member from the organization?",
+      "lastOwnerError": "You cannot remove the last owner of an organization."
+    },
+    "invitations": {
+      "title": "Invite member",
+      "empty": "You have no pending invitations.",
+      "accept": "Accept",
+      "decline": "Decline",
+      "expiresIn": "Expires",
+      "invitedBy": "Invited by",
+      "invitedToOrg": "Invite a teammate to join this organization.",
+      "sentSuccess": "Invitation sent",
+      "copyLink": "Copy link",
+      "copied": "Copied",
+      "banner": "You have pending invitations",
+      "emailAddress": "Email Address",
+      "emailPlaceholder": "colleague@institution.edu",
+      "role": "Role",
+      "sendInvitation": "Send Invitation"
+    },
+    "transfer": {
+      "title": "Transfer ownership",
+      "toOwner": "Transfer to",
+      "confirm": "Transfer",
+      "success": "Ownership transferred."
+    },
+    "roles": {
+      "owner": "Owner",
+      "admin": "Admin",
+      "member": "Member"
+    }
+  }
+}

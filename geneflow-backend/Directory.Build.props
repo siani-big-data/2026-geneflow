@@ -1,0 +1,23 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+
+    <!-- XML Documentation -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+    <!-- Treat missing XML comments as warnings (CS1591) -->
+    <NoWarn>$(NoWarn)</NoWarn>
+
+    <!-- Code Analysis -->
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <AnalysisLevel>latest</AnalysisLevel>
+
+    <!-- Assembly Info -->
+    <Company>GeneFlow</Company>
+    <Product>GeneFlow Platform</Product>
+    <Copyright>Copyright © GeneFlow 2024-2026</Copyright>
+  </PropertyGroup>
+</Project>
