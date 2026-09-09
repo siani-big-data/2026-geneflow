@@ -27,29 +27,7 @@ Bajo la interfaz, GeneFlow es un **sistema distribuido y orientado a eventos** f
 
 ## 🏗️ Arquitectura
 
-```
-                        ┌──────────────────────────┐
-                        │    geneflow-frontend     │   Next.js · React · TS
-                        │      (interfaz web)      │
-                        └────────────┬─────────────┘
-                                     │  REST  ·  SSE (tiempo real)
-                        ┌────────────▼─────────────┐
-                        │     geneflow-backend     │   .NET 8 · CQRS · DDD
-                        │   (API + único productor │
-                        │      de eventos)         │
-                        └────────────┬─────────────┘
-                                     │  publica eventos de dominio
-      ┌──────────────────────────────┼──────────────────────────────┐
-      │              BUS DE EVENTOS  ·  Redis Streams                 │
-      │   users · studies · traces · alignments · ai · system ...     │
-      └───────┬───────────────────┬───────────────────┬──────────────┘
-              │ consume           │ consume           │ consume
-      ┌───────▼────────┐  ┌───────▼────────┐  ┌───────▼────────────┐
-      │ geneflow-      │  │ geneflow-ai    │  │ geneflow-datalake  │
-      │ analysis       │  │ (IA · copiloto │  │ (event store       │
-      │ (bioinformática)│  │  · BLAST · ML) │  │  inmutable · JSONL)│
-      └────────────────┘  └────────────────┘  └────────────────────┘
-```
+![Arquitectura general de GeneFlow](./arquitectura-general.png)
 
 El **servicio principal** (backend) es el único que produce eventos de dominio. El resto de servicios (motor de análisis, IA y datalake) los consumen de forma **asíncrona y desacoplada**, lo que permite escalar y evolucionar cada pieza por separado. La interfaz dialoga con el backend por **REST** y recibe el progreso de las operaciones largas por **Server-Sent Events (SSE)**. Los binarios pesados (trazas, cromatogramas) viajan por almacenamiento de objetos compatible con **S3 (MinIO)**, no por la mensajería.
 
@@ -113,6 +91,8 @@ Cada servicio se ejecuta de forma independiente y se contenedoriza con Docker. L
 Proyecto desarrollado como **Trabajo Fin de Título (TFT)** del Grado en Ingeniería Informática de la **Escuela de Ingeniería Informática de la Universidad de Las Palmas de Gran Canaria (ULPGC)**.
 
 **Autor:** Eduardo Marrero González
+
+[📖 Consultar la memoria completa del proyecto](./2026_Memoria_TFG_Eduardo_Marrero.pdf)
 
 ---
 
